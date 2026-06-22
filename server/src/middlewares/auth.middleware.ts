@@ -1,0 +1,20 @@
+import { Request, Response, NextFunction } from 'express';
+import { verifyAccess } from '../utils/jwt';
+
+export function authenticate(req: Request, res: Response, next: NextFunction) {
+  const header = req.headers.authorization;
+  if (!header?.startsWith('Bearer ')) return res.status(401).json({ message: 'Unauthorized' });
+  try {
+    (req as any).user = verifyAccess(header.slice(7));
+    next();
+  } catch {
+    res.status(401).json({ message: 'Invalid token' });
+  }
+}
+
+export const authorize = (...roles: string[]) =>
+  (req: Request, res: Response, next: NextFunction) => {
+    const role = (req as any).user?.role;
+    if (!roles.includes(role)) return res.status(403).json({ message: 'Forbidden' });
+    next();
+  };
