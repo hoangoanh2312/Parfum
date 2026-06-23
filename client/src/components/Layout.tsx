@@ -1,15 +1,62 @@
-import { Link, Outlet } from 'react-router-dom';
+import { Outlet, Link } from "react-router-dom";
 
 export default function Layout() {
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="border-b p-4 flex gap-4">
-        <Link to="/" className="font-bold">HOC PARFUM</Link>
-        <Link to="/shop">Shop</Link>
-        <Link to="/login" className="ml-auto">Dang nhap</Link>
+    <>
+      <header className="border-b">
+        <div className="max-w-7xl mx-auto flex justify-between items-center py-4 px-6">
+          <h1 className="text-2xl font-bold">PARFUM</h1>
+
+          <nav className="flex gap-6">
+            <Link to="/">Home</Link>
+            <Link to="/shop">Shop</Link>
+            <Link to="/login">Login</Link>
+          </nav>
+
+          <div className="flex gap-4">
+            <span>🔍</span>
+            <span>🛒</span>
+            <span>👤</span>
+          </div>
+        </div>
       </header>
-      <main className="flex-1 p-6"><Outlet /></main>
-      <footer className="border-t p-4 text-center text-sm text-gray-500">(c) HOC PARFUM</footer>
-    </div>
+
+      <main>
+        <Outlet />
+      </main>
+
+      <footer className="bg-[#f7f4ef] border-t mt-20">
+        <div className="max-w-7xl mx-auto px-6 py-10 grid md:grid-cols-4 gap-8">
+          <div>
+            <h3 className="font-bold text-xl mb-3">PARFUM</h3>
+            <p>Luxury perfume collection</p>
+          </div>
+
+          <div>
+            <h4 className="font-semibold">Navigation</h4>
+            <ul>
+              <li>Home</li>
+              <li>Shop</li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="font-semibold">Collections</h4>
+            <ul>
+              <li>Byredo</li>
+              <li>Tom Ford</li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="font-semibold">Newsletter</h4>
+            <input
+              className="border p-2 w-full"
+              placeholder="Email..."
+            />
+          </div>
+        </div>
+      </footer>
+    </>
   );
 }
