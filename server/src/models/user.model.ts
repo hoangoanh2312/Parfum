@@ -22,9 +22,8 @@ const userSchema = new Schema(
 		timestamps: true, // tự thêm createdAt / updatedAt
 		toJSON: {
 			transform(_doc, ret) {
-				delete ret.password // chắc chắn không bao giờ lộ password ra API
-				delete ret.__v
-				return ret
+				const { password: _password, __v, ...safe } = ret
+				return safe
 			},
 		},
 	},

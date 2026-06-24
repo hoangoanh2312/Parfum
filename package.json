@@ -1,11 +1,21 @@
 {
   "name": "hoc-parfum",
   "private": true,
-  "workspaces": ["server", "client"],
+  "workspaces": [
+    "server",
+    "client"
+  ],
   "scripts": {
     "dev": "concurrently -n SERVER,CLIENT -c blue,green \"npm:dev -w server\" \"npm:dev -w client\"",
     "build": "npm run build -w server && npm run build -w client",
     "lint": "npm run lint -w server && npm run lint -w client"
   },
-  "devDependencies": { "concurrently": "^9.0.0" }
+  "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "concurrently": "^9.0.0"
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "zod": "^4.4.3"
+  }
 }
