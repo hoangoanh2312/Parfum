@@ -1,8 +1,13 @@
 import { Router } from 'express';
+
 import authRoutes from './auth.routes';
+import uploadRoutes from './upload.routes';
+import variantRoutes from './variant.routes';
 
 const router = Router();
-router.get('/health', (_req, res) => res.json({ status: 'ok' }));
+
 router.use('/auth', authRoutes);
-// TODO: router.use('/products', productRoutes) ... theo cac sprint
+router.use('/upload', uploadRoutes);
+router.use('/variants', variantRoutes);
+
 export default router;
