@@ -14,6 +14,7 @@ function required(key: string): string {
 export const env = {
 	nodeEnv: process.env.NODE_ENV ?? "development",
 	port: Number(process.env.PORT ?? 5000),
+	clientUrl: process.env.CLIENT_URL ?? "http://localhost:5173",
 	mongoUri: required("MONGO_URI"),
 	jwtAccessSecret: required("JWT_ACCESS_SECRET"),
 	jwtRefreshSecret: required("JWT_REFRESH_SECRET"),

@@ -17,12 +17,14 @@ const userSchema = new Schema(
 			default: "customer",
 		},
 		addresses: [{ label: String, phone: String, detail: String }],
+		refreshToken: { type: String },
 	},
 	{
 		timestamps: true, // tự thêm createdAt / updatedAt
 		toJSON: {
-			transform(_doc, ret) {
-				delete ret.password // chắc chắn không bao giờ lộ password ra API
+			transform(_doc, ret: any) {
+				delete ret.password
+				delete ret.refreshToken
 				delete ret.__v
 				return ret
 			},
