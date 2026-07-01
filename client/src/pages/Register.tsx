@@ -84,10 +84,11 @@ const features: FeatureItem[] = [
   },
 ];
 
-export default function Login() {
+export default function Register() {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [keepSignedIn, setKeepSignedIn] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const setUser = useAuth((s) => s.setUser);
@@ -96,14 +97,18 @@ export default function Login() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    if (password !== confirmPassword) {
+      setError("Mật khẩu xác nhận không khớp");
+      return;
+    }
     setLoading(true);
     try {
-      const { data } = await api.post("/auth/login", { email, password });
+      const { data } = await api.post("/auth/register", { name, email, password });
       useAuth.getState().setTokens(data.accessToken, data.refreshToken);
       setUser(data.user);
       navigate("/");
     } catch (err: any) {
-      setError(err.response?.data?.message || "Đăng nhập thất bại");
+      setError(err.response?.data?.message || "Đăng ký thất bại");
     } finally {
       setLoading(false);
     }
@@ -150,7 +155,7 @@ export default function Login() {
                 margin: "23px 0 0",
               }}
             >
-              Access the
+              Join the
               <br />
               Editorial Club
             </h1>
@@ -166,7 +171,7 @@ export default function Login() {
                   margin: 0,
                 }}
               >
-                Join an elite circle of fragrance enthusiasts and receive curated insights into the world of luxury olfaction.
+                Become a member of our elite fragrance circle and receive curated insights into the world of luxury olfaction.
               </p>
             </div>
 
@@ -249,7 +254,7 @@ export default function Login() {
                 margin: 0,
               }}
             >
-              Welcome Back
+              Apply for Membership
             </h2>
             <p
               style={{
@@ -263,7 +268,7 @@ export default function Login() {
                 margin: "8px 0 0",
               }}
             >
-              Enter your manuscript credentials
+              Create your manuscript credentials
             </p>
 
             {error && (
@@ -283,6 +288,18 @@ export default function Login() {
 
             <form onSubmit={onSubmit} style={{ marginTop: 48, display: "flex", flexDirection: "column", gap: 40 }}>
               <label style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <span style={fieldLabelStyle}>Full Name</span>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Nguyễn Văn A"
+                  style={fieldInputStyle}
+                  required
+                />
+              </label>
+
+              <label style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 <span style={fieldLabelStyle}>Email Address</span>
                 <input
                   type="email"
@@ -295,12 +312,7 @@ export default function Login() {
               </label>
 
               <label style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between" }}>
-                  <span style={fieldLabelStyle}>Password</span>
-                  <a href="#" style={{ ...fieldLabelStyle, textDecoration: "none", color: color.gold }}>
-                    Forgot?
-                  </a>
-                </div>
+                <span style={fieldLabelStyle}>Password</span>
                 <input
                   type="password"
                   value={password}
@@ -308,89 +320,81 @@ export default function Login() {
                   placeholder="••••••••"
                   style={fieldInputStyle}
                   required
+                  minLength={6}
                 />
               </label>
 
-              <label style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}>
+              <label style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <span style={fieldLabelStyle}>Confirm Password</span>
                 <input
-                  type="checkbox"
-                  checked={keepSignedIn}
-                  onChange={(e) => setKeepSignedIn(e.target.checked)}
-                  style={{
-                    width: 16,
-                    height: 16,
-                    background: "#FFFFFF",
-                    border: `1px solid ${color.inputBorder}`,
-                    accentColor: color.gold,
-                    flexShrink: 0,
-                  }}
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="••••••••"
+                  style={fieldInputStyle}
+                  required
                 />
-                <span style={{ fontFamily: font.sans, fontSize: 12, lineHeight: "16px", color: color.body }}>
-                  Keep me signed in to the archives
-                </span>
               </label>
 
-              <div style={{ display: "flex", flexDirection: "column", gap: 24, marginTop: 24 }}>
-                <button
-                  type="submit"
-                  disabled={loading}
+              <button
+                type="submit"
+                disabled={loading}
+                style={{
+                  width: "100%",
+                  background: color.gold,
+                  border: 0,
+                  padding: "20px 32px",
+                  fontFamily: font.sans,
+                  fontWeight: 400,
+                  fontSize: 12,
+                  lineHeight: "16px",
+                  letterSpacing: "3px",
+                  textTransform: "uppercase",
+                  color: "#FFFFFF",
+                  cursor: loading ? "default" : "pointer",
+                  opacity: loading ? 0.5 : 1,
+                }}
+              >
+                {loading ? "Processing..." : "Apply for Membership"}
+              </button>
+
+              <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                <span style={{ flex: 1, height: 1, background: color.divider }} />
+                <span
                   style={{
-                    width: "100%",
-                    background: color.gold,
-                    border: 0,
-                    padding: "20px 32px",
                     fontFamily: font.sans,
-                    fontWeight: 400,
-                    fontSize: 12,
-                    lineHeight: "16px",
-                    letterSpacing: "3px",
+                    fontSize: 10,
+                    lineHeight: "15px",
+                    letterSpacing: "1px",
                     textTransform: "uppercase",
-                    color: "#FFFFFF",
-                    cursor: loading ? "default" : "pointer",
-                    opacity: loading ? 0.5 : 1,
+                    color: "rgba(95,94,94,0.4)",
                   }}
                 >
-                  {loading ? "Processing..." : "Sign In to the Club"}
-                </button>
-
-                <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                  <span style={{ flex: 1, height: 1, background: color.divider }} />
-                  <span
-                    style={{
-                      fontFamily: font.sans,
-                      fontSize: 10,
-                      lineHeight: "15px",
-                      letterSpacing: "1px",
-                      textTransform: "uppercase",
-                      color: "rgba(95,94,94,0.4)",
-                    }}
-                  >
-                    Or
-                  </span>
-                  <span style={{ flex: 1, height: 1, background: color.divider }} />
-                </div>
-
-                <Link
-                  to="/register"
-                  style={{
-                    width: "100%",
-                    background: "transparent",
-                    border: "1px solid rgba(115,92,0,0.4)",
-                    padding: "20px 32px",
-                    fontFamily: font.sans,
-                    fontWeight: 400,
-                    fontSize: 12,
-                    lineHeight: "16px",
-                    letterSpacing: "3px",
-                    textTransform: "uppercase",
-                    color: color.gold,
-                    textDecoration: "none",
-                    textAlign: "center",
-                  }}
-                >
-                  Apply for Membership
-                </Link>
+                  Or
+                </span>
+                <span style={{ flex: 1, height: 1, background: color.divider }} />
               </div>
+
+              <Link
+                to="/login"
+                style={{
+                  width: "100%",
+                  background: "transparent",
+                  border: "1px solid rgba(115,92,0,0.4)",
+                  padding: "20px 32px",
+                  fontFamily: font.sans,
+                  fontWeight: 400,
+                  fontSize: 12,
+                  lineHeight: "16px",
+                  letterSpacing: "3px",
+                  textTransform: "uppercase",
+                  color: color.gold,
+                  textDecoration: "none",
+                  textAlign: "center",
+                }}
+              >
+                Sign In to the Club
+              </Link>
             </form>
           </div>
         </div>

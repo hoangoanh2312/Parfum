@@ -5,8 +5,8 @@ export const api = axios.create({ baseURL: import.meta.env.VITE_API_URL || '/api
 let isRefreshing = false;
 let pendingQueue: Array<{ resolve: (token: string) => void; reject: () => void }> = [];
 
-function processQueue(token: string, err?: any) {
-  pendingQueue.forEach((p) => (err ? p.reject() : p.resolve(token)));
+function processQueue(token: string | null, err?: any) {
+  pendingQueue.forEach((p) => (err ? p.reject() : p.resolve(token!)));
   pendingQueue = [];
 }
 
