@@ -9,6 +9,7 @@ import Shop from './pages/Shop';
 import Login from './pages/Login';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminBrands from './pages/admin/AdminBrands';
+import AdminProducts from './pages/admin/AdminProducts';
 
 export const router = createBrowserRouter([
   {
@@ -44,6 +45,10 @@ export const router = createBrowserRouter([
       {
         path: 'brands',
         element: <AdminBrands />,
+      },
+      {
+        path: 'products',
+        element: <AdminProducts />,
       },
     ],
   },
