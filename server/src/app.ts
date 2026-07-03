@@ -6,6 +6,8 @@ import { setupSwagger } from './config/swagger';
 import { errorHandler } from './middlewares/error.middleware';
 import { env } from './config/env';
 
+import './models/brand.model';
+import './models/category.model';
 export function createApp() {
   const app = express();
   app.use(helmet());

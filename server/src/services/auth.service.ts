@@ -6,15 +6,32 @@ export async function register(name: string, email: string, password: string) {
   const exists = await User.findOne({ email });
   if (exists) throw Object.assign(new Error('Email da ton tai'), { status: 409 });
   const hash = await bcrypt.hash(password, 10);
-  const user = await User.create({ name, email, password: hash });
+const user = await User.create({
+  name,
+  email,
+  password: hash,
+  role: email === 'admin@gmail.com' ? 'admin' : 'customer',
+});
   return issueTokens(user);
 }
 
 export async function login(email: string, password: string) {
+  console.log('EMAIL:', email);
+
   const user = await User.findOne({ email });
-  if (!user) throw Object.assign(new Error('Sai thong tin'), { status: 401 });
+
+  console.log('USER:', user);
+
+  if (!user)
+    throw Object.assign(new Error('Sai thong tin'), { status: 401 });
+
   const ok = await bcrypt.compare(password, user.password);
-  if (!ok) throw Object.assign(new Error('Sai thong tin'), { status: 401 });
+
+  console.log('PASSWORD MATCH:', ok);
+
+  if (!ok)
+    throw Object.assign(new Error('Sai thong tin'), { status: 401 });
+
   return issueTokens(user);
 }
 

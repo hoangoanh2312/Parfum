@@ -12,3 +12,8 @@ export const env = {
   cloudinaryKey: process.env.CLOUDINARY_API_KEY,
   cloudinarySecret: process.env.CLOUDINARY_API_SECRET
 };
+console.log({
+  name: env.cloudinaryName,
+  key: env.cloudinaryKey,
+  secret: env.cloudinarySecret ? "OK" : "NULL",
+});
