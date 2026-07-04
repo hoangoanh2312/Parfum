@@ -1,21 +1,17 @@
-import { createApp } from './app';
-import { connectDB } from './config/db';
-import { env } from './config/env';
-import uploadRoutes from './routes/upload.routes';
+import { env } from "./config/env" // import ĐẦU TIÊN để nạp .env trước mọi thứ
+import { connectDB } from "./config/db"
 
-async function bootstrap() {
-  await connectDB();
-  
-  // 1. Tạo biến app từ hàm createApp()
-  const app = createApp();
-  
-  // 2. Đăng ký route upload vào đây
-  app.use('/api', uploadRoutes);
-  
-  // 3. Khởi động server
-  app.listen(env.port, () => {
-    console.log(`🚀 Server is running on port ${env.port}`);
-  });
+// Lưu ý: file ./app (khởi tạo Express app) thuộc skeleton HT-05.
+// Ở đây minh họa cách ráp connectDB vào điểm khởi động.
+import { createApp } from "./app";
+
+const app = createApp();
+
+async function start() {
+	await connectDB()
+	app.listen(env.port, () =>
+		console.log(`🚀 Server: http://localhost:${env.port}`),
+	)
 }
 
-bootstrap();
+start()

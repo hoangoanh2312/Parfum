@@ -1,11 +1,11 @@
-import { Clock3 } from "lucide-react";
+import { Info } from "lucide-react";
 
-export default function Shop() {
+export default function About() {
   return (
     <section className="min-h-screen bg-[#faf7f2] flex items-center justify-center px-6">
       <div className="text-center">
 
-        <Clock3
+        <Info
           size={70}
           className="mx-auto text-[#b8860b] mb-8 animate-pulse"
         />
@@ -15,12 +15,12 @@ export default function Shop() {
         </p>
 
         <h1 className="font-heading text-7xl mb-6">
-          Cửa hàng
+          Giới thiệu
         </h1>
 
         <p className="max-w-xl mx-auto text-gray-500 leading-8">
-          Chúng tôi đang hoàn thiện cửa hàng nước hoa với nhiều sản phẩm
-          chính hãng và những bộ sưu tập độc quyền.
+          Perfume Store sẽ mang đến những sản phẩm nước hoa chính hãng,
+          dịch vụ tận tâm và trải nghiệm mua sắm cao cấp.
         </p>
 
         <button

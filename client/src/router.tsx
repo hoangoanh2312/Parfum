@@ -1,18 +1,23 @@
 import { createBrowserRouter } from 'react-router-dom';
 
 import Layout from './components/Layout';
+
 import AdminLayout from './components/AdminLayout';
 import AdminRoute from './components/AdminRoute';
-
-import Home from './pages/Home';
-import Shop from './pages/Shop';
-import Login from './pages/Login';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminBrands from './pages/admin/AdminBrands';
 
-export const router = createBrowserRouter([
+
+import Home from "./pages/Home";
+import Shop from "./pages/Shop";
+import Brand from "./pages/Brand";
+import Blog from "./pages/Blog";
+import About from "./pages/About";
+import Login from "./pages/Login";
+
+const router = createBrowserRouter([
   {
-    path: '/',
+    path: "/",
     element: <Layout />,
     children: [
       {
@@ -20,11 +25,23 @@ export const router = createBrowserRouter([
         element: <Home />,
       },
       {
-        path: 'shop',
+        path: "shop",
         element: <Shop />,
       },
       {
-        path: 'login',
+        path: "brand",
+        element: <Brand />,
+      },
+      {
+        path: "blog",
+        element: <Blog />,
+      },
+      {
+        path: "about",
+        element: <About />,
+      },
+      {
+        path: "login",
         element: <Login />,
       },
     ],
@@ -48,3 +65,5 @@ export const router = createBrowserRouter([
     ],
   },
 ]);
+
+export default router;
