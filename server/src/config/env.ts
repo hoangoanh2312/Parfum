@@ -17,4 +17,5 @@ export const env = {
 	mongoUri: required("MONGO_URI"),
 	jwtAccessSecret: required("JWT_ACCESS_SECRET"),
 	jwtRefreshSecret: required("JWT_REFRESH_SECRET"),
+	clientUrl: process.env.CLIENT_URL || "http://localhost:5173"
 }

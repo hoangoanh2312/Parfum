@@ -1,26 +1,26 @@
-import { Clock3 } from "lucide-react";
+import { Newspaper } from "lucide-react";
 
-export default function Shop() {
+export default function Blog() {
   return (
     <section className="min-h-screen bg-[#faf7f2] flex items-center justify-center px-6">
       <div className="text-center">
 
-        <Clock3
+        <Newspaper
           size={70}
           className="mx-auto text-[#b8860b] mb-8 animate-pulse"
         />
 
         <p className="uppercase tracking-[6px] text-[#b8860b] text-sm mb-4">
-          Đang cập nhật
+          Đang xây dựng
         </p>
 
         <h1 className="font-heading text-7xl mb-6">
-          Cửa hàng
+          Tin tức
         </h1>
 
         <p className="max-w-xl mx-auto text-gray-500 leading-8">
-          Chúng tôi đang hoàn thiện cửa hàng nước hoa với nhiều sản phẩm
-          chính hãng và những bộ sưu tập độc quyền.
+          Các bài viết về nước hoa, xu hướng và kinh nghiệm lựa chọn
+          sẽ sớm được đăng tải.
         </p>
 
         <button

@@ -1,19 +1,17 @@
-import { Request, Response, NextFunction } from 'express';
-import { getBrands } from '../services/brand.services';
+import { Request, Response } from "express";
+import * as brandService from "../services/brand.services";
 
-export const getAllBrands = async (
+export const getBrands = async (
   req: Request,
-  res: Response,
-  next: NextFunction
+  res: Response
 ) => {
   try {
-    const brands = await getBrands();
+    const data = await brandService.getBrands();
 
-    res.status(200).json({
-      success: true,
-      data: brands,
-    });
+    return res.status(200).json(data);
   } catch (error) {
-    next(error);
+    return res.status(500).json({
+      message: error instanceof Error ? error.message : "Internal Server Error",
+    });
   }
 };
