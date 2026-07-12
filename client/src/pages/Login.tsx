@@ -1,17 +1,21 @@
 import { useState } from 'react';
 import { api } from '../lib/api';
 import { useAuth } from '../store/auth.store';
+import { useCart } from '../store/cart.store';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const setUser = useAuth((s) => s.setUser);
+  const syncOnLogin = useCart((s) => s.syncOnLogin);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     const { data } = await api.post('/auth/login', { email, password });
     localStorage.setItem('accessToken', data.accessToken);
     setUser(data.user);
+    // ĐỒNG BỘ giỏ hàng khách vãng lai (localStorage) -> DB ngay sau khi đăng nhập
+    await syncOnLogin();
   }
 
   return (

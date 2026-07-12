@@ -1,36 +1,39 @@
-import { Clock3 } from "lucide-react";
+import { useEffect, useState } from 'react';
+import { api } from '../lib/api';
+import ProductCard, { ProductCardData } from '../components/ProductCard';
 
 export default function Shop() {
+  const [products, setProducts] = useState<ProductCardData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    api
+      .get('/products')
+      .then(({ data }) => setProducts(Array.isArray(data) ? data : []))
+      .catch((e) => setError(e?.response?.data?.message || 'Không tải được sản phẩm'))
+      .finally(() => setLoading(false));
+  }, []);
+
   return (
-    <section className="min-h-screen bg-[#faf7f2] flex items-center justify-center px-6">
-      <div className="text-center">
-
-        <Clock3
-          size={70}
-          className="mx-auto text-[#b8860b] mb-8 animate-pulse"
-        />
-
-        <p className="uppercase tracking-[6px] text-[#b8860b] text-sm mb-4">
-          Đang cập nhật
+    <section className="min-h-screen bg-[#faf7f2] px-6 py-16">
+      <div className="max-w-7xl mx-auto">
+        <h1 className="font-heading text-6xl mb-2 text-center">Cửa hàng</h1>
+        <p className="text-center text-gray-500 mb-12">
+          Toàn bộ sản phẩm nước hoa chính hãng
         </p>
 
-        <h1 className="font-heading text-7xl mb-6">
-          Cửa hàng
-        </h1>
+        {loading && <p className="text-center text-gray-400">Đang tải sản phẩm...</p>}
+        {error && <p className="text-center text-red-500">{error}</p>}
+        {!loading && !error && products.length === 0 && (
+          <p className="text-center text-gray-400">Chưa có sản phẩm nào trong cơ sở dữ liệu.</p>
+        )}
 
-        <p className="max-w-xl mx-auto text-gray-500 leading-8">
-          Chúng tôi đang hoàn thiện cửa hàng nước hoa với nhiều sản phẩm
-          chính hãng và những bộ sưu tập độc quyền.
-        </p>
-
-        <button
-          onClick={() => window.history.back()}
-          className="mt-10 border border-black px-8 py-3 uppercase tracking-[4px]
-          hover:bg-black hover:text-white duration-300"
-        >
-          Quay lại
-        </button>
-
+        <div className="grid md:grid-cols-4 gap-8">
+          {products.map((item) => (
+            <ProductCard key={item.id} item={item} />
+          ))}
+        </div>
       </div>
     </section>
   );
