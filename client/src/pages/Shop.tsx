@@ -8,11 +8,22 @@ export default function Shop() {
   const [error, setError] = useState('');
 
   useEffect(() => {
+    let active = true;
     api
       .get('/products')
-      .then(({ data }) => setProducts(Array.isArray(data) ? data : []))
-      .catch((e) => setError(e?.response?.data?.message || 'Không tải được sản phẩm'))
-      .finally(() => setLoading(false));
+      .then(({ data }) => {
+        if (!active) return;
+        setProducts(Array.isArray(data) ? data : []);
+        setError('');
+      })
+      .catch((e) => {
+        if (!active) return;
+        setError(e?.response?.data?.message || 'Không tải được sản phẩm');
+      })
+      .finally(() => active && setLoading(false));
+    return () => {
+      active = false;
+    };
   }, []);
 
   return (
@@ -24,7 +35,9 @@ export default function Shop() {
         </p>
 
         {loading && <p className="text-center text-gray-400">Đang tải sản phẩm...</p>}
-        {error && <p className="text-center text-red-500">{error}</p>}
+        {!loading && error && products.length === 0 && (
+          <p className="text-center text-red-500">{error}</p>
+        )}
         {!loading && !error && products.length === 0 && (
           <p className="text-center text-gray-400">Chưa có sản phẩm nào trong cơ sở dữ liệu.</p>
         )}

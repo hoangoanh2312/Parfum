@@ -1,6 +1,8 @@
 import { Heart } from 'lucide-react';
 import { useCart } from '../store/cart.store';
 
+const PLACEHOLDER = 'https://placehold.co/400x500?text=No+Image';
+
 export interface ProductCardData {
   id: string;
   slug?: string;
@@ -41,8 +43,12 @@ export default function ProductCard({ item }: { item: ProductCardData }) {
     <div className="bg-white p-5 hover:shadow-2xl duration-300 group">
       <div className="overflow-hidden">
         <img
-          src={item.image || 'https://via.placeholder.com/400x500?text=No+Image'}
+          src={item.image || PLACEHOLDER}
           alt={item.name}
+          onError={(e) => {
+            // Ảnh trong DB hỏng/không tải được -> thay bằng ảnh mặc định
+            (e.currentTarget as HTMLImageElement).src = PLACEHOLDER;
+          }}
           className="h-72 w-full object-cover group-hover:scale-110 duration-500"
         />
       </div>

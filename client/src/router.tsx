@@ -7,17 +7,17 @@ import AdminRoute from './components/AdminRoute';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminBrands from './pages/admin/AdminBrands';
 
-
-import Home from "./pages/Home";
-import Shop from "./pages/Shop";
-import Brand from "./pages/Brand";
-import Blog from "./pages/Blog";
-import About from "./pages/About";
-import Login from "./pages/Login";
+import Home from './pages/Home';
+import Shop from './pages/Shop';
+import Brand from './pages/Brand';
+import Blog from './pages/Blog';
+import About from './pages/About';
+import Login from './pages/Login';
+import Cart from './pages/Cart';
 
 const router = createBrowserRouter([
   {
-    path: "/",
+    path: '/',
     element: <Layout />,
     children: [
       {
@@ -25,24 +25,28 @@ const router = createBrowserRouter([
         element: <Home />,
       },
       {
-        path: "shop",
+        path: 'shop',
         element: <Shop />,
       },
       {
-        path: "brand",
+        path: 'brand',
         element: <Brand />,
       },
       {
-        path: "blog",
+        path: 'blog',
         element: <Blog />,
       },
       {
-        path: "about",
+        path: 'about',
         element: <About />,
       },
       {
-        path: "login",
+        path: 'login',
         element: <Login />,
+      },
+      {
+        path: 'cart',
+        element: <Cart />,
       },
     ],
   },

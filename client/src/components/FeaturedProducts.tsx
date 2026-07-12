@@ -9,11 +9,22 @@ export default function FeaturedProducts() {
 
   // Lấy sản phẩm THẬT từ API (Mongo) thay vì file tĩnh assets/data
   useEffect(() => {
+    let active = true; // chống StrictMode gọi 2 lần trong môi trường dev
     api
       .get('/products')
-      .then(({ data }) => setProducts(Array.isArray(data) ? data.slice(0, 8) : []))
-      .catch((e) => setError(e?.response?.data?.message || 'Không tải được sản phẩm'))
-      .finally(() => setLoading(false));
+      .then(({ data }) => {
+        if (!active) return;
+        setProducts(Array.isArray(data) ? data.slice(0, 8) : []);
+        setError('');
+      })
+      .catch((e) => {
+        if (!active) return;
+        setError(e?.response?.data?.message || 'Không tải được sản phẩm');
+      })
+      .finally(() => active && setLoading(false));
+    return () => {
+      active = false;
+    };
   }, []);
 
   return (
@@ -27,7 +38,10 @@ export default function FeaturedProducts() {
         </div>
 
         {loading && <p className="text-center text-gray-400">Đang tải sản phẩm...</p>}
-        {error && <p className="text-center text-red-500">{error}</p>}
+        {/* Chỉ báo lỗi khi KHÔNG có sản phẩm nào, tránh hiện lỗi "ảo" do StrictMode */}
+        {!loading && error && products.length === 0 && (
+          <p className="text-center text-red-500">{error}</p>
+        )}
         {!loading && !error && products.length === 0 && (
           <p className="text-center text-gray-400">Chưa có sản phẩm nào trong cơ sở dữ liệu.</p>
         )}
