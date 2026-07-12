@@ -17,5 +17,8 @@ export const env = {
 	mongoUri: required("MONGO_URI"),
 	jwtAccessSecret: required("JWT_ACCESS_SECRET"),
 	jwtRefreshSecret: required("JWT_REFRESH_SECRET"),
-	clientUrl: process.env.CLIENT_URL || "http://localhost:5173"
+	clientUrl: process.env.CLIENT_URL || "http://localhost:5173",
+	cloudinaryName: process.env.CLOUDINARY_CLOUD_NAME,
+	cloudinaryKey: process.env.CLOUDINARY_API_KEY,
+	cloudinarySecret: process.env.CLOUDINARY_API_SECRET,
 }

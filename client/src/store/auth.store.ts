@@ -9,28 +9,56 @@ interface User {
 
 interface AuthState {
   user: User | null;
+  accessToken: string | null;
+  refreshToken: string | null;
   setUser: (u: User | null) => void;
+  setAuth: (payload: { accessToken: string; refreshToken: string; user: User }) => void;
   logout: () => void;
 }
 
-const savedUser = localStorage.getItem('user');
+const getStoredAuth = () => {
+  if (typeof window === 'undefined') {
+    return { user: null, accessToken: null, refreshToken: null };
+  }
 
-export const useAuth = create<AuthState>((set) => ({
-  user: savedUser ? JSON.parse(savedUser) : null,
+  const savedUser = localStorage.getItem('user');
+  return {
+    user: savedUser ? JSON.parse(savedUser) : null,
+    accessToken: localStorage.getItem('accessToken'),
+    refreshToken: localStorage.getItem('refreshToken'),
+  };
+};
 
-  setUser: (user) => {
-    if (user) {
+export const useAuth = create<AuthState>((set) => {
+  const initial = getStoredAuth();
+
+  return {
+    user: initial.user,
+    accessToken: initial.accessToken,
+    refreshToken: initial.refreshToken,
+
+    setUser: (user) => {
+      if (user) {
+        localStorage.setItem('user', JSON.stringify(user));
+      } else {
+        localStorage.removeItem('user');
+      }
+
+      set({ user });
+    },
+
+    setAuth: ({ accessToken, refreshToken, user }) => {
+      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('refreshToken', refreshToken);
       localStorage.setItem('user', JSON.stringify(user));
-    } else {
+      set({ accessToken, refreshToken, user });
+    },
+
+    logout: () => {
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
       localStorage.removeItem('user');
-    }
-
-    set({ user });
-  },
-
-  logout: () => {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('user');
-    set({ user: null });
-  },
-}));
+      set({ user: null, accessToken: null, refreshToken: null });
+    },
+  };
+});

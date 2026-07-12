@@ -11,8 +11,11 @@ export async function register(name: string, email: string, password: string) {
 }
 
 export async function login(email: string, password: string) {
-  const user = await User.findOne({ email });
+  const user = await User.findOne({ email }).select('+password');
   if (!user) throw Object.assign(new Error('Sai thong tin'), { status: 401 });
+  if (typeof user.password !== 'string') {
+    throw Object.assign(new Error('Sai thong tin'), { status: 401 });
+  }
   const ok = await bcrypt.compare(password, user.password);
   if (!ok) throw Object.assign(new Error('Sai thong tin'), { status: 401 });
   return issueTokens(user);
