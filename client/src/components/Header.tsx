@@ -8,6 +8,7 @@ import {
   MapPin,
 } from "lucide-react";
 import { useCart } from "../store/cart.store";
+import { useAuth } from "../store/auth.store";
 
 const leftMenu = [
   { name: "Trang chủ", link: "/" },
@@ -23,11 +24,12 @@ const rightMenu = [
 export default function Header() {
   const count = useCart((s) => s.count);
   const loadCart = useCart((s) => s.loadCart);
+  const user = useAuth((s) => s.user);
 
-  // Nạp giỏ hàng 1 lần khi app khởi động (Header luôn hiển thị trong Layout)
+  // Nạp lại giỏ khi khởi động và mỗi khi trạng thái đăng nhập thay đổi
   useEffect(() => {
     loadCart();
-  }, []);
+  }, [user]);
 
   return (
     <header className="bg-[#faf7f2] border-b">
@@ -91,7 +93,7 @@ export default function Header() {
               )}
             </Link>
 
-            <Link to="/login">
+            <Link to={user ? "/dashboard" : "/login"} title={user ? user.name : "Đăng nhập"}>
               <User size={15} className="cursor-pointer hover:text-black duration-300" />
             </Link>
           </div>

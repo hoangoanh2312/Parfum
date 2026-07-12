@@ -1,7 +1,8 @@
-import { Heart } from 'lucide-react';
-import { useCart } from '../store/cart.store';
+import { Heart } from "lucide-react";
+import { useCart } from "../store/cart.store";
+import { toast } from "../store/toast.store";
 
-const PLACEHOLDER = 'https://placehold.co/400x500?text=No+Image';
+const PLACEHOLDER = "https://placehold.co/400x500?text=No+Image";
 
 export interface ProductCardData {
   id: string;
@@ -19,29 +20,43 @@ export interface ProductCardData {
 export default function ProductCard({ item }: { item: ProductCardData }) {
   const addItem = useCart((s) => s.addItem);
 
+  // Hết hàng khi: chưa có phiên bản để bán HOẶC tổng tồn kho <= 0
+  const outOfStock =
+    !item.variantId || (typeof item.stock === "number" && item.stock <= 0);
+
   async function handleAdd() {
     if (!item.variantId) {
-      alert('Sản phẩm chưa có phiên bản để bán');
+      toast.error("Sản phẩm chưa có phiên bản để bán");
       return;
     }
-    await addItem(
-      {
-        variant: item.variantId,
-        name: item.name,
-        image: item.image || undefined,
-        volume: item.volume,
-        price: item.price || 0,
-        stock: item.stock,
-        quantity: 1,
-      },
-      1,
-    );
-    alert('Đã thêm vào giỏ');
+    if (typeof item.stock === "number" && item.stock <= 0) {
+      toast.error("Sản phẩm đã hết hàng");
+      return;
+    }
+    try {
+      await addItem(
+        {
+          variant: item.variantId,
+          name: item.name,
+          image: item.image || undefined,
+          volume: item.volume,
+          price: item.price || 0,
+          stock: item.stock,
+          quantity: 1,
+        },
+        1,
+      );
+      toast.success("Đã thêm vào giỏ");
+    } catch (e: any) {
+      toast.error(
+        e?.response?.data?.message || e?.message || "Không thể thêm vào giỏ",
+      );
+    }
   }
 
   return (
     <div className="bg-white p-5 hover:shadow-2xl duration-300 group">
-      <div className="overflow-hidden">
+      <div className="overflow-hidden relative">
         <img
           src={item.image || PLACEHOLDER}
           alt={item.name}
@@ -49,8 +64,16 @@ export default function ProductCard({ item }: { item: ProductCardData }) {
             // Ảnh trong DB hỏng/không tải được -> thay bằng ảnh mặc định
             (e.currentTarget as HTMLImageElement).src = PLACEHOLDER;
           }}
-          className="h-72 w-full object-cover group-hover:scale-110 duration-500"
+          className={
+            "h-72 w-full object-cover group-hover:scale-110 duration-500 " +
+            (outOfStock ? "opacity-60 grayscale" : "")
+          }
         />
+        {outOfStock && (
+          <span className="absolute top-3 left-3 bg-red-600 text-white text-xs px-3 py-1 uppercase tracking-widest">
+            Hết hàng
+          </span>
+        )}
       </div>
 
       <p className="uppercase text-gray-400 text-xs mt-5">{item.brand}</p>
@@ -63,9 +86,15 @@ export default function ProductCard({ item }: { item: ProductCardData }) {
 
       <button
         onClick={handleAdd}
-        className="mt-6 w-full border py-3 uppercase tracking-widest hover:bg-black hover:text-white duration-300"
+        disabled={outOfStock}
+        className={
+          "mt-6 w-full border py-3 uppercase tracking-widest duration-300 " +
+          (outOfStock
+            ? "opacity-50 cursor-not-allowed bg-gray-100 text-gray-400"
+            : "hover:bg-black hover:text-white")
+        }
       >
-        Thêm vào giỏ
+        {outOfStock ? "Hết hàng" : "Thêm vào giỏ"}
       </button>
     </div>
   );

@@ -1,5 +1,7 @@
 import { Variant } from '../models/variant.model';
 import { Cart } from '../models/cart.model';
+import { Order } from '../models/order.model';
+import { Payment } from '../models/payment.model';
 
 export type StockItem = { variant: string; quantity: number };
 
@@ -24,11 +26,13 @@ export async function checkStock(items: StockItem[]) {
       problems.push({ variant: it.variant, reason: 'invalid_quantity' });
       continue;
     }
-    if (v.stock < qty) {
+    // Ép kiểu số: thiếu field / null -> coi như 0 (hết hàng), tránh lỗi undefined < qty = false
+    const available = Number(v.stock) || 0;
+    if (available < qty) {
       problems.push({
         variant: it.variant,
         reason: 'out_of_stock',
-        available: v.stock,
+        available,
         requested: qty,
       });
     }
@@ -40,7 +44,7 @@ export async function checkStock(items: StockItem[]) {
       price: v.price,
       quantity: qty,
       lineTotal: v.price * qty,
-      available: v.stock,
+      available,
     });
   }
 
@@ -102,4 +106,79 @@ export async function prepareCheckout(userId: string) {
   }));
 
   return checkStock(items);
+}
+
+/**
+ * TẠO ĐƠN HÀNG THẬT (checkout thực sự).
+ * Luồng: kiểm tra tồn kho -> TRẪ kho an toàn -> tạo Order (snapshot giá) + Payment -> xóa giỏ.
+ * Nếu tạo Order/Payment lỗi -> HOÀN lại kho đã trừ.
+ */
+export async function createOrder(
+  userId: string,
+  opts: { method?: 'cod' | 'bank_qr'; address?: any; note?: string } = {},
+) {
+  const cart: any = await Cart.findOne({ user: userId });
+  if (!cart || cart.items.length === 0) {
+    throw Object.assign(new Error('Giỏ hàng trống'), { status: 400 });
+  }
+
+  const stockItems: StockItem[] = cart.items.map((i: any) => ({
+    variant: String(i.variant),
+    quantity: i.quantity,
+  }));
+
+  // 1) Kiểm tra tồn kho trước khi trừ
+  const check = await checkStock(stockItems);
+  if (!check.ok) {
+    throw Object.assign(new Error('Một số sản phẩm không đủ tồn kho'), {
+      status: 409,
+      problems: check.problems,
+    });
+  }
+
+  // 2) TRẪ tồn kho an toàn (tự rollback nếu 1 item lỗi)
+  await decrementStock(stockItems);
+
+  try {
+    const method = opts.method === 'bank_qr' ? 'bank_qr' : 'cod';
+
+    // 3) Tạo đơn (lưu snapshot tên/giá tại thời điểm mua)
+    const order: any = await Order.create({
+      user: userId,
+      items: check.items.map((x: any) => ({
+        variant: x.variant,
+        name: x.name,
+        volume: x.volume,
+        price: x.price,
+        quantity: x.quantity,
+      })),
+      total: check.total,
+      status: 'pending',
+      address: opts.address,
+      note: opts.note,
+    });
+
+    // 4) Tạo bản ghi thanh toán (COD mặc định: chưa thanh toán)
+    await Payment.create({
+      order: order._id,
+      method,
+      status: 'unpaid',
+      amount: check.total,
+    });
+
+    // 5) Xóa sạch giỏ sau khi đặt hàng
+    cart.items = [];
+    await cart.save();
+
+    return {
+      orderId: String(order._id),
+      total: check.total,
+      status: order.status,
+      method,
+    };
+  } catch (err) {
+    // Tạo đơn thất bại -> hoàn lại kho đã trừ để không mất tồn kho
+    await restoreStock(stockItems);
+    throw err;
+  }
 }

@@ -1,6 +1,7 @@
 import { createBrowserRouter } from 'react-router-dom';
 
 import Layout from './components/Layout';
+import ProtectedRoute from './components/ProtectedRoute';
 
 import AdminLayout from './components/AdminLayout';
 import AdminRoute from './components/AdminRoute';
@@ -13,40 +14,27 @@ import Brand from './pages/Brand';
 import Blog from './pages/Blog';
 import About from './pages/About';
 import Login from './pages/Login';
+import Register from './pages/Register';
 import Cart from './pages/Cart';
+import Dashboard from './pages/Dashboard';
 
 const router = createBrowserRouter([
   {
     path: '/',
     element: <Layout />,
     children: [
+      { index: true, element: <Home /> },
+      { path: 'shop', element: <Shop /> },
+      { path: 'brand', element: <Brand /> },
+      { path: 'blog', element: <Blog /> },
+      { path: 'about', element: <About /> },
+      { path: 'login', element: <Login /> },
+      { path: 'register', element: <Register /> },
+      { path: 'cart', element: <Cart /> },
+      // Khu vực cần đăng nhập
       {
-        index: true,
-        element: <Home />,
-      },
-      {
-        path: 'shop',
-        element: <Shop />,
-      },
-      {
-        path: 'brand',
-        element: <Brand />,
-      },
-      {
-        path: 'blog',
-        element: <Blog />,
-      },
-      {
-        path: 'about',
-        element: <About />,
-      },
-      {
-        path: 'login',
-        element: <Login />,
-      },
-      {
-        path: 'cart',
-        element: <Cart />,
+        element: <ProtectedRoute />,
+        children: [{ path: 'dashboard', element: <Dashboard /> }],
       },
     ],
   },
@@ -58,14 +46,8 @@ const router = createBrowserRouter([
       </AdminRoute>
     ),
     children: [
-      {
-        index: true,
-        element: <AdminDashboard />,
-      },
-      {
-        path: 'brands',
-        element: <AdminBrands />,
-      },
+      { index: true, element: <AdminDashboard /> },
+      { path: 'brands', element: <AdminBrands /> },
     ],
   },
 ]);

@@ -53,12 +53,15 @@ export async function addItem(userId: string, variantId: string, quantity = 1) {
   const v: any = await Variant.findById(variantId);
   if (!v) throw Object.assign(new Error('Không tìm thấy biến thể'), { status: 404 });
 
+  const stock = Number(v.stock) || 0;
+  if (stock <= 0) throw Object.assign(new Error('Sản phẩm đã hết hàng'), { status: 409 });
+
   const qty = Math.max(1, Math.floor(Number(quantity) || 1));
   const cart: any = await findOrCreate(userId);
   const line = cart.items.find((i: any) => String(i.variant) === String(variantId));
 
   let next = (line ? line.quantity : 0) + qty;
-  if (v.stock != null && next > v.stock) next = v.stock; // không cho vượt tồn kho
+  if (next > stock) next = stock; // không cho vượt tồn kho
 
   if (line) line.quantity = next;
   else cart.items.push({ variant: variantId, quantity: next });
@@ -78,7 +81,8 @@ export async function updateItem(userId: string, variantId: string, quantity: nu
     cart.items = cart.items.filter((i: any) => String(i.variant) !== String(variantId));
   } else {
     const v: any = await Variant.findById(variantId);
-    line.quantity = v && v.stock != null ? Math.min(qty, v.stock) : qty;
+    const stock = Number(v?.stock) || 0;
+    line.quantity = stock > 0 ? Math.min(qty, stock) : qty;
   }
 
   await cart.save();

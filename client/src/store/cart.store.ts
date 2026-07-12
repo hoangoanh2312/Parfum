@@ -68,9 +68,13 @@ export const useCart = create<CartState>((set, get) => ({
       const { data } = await api.post('/cart/items', { variant: item.variant, quantity });
       set({ items: data.data.items, total: data.data.total, count: data.data.count });
     } else {
+      // stock là số > 0 -> giới hạn; = 0 -> hết hàng; undefined -> không giới hạn
+      if (typeof item.stock === 'number' && item.stock <= 0) {
+        throw Object.assign(new Error('Sản phẩm đã hết hàng'), { status: 409 });
+      }
       const items = readGuest();
       const line = items.find((i) => i.variant === item.variant);
-      const cap = item.stock ?? Number.MAX_SAFE_INTEGER;
+      const cap = typeof item.stock === 'number' ? item.stock : Number.MAX_SAFE_INTEGER;
       if (line) line.quantity = Math.min(line.quantity + quantity, cap);
       else items.push({ ...item, quantity: Math.min(quantity, cap) });
       writeGuest(items);

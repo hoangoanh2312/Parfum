@@ -25,3 +25,16 @@ export const checkStock = async (req: Request, res: Response) => {
     res.status(error.status || 500).json({ success: false, message: error.message });
   }
 };
+
+// POST /api/orders  { method?, address?, note? }
+// Tạo đơn hàng THẬT: kiểm tra tồn kho -> trừ kho -> tạo Order + Payment -> xóa giỏ
+export const createOrder = async (req: Request, res: Response) => {
+  try {
+    const data = await orderService.createOrder(uid(req), req.body || {});
+    res.status(201).json({ success: true, data });
+  } catch (error: any) {
+    res
+      .status(error.status || 500)
+      .json({ success: false, message: error.message, problems: error.problems });
+  }
+};
