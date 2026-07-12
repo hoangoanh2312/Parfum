@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AlertTriangle, Package2, RefreshCw, ShoppingBag, TrendingUp } from 'lucide-react';
 import { api } from '../../lib/api';
 
@@ -87,7 +87,7 @@ export default function AdminDashboard() {
   const requestIdRef = useRef(0);
   const controllerRef = useRef<AbortController | null>(null);
 
-  const fetchDashboard = async (nextFilters: FilterState, showLoading = true) => {
+  const fetchDashboard = useCallback(async (nextFilters: FilterState, showLoading = true) => {
     const currentRequestId = ++requestIdRef.current;
     controllerRef.current?.abort();
     const controller = new AbortController();
@@ -135,7 +135,7 @@ export default function AdminDashboard() {
         setLoading(false);
       }
     }
-  };
+  }, []);
 
   useEffect(() => {
     void fetchDashboard(appliedFilters);
@@ -143,7 +143,7 @@ export default function AdminDashboard() {
     return () => {
       controllerRef.current?.abort();
     };
-  }, []);
+  }, [appliedFilters, fetchDashboard]);
 
   const summaryCards = useMemo(() => {
     if (!dashboard) {
