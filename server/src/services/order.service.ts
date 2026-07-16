@@ -2,6 +2,7 @@ import { Variant } from '../models/variant.model';
 import { Cart } from '../models/cart.model';
 import { Order } from '../models/order.model';
 import { Payment } from '../models/payment.model';
+import { env } from '../config/env';
 
 export type StockItem = { variant: string; quantity: number };
 
@@ -182,3 +183,131 @@ export async function createOrder(
     throw err;
   }
 }
+<<<<<<< Updated upstream
+=======
+
+/**
+ * PF-35: Lấy DANH SÁCH đơn hàng của 1 user (mới nhất trước).
+ * Kèm trạng thái thanh toán (join sang Payment) để hiển thị badge.
+ */
+export async function getMyOrders(userId: string) {
+  const orders: any[] = await Order.find({ user: userId }).sort({ createdAt: -1 }).lean();
+
+  const ids = orders.map((o) => o._id);
+  const payments: any[] = await Payment.find({ order: { $in: ids } }).lean();
+  const payMap = new Map(payments.map((p) => [String(p.order), p]));
+
+  return orders.map((o) => {
+    const pay = payMap.get(String(o._id));
+    const itemCount = (o.items || []).reduce((s: number, it: any) => s + (it.quantity || 0), 0);
+    return {
+      id: String(o._id),
+      createdAt: o.createdAt,
+      total: o.total,
+      status: o.status,
+      itemCount,
+      firstItemName: o.items?.[0]?.name || '',
+      payment: pay
+        ? { method: pay.method, status: pay.status }
+        : { method: 'cod', status: 'unpaid' },
+    };
+  });
+}
+
+/**
+ * PF-35: CHI TIẾT 1 đơn hàng của user.
+ * Chặn xem đơn của người khác bằng điều kiện { _id, user }.
+ */
+export async function getOrderById(userId: string, orderId: string) {
+  let order: any = null;
+  try {
+    order = await Order.findOne({ _id: orderId, user: userId }).lean();
+  } catch {
+    // orderId sai định dạng ObjectId -> coi như không tìm thấy
+    throw Object.assign(new Error('Không tìm thấy đơn hàng'), { status: 404 });
+  }
+  if (!order) {
+    throw Object.assign(new Error('Không tìm thấy đơn hàng'), { status: 404 });
+  }
+
+  const payment: any = await Payment.findOne({ order: order._id }).lean();
+
+  return {
+    id: String(order._id),
+    createdAt: order.createdAt,
+    updatedAt: order.updatedAt,
+    status: order.status,
+    total: order.total,
+    address: order.address || null,
+    note: order.note || '',
+    items: (order.items || []).map((it: any) => ({
+      variant: String(it.variant),
+      name: it.name,
+      volume: it.volume,
+      price: it.price,
+      quantity: it.quantity,
+      lineTotal: (it.price || 0) * (it.quantity || 0),
+    })),
+    payment: payment
+      ? { method: payment.method, status: payment.status, amount: payment.amount }
+      : null,
+  };
+}
+
+/**
+ * PF-36: Thông tin thanh toán cho 1 đơn (COD hoặc chuyển khoản VietQR).
+ * Với bank_qr sẽ sinh link ảnh QR động từ cấu hình VietQR trong .env.
+ * Chặn xem đơn của người khác bằng điều kiện { _id, user }.
+ */
+export async function getPaymentInfo(userId: string, orderId: string) {
+  let order: any = null;
+  try {
+    order = await Order.findOne({ _id: orderId, user: userId }).lean();
+  } catch {
+    throw Object.assign(new Error('Không tìm thấy đơn hàng'), { status: 404 });
+  }
+  if (!order) {
+    throw Object.assign(new Error('Không tìm thấy đơn hàng'), { status: 404 });
+  }
+
+  const payment: any = await Payment.findOne({ order: order._id }).lean();
+  const method = payment?.method || 'cod';
+  const status = payment?.status || 'unpaid';
+  const amount = payment?.amount ?? order.total ?? 0;
+
+  // Nội dung chuyển khoản: HOCPARFUM + 6 ký tự cuối mã đơn (viết hoa)
+  const transferContent = 'HOCPARFUM ' + String(order._id).slice(-6).toUpperCase();
+
+  const result = {
+    orderId: String(order._id),
+    method,
+    status,
+    amount,
+    bank: {
+      bin: env.vietqr.bankBin,
+      accountNo: env.vietqr.accountNo,
+      accountName: env.vietqr.accountName,
+    },
+    transferContent,
+    qrUrl: '',
+  };
+
+  // Chỉ tạo ảnh QR khi thanh toán bằng chuyển khoản
+  if (method === 'bank_qr') {
+    result.qrUrl =
+      'https://img.vietqr.io/image/' +
+      env.vietqr.bankBin +
+      '-' +
+      env.vietqr.accountNo +
+      '-compact2.png' +
+      '?amount=' +
+      encodeURIComponent(String(amount)) +
+      '&addInfo=' +
+      encodeURIComponent(transferContent) +
+      '&accountName=' +
+      encodeURIComponent(env.vietqr.accountName);
+  }
+
+  return result;
+}
+>>>>>>> Stashed changes
