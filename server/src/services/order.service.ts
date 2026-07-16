@@ -83,10 +83,7 @@ export async function decrementStock(items: StockItem[]) {
 /** HOÀN lại tồn kho (dùng khi hủy đơn hoặc thanh toán thất bại). */
 export async function restoreStock(items: StockItem[]) {
   for (const it of items) {
-    await Variant.updateOne(
-      { _id: it.variant },
-      { $inc: { stock: Number(it.quantity) } },
-    );
+    await Variant.updateOne({ _id: it.variant }, { $inc: { stock: Number(it.quantity) } });
   }
 }
 
@@ -181,4 +178,72 @@ export async function createOrder(
     await restoreStock(stockItems);
     throw err;
   }
+}
+
+/**
+ * PF-35: Lấy DANH SÁCH đơn hàng của 1 user (mới nhất trước).
+ * Kèm trạng thái thanh toán (join sang Payment) để hiển thị badge.
+ */
+export async function getMyOrders(userId: string) {
+  const orders: any[] = await Order.find({ user: userId }).sort({ createdAt: -1 }).lean();
+
+  const ids = orders.map((o) => o._id);
+  const payments: any[] = await Payment.find({ order: { $in: ids } }).lean();
+  const payMap = new Map(payments.map((p) => [String(p.order), p]));
+
+  return orders.map((o) => {
+    const pay = payMap.get(String(o._id));
+    const itemCount = (o.items || []).reduce((s: number, it: any) => s + (it.quantity || 0), 0);
+    return {
+      id: String(o._id),
+      createdAt: o.createdAt,
+      total: o.total,
+      status: o.status,
+      itemCount,
+      firstItemName: o.items?.[0]?.name || '',
+      payment: pay
+        ? { method: pay.method, status: pay.status }
+        : { method: 'cod', status: 'unpaid' },
+    };
+  });
+}
+
+/**
+ * PF-35: CHI TIẾT 1 đơn hàng của user.
+ * Chặn xem đơn của người khác bằng điều kiện { _id, user }.
+ */
+export async function getOrderById(userId: string, orderId: string) {
+  let order: any = null;
+  try {
+    order = await Order.findOne({ _id: orderId, user: userId }).lean();
+  } catch {
+    // orderId sai định dạng ObjectId -> coi như không tìm thấy
+    throw Object.assign(new Error('Không tìm thấy đơn hàng'), { status: 404 });
+  }
+  if (!order) {
+    throw Object.assign(new Error('Không tìm thấy đơn hàng'), { status: 404 });
+  }
+
+  const payment: any = await Payment.findOne({ order: order._id }).lean();
+
+  return {
+    id: String(order._id),
+    createdAt: order.createdAt,
+    updatedAt: order.updatedAt,
+    status: order.status,
+    total: order.total,
+    address: order.address || null,
+    note: order.note || '',
+    items: (order.items || []).map((it: any) => ({
+      variant: String(it.variant),
+      name: it.name,
+      volume: it.volume,
+      price: it.price,
+      quantity: it.quantity,
+      lineTotal: (it.price || 0) * (it.quantity || 0),
+    })),
+    payment: payment
+      ? { method: payment.method, status: payment.status, amount: payment.amount }
+      : null,
+  };
 }

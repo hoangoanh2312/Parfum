@@ -31,15 +31,50 @@ type SectionKey =
   | "addresses"
   | "password";
 
-type MenuItem = { key: SectionKey; label: string; icon: JSX.Element; ready: boolean };
+type MenuItem = {
+  key: SectionKey;
+  label: string;
+  icon: JSX.Element;
+  ready: boolean;
+};
 
 const menu: MenuItem[] = [
-  { key: "profile", label: "Thông tin tài khoản", icon: <User size={17} />, ready: true },
-  { key: "orders", label: "Đơn hàng của tôi", icon: <Package size={17} />, ready: false },
-  { key: "wishlist", label: "Danh sách yêu thích", icon: <Heart size={17} />, ready: false },
-  { key: "reviews", label: "Đánh giá của tôi", icon: <Star size={17} />, ready: false },
-  { key: "addresses", label: "Sổ địa chỉ", icon: <MapPin size={17} />, ready: false },
-  { key: "password", label: "Đổi mật khẩu", icon: <Lock size={17} />, ready: false },
+  {
+    key: "profile",
+    label: "Thông tin tài khoản",
+    icon: <User size={17} />,
+    ready: true,
+  },
+  {
+    key: "orders",
+    label: "Đơn hàng của tôi",
+    icon: <Package size={17} />,
+    ready: true,
+  },
+  {
+    key: "wishlist",
+    label: "Danh sách yêu thích",
+    icon: <Heart size={17} />,
+    ready: false,
+  },
+  {
+    key: "reviews",
+    label: "Đánh giá của tôi",
+    icon: <Star size={17} />,
+    ready: false,
+  },
+  {
+    key: "addresses",
+    label: "Sổ địa chỉ",
+    icon: <MapPin size={17} />,
+    ready: false,
+  },
+  {
+    key: "password",
+    label: "Đổi mật khẩu",
+    icon: <Lock size={17} />,
+    ready: false,
+  },
 ];
 
 const sLabel: Record<SectionKey, string> = {
@@ -64,33 +99,191 @@ const sDesc: Record<Exclude<SectionKey, "profile">, string> = {
     "Tính năng đổi mật khẩu đang được phát triển. Sẽ yêu cầu mật khẩu hiện tại và mật khẩu mới.",
 };
 
-const pageStyle: CSSProperties = { background: c.pageBg, minHeight: "100vh", padding: "40px 16px" };
+const pageStyle: CSSProperties = {
+  background: c.pageBg,
+  minHeight: "100vh",
+  padding: "40px 16px",
+};
 const containerStyle: CSSProperties = { maxWidth: 1100, margin: "0 auto" };
 const titleWrapStyle: CSSProperties = { marginBottom: 28 };
-const h1Style: CSSProperties = { fontFamily: "'Noto Serif', serif", fontSize: 30, color: c.ink, margin: 0 };
-const subtitleStyle: CSSProperties = { color: c.body, marginTop: 6, fontSize: 15 };
-const gridStyle: CSSProperties = { display: "grid", gridTemplateColumns: "260px 1fr", gap: 24, alignItems: "start" };
-const sidebarStyle: CSSProperties = { background: c.cardBg, border: `1px solid ${c.border}`, borderRadius: 14, padding: 18 };
-const userRowStyle: CSSProperties = { display: "flex", alignItems: "center", gap: 12, padding: "6px 6px 16px" };
-const avatarStyle: CSSProperties = { width: 52, height: 52, borderRadius: "50%", background: c.gold, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontFamily: "'Noto Serif', serif", flexShrink: 0 };
-const userNameStyle: CSSProperties = { fontWeight: 600, color: c.ink, fontSize: 15 };
-const userRoleStyle: CSSProperties = { fontSize: 12, color: c.gold, textTransform: "uppercase", letterSpacing: 1, marginTop: 2 };
-const dividerStyle: CSSProperties = { height: 1, background: c.border, margin: "8px 0 12px" };
-const navWrapStyle: CSSProperties = { display: "flex", flexDirection: "column", gap: 4 };
+const h1Style: CSSProperties = {
+  fontFamily: "'Noto Serif', serif",
+  fontSize: 30,
+  color: c.ink,
+  margin: 0,
+};
+const subtitleStyle: CSSProperties = {
+  color: c.body,
+  marginTop: 6,
+  fontSize: 15,
+};
+const gridStyle: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "260px 1fr",
+  gap: 24,
+  alignItems: "start",
+};
+const sidebarStyle: CSSProperties = {
+  background: c.cardBg,
+  border: `1px solid ${c.border}`,
+  borderRadius: 14,
+  padding: 18,
+};
+const userRowStyle: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 12,
+  padding: "6px 6px 16px",
+};
+const avatarStyle: CSSProperties = {
+  width: 52,
+  height: 52,
+  borderRadius: "50%",
+  background: c.gold,
+  color: "#fff",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  fontSize: 22,
+  fontFamily: "'Noto Serif', serif",
+  flexShrink: 0,
+};
+const userNameStyle: CSSProperties = {
+  fontWeight: 600,
+  color: c.ink,
+  fontSize: 15,
+};
+const userRoleStyle: CSSProperties = {
+  fontSize: 12,
+  color: c.gold,
+  textTransform: "uppercase",
+  letterSpacing: 1,
+  marginTop: 2,
+};
+const dividerStyle: CSSProperties = {
+  height: 1,
+  background: c.border,
+  margin: "8px 0 12px",
+};
+const navWrapStyle: CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  gap: 4,
+};
 const navLabelStyle: CSSProperties = { flex: 1, textAlign: "left" };
-const comingBadgeStyle: CSSProperties = { fontSize: 10, textTransform: "uppercase", letterSpacing: 0.5, color: c.gold, border: `1px solid ${c.gold}`, borderRadius: 999, padding: "2px 8px" };
-const cartCountStyle: CSSProperties = { background: c.ink, color: "#fff", fontSize: 11, minWidth: 20, height: 20, borderRadius: 999, display: "inline-flex", alignItems: "center", justifyContent: "center", padding: "0 6px" };
-const logoutStyle: CSSProperties = { display: "flex", alignItems: "center", gap: 10, width: "100%", border: `1px solid ${c.border}`, background: "#fff", color: "#a11", borderRadius: 10, padding: "11px 12px", cursor: "pointer", fontSize: 14 };
-const contentStyle: CSSProperties = { background: "#fff", border: `1px solid ${c.border}`, borderRadius: 14, padding: 28, minHeight: 440 };
-const sectionH2Style: CSSProperties = { fontFamily: "'Noto Serif', serif", fontSize: 22, color: c.ink, marginTop: 0, marginBottom: 20 };
-const fieldGridStyle: CSSProperties = { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18 };
-const fieldLabelStyle: CSSProperties = { fontSize: 11, textTransform: "uppercase", letterSpacing: 1, color: c.body, marginBottom: 6 };
-const fieldValueStyle: CSSProperties = { border: `1px solid ${c.border}`, borderRadius: 8, padding: "12px 14px", color: c.ink, background: c.pageBg, wordBreak: "break-all" };
-const csBoxStyle: CSSProperties = { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "56px 24px", border: `1px dashed ${c.border}`, borderRadius: 12, background: c.pageBg };
-const csIconStyle: CSSProperties = { width: 60, height: 60, borderRadius: "50%", background: c.cardBg, color: c.gold, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16 };
-const csTitleStyle: CSSProperties = { fontFamily: "'Noto Serif', serif", fontSize: 20, color: c.ink, margin: 0 };
-const csDescStyle: CSSProperties = { color: c.body, fontSize: 14, maxWidth: 440, marginTop: 8, lineHeight: 1.6 };
-const csBadgeStyle: CSSProperties = { marginTop: 18, fontSize: 11, letterSpacing: 1, textTransform: "uppercase", color: c.gold, border: `1px solid ${c.gold}`, borderRadius: 999, padding: "6px 14px" };
+const comingBadgeStyle: CSSProperties = {
+  fontSize: 10,
+  textTransform: "uppercase",
+  letterSpacing: 0.5,
+  color: c.gold,
+  border: `1px solid ${c.gold}`,
+  borderRadius: 999,
+  padding: "2px 8px",
+};
+const cartCountStyle: CSSProperties = {
+  background: c.ink,
+  color: "#fff",
+  fontSize: 11,
+  minWidth: 20,
+  height: 20,
+  borderRadius: 999,
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  padding: "0 6px",
+};
+const logoutStyle: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 10,
+  width: "100%",
+  border: `1px solid ${c.border}`,
+  background: "#fff",
+  color: "#a11",
+  borderRadius: 10,
+  padding: "11px 12px",
+  cursor: "pointer",
+  fontSize: 14,
+};
+const contentStyle: CSSProperties = {
+  background: "#fff",
+  border: `1px solid ${c.border}`,
+  borderRadius: 14,
+  padding: 28,
+  minHeight: 440,
+};
+const sectionH2Style: CSSProperties = {
+  fontFamily: "'Noto Serif', serif",
+  fontSize: 22,
+  color: c.ink,
+  marginTop: 0,
+  marginBottom: 20,
+};
+const fieldGridStyle: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "1fr 1fr",
+  gap: 18,
+};
+const fieldLabelStyle: CSSProperties = {
+  fontSize: 11,
+  textTransform: "uppercase",
+  letterSpacing: 1,
+  color: c.body,
+  marginBottom: 6,
+};
+const fieldValueStyle: CSSProperties = {
+  border: `1px solid ${c.border}`,
+  borderRadius: 8,
+  padding: "12px 14px",
+  color: c.ink,
+  background: c.pageBg,
+  wordBreak: "break-all",
+};
+const csBoxStyle: CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  textAlign: "center",
+  padding: "56px 24px",
+  border: `1px dashed ${c.border}`,
+  borderRadius: 12,
+  background: c.pageBg,
+};
+const csIconStyle: CSSProperties = {
+  width: 60,
+  height: 60,
+  borderRadius: "50%",
+  background: c.cardBg,
+  color: c.gold,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  marginBottom: 16,
+};
+const csTitleStyle: CSSProperties = {
+  fontFamily: "'Noto Serif', serif",
+  fontSize: 20,
+  color: c.ink,
+  margin: 0,
+};
+const csDescStyle: CSSProperties = {
+  color: c.body,
+  fontSize: 14,
+  maxWidth: 440,
+  marginTop: 8,
+  lineHeight: 1.6,
+};
+const csBadgeStyle: CSSProperties = {
+  marginTop: 18,
+  fontSize: 11,
+  letterSpacing: 1,
+  textTransform: "uppercase",
+  color: c.gold,
+  border: `1px solid ${c.gold}`,
+  borderRadius: 999,
+  padding: "6px 14px",
+};
 const profileComingWrapStyle: CSSProperties = { marginTop: 24 };
 
 const navBtn = (isActive: boolean): CSSProperties => ({
@@ -169,7 +362,13 @@ export default function Dashboard() {
 
             <nav style={navWrapStyle}>
               {menu.map((m) => (
-                <button key={m.key} onClick={() => setActive(m.key)} style={navBtn(active === m.key)}>
+                <button
+                  key={m.key}
+                  onClick={() =>
+                    m.key === "orders" ? navigate("/orders") : setActive(m.key)
+                  }
+                  style={navBtn(active === m.key)}
+                >
                   {m.icon}
                   <span style={navLabelStyle}>{m.label}</span>
                   {!m.ready && <span style={comingBadgeStyle}>Sắp có</span>}
@@ -179,7 +378,9 @@ export default function Dashboard() {
               <button onClick={() => navigate("/cart")} style={navBtn(false)}>
                 <ShoppingBag size={17} />
                 <span style={navLabelStyle}>Giỏ hàng</span>
-                {cartCount > 0 && <span style={cartCountStyle}>{cartCount}</span>}
+                {cartCount > 0 && (
+                  <span style={cartCountStyle}>{cartCount}</span>
+                )}
               </button>
             </nav>
 

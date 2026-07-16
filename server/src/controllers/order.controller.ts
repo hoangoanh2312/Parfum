@@ -38,3 +38,23 @@ export const createOrder = async (req: Request, res: Response) => {
       .json({ success: false, message: error.message, problems: error.problems });
   }
 };
+
+// GET /api/orders  -> DANH SÁCH đơn của user đang đăng nhập (PF-35)
+export const myOrders = async (req: Request, res: Response) => {
+  try {
+    const data = await orderService.getMyOrders(uid(req));
+    res.status(200).json({ success: true, data });
+  } catch (error: any) {
+    res.status(error.status || 500).json({ success: false, message: error.message });
+  }
+};
+
+// GET /api/orders/:id  -> CHI TIẾT 1 đơn của user (PF-35)
+export const orderDetail = async (req: Request, res: Response) => {
+  try {
+    const data = await orderService.getOrderById(uid(req), req.params.id);
+    res.status(200).json({ success: true, data });
+  } catch (error: any) {
+    res.status(error.status || 500).json({ success: false, message: error.message });
+  }
+};
