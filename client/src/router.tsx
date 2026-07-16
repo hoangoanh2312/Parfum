@@ -19,6 +19,8 @@ import Cart from "./pages/Cart";
 import Dashboard from "./pages/Dashboard";
 import Orders from "./pages/Orders";
 import OrderDetail from "./pages/OrderDetail";
+import Checkout from "./pages/Checkout";
+import ThankYou from "./pages/ThankYou";
 
 const router = createBrowserRouter([
   {
@@ -40,6 +42,8 @@ const router = createBrowserRouter([
           { path: "dashboard", element: <Dashboard /> },
           { path: "orders", element: <Orders /> },
           { path: "orders/:id", element: <OrderDetail /> },
+          { path: "checkout", element: <Checkout /> },
+          { path: "thank-you/:id", element: <ThankYou /> },
         ],
       },
     ],

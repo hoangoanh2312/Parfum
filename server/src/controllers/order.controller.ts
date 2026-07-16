@@ -58,3 +58,13 @@ export const orderDetail = async (req: Request, res: Response) => {
     res.status(error.status || 500).json({ success: false, message: error.message });
   }
 };
+
+// GET /api/orders/:id/payment  -> thông tin thanh toán + QR chuyển khoản (PF-36)
+export const paymentInfo = async (req: Request, res: Response) => {
+  try {
+    const data = await orderService.getPaymentInfo(uid(req), req.params.id);
+    res.status(200).json({ success: true, data });
+  } catch (error: any) {
+    res.status(error.status || 500).json({ success: false, message: error.message });
+  }
+};

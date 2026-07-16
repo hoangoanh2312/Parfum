@@ -6,6 +6,7 @@ import {
   createOrder,
   myOrders,
   orderDetail,
+  paymentInfo,
 } from '../controllers/order.controller';
 
 const router = Router();
@@ -19,6 +20,8 @@ router.post('/check-stock', checkStock);
 router.get('/', authenticate, myOrders);
 // Tạo đơn hàng thật: kiểm tra tồn kho -> trừ kho -> tạo Order + Payment -> xóa giỏ
 router.post('/', authenticate, createOrder);
+// PF-36: thông tin thanh toán + QR chuyển khoản (đặt TRƯỚC /:id)
+router.get('/:id/payment', authenticate, paymentInfo);
 // PF-35: chi tiết 1 đơn (đặt CUỐI cùng để không nuốt /checkout-preview, /check-stock)
 router.get('/:id', authenticate, orderDetail);
 
