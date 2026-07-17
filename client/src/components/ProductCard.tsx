@@ -1,5 +1,6 @@
 import { Heart, ShoppingBag } from "lucide-react";
 import { Link } from "react-router-dom";
+import { api } from "../lib/api";
 import { useCart } from "../store/cart.store";
 import { toast } from "../store/toast.store";
 
@@ -64,6 +65,15 @@ export default function ProductCard({ item }: { item: ProductCardData }) {
     }
   }
 
+  async function handleWishlist() {
+    try {
+      await api.post(`/account/wishlist/${item.id}`);
+      toast.success("Đã thêm vào wishlist");
+    } catch (e: any) {
+      toast.error(e?.response?.status === 401 ? "Vui lòng đăng nhập" : "Không thể thêm wishlist");
+    }
+  }
+
   return (
     <article className="group">
       {/* Image */}
@@ -87,7 +97,11 @@ export default function ProductCard({ item }: { item: ProductCardData }) {
         )}
 
         {/* Wishlist */}
-        <button className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white shadow flex items-center justify-center hover:bg-[#1C1C19] hover:text-white duration-300">
+        <button
+          type="button"
+          onClick={handleWishlist}
+          className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white shadow flex items-center justify-center hover:bg-[#1C1C19] hover:text-white duration-300"
+        >
           <Heart size={18} />
         </button>
 

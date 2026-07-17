@@ -125,6 +125,19 @@ export async function deleteAddress(userId: string, addressId: string) {
   return user.addresses;
 }
 
+export async function setDefaultAddress(userId: string, addressId: string) {
+  const user = await User.findById(userId);
+  if (!user) throw Object.assign(new Error('User not found'), { status: 404 });
+
+  const address = user.addresses.id(addressId);
+  if (!address) throw Object.assign(new Error('Address not found'), { status: 404 });
+
+  const plain = address.toObject();
+  user.addresses = [plain, ...user.addresses.filter((item: any) => String(item._id) !== addressId)] as any;
+  await user.save();
+  return user.addresses;
+}
+
 async function issueTokens(user: any) {
   const payload = { id: user._id, role: user.role };
   const refreshToken = signRefresh(payload);

@@ -72,3 +72,10 @@ export async function deleteAddress(req: Request, res: Response, next: NextFunct
     res.json(await authService.deleteAddress(userId, req.params.addressId));
   } catch (e) { next(e); }
 }
+
+export async function setDefaultAddress(req: Request, res: Response, next: NextFunction) {
+  try {
+    const userId = (req as any).user?.id;
+    res.json(await authService.setDefaultAddress(userId, req.params.addressId));
+  } catch (e) { next(e); }
+}

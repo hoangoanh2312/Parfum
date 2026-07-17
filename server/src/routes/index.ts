@@ -6,6 +6,7 @@ import { rateLimit } from '../middlewares/rateLimit.middleware';
 import categoryRoutes from './category.routes';
 import brandRoutes from './brand.routes';
 import productRoutes from './product.routes';
+import accountRoutes from './account.routes';
 
 const router = Router();
 const apiLimiter = rateLimit({
@@ -22,6 +23,7 @@ router.use('/auth', authRoutes);
 router.use('/categories', categoryRoutes);
 router.use('/brands', brandRoutes);
 router.use('/products', productRoutes);
+router.use('/account', accountRoutes);
 
 router.get('/admin-only', authenticate, authorize('admin'), (_req, res) => res.json({ message: 'Admin only' }));
 

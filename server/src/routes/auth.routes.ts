@@ -70,5 +70,6 @@ r.put(
   validate(addressSchema),
   ctrl.updateAddress,
 );
+r.patch('/me/addresses/:addressId/default', authenticate, ctrl.setDefaultAddress);
 r.delete('/me/addresses/:addressId', authenticate, ctrl.deleteAddress);
 export default r;
