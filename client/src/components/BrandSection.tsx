@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { api } from "../lib/api";
 
-export const brandsTop = [
+const fallbackBrands = [
   "CHANEL",
   "DIOR",
   "YSL",
@@ -9,9 +10,6 @@ export const brandsTop = [
   "CREED",
   "LE LABO",
   "BYREDO",
-];
-
-export const brandsBottom = [
   "DIPTYQUE",
   "JO MALONE",
   "AMOUAGE",
@@ -22,8 +20,49 @@ export const brandsBottom = [
   "HERMES",
 ];
 
+type Brand = {
+  _id?: string;
+  id?: string;
+  name: string;
+};
+
 export default function BrandSection() {
   const [active, setActive] = useState("");
+  const [brands, setBrands] = useState<string[]>(fallbackBrands);
+
+  useEffect(() => {
+    let mounted = true;
+
+    api
+      .get<Brand[]>("/brands")
+      .then(({ data }) => {
+        const names = data
+          .map((brand) => brand.name?.trim())
+          .filter((name): name is string => Boolean(name));
+
+        if (mounted && names.length) {
+          setBrands(names);
+          setActive((current) => (names.includes(current) ? current : ""));
+        }
+      })
+      .catch(() => {
+        if (mounted) setBrands(fallbackBrands);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const [brandsTop, brandsBottom] = useMemo(() => {
+    const midpoint = Math.ceil(brands.length / 2);
+    const top = brands.slice(0, midpoint);
+    const bottom = brands.slice(midpoint);
+    return [top.length ? top : fallbackBrands.slice(0, 8), bottom.length ? bottom : top];
+  }, [brands]);
+
+  const repeatedTop = useMemo(() => repeatBrands(brandsTop), [brandsTop]);
+  const repeatedBottom = useMemo(() => repeatBrands(brandsBottom), [brandsBottom]);
 
   return (
     <section className="bg-[#faf7f2] py-16 overflow-hidden">
@@ -33,14 +72,14 @@ export default function BrandSection() {
       </h2>
 
       {/* Hàng 1 */}
-<div className="overflow-hidden mb-8">
+<div className="overflow-hidden mb-8 flex justify-start">
   <div className="marquee-left gap-16">
 
-    {[...brandsTop, ...brandsTop].map((brand, index) => (
+    {repeatedTop.map((brand, index) => (
       <button
         key={index}
         onClick={() => setActive(brand)}
-        className={`uppercase tracking-[4px] transition-all duration-300
+        className={`shrink-0 whitespace-nowrap uppercase tracking-[4px] transition-all duration-300
         ${
           active === brand
             ? "text-[#b8860b] scale-110 font-normal"
@@ -55,14 +94,14 @@ export default function BrandSection() {
 </div>
 
       {/* Hàng 2 (lệch sang phải) */}
-    <div className="overflow-hidden">
+    <div className="overflow-hidden flex justify-end">
   <div className="marquee-right gap-16">
 
-    {[...brandsBottom, ...brandsBottom].map((brand, index) => (
+    {repeatedBottom.map((brand, index) => (
       <button
         key={index}
         onClick={() => setActive(brand)}
-        className={`uppercase tracking-[4px] transition-all duration-300
+        className={`shrink-0 whitespace-nowrap uppercase tracking-[4px] transition-all duration-300
         ${
           active === brand
             ? "text-[#b8860b] scale-110 font-normal"
@@ -78,4 +117,10 @@ export default function BrandSection() {
 
     </section>
   );
+}
+
+function repeatBrands(items: string[]) {
+  const source = items.length ? items : fallbackBrands;
+  const repeatCount = Math.max(4, Math.ceil(18 / source.length));
+  return Array.from({ length: repeatCount }, () => source).flat();
 }

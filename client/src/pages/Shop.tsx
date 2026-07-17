@@ -42,6 +42,7 @@ const occasionSeasonMap: Record<string, string[]> = {
 
 export default function Shop() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
 const [search,setSearch]=useState("");
@@ -86,6 +87,30 @@ const toggleScent = (value: string) => {
       : [...prev, value]
   );
 };
+
+useEffect(() => {
+  let active = true;
+
+  async function loadFilterOptions() {
+    try {
+      const { data } = await api.get<ProductListResponse>("/products", {
+        params: { page: 1, limit: 100, sort: "newest" },
+      });
+
+      if (active) {
+        setAllProducts(data.data);
+      }
+    } catch (error) {
+      console.error("Failed to load filter options", error);
+    }
+  }
+
+  loadFilterOptions();
+
+  return () => {
+    active = false;
+  };
+}, []);
 
 useEffect(() => {
   let active = true;
@@ -135,6 +160,7 @@ useEffect(() => {
   selectedGenders,
   selectedScents,
   selectedSizes,
+  selectedOccasions,
   selectedConcentrations,
   price,
   sort,
@@ -144,46 +170,46 @@ const brands = useMemo(
   () =>
     Array.from(
       new Set(
-        products
+        allProducts
           .map((product) => product.brand)
           .filter((brand): brand is string => Boolean(brand)),
       ),
     ),
-  [products],
+  [allProducts],
 );
 
 const scents = useMemo(
   () =>
     Array.from(
       new Set(
-        products
+        allProducts
           .map((product) => product.fragranceFamily)
           .filter((scent): scent is string => Boolean(scent)),
       ),
     ),
-  [products],
+  [allProducts],
 );
 
 const sizes = useMemo(
-  () => Array.from(new Set(products.flatMap((product) => product.sizes ?? []))),
-  [products],
+  () => Array.from(new Set(allProducts.flatMap((product) => product.sizes ?? []))),
+  [allProducts],
 );
 
 const concentrations = useMemo(
   () =>
     Array.from(
       new Set(
-        products
+        allProducts
           .map((product) => product.concentration)
           .filter((concentration): concentration is string => Boolean(concentration)),
       ),
     ),
-  [products],
+  [allProducts],
 );
 
 const maxPrice = useMemo(
-  () => products.reduce((max, product) => Math.max(max, product.price ?? 0), 0),
-  [products],
+  () => allProducts.reduce((max, product) => Math.max(max, product.price ?? 0), 0),
+  [allProducts],
 );
 
 useEffect(() => {
