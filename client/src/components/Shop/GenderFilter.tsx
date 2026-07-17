@@ -4,6 +4,12 @@ interface GenderFilterProps {
     onToggle:(gender:string)=>void;
 }
 
+const genderLabels: Record<string, string> = {
+  female: "Women",
+  male: "Men",
+  unisex: "Unisex",
+};
+
 export default function GenderFilter({
   genders = ["Women", "Men", "Unisex"],
   selected = [],
@@ -28,7 +34,7 @@ export default function GenderFilter({
               className="accent-[#735C00]"
             />
 
-            <span className="text-sm">{gender}</span>
+            <span className="text-sm">{genderLabels[gender] ?? gender}</span>
           </label>
         ))}
       </div>

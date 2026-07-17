@@ -4,7 +4,7 @@ interface Product {
   _id?: string;
   id?: string;
   name: string;
-  description: string;
+  description?: string;
   price: number;
   image?: string;
   images?: string[];
@@ -17,6 +17,10 @@ interface ProductCardProps {
 export default function ProductCard({
   product,
 }: ProductCardProps) {
+  const price = new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+  }).format(product.price);
   const image =
     product.images?.[0] ||
     product.image ||
@@ -57,12 +61,12 @@ export default function ProductCard({
         </h3>
 
         <p className="mt-3 text-sm text-[#5F5E5E] leading-7 line-clamp-2">
-          {product.description}
+          {product.description || "No description available."}
         </p>
 
         <div className="flex items-center justify-between mt-6">
           <span className="text-2xl font-semibold text-[#1C1C19]">
-            ${product.price}
+            {price}
           </span>
 
           <button className="uppercase tracking-[2px] text-[11px] font-semibold text-[#735C00] hover:underline">

@@ -1,18 +1,207 @@
-import { Search, ChevronDown } from "lucide-react";
 import ShopSidebar from "../components/Shop/ShopSidebar";
-import ProductCard from "../components/Shop/ProductCard";
-import { useState } from "react";
+import ProductGrid from "../components/Shop/ProductGrid";
+import { useEffect, useMemo, useState } from "react";
 import Footer from "../components/Footer";
+import { api } from "../lib/api";
+
+type Product = {
+  _id: string;
+  name: string;
+  description?: string;
+  price: number;
+  images?: string[];
+  fragranceFamily?: string;
+  concentration?: string;
+  gender?: string;
+  season?: string[];
+  sizes?: string[];
+  brand?: {
+    _id: string;
+    name: string;
+  } | null;
+};
+
+const occasionSeasonMap: Record<string, string[]> = {
+  Day: ["spring", "summer", "all"],
+  Night: ["autumn", "winter", "all"],
+  Formal: ["autumn", "winter", "all"],
+  Work: ["spring", "summer", "autumn", "all"],
+};
 
 export default function Shop() {
-  const products = Array.from({ length: 12 }, (_, index) => ({ id: index })) as any[];
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
 const [search,setSearch]=useState("");
-
+const [selectedScents, setSelectedScents] = useState<string[]>([]);
 const [selectedBrands,setSelectedBrands]=useState<string[]>([]);
 
 const [selectedGenders,setSelectedGenders]=useState<string[]>([]);
+const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
 
-const [price,setPrice]=useState(500);
+const [selectedOccasions, setSelectedOccasions] = useState<string[]>([]);
+
+const [selectedConcentrations, setSelectedConcentrations] = useState<string[]>([]);
+const [price,setPrice]=useState(Number.MAX_SAFE_INTEGER);
+const toggleSize = (value: string) => {
+  setSelectedSizes((prev) =>
+    prev.includes(value)
+      ? prev.filter((x) => x !== value)
+      : [...prev, value]
+  );
+};
+
+const toggleOccasion = (value: string) => {
+  setSelectedOccasions((prev) =>
+    prev.includes(value)
+      ? prev.filter((x) => x !== value)
+      : [...prev, value]
+  );
+};
+
+const toggleConcentration = (value: string) => {
+  setSelectedConcentrations((prev) =>
+    prev.includes(value)
+      ? prev.filter((x) => x !== value)
+      : [...prev, value]
+  );
+};
+const toggleScent = (value: string) => {
+  setSelectedScents((prev) =>
+    prev.includes(value)
+      ? prev.filter((item) => item !== value)
+      : [...prev, value]
+  );
+};
+
+useEffect(() => {
+  let active = true;
+
+  async function loadProducts() {
+    try {
+      setLoading(true);
+      const { data } = await api.get<Product[]>("/products");
+
+      if (active) {
+        setProducts(data);
+      }
+    } catch (error) {
+      console.error("Failed to load products", error);
+    } finally {
+      if (active) {
+        setLoading(false);
+      }
+    }
+  }
+
+  loadProducts();
+
+  return () => {
+    active = false;
+  };
+}, []);
+
+const brands = useMemo(
+  () =>
+    Array.from(
+      new Set(
+        products
+          .map((product) => product.brand?.name)
+          .filter((brand): brand is string => Boolean(brand)),
+      ),
+    ),
+  [products],
+);
+
+const scents = useMemo(
+  () =>
+    Array.from(
+      new Set(
+        products
+          .map((product) => product.fragranceFamily)
+          .filter((scent): scent is string => Boolean(scent)),
+      ),
+    ),
+  [products],
+);
+
+const sizes = useMemo(
+  () => Array.from(new Set(products.flatMap((product) => product.sizes ?? []))),
+  [products],
+);
+
+const concentrations = useMemo(
+  () =>
+    Array.from(
+      new Set(
+        products
+          .map((product) => product.concentration)
+          .filter((concentration): concentration is string => Boolean(concentration)),
+      ),
+    ),
+  [products],
+);
+
+const maxPrice = useMemo(
+  () => products.reduce((max, product) => Math.max(max, product.price), 0),
+  [products],
+);
+
+useEffect(() => {
+  if (maxPrice > 0 && price === Number.MAX_SAFE_INTEGER) {
+    setPrice(maxPrice);
+  }
+}, [maxPrice, price]);
+
+const filteredProducts = useMemo(
+  () =>
+    products.filter((product) => {
+      const matchesSearch = product.name.toLowerCase().includes(search.toLowerCase());
+      const matchesBrand =
+        selectedBrands.length === 0 ||
+        (product.brand?.name ? selectedBrands.includes(product.brand.name) : false);
+      const matchesGender =
+        selectedGenders.length === 0 ||
+        (product.gender ? selectedGenders.includes(product.gender) : false);
+      const matchesScent =
+        selectedScents.length === 0 ||
+        (product.fragranceFamily ? selectedScents.includes(product.fragranceFamily) : false);
+      const matchesSize =
+        selectedSizes.length === 0 ||
+        selectedSizes.some((size) => product.sizes?.includes(size));
+      const matchesOccasion =
+        selectedOccasions.length === 0 ||
+        selectedOccasions.some((occasion) =>
+          occasionSeasonMap[occasion]?.some((season) => product.season?.includes(season)),
+        );
+      const matchesConcentration =
+        selectedConcentrations.length === 0 ||
+        (product.concentration ? selectedConcentrations.includes(product.concentration) : false);
+      const matchesPrice = product.price <= price;
+
+      return (
+        matchesSearch &&
+        matchesBrand &&
+        matchesGender &&
+        matchesScent &&
+        matchesSize &&
+        matchesOccasion &&
+        matchesConcentration &&
+        matchesPrice
+      );
+    }),
+  [
+    products,
+    search,
+    selectedBrands,
+    selectedGenders,
+    selectedScents,
+    selectedSizes,
+    selectedOccasions,
+    selectedConcentrations,
+    price,
+  ],
+);
+
 const toggleBrand=(brand:string)=>{
 
 setSelectedBrands(prev=>
@@ -70,25 +259,36 @@ prev.includes(gender)
 
 <section className="max-w-[1536px] mx-auto px-10 flex gap-16 pb-24">
   <ShopSidebar
+
     search={search}
     setSearch={setSearch}
-    brands={[
-      "Byredo",
-      "Diptyque",
-      "Tom Ford",
-      "Creed",
-    ]}
+    brands={brands}
     selectedBrands={selectedBrands}
     toggleBrand={toggleBrand}
     genders={[
-      "Women",
-      "Men",
-      "Unisex",
+      "female",
+      "male",
+      "unisex",
     ]}
     selectedGenders={selectedGenders}
     toggleGender={toggleGender}
     price={price}
+    maxPrice={maxPrice}
     setPrice={setPrice}
+      selectedScents={selectedScents}
+      scents={scents}
+toggleScent={toggleScent}
+    selectedSizes={selectedSizes}
+sizes={sizes}
+toggleSize={toggleSize}
+
+selectedOccasions={selectedOccasions}
+occasions={["Day", "Night", "Formal", "Work"]}
+toggleOccasion={toggleOccasion}
+
+selectedConcentrations={selectedConcentrations}
+concentrations={concentrations}
+toggleConcentration={toggleConcentration}
   />
 
         {/* Content */}
@@ -96,7 +296,7 @@ prev.includes(gender)
           {/* Toolbar */}
           <div className="flex justify-between border-b pb-5 border-[#e8deca]">
             <p className="uppercase text-xs tracking-widest text-[#5F5E5E]">
-              Showing 12 products
+              Showing {filteredProducts.length} products
             </p>
 
             <select className="uppercase text-xs tracking-widest bg-transparent outline-none">
@@ -107,11 +307,7 @@ prev.includes(gender)
           </div>
 
           {/* Grid */}
-         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 mt-10">
-  {products.map((product) => (
-    <ProductCard key={product.id} product={product} />
-  ))}
-</div>
+          <ProductGrid products={filteredProducts} loading={loading} />
           {/* Pagination */}
           <div className="border-t mt-16 pt-8 flex justify-center items-center gap-8">
             <button className="uppercase text-xs text-gray-400">

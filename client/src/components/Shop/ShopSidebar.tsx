@@ -1,10 +1,26 @@
-import { ChevronDown } from "lucide-react";
 import SearchBox from "./SearchBox";
 import BrandFilter from "./BrandFilter";
 import GenderFilter from "./GenderFilter";
 import PriceFilter from "./PriceFilter";
-
+import ScentFilter from "./ScentFilter";
+import SizeFilter from "./SizeFilter";
+import OccasionFilter from "./OccasionFilter";
+import ConcentrationFilter from "./ConcentrationFilter";
 interface Props{
+  scents:string[];
+  selectedSizes: string[];
+sizes:string[];
+toggleSize: (size: string) => void;
+
+selectedOccasions: string[];
+occasions:string[];
+toggleOccasion: (item: string) => void;
+
+selectedConcentrations: string[];
+concentrations:string[];
+toggleConcentration: (item: string) => void;
+  selectedScents: string[];
+toggleScent: (value: string) => void;
     search:string;
     setSearch:(v:string)=>void;
 
@@ -17,15 +33,9 @@ interface Props{
     toggleGender:(gender:string)=>void;
 
     price:number;
+    maxPrice:number;
     setPrice:(value:number)=>void;
 }
-const genders = ["Women", "Men", "Unisex"];
-
-const scents = ["Floral", "Woody", "Citrus", "Oriental"];
-
-const sizes = ["30ml", "50ml", "75ml", "100ml", "200ml"];
-
-const occasions = ["Day", "Night", "Formal", "Work"];
 
 export default function ShopSidebar(props:Props){
   return (
@@ -49,81 +59,34 @@ export default function ShopSidebar(props:Props){
 
 <PriceFilter
     value={props.price}
+    max={props.maxPrice || 500}
     onChange={props.setPrice}
 />
 
       {/* Scent */}
-
-      <FilterTitle title="Scent Profile" />
-
-      <div className="space-y-3 mt-6">
-        {scents.map((item) => (
-          <Checkbox key={item} label={item} />
-        ))}
-      </div>
+     <ScentFilter
+    scents={props.scents}
+    selected={props.selectedScents}
+    onToggle={props.toggleScent}
+/>
 
       {/* Size */}
-
-      <div className="mt-10">
-        <h3 className="uppercase tracking-[2px] text-[11px] font-semibold text-[#735C00] mb-5">
-          Size
-        </h3>
-
-        <div className="flex flex-wrap gap-3">
-          {sizes.map((item) => (
-            <button
-              key={item}
-              className="border border-[#D0C5AF] px-4 py-2 text-[11px] uppercase tracking-widest hover:bg-[#735C00] hover:text-white transition"
-            >
-              {item}
-            </button>
-          ))}
-        </div>
-      </div>
-
+      <SizeFilter
+    sizes={props.sizes}
+    selected={props.selectedSizes}
+    onToggle={props.toggleSize}
+/>
       {/* Occasion */}
-
-      <div className="mt-10">
-        <h3 className="uppercase tracking-[2px] text-[11px] font-semibold text-[#735C00] mb-5">
-          Occasion
-        </h3>
-
-        <div className="flex flex-wrap gap-3">
-          {occasions.map((item) => (
-            <button
-              key={item}
-              className="border border-[#D0C5AF] px-4 py-2 text-[11px] uppercase tracking-widest hover:bg-[#735C00] hover:text-white transition"
-            >
-              {item}
-            </button>
-          ))}
-        </div>
-      </div>
+     <OccasionFilter
+    occasions={props.occasions}
+    selected={props.selectedOccasions}
+    onToggle={props.toggleOccasion}
+/>
+<ConcentrationFilter
+  concentrations={props.concentrations}
+  selected={props.selectedConcentrations}
+  onToggle={props.toggleConcentration}
+/>
     </aside>
-  );
-}
-
-function FilterTitle({ title }: { title: string }) {
-  return (
-    <button className="flex justify-between items-center w-full mt-10">
-      <span className="uppercase tracking-[2px] text-[11px] font-semibold text-[#735C00]">
-        {title}
-      </span>
-
-      <ChevronDown size={16} />
-    </button>
-  );
-}
-
-function Checkbox({ label }: { label: string }) {
-  return (
-    <label className="flex items-center gap-3 cursor-pointer text-sm text-[#1C1C19]">
-      <input
-        type="checkbox"
-        className="accent-[#735C00] w-4 h-4"
-      />
-
-      {label}
-    </label>
   );
 }
