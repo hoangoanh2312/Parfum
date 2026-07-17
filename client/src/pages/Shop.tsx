@@ -5,20 +5,32 @@ import Footer from "../components/Footer";
 import { api } from "../lib/api";
 
 type Product = {
-  _id: string;
+  id: string;
+  _id?: string;
   name: string;
   description?: string;
-  price: number;
+  price?: number | null;
   images?: string[];
+  image?: string | null;
+  priceText?: string;
+  variantId?: string | null;
+  volume?: string;
+  stock?: number;
   fragranceFamily?: string;
   concentration?: string;
   gender?: string;
   season?: string[];
   sizes?: string[];
-  brand?: {
-    _id: string;
-    name: string;
-  } | null;
+  brand?: string;
+  category?: string;
+};
+
+type ProductListResponse = {
+  data: Product[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
 };
 
 const occasionSeasonMap: Record<string, string[]> = {
@@ -31,6 +43,7 @@ const occasionSeasonMap: Record<string, string[]> = {
 export default function Shop() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [total, setTotal] = useState(0);
 const [search,setSearch]=useState("");
 const [selectedScents, setSelectedScents] = useState<string[]>([]);
 const [selectedBrands,setSelectedBrands]=useState<string[]>([]);
@@ -42,6 +55,7 @@ const [selectedOccasions, setSelectedOccasions] = useState<string[]>([]);
 
 const [selectedConcentrations, setSelectedConcentrations] = useState<string[]>([]);
 const [price,setPrice]=useState(Number.MAX_SAFE_INTEGER);
+const [sort,setSort]=useState("newest");
 const toggleSize = (value: string) => {
   setSelectedSizes((prev) =>
     prev.includes(value)
@@ -79,10 +93,27 @@ useEffect(() => {
   async function loadProducts() {
     try {
       setLoading(true);
-      const { data } = await api.get<Product[]>("/products");
+      const { data } = await api.get<ProductListResponse>("/products", {
+        params: {
+          page: 1,
+          limit: 100,
+          search: search || undefined,
+          brand: selectedBrands.join(",") || undefined,
+          gender: selectedGenders.join(",") || undefined,
+          scent: selectedScents.join(",") || undefined,
+          size: selectedSizes.join(",") || undefined,
+          season: selectedOccasions
+            .flatMap((occasion) => occasionSeasonMap[occasion] ?? [])
+            .join(",") || undefined,
+          concentration: selectedConcentrations.join(",") || undefined,
+          maxPrice: price === Number.MAX_SAFE_INTEGER ? undefined : price,
+          sort,
+        },
+      });
 
       if (active) {
-        setProducts(data);
+        setProducts(data.data);
+        setTotal(data.total);
       }
     } catch (error) {
       console.error("Failed to load products", error);
@@ -98,14 +129,23 @@ useEffect(() => {
   return () => {
     active = false;
   };
-}, []);
+}, [
+  search,
+  selectedBrands,
+  selectedGenders,
+  selectedScents,
+  selectedSizes,
+  selectedConcentrations,
+  price,
+  sort,
+]);
 
 const brands = useMemo(
   () =>
     Array.from(
       new Set(
         products
-          .map((product) => product.brand?.name)
+          .map((product) => product.brand)
           .filter((brand): brand is string => Boolean(brand)),
       ),
     ),
@@ -142,7 +182,7 @@ const concentrations = useMemo(
 );
 
 const maxPrice = useMemo(
-  () => products.reduce((max, product) => Math.max(max, product.price), 0),
+  () => products.reduce((max, product) => Math.max(max, product.price ?? 0), 0),
   [products],
 );
 
@@ -158,7 +198,7 @@ const filteredProducts = useMemo(
       const matchesSearch = product.name.toLowerCase().includes(search.toLowerCase());
       const matchesBrand =
         selectedBrands.length === 0 ||
-        (product.brand?.name ? selectedBrands.includes(product.brand.name) : false);
+        (product.brand ? selectedBrands.includes(product.brand) : false);
       const matchesGender =
         selectedGenders.length === 0 ||
         (product.gender ? selectedGenders.includes(product.gender) : false);
@@ -176,7 +216,7 @@ const filteredProducts = useMemo(
       const matchesConcentration =
         selectedConcentrations.length === 0 ||
         (product.concentration ? selectedConcentrations.includes(product.concentration) : false);
-      const matchesPrice = product.price <= price;
+      const matchesPrice = (product.price ?? 0) <= price;
 
       return (
         matchesSearch &&
@@ -296,13 +336,17 @@ toggleConcentration={toggleConcentration}
           {/* Toolbar */}
           <div className="flex justify-between border-b pb-5 border-[#e8deca]">
             <p className="uppercase text-xs tracking-widest text-[#5F5E5E]">
-              Showing {filteredProducts.length} products
+              Showing {filteredProducts.length} of {total} products
             </p>
 
-            <select className="uppercase text-xs tracking-widest bg-transparent outline-none">
-              <option>Newest</option>
-              <option>Price ↑</option>
-              <option>Price ↓</option>
+            <select
+              className="uppercase text-xs tracking-widest bg-transparent outline-none"
+              value={sort}
+              onChange={(e) => setSort(e.target.value)}
+            >
+              <option value="newest">Newest</option>
+              <option value="price_asc">Price ↑</option>
+              <option value="price_desc">Price ↓</option>
             </select>
           </div>
 

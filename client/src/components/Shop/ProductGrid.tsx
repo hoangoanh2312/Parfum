@@ -5,8 +5,10 @@ interface Product {
   id?: string;
   name: string;
   description?: string;
-  price: number;
-  image?: string;
+  price?: number | null;
+  priceText?: string;
+  image?: string | null;
+  brand?: string;
   images?: string[];
 }
 

@@ -5,8 +5,10 @@ interface Product {
   id?: string;
   name: string;
   description?: string;
-  price: number;
-  image?: string;
+  price?: number | null;
+  priceText?: string;
+  image?: string | null;
+  brand?: string;
   images?: string[];
 }
 
@@ -17,10 +19,14 @@ interface ProductCardProps {
 export default function ProductCard({
   product,
 }: ProductCardProps) {
-  const price = new Intl.NumberFormat("vi-VN", {
-    style: "currency",
-    currency: "VND",
-  }).format(product.price);
+  const price =
+    product.priceText ||
+    (product.price != null
+      ? new Intl.NumberFormat("vi-VN", {
+          style: "currency",
+          currency: "VND",
+        }).format(product.price)
+      : "Liên hệ");
   const image =
     product.images?.[0] ||
     product.image ||
@@ -53,7 +59,7 @@ export default function ProductCard({
       {/* Info */}
       <div className="mt-6">
         <p className="uppercase tracking-[3px] text-[10px] text-[#735C00]">
-          Eau De Parfum
+          {product.brand || "Eau De Parfum"}
         </p>
 
         <h3 className="mt-2 text-2xl font-semibold text-[#1C1C19]">
