@@ -29,8 +29,12 @@ export default function Cart() {
     api
       .get("/products")
       .then(({ data }) => {
+<<<<<<< HEAD
         const list = Array.isArray(data) ? data : data.data;
         if (active) setSimilar(Array.isArray(list) ? list : []);
+=======
+        if (active) setSimilar(Array.isArray(data) ? data : []);
+>>>>>>> 370e5a108f256acb306946aad424ff837135ade1
       })
       .catch(() => {
         // bỏ qua nếu lỗi, chỉ là gợi ý

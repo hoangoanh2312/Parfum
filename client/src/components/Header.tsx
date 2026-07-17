@@ -93,10 +93,14 @@ export default function Header() {
               )}
             </Link>
 
+<<<<<<< HEAD
             <Link
               to={user?.role === "admin" ? "/admin/reviews" : "/login"}
               title={user ? user.name : "Đăng nhập"}
             >
+=======
+            <Link to={user ? "/dashboard" : "/login"} title={user ? user.name : "Đăng nhập"}>
+>>>>>>> 370e5a108f256acb306946aad424ff837135ade1
               <User size={15} className="cursor-pointer hover:text-black duration-300" />
             </Link>
           </div>

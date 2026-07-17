@@ -1,5 +1,6 @@
 import { Product } from '../models/product.model';
 import { Variant } from '../models/variant.model';
+<<<<<<< HEAD
 import '../models/brand.model';
 import '../models/category.model';
 
@@ -46,6 +47,8 @@ type ProductCard = {
 const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 12;
 const MAX_LIMIT = 100;
+=======
+>>>>>>> 370e5a108f256acb306946aad424ff837135ade1
 
 // Định dạng tiền VND
 function formatVnd(n?: number | null) {
@@ -53,6 +56,7 @@ function formatVnd(n?: number | null) {
   return n.toLocaleString('vi-VN') + 'đ';
 }
 
+<<<<<<< HEAD
 function toNumber(value: unknown, fallback: number) {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
@@ -220,6 +224,50 @@ export async function getProducts(query: ProductListQuery = {}) {
     limit,
     totalPages,
   };
+=======
+/**
+ * Lấy danh sách sản phẩm để hiển thị ngoài web.
+ * Ghép Product + Brand + Variant (lấy giá RẺ NHẤT làm giá hiển thị "từ ...").
+ */
+export async function getProducts() {
+  const products: any[] = await Product.find({ isActive: true })
+    .populate('brand', 'name')
+    .populate('category', 'name')
+    .sort({ createdAt: -1 })
+    .lean();
+
+  const ids = products.map((p) => p._id);
+  const variants: any[] = await Variant.find({ product: { $in: ids } }).lean();
+
+  // Gom variant theo product
+  const byProduct: Record<string, any[]> = {};
+  for (const v of variants) {
+    const key = String(v.product);
+    (byProduct[key] ||= []).push(v);
+  }
+
+  return products.map((p) => {
+    const vs = byProduct[String(p._id)] || [];
+    const cheapest = vs.reduce(
+      (min: any, v: any) => (min == null || v.price < min.price ? v : min),
+      null as any,
+    );
+    const stock = vs.reduce((s: number, v: any) => s + (v.stock || 0), 0);
+    return {
+      id: String(p._id),
+      slug: p.slug,
+      name: p.name,
+      brand: p.brand?.name || '',
+      category: p.category?.name || '',
+      image: (p.images && p.images[0]) || (cheapest && cheapest.images?.[0]) || null,
+      price: cheapest?.price ?? null,
+      priceText: formatVnd(cheapest?.price),
+      variantId: cheapest ? String(cheapest._id) : null, // dùng cho "Thêm vào giỏ"
+      volume: cheapest?.volume || '',
+      stock,
+    };
+  });
+>>>>>>> 370e5a108f256acb306946aad424ff837135ade1
 }
 
 /** Chi tiết 1 sản phẩm theo id hoặc slug, kèm toàn bộ variant. */
@@ -237,6 +285,7 @@ export async function getProductDetail(idOrSlug: string) {
     throw Object.assign(new Error('Không tìm thấy sản phẩm'), { status: 404 });
   }
 
+<<<<<<< HEAD
   const variants: any[] = await Variant.find({ product: product._id })
     .sort({ price: 1 })
     .lean();
@@ -279,4 +328,8 @@ export async function getProductDetail(idOrSlug: string) {
     stock,
     isActive: product.isActive !== false,
   };
+=======
+  const variants = await Variant.find({ product: product._id }).lean();
+  return { ...product, variants };
+>>>>>>> 370e5a108f256acb306946aad424ff837135ade1
 }
