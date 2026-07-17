@@ -8,12 +8,20 @@ import { env } from './config/env';
 
 export function createApp() {
   const app = express();
+  const isAllowedOrigin = (origin: string) => {
+    if (env.allowedOrigins.includes(origin)) return true;
+    if (env.nodeEnv !== 'production' && /^https?:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin)) {
+      return true;
+    }
+    return false;
+  };
+
   app.use(helmet({
     crossOriginResourcePolicy: { policy: 'cross-origin' },
   }));
   app.use(cors({
     origin(origin, callback) {
-      if (!origin || env.allowedOrigins.includes(origin)) return callback(null, true);
+      if (!origin || isAllowedOrigin(origin)) return callback(null, true);
       return callback(new Error('Not allowed by CORS'));
     },
     credentials: true,

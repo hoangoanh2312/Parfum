@@ -2,11 +2,15 @@ import {
   Clock3,
   Heart,
   LayoutDashboard,
+  LogOut,
   MapPin,
   Settings,
   Sparkles,
 } from "lucide-react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
+import { api } from "../../lib/api";
+import { useAuth } from "../../store/auth.store";
+import { toast } from "../../store/toast.store";
 
 const accountLinks = [
   {
@@ -43,6 +47,21 @@ const accountLinks = [
 ];
 
 export default function AccountSidebar() {
+  const logout = useAuth((state) => state.logout);
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      await api.post("/auth/logout");
+    } catch {
+      // Local logout still matters if the server session is already gone.
+    } finally {
+      logout();
+      toast.success("Đã đăng xuất");
+      navigate("/login");
+    }
+  };
+
   return (
     <aside className="w-full shrink-0 border-b border-[#E8E1D8] bg-[#FCF9F4] p-6 lg:w-[245px] lg:border-b-0 lg:border-r lg:p-8">
       <p className="mb-5 text-[9px] uppercase tracking-[0.25em] text-[#777068]">
@@ -68,6 +87,15 @@ export default function AccountSidebar() {
           </NavLink>
         ))}
       </nav>
+
+      <button
+        type="button"
+        onClick={handleLogout}
+        className="mt-5 flex w-full items-center gap-3 border-l-2 border-transparent px-4 py-3 text-left text-xs text-[#8B2F24] transition hover:bg-[#F1EDE7]"
+      >
+        <LogOut size={15} strokeWidth={1.4} />
+        <span>Logout</span>
+      </button>
 
       <div className="mt-12 bg-[#E8E4DF] p-5">
         <h3 className="font-serif text-base">Concierge Service</h3>
