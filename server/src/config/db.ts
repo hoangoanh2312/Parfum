@@ -3,6 +3,7 @@ import { env } from "./env"
 
 export async function connectDB() {
 	try {
+		console.log("Mongo URI:", env.mongoUri)
 		await mongoose.connect(env.mongoUri)
 		console.log("✅ MongoDB connected")
 	} catch (err) {
