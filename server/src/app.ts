@@ -8,9 +8,17 @@ import { env } from './config/env';
 
 export function createApp() {
   const app = express();
-  app.use(helmet());
-  app.use(cors({ origin: env.clientUrl, credentials: true }));
-  app.use(express.json());
+  app.use(helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+  }));
+  app.use(cors({
+    origin(origin, callback) {
+      if (!origin || env.allowedOrigins.includes(origin)) return callback(null, true);
+      return callback(new Error('Not allowed by CORS'));
+    },
+    credentials: true,
+  }));
+  app.use(express.json({ limit: '100kb' }));
   app.get('/', (_, res) => {
   res.json({
     status: 'ok',
