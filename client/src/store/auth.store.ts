@@ -1,11 +1,19 @@
 import { create } from 'zustand';
-import { jwtDecode } from 'jwt-decode';
+import { api } from '../lib/api';
 
 interface User {
   id: string;
   name: string;
   email: string;
   role: string;
+  addresses?: Address[];
+}
+
+export interface Address {
+  _id: string;
+  label: string;
+  phone: string;
+  detail: string;
 }
 
 interface AuthState {
@@ -27,12 +35,19 @@ interface JWTPayload {
 const isValidToken = (token: string | null): boolean => {
   if (!token) return false;
   try {
-    const decoded = jwtDecode<JWTPayload>(token);
+    const decoded = decodeJwt<JWTPayload>(token);
     return decoded.exp > Date.now() / 1000;
   } catch {
     return false;
   }
 };
+
+function decodeJwt<T>(token: string): T {
+  const payload = token.split('.')[1];
+  const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
+  const decoded = atob(normalized);
+  return JSON.parse(decoded) as T;
+}
 
 export const useAuth = create<AuthState>((set, get) => ({
   user: null,
@@ -56,8 +71,22 @@ export const useAuth = create<AuthState>((set, get) => ({
   bootstrap: async () => {
     const token = localStorage.getItem('accessToken');
     if (isValidToken(token)) {
-      const decoded = jwtDecode<User & JWTPayload>(token!);
-      set({ user: { id: decoded.id, name: '', email: '', role: decoded.role }, isBootstrapped: true });
+      try {
+        const { data } = await api.get('/auth/me');
+        set({
+          user: {
+            id: data._id || data.id,
+            name: data.name,
+            email: data.email,
+            role: data.role,
+            addresses: data.addresses || [],
+          },
+          isBootstrapped: true,
+        });
+      } catch {
+        const decoded = decodeJwt<User & JWTPayload>(token!);
+        set({ user: { id: decoded.id, name: '', email: '', role: decoded.role }, isBootstrapped: true });
+      }
     } else {
       set({ user: null, isBootstrapped: true });
     }
