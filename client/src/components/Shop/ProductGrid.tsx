@@ -10,6 +10,7 @@ interface Product {
   image?: string | null;
   brand?: string;
   images?: string[];
+  slug?: string;
 }
 
 interface ProductGridProps {

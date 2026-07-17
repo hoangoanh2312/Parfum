@@ -233,6 +233,46 @@ export async function getProductDetail(idOrSlug: string) {
     throw Object.assign(new Error('Không tìm thấy sản phẩm'), { status: 404 });
   }
 
-  const variants = await Variant.find({ product: product._id }).lean();
-  return { ...product, variants };
+  const variants: any[] = await Variant.find({ product: product._id })
+    .sort({ price: 1 })
+    .lean();
+
+  const normalizedVariants = variants.map((variant) => ({
+    id: String(variant._id),
+    sku: variant.sku,
+    size: variant.size || variant.volume || '',
+    volume: variant.size || variant.volume || '',
+    price: variant.price,
+    priceText: formatVnd(variant.price),
+    stock: variant.stock || 0,
+    images: variant.images || [],
+    isActive: variant.isActive !== false,
+  }));
+
+  const variantImages = normalizedVariants.flatMap((variant) => variant.images);
+  const gallery = Array.from(new Set([...(product.images || []), ...variantImages]));
+  const stock = normalizedVariants.reduce((sum, variant) => sum + (variant.stock || 0), 0);
+
+  return {
+    id: String(product._id),
+    slug: product.slug,
+    name: product.name,
+    brand: product.brand?.name || '',
+    category: product.category?.name || '',
+    description: product.description || '',
+    gender: product.gender || '',
+    fragranceFamily: product.fragranceFamily || '',
+    concentration: product.concentration || '',
+    season: product.season || [],
+    gallery,
+    images: gallery,
+    notes: {
+      top: product.notes?.top?.length ? product.notes.top : product.topNotes || [],
+      middle: product.notes?.middle?.length ? product.notes.middle : product.heartNotes || [],
+      base: product.notes?.base?.length ? product.notes.base : product.baseNotes || [],
+    },
+    variants: normalizedVariants,
+    stock,
+    isActive: product.isActive !== false,
+  };
 }

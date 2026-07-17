@@ -1,4 +1,5 @@
 import { Heart, ShoppingBag } from "lucide-react";
+import { Link } from "react-router-dom";
 
 interface Product {
   _id?: string;
@@ -10,6 +11,7 @@ interface Product {
   image?: string | null;
   brand?: string;
   images?: string[];
+  slug?: string;
 }
 
 interface ProductCardProps {
@@ -19,6 +21,7 @@ interface ProductCardProps {
 export default function ProductCard({
   product,
 }: ProductCardProps) {
+  const detailPath = `/products/${product.slug || product.id || product._id}`;
   const price =
     product.priceText ||
     (product.price != null
@@ -75,9 +78,12 @@ export default function ProductCard({
             {price}
           </span>
 
-          <button className="uppercase tracking-[2px] text-[11px] font-semibold text-[#735C00] hover:underline">
+          <Link
+            to={detailPath}
+            className="uppercase tracking-[2px] text-[11px] font-semibold text-[#735C00] hover:underline"
+          >
             View
-          </button>
+          </Link>
         </div>
       </div>
     </article>

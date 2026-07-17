@@ -29,7 +29,8 @@ export default function Cart() {
     api
       .get("/products")
       .then(({ data }) => {
-        if (active) setSimilar(Array.isArray(data) ? data : []);
+        const list = Array.isArray(data) ? data : data.data;
+        if (active) setSimilar(Array.isArray(list) ? list : []);
       })
       .catch(() => {
         // bỏ qua nếu lỗi, chỉ là gợi ý

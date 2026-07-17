@@ -14,7 +14,8 @@ export default function FeaturedProducts() {
       .get('/products')
       .then(({ data }) => {
         if (!active) return;
-        setProducts(Array.isArray(data) ? data.slice(0, 8) : []);
+        const list = Array.isArray(data) ? data : data.data;
+        setProducts(Array.isArray(list) ? list.slice(0, 8) : []);
         setError('');
       })
       .catch((e) => {

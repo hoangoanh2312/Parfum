@@ -16,6 +16,7 @@ import About from "./pages/About";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Cart from "./pages/Cart";
+import ProductDetail from "./pages/ProductDetail";
 import Dashboard from "./pages/Dashboard";
 import Orders from "./pages/Orders";
 import OrderDetail from "./pages/OrderDetail";
@@ -35,6 +36,7 @@ const router = createBrowserRouter([
       { path: "login", element: <Login /> },
       { path: "register", element: <Register /> },
       { path: "cart", element: <Cart /> },
+      { path: "products/:idOrSlug", element: <ProductDetail /> },
       // Khu vực cần đăng nhập
       {
         element: <ProtectedRoute />,

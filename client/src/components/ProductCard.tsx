@@ -1,4 +1,5 @@
 import { Heart, ShoppingBag } from "lucide-react";
+import { Link } from "react-router-dom";
 import { useCart } from "../store/cart.store";
 import { toast } from "../store/toast.store";
 
@@ -22,6 +23,7 @@ export interface ProductCardData {
 
 export default function ProductCard({ item }: { item: ProductCardData }) {
   const addItem = useCart((s) => s.addItem);
+  const detailPath = `/products/${item.slug || item.id}`;
 
   // Hết hàng khi: chưa có phiên bản để bán HOẶC tổng tồn kho <= 0
   const outOfStock =
@@ -121,9 +123,12 @@ export default function ProductCard({ item }: { item: ProductCardData }) {
             {item.priceText || (item.price ? `${(item.price || 0).toLocaleString("vi-VN")}đ` : "Liên hệ")}
           </span>
 
-          <button className="uppercase tracking-[2px] text-[11px] font-semibold text-[#735C00] hover:underline">
+          <Link
+            to={detailPath}
+            className="uppercase tracking-[2px] text-[11px] font-semibold text-[#735C00] hover:underline"
+          >
             View
-          </button>
+          </Link>
         </div>
       </div>
     </article>
