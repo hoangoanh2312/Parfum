@@ -18,6 +18,9 @@ export const env = {
   jwtAccessSecret: required('JWT_ACCESS_SECRET'),
   jwtRefreshSecret: required('JWT_REFRESH_SECRET'),
   clientUrl: process.env.CLIENT_URL || 'http://localhost:5173',
+  cloudinaryName: process.env.CLOUDINARY_CLOUD_NAME || '',
+  cloudinaryKey: process.env.CLOUDINARY_API_KEY || '',
+  cloudinarySecret: process.env.CLOUDINARY_API_SECRET || '',
   // PF-36: cấu hình VietQR (demo) cho thanh toán chuyển khoản QR
   vietqr: {
     bankBin: process.env.VIETQR_BANK_BIN || '970415',

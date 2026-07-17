@@ -6,7 +6,6 @@ interface User {
   name: string;
   email: string;
   role: string;
-<<<<<<< HEAD
   addresses?: Address[];
 }
 
@@ -61,42 +60,11 @@ export const useAuth = create<AuthState>((set, get) => ({
   setTokens: (access, refresh) => {
     localStorage.setItem('accessToken', access);
     localStorage.setItem('refreshToken', refresh);
-=======
-}
-
-interface AuthState {
-  user: User | null;
-  setUser: (u: User | null) => void;
-  setTokens: (accessToken: string, refreshToken?: string) => void;
-  logout: () => void;
-}
-
-const savedUser = localStorage.getItem('user');
-
-export const useAuth = create<AuthState>((set) => ({
-  user: savedUser ? JSON.parse(savedUser) : null,
-
-  setUser: (user) => {
-    if (user) {
-      localStorage.setItem('user', JSON.stringify(user));
-    } else {
-      localStorage.removeItem('user');
-    }
-    set({ user });
-  },
-
-  // Lưu token sau khi đăng nhập/đăng ký. lib/api.ts sẽ tự đính kèm
-  // "Authorization: Bearer <accessToken>" cho mọi request nhờ đọc localStorage.
-  setTokens: (accessToken, refreshToken) => {
-    if (accessToken) localStorage.setItem('accessToken', accessToken);
-    if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
->>>>>>> 370e5a108f256acb306946aad424ff837135ade1
   },
 
   logout: () => {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
-<<<<<<< HEAD
     set({ user: null, isBootstrapped: true });
   },
 
@@ -122,9 +90,5 @@ export const useAuth = create<AuthState>((set) => ({
     } else {
       set({ user: null, isBootstrapped: true });
     }
-=======
-    localStorage.removeItem('user');
-    set({ user: null });
->>>>>>> 370e5a108f256acb306946aad424ff837135ade1
   },
 }));

@@ -1,4 +1,5 @@
 import bcrypt from 'bcryptjs';
+import { JsonWebTokenError, TokenExpiredError } from 'jsonwebtoken';
 import { User } from '../models/user.model';
 import { signAccess, signRefresh, verifyRefresh } from '../utils/jwt';
 
@@ -12,21 +13,11 @@ export async function register(name: string, email: string, password: string) {
 
 export async function login(email: string, password: string) {
   const user = await User.findOne({ email }).select('+password');
-<<<<<<< HEAD
   if (!user) throw Object.assign(new Error('Sai thong tin'), { status: 401 });
   const ok = await bcrypt.compare(password, user.password as string);
-=======
-  if (!user) {
-    throw Object.assign(new Error('Sai thong tin'), { status: 401 });
-  }
-  
-  const ok = await bcrypt.compare(password, user.password);
->>>>>>> 370e5a108f256acb306946aad424ff837135ade1
   if (!ok) throw Object.assign(new Error('Sai thong tin'), { status: 401 });
   return issueTokens(user);
 }
-
-import { JsonWebTokenError, TokenExpiredError } from 'jsonwebtoken';
 
 export async function refreshAccessToken(refreshToken: string) {
   let payload: { id: string };
@@ -89,7 +80,7 @@ export async function addAddress(
   userId: string,
   input: { label: string; phone: string; detail: string },
 ) {
-  const user = await User.findById(userId);
+  const user: any = await User.findById(userId);
   if (!user) throw Object.assign(new Error('User not found'), { status: 404 });
 
   user.addresses.push({
@@ -106,7 +97,7 @@ export async function updateAddress(
   addressId: string,
   input: { label: string; phone: string; detail: string },
 ) {
-  const user = await User.findById(userId);
+  const user: any = await User.findById(userId);
   if (!user) throw Object.assign(new Error('User not found'), { status: 404 });
 
   const address = user.addresses.id(addressId);
@@ -122,7 +113,7 @@ export async function updateAddress(
 }
 
 export async function deleteAddress(userId: string, addressId: string) {
-  const user = await User.findById(userId);
+  const user: any = await User.findById(userId);
   if (!user) throw Object.assign(new Error('User not found'), { status: 404 });
 
   const address = user.addresses.id(addressId);

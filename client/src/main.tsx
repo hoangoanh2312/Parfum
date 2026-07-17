@@ -1,12 +1,8 @@
 import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import { RouterProvider } from 'react-router-dom';
-<<<<<<< HEAD
 import { router } from './router';
 import { useAuth } from './store/auth.store';
-=======
-import  router  from './router';
->>>>>>> 370e5a108f256acb306946aad424ff837135ade1
 import './index.css';
 
 function App() {
@@ -23,7 +19,7 @@ function App() {
   return <RouterProvider router={router} />;
 }
 
-ReactDOM.createRoot(document.getElementById('root')!)!.render(
+ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <App />
   </React.StrictMode>,

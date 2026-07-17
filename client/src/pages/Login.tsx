@@ -2,10 +2,6 @@ import React, { useState, CSSProperties } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
 import { useAuth } from "../store/auth.store";
-<<<<<<< HEAD
-=======
-import { useCart } from "../store/cart.store";
->>>>>>> 370e5a108f256acb306946aad424ff837135ade1
 
 const color = {
   pageBg: "#FDF9F4",
@@ -105,10 +101,6 @@ export default function Login() {
       const { data } = await api.post("/auth/login", { email, password });
       useAuth.getState().setTokens(data.accessToken, data.refreshToken);
       setUser(data.user);
-<<<<<<< HEAD
-=======
-      await useCart.getState().syncOnLogin(); // gộp giỏ khách + nạp giỏ từ DB
->>>>>>> 370e5a108f256acb306946aad424ff837135ade1
       navigate("/");
     } catch (err: any) {
       setError(err.response?.data?.message || "Đăng nhập thất bại");
