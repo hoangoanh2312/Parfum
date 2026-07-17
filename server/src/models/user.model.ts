@@ -17,6 +17,11 @@ const userSchema = new Schema(
 			default: "customer",
 		},
 		addresses: [{ label: String, phone: String, detail: String }],
+		scentProfile: {
+			families: [{ type: String }],
+			preferredNotes: [{ type: String }],
+			dislikedNotes: [{ type: String }],
+		},
 		refreshToken: { type: String },
 	},
 	{

@@ -1,6 +1,13 @@
 import { Order } from '../models/order.model';
 import { Wishlist } from '../models/wishlist.model';
+import { User } from '../models/user.model';
 import '../models/product.model';
+
+const defaultScentProfile = {
+  families: ['woody', 'fresh', 'oriental'],
+  preferredNotes: ['Oud', 'Amber', 'Bergamot', 'Sandalwood', 'Vanilla', 'Musk'],
+  dislikedNotes: ['Tobacco', 'Leather'],
+};
 
 export async function getOrders(userId: string) {
   const orders: any[] = await Order.find({ user: userId }).sort({ createdAt: -1 }).lean();
@@ -63,4 +70,30 @@ export async function removeWishlistItem(userId: string, productId: string) {
     { new: true },
   );
   return getWishlist(userId);
+}
+
+export async function getScentProfile(userId: string) {
+  const user: any = await User.findById(userId).select('scentProfile').lean();
+  return {
+    families: user?.scentProfile?.families?.length ? user.scentProfile.families : defaultScentProfile.families,
+    preferredNotes: user?.scentProfile?.preferredNotes?.length
+      ? user.scentProfile.preferredNotes
+      : defaultScentProfile.preferredNotes,
+    dislikedNotes: user?.scentProfile?.dislikedNotes || defaultScentProfile.dislikedNotes,
+  };
+}
+
+export async function updateScentProfile(
+  userId: string,
+  profile: { families: string[]; preferredNotes: string[]; dislikedNotes: string[] },
+) {
+  const user: any = await User.findByIdAndUpdate(
+    userId,
+    { $set: { scentProfile: profile } },
+    { new: true },
+  )
+    .select('scentProfile')
+    .lean();
+
+  return user?.scentProfile || profile;
 }

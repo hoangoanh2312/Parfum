@@ -20,28 +20,14 @@ interface OrderItem {
 }
 
 interface RecommendationItem {
+  id?: string;
+  slug?: string;
   category: string;
   name: string;
   description: string;
   image: string;
+  stock?: number;
 }
-
-const recentOrders: OrderItem[] = [
-  {
-    id: "8921",
-    name: "Midnight Vetiver",
-    date: "12/12/2025",
-    price: "5.990.000đ",
-    status: "Đã giao",
-  },
-  {
-    id: "8845",
-    name: "The Discovery Set",
-    date: "05/11/2025",
-    price: "2.150.000đ",
-    status: "Đã giao",
-  },
-];
 
 const recommendations: RecommendationItem[] = [
   {
@@ -76,6 +62,7 @@ export default function AccountOverview() {
   const user = useAuth((state) => state.user);
   const [orders, setOrders] = useState<OrderItem[]>([]);
   const [items, setItems] = useState<RecommendationItem[]>(recommendations);
+  const [refillProduct, setRefillProduct] = useState<RecommendationItem | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -88,7 +75,9 @@ export default function AccountOverview() {
           data.slice(0, 2).map((order) => ({
             id: order.id.slice(-6).toUpperCase(),
             name: order.firstItemName || "Đơn hàng",
-            date: order.createdAt ? new Date(order.createdAt).toLocaleDateString("vi-VN") : "Đang cập nhật",
+            date: order.createdAt
+              ? new Date(order.createdAt).toLocaleDateString("vi-VN")
+              : "Đang cập nhật",
             price: `${(order.total || 0).toLocaleString("vi-VN")}đ`,
             status: order.status,
           })),
@@ -99,16 +88,26 @@ export default function AccountOverview() {
       });
 
     api
-      .get<{ data: any[] }>("/products", { params: { limit: 3, sort: "newest" } })
+      .get<{ data: any[] }>("/products", { params: { limit: 100, sort: "newest" } })
       .then(({ data }) => {
         if (!mounted || !Array.isArray(data.data) || data.data.length === 0) return;
-        setItems(
-          data.data.slice(0, 3).map((product) => ({
-            category: product.category || product.brand || "Parfum",
-            name: product.name,
-            description: product.description || "Mùi hương tinh tế, sang trọng.",
-            image: product.images?.[0] || product.image || "https://placehold.co/800x600?text=No+Image",
-          })),
+        const products: RecommendationItem[] = data.data.map((product) => ({
+          id: product.id,
+          slug: product.slug,
+          category: product.category || product.brand || "Parfum",
+          name: product.name,
+          description: product.description || "Mùi hương tinh tế, sang trọng.",
+          image: product.images?.[0] || product.image || "https://placehold.co/800x600?text=No+Image",
+          stock: product.stock || 0,
+        }));
+
+        setItems(products.slice(0, 3));
+        setRefillProduct(
+          products
+            .filter((product) => (product.stock || 0) > 0)
+            .sort((left, right) => (left.stock || 0) - (right.stock || 0))[0] ||
+            products[0] ||
+            null,
         );
       })
       .catch(() => undefined);
@@ -119,10 +118,12 @@ export default function AccountOverview() {
   }, []);
 
   const defaultAddress = user?.addresses?.[0];
+  const refillProductPath = refillProduct
+    ? `/products/${refillProduct.slug || refillProduct.id}`
+    : "/shop";
 
   return (
     <div className="min-h-screen bg-[#FCF9F4] text-[#27231F]">
-      {/* Tiêu đề */}
       <section className="border-b border-[#E8E1D8] px-6 pb-6 pt-12 lg:px-12">
         <p className="mb-2 text-[10px] uppercase tracking-[0.3em] text-[#9A9186]">
           Cổng thông tin cá nhân
@@ -146,7 +147,6 @@ export default function AccountOverview() {
       </section>
 
       <main className="space-y-14 px-6 py-10 lg:px-12">
-        {/* Scent DNA và Refill */}
         <section className="grid gap-5 xl:grid-cols-[2fr_1fr]">
           <div className="grid gap-6 bg-[#F3EFEA] p-6 sm:grid-cols-[1fr_220px] lg:p-8">
             <div className="flex flex-col justify-center">
@@ -191,22 +191,32 @@ export default function AccountOverview() {
               </h2>
 
               <p className="mt-4 text-sm leading-6 text-[#907A21]">
-                Chai nước hoa L&apos;Obscurité của bạn được dự đoán sẽ hết
-                trong khoảng 12 ngày tới.
+                {refillProduct ? (
+                  <>
+                    <Link
+                      to={refillProductPath}
+                      className="font-semibold text-[#6D5900] underline-offset-4 hover:underline"
+                    >
+                      {refillProduct.name}
+                    </Link>{" "}
+                    đang còn {refillProduct.stock || 0} sản phẩm trong kho.
+                  </>
+                ) : (
+                  "Chưa có sản phẩm nào cần theo dõi tồn kho."
+                )}
               </p>
             </div>
 
             <Link
-              to="/shop"
+              to={refillProductPath}
               className="mt-8 flex items-center justify-center gap-3 bg-[#816900] px-5 py-4 text-[10px] uppercase tracking-[0.16em] text-white transition hover:bg-[#685400]"
             >
-              Mua lại ngay
+              Xem chi tiết
               <ArrowRight size={13} />
             </Link>
           </div>
         </section>
 
-        {/* Đơn hàng và địa chỉ */}
         <section className="grid gap-10 xl:grid-cols-2">
           <div>
             <div className="mb-5 flex items-end justify-between gap-4">
@@ -221,7 +231,7 @@ export default function AccountOverview() {
             </div>
 
             <div className="space-y-4">
-              {(orders.length ? orders : recentOrders.slice(0, 0)).map((order) => (
+              {orders.map((order) => (
                 <div
                   key={order.id}
                   className="grid grid-cols-[56px_1fr_auto] items-center gap-4 border-l-2 border-[#B49A26] bg-[#F4F0EA] p-4 transition hover:bg-[#EEE8DF]"
@@ -275,11 +285,7 @@ export default function AccountOverview() {
                 </p>
 
                 <div className="mt-5 flex gap-3">
-                  <MapPin
-                    size={16}
-                    strokeWidth={1.3}
-                    className="mt-1 shrink-0"
-                  />
+                  <MapPin size={16} strokeWidth={1.3} className="mt-1 shrink-0" />
 
                   <div className="font-serif text-sm leading-6">
                     <p>{user?.name || "Chưa cập nhật"}</p>
@@ -289,10 +295,7 @@ export default function AccountOverview() {
                 </div>
 
                 <div className="mt-8 flex gap-5">
-                  <Link
-                    to="/account/addresses"
-                    className="text-[9px] uppercase tracking-widest"
-                  >
+                  <Link to="/account/addresses" className="text-[9px] uppercase tracking-widest">
                     Chỉnh sửa
                   </Link>
 
@@ -319,7 +322,6 @@ export default function AccountOverview() {
           </div>
         </section>
 
-        {/* Gợi ý sản phẩm */}
         <section>
           <div className="mb-8 text-center">
             <div className="flex items-center justify-center gap-2">
@@ -337,7 +339,7 @@ export default function AccountOverview() {
 
           <div className="grid gap-8 md:grid-cols-3">
             {items.map((item) => (
-              <article key={item.name} className="group">
+              <article key={item.id || item.name} className="group">
                 <div className="overflow-hidden bg-[#ECE7E0]">
                   <img
                     src={item.image}

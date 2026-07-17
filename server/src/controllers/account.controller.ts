@@ -34,3 +34,19 @@ export async function removeWishlistItem(req: Request, res: Response) {
     res.status(error.status || 500).json({ message: error.message || 'Server error' });
   }
 }
+
+export async function getScentProfile(req: Request, res: Response) {
+  try {
+    res.json(await accountService.getScentProfile(uid(req)));
+  } catch (error: any) {
+    res.status(error.status || 500).json({ message: error.message || 'Server error' });
+  }
+}
+
+export async function updateScentProfile(req: Request, res: Response) {
+  try {
+    res.json(await accountService.updateScentProfile(uid(req), req.body));
+  } catch (error: any) {
+    res.status(error.status || 500).json({ message: error.message || 'Server error' });
+  }
+}

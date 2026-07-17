@@ -49,7 +49,7 @@ export default function Settings() {
 
     setForm((previous) => ({
       ...previous,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: type === "checkbox" ? checked : name === "phone" ? value.replace(/\D/g, "").slice(0, 10) : value,
     }));
   };
 
@@ -67,19 +67,45 @@ export default function Settings() {
       }
     }
 
+    const defaultAddress = user?.addresses?.[0];
+    const nextPhone = form.phone.trim();
+
+    if (nextPhone && !/^0\d{9}$/.test(nextPhone)) {
+      toast.error("Số điện thoại phải bắt đầu bằng 0 và đủ 10 số");
+      return;
+    }
+
+    if (nextPhone && !defaultAddress) {
+      toast.error("Bạn cần thêm địa chỉ trước khi cập nhật số điện thoại");
+      return;
+    }
+
     try {
       setSaving(true);
       const { data } = await api.put("/auth/me", {
         name: form.fullName,
         email: form.email,
       });
+      let nextAddresses = data.addresses || [];
+
+      if (defaultAddress && nextPhone !== defaultAddress.phone) {
+        const { data: updatedAddresses } = await api.put(
+          `/auth/me/addresses/${defaultAddress._id}`,
+          {
+            label: defaultAddress.label || "Mặc định",
+            phone: nextPhone,
+            detail: defaultAddress.detail,
+          },
+        );
+        nextAddresses = updatedAddresses;
+      }
 
       setUser({
         id: data._id || data.id,
         name: data.name,
         email: data.email,
         role: data.role,
-        addresses: data.addresses || [],
+        addresses: nextAddresses,
       });
 
       if (form.currentPassword && form.newPassword) {
