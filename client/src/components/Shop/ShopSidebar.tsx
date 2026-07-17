@@ -17,6 +17,7 @@ interface Props{
     toggleGender:(gender:string)=>void;
 
     price:number;
+    maxPrice?: number;
     setPrice:(value:number)=>void;
 }
 const genders = ["Women", "Men", "Unisex"];
@@ -49,6 +50,7 @@ export default function ShopSidebar(props:Props){
 
 <PriceFilter
     value={props.price}
+    max={props.maxPrice}
     onChange={props.setPrice}
 />
 

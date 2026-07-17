@@ -1,24 +1,22 @@
 import { useState } from "react";
 
-interface PriceFilterProps{
-    value:number;
-    onChange:(value:number)=>void;
-    min?: number;
-    max?: number;
+interface PriceFilterProps {
+  value: number;
+  onChange: (value: number) => void;
+  min?: number;
+  max?: number;
 }
+
+const vnd = (n: number) => (n || 0).toLocaleString("vi-VN") + "₫";
 
 export default function PriceFilter({
   min = 0,
-  max = 500,
+  max = 5000000,
+  value,
   onChange,
 }: PriceFilterProps) {
-  const [value, setValue] = useState(max);
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const price = Number(e.target.value);
-
-    setValue(price);
-    onChange?.(price);
+    onChange?.(Number(e.target.value));
   };
 
   return (
@@ -37,9 +35,9 @@ export default function PriceFilter({
       />
 
       <div className="flex justify-between mt-3 text-xs text-gray-500">
-        <span>${min}</span>
+        <span>{vnd(min)}</span>
 
-        <span>${value}</span>
+        <span>{vnd(value)}</span>
       </div>
     </div>
   );

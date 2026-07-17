@@ -1,17 +1,7 @@
-import ProductCard from "./ProductCard";
-
-interface Product {
-  _id?: string;
-  id?: string;
-  name: string;
-  description: string;
-  price: number;
-  image?: string;
-  images?: string[];
-}
+import ProductCard, { ProductCardData } from "../ProductCard";
 
 interface ProductGridProps {
-  products: Product[];
+  products: ProductCardData[];
   loading?: boolean;
 }
 
@@ -60,8 +50,8 @@ export default function ProductGrid({
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 mt-10">
       {products.map((product) => (
         <ProductCard
-          key={product._id || product.id}
-          product={product}
+          key={product.id}
+          item={product}
         />
       ))}
     </div>
