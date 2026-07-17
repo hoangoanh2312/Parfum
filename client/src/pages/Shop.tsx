@@ -2,6 +2,7 @@ import { Search, ChevronDown } from "lucide-react";
 import ShopSidebar from "../components/Shop/ShopSidebar";
 import ProductCard from "../components/Shop/ProductCard";
 import { useState } from "react";
+import Footer from "../components/Footer";
 
 export default function Shop() {
   const products = Array.from({ length: 12 }, (_, index) => ({ id: index })) as any[];
@@ -39,6 +40,7 @@ prev.includes(gender)
 
 }
   return (
+    <>
     <main className="bg-[#FDF9F4]">
       {/* Hero */}
       <section className="max-w-[1536px] mx-auto px-10 pt-32 pb-16">
@@ -127,5 +129,8 @@ prev.includes(gender)
         </section>
       </section>
     </main>
+    
+    <Footer />
+</>
   );
 }
