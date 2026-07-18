@@ -9,6 +9,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Brand from "./pages/Brand";
 import Blog from "./pages/Blog";
+import BlogPost from "./pages/BlogPost";
 import About from "./pages/About";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
@@ -24,6 +25,7 @@ import Wishlist from "./pages/account/Wishlist";
 import SavedAddresses from "./pages/account/SavedAddresses";
 import ScentProfile from "./pages/account/ScentProfile";
 import Settings from "./pages/account/Settings";
+import Contact from "./pages/Contact";
 // Trang quản trị
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminProducts from "./pages/admin/AdminProducts";
@@ -44,6 +46,8 @@ export const router = createBrowserRouter([
       { path: "shop", element: <Shop /> },
       { path: "brand", element: <Brand /> },
       { path: "blog", element: <Blog /> },
+      { path: "blog/:slug", element: <BlogPost /> },
+      { path: "contact", element: <Contact /> },
       { path: "about", element: <About /> },
       { path: "cart", element: <Cart /> },
       { path: "checkout", element: <Checkout /> },

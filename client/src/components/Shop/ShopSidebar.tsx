@@ -6,6 +6,7 @@ import ScentFilter from "./ScentFilter";
 import SizeFilter from "./SizeFilter";
 import OccasionFilter from "./OccasionFilter";
 import ConcentrationFilter from "./ConcentrationFilter";
+
 interface Props {
   scents: string[];
   selectedSizes: string[];

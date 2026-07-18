@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 
 // ─── Fonts (thêm vào index.html hoặc layout root nếu chưa có) ───────────────
 // <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Jost:wght@200;300;400&display=swap" rel="stylesheet">
@@ -88,6 +89,7 @@ const COLLECTIONS = [
 
 // ─── Component ───────────────────────────────────────────────────────────────
 export default function BannerSection() {
+  const navigate = useNavigate();
   const [active, setActive] = useState(0);
   const [fading, setFading] = useState(false);
   const [autoplay, setAutoplay] = useState(true);
@@ -361,6 +363,7 @@ export default function BannerSection() {
           {/* Right col: CTA + dots */}
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 12 }}>
             <button
+              onClick={() => navigate("/shop")}
               style={{
                 fontFamily: "'Jost', sans-serif",
                 fontSize: 9,

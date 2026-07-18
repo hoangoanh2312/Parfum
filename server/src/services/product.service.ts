@@ -40,6 +40,11 @@ type ProductCard = {
   variantId: string | null;
   volume: string;
   stock: number;
+  notes?: {
+    top: string[];
+    middle: string[];
+    base: string[];
+  };
   createdAt?: Date;
 };
 
@@ -58,8 +63,12 @@ function toNumber(value: unknown, fallback: number) {
 }
 
 function toList(value: unknown) {
-  if (Array.isArray(value)) return value.flatMap((item) => String(item).split(','));
+  if (Array.isArray(value)) {
+    return value.flatMap((item) => String(item).split(','));
+  }
+
   if (value == null || value === '') return [];
+
   return String(value).split(',');
 }
 
@@ -79,6 +88,17 @@ function overlaps(values: string[] | undefined, filters: string[]) {
   if (filters.length === 0) return true;
   const normalizedValues = (values ?? []).map(normalize);
   return filters.some((filter) => normalizedValues.includes(normalize(filter)));
+}
+
+function matchesScentProfile(product: ProductCard, filters: string[]) {
+  if (filters.length === 0) return true;
+
+  return (
+    includesAny(product.fragranceFamily, filters) ||
+    overlaps(product.notes?.top, filters) ||
+    overlaps(product.notes?.middle, filters) ||
+    overlaps(product.notes?.base, filters)
+  );
 }
 
 function sortProducts(products: ProductCard[], sort?: string) {
@@ -107,6 +127,10 @@ function sortProducts(products: ProductCard[], sort?: string) {
   }
 }
 
+/**
+ * Lấy danh sách sản phẩm cho Shop.
+ * Hỗ trợ filter, sort, pagination, lọc khoảng giá dựa trên giá variant rẻ nhất.
+ */
 export async function getProducts(query: ProductListQuery = {}) {
   const page = Math.max(1, Math.floor(toNumber(query.page, DEFAULT_PAGE)));
   const limit = Math.min(MAX_LIMIT, Math.max(1, Math.floor(toNumber(query.limit, DEFAULT_LIMIT))));
@@ -124,18 +148,14 @@ export async function getProducts(query: ProductListQuery = {}) {
   const seasonFilters = [...toList(query.season), ...toList(query.occasion)];
   const sizeFilters = toList(query.size);
 
-  const productQuery: Record<string, unknown> = {
-    $and: [{ $or: [{ isActive: true }, { isActive: { $exists: false } }] }],
-  };
+  const productQuery: Record<string, unknown> = { isActive: true };
 
   if (search) {
-    (productQuery.$and as Record<string, unknown>[]).push({
-      $or: [
-        { name: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } },
-        { slug: { $regex: search, $options: 'i' } },
-      ],
-    });
+    productQuery.$or = [
+      { name: { $regex: search, $options: 'i' } },
+      { description: { $regex: search, $options: 'i' } },
+      { slug: { $regex: search, $options: 'i' } },
+    ];
   }
 
   const products: any[] = await Product.find(productQuery)
@@ -189,17 +209,23 @@ export async function getProducts(query: ProductListQuery = {}) {
       variantId: cheapest ? String(cheapest._id) : null,
       volume: cheapest?.size || cheapest?.volume || '',
       stock,
+      notes: {
+        top: product.notes?.top?.length ? product.notes.top : product.topNotes || [],
+        middle: product.notes?.middle?.length ? product.notes.middle : product.heartNotes || [],
+        base: product.notes?.base?.length ? product.notes.base : product.baseNotes || [],
+      },
       createdAt: product.createdAt,
     };
   });
 
   const filtered = cards.filter((product) => {
     const price = product.price ?? 0;
+
     return (
       includesAny(product.brand, brandFilters) &&
       includesAny(product.category, categoryFilters) &&
       includesAny(product.gender, genderFilters) &&
-      includesAny(product.fragranceFamily, scentFilters) &&
+      matchesScentProfile(product, scentFilters) &&
       includesAny(product.concentration, concentrationFilters) &&
       overlaps(product.season, seasonFilters) &&
       overlaps(product.sizes, sizeFilters) &&
@@ -216,7 +242,13 @@ export async function getProducts(query: ProductListQuery = {}) {
     .slice(start, start + limit)
     .map(({ createdAt: _createdAt, ...product }) => product);
 
-  return { data, total, page, limit, totalPages };
+  return {
+    data,
+    total,
+    page,
+    limit,
+    totalPages,
+  };
 }
 
 export async function getProductDetail(idOrSlug: string) {
@@ -231,7 +263,9 @@ export async function getProductDetail(idOrSlug: string) {
     throw Object.assign(new Error('Không tìm thấy sản phẩm'), { status: 404 });
   }
 
-  const variants: any[] = await Variant.find({ product: product._id }).sort({ price: 1 }).lean();
+  const variants: any[] = await Variant.find({ product: product._id })
+    .sort({ price: 1 })
+    .lean();
 
   const normalizedVariants = variants.map((variant) => ({
     id: String(variant._id),

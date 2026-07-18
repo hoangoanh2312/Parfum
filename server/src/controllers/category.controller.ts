@@ -1,14 +1,19 @@
-import { Request, Response } from 'express';
-import * as categoryService from '../services/category.services';
+import { Request, Response, NextFunction } from 'express';
+import { getCategories } from '../services/category.services';
 
-export const getCategories = async (req: Request, res: Response) => {
+export const getAllCategories = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
-    const data = await categoryService.getCategories();
+    const categories = await getCategories();
 
-    return res.status(200).json(data);
-  } catch (error) {
-    return res.status(500).json({
-      message: error instanceof Error ? error.message : 'Internal Server Error',
+    res.status(200).json({
+      success: true,
+      data: categories,
     });
+  } catch (error) {
+    next(error);
   }
 };

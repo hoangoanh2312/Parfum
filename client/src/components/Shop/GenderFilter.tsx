@@ -2,6 +2,7 @@ interface GenderFilterProps {
   genders: string[];
   selected: string[];
   onToggle: (gender: string) => void;
+  onClear?: () => void;
 }
 
 const genderLabels: Record<string, string> = {

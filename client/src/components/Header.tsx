@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { NavLink, Link } from "react-router-dom";
-import { Search, Heart, ShoppingBag, User, MapPin } from "lucide-react";
+import { Search, Heart, ShoppingBag, User, Contact as ContactIcon } from "lucide-react";
 import { useCart } from "../store/cart.store";
 import { useAuth } from "../store/auth.store";
 
@@ -71,20 +71,25 @@ export default function Header() {
           ))}
 
           <div className="h-5 w-px bg-[#a67c1a]" />
-
           <div className="flex items-center gap-4 text-[#a67c1a]">
-            <MapPin
-              size={15}
-              className="cursor-pointer hover:text-black duration-300"
-            />
-            <Search
-              size={15}
-              className="cursor-pointer hover:text-black duration-300"
-            />
-            <Heart
-              size={15}
-              className="cursor-pointer hover:text-black duration-300"
-            />
+            <Link to="/contact">
+              <ContactIcon
+                size={15}
+                className="cursor-pointer hover:text-black duration-300"
+              />
+            </Link>
+            <Link to="/Shop">
+              <Search
+                size={15}
+                className="cursor-pointer hover:text-black duration-300"
+              />
+            </Link>
+            <Link to="/account/wishlist" className="relative">
+              <Heart
+                size={15}
+                className="cursor-pointer hover:text-black duration-300"
+              />
+            </Link>
 
             {/* Giỏ hàng + badge số lượng */}
             <Link to="/cart" className="relative">

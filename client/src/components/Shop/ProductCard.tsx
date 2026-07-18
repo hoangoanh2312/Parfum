@@ -121,9 +121,11 @@ export default function ProductCard({ product }: ProductCardProps) {
           {product.brand || "Eau De Parfum"}
         </p>
 
-        <h3 className="mt-2 text-2xl font-semibold text-[#1C1C19]">
-          {product.name}
-        </h3>
+        <Link to={detailPath}>
+          <h3 className="h-[62px] overflow-hidden font-noto-serif text-[24px] text-[#1E1D1A]">
+            {product.name}
+          </h3>
+        </Link>
 
         <p className="mt-3 text-sm text-[#5F5E5E] leading-7 line-clamp-2">
           {product.description || "No description available."}

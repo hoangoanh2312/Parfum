@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import path from 'path';
 import routes from './routes';
 import { setupSwagger } from './config/swagger';
 import { errorHandler } from './middlewares/error.middleware';
@@ -31,6 +32,7 @@ export function createApp() {
     }),
   );
   app.use(express.json({ limit: '100kb' }));
+  app.use('/uploads', express.static(path.resolve(process.cwd(), 'uploads')));
   app.get('/', (_, res) => {
     res.json({
       status: 'ok',
@@ -42,3 +44,6 @@ export function createApp() {
   app.use(errorHandler);
   return app;
 }
+
+// FIXED: export app instance để index.ts có thể import { app }
+export const app = createApp();
