@@ -369,8 +369,12 @@ const toggleGender=(gender:string)=>{
 
           <div className="bg-[#F3EEE7] h-[330px] rounded-sm overflow-hidden">
             <img
-              src="https://images.unsplash.com/photo-1594035910387-fea47794261f?w=1200"
+              src="https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&w=1200&q=82"
               alt=""
+              width={1200}
+              height={675}
+              decoding="async"
+              fetchPriority="high"
               className="w-full h-full object-cover"
             />
           </div>

@@ -4,8 +4,8 @@ export default {
   theme: {
   extend: {
     fontFamily: {
-      heading: ["Cormorant Garamond", "serif"],
-      body: ["Montserrat", "sans-serif"],
+      heading: ["Georgia", "Times New Roman", "serif"],
+      body: ["Arial", "Helvetica", "sans-serif"],
     },
   },
 },

@@ -2,6 +2,7 @@ import { Heart, ShoppingBag } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useCart } from "../../store/cart.store";
 import { toast } from "../../store/toast.store";
+import { optimizeCloudinaryImage } from "../../lib/image";
 
 interface Product {
   _id?: string;
@@ -79,8 +80,12 @@ export default function ProductCard({
       <div className="relative overflow-hidden bg-[#F3EEE7] aspect-[4/5]">
         <Link to={detailPath} className="block h-full w-full">
           <img
-            src={image}
+            src={optimizeCloudinaryImage(image, 640)}
             alt={product.name}
+            loading="lazy"
+            decoding="async"
+            width={640}
+            height={800}
             className="w-full h-full object-cover duration-500 group-hover:scale-105"
           />
         </Link>

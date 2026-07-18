@@ -2,13 +2,16 @@ import { Link } from "react-router-dom";
 
 export default function BannerSection() {
   return (
-    <section
-      className="relative h-[700px] bg-fixed bg-cover bg-center"
-      style={{
-        backgroundImage:
-          "url('https://images.unsplash.com/photo-1595425964071-9e6d1d6c1f0f?w=1600')",
-      }}
-    >
+    <section className="relative h-[700px] overflow-hidden bg-[#DDD5CA]">
+      <img
+        src="https://images.unsplash.com/photo-1595425964071-9e6d1d6c1f0f?auto=format&fit=crop&w=1600&q=80"
+        alt="Bộ sưu tập nước hoa đặc biệt"
+        loading="lazy"
+        decoding="async"
+        width={1600}
+        height={1050}
+        className="absolute inset-0 h-full w-full object-cover"
+      />
       <div className="absolute inset-0 bg-black/55"></div>
 
       <div className="relative h-full max-w-7xl mx-auto flex items-center">

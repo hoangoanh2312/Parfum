@@ -2,13 +2,19 @@ import { Link } from "react-router-dom";
 
 export default function HeroSection() {
   return (
-    <section
-      className="relative h-[720px] bg-cover bg-center"
-      style={{
-        backgroundImage:
-          "url('https://images.unsplash.com/photo-1594035910387-fea47794261f')",
-      }}
-    >
+    <section className="relative h-[720px] overflow-hidden bg-[#DDD5CA]">
+      <img
+        src="https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&w=1600&q=72"
+        srcSet="https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&w=640&q=72 640w, https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&w=960&q=72 960w, https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&w=1280&q=72 1280w, https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&w=1600&q=72 1600w"
+        sizes="100vw"
+        alt="Bộ sưu tập nước hoa cao cấp"
+        width={1600}
+        height={900}
+        loading="eager"
+        decoding="async"
+        fetchPriority="high"
+        className="absolute inset-0 h-full w-full object-cover"
+      />
       <div className="absolute inset-0 bg-black/25" />
 
       <div className="relative max-w-7xl mx-auto h-full flex items-center justify-end">

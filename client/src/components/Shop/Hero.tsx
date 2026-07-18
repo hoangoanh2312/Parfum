@@ -28,6 +28,10 @@ export default function Hero({
           <img
             src={image}
             alt={title}
+            width={1200}
+            height={675}
+            decoding="async"
+            fetchPriority="high"
             className="w-full h-full object-cover"
           />
         </div>
