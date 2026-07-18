@@ -27,6 +27,10 @@ type Brand = {
   name: string;
 };
 
+type ProductListResponse = {
+  data: Array<{ brand?: string }>;
+};
+
 export default function BrandSection() {
   const [active, setActive] = useState("");
   const [brands, setBrands] = useState<string[]>(fallbackBrands);
@@ -34,12 +38,24 @@ export default function BrandSection() {
   useEffect(() => {
     let mounted = true;
 
-    api
-      .get<Brand[]>("/brands")
-      .then(({ data }) => {
-        const names = data
+    Promise.allSettled([
+      api.get<Brand[]>("/brands"),
+      api.get<ProductListResponse>("/products", { params: { page: 1, limit: 100 } }),
+    ])
+      .then((results) => {
+        const brandNames =
+          results[0].status === "fulfilled"
+            ? results[0].value.data
           .map((brand) => brand.name?.trim())
-          .filter((name): name is string => Boolean(name));
+                .filter((name): name is string => Boolean(name))
+            : [];
+        const productBrandNames =
+          results[1].status === "fulfilled"
+            ? results[1].value.data.data
+                .map((product) => product.brand?.trim())
+                .filter((name): name is string => Boolean(name))
+            : [];
+        const names = buildBrandList([...brandNames, ...productBrandNames]);
 
         if (mounted && names.length) {
           setBrands(names);
@@ -56,7 +72,7 @@ export default function BrandSection() {
   }, []);
 
   const [brandsTop, brandsBottom] = useMemo(() => {
-    const uniqueBrands = Array.from(new Set(brands));
+    const uniqueBrands = buildBrandList(brands);
     const top = uniqueBrands.filter((_, index) => index % 2 === 0);
     const bottom = uniqueBrands.filter((_, index) => index % 2 === 1);
 
@@ -64,7 +80,7 @@ export default function BrandSection() {
   }, [brands]);
 
   const renderBrandRow = (items: string[]) =>
-    items.map((brand, index) => (
+    expandBrandRow(items).map((brand, index) => (
       <Link
         key={`${brand}-${index}`}
         to={`/shop?brand=${encodeURIComponent(brand)}`}
@@ -96,7 +112,7 @@ export default function BrandSection() {
 </div>
 
       {/* Hàng 2 (lệch sang phải) */}
-    <div className="overflow-hidden flex justify-end">
+    <div className="overflow-hidden flex justify-start">
   <div className="marquee-right gap-16">
     <div className="marquee-group gap-16">{renderBrandRow(brandsBottom)}</div>
     <div className="marquee-group gap-16" aria-hidden="true">{renderBrandRow(brandsBottom)}</div>
@@ -105,4 +121,28 @@ export default function BrandSection() {
 
     </section>
   );
+}
+
+function buildBrandList(items: string[]) {
+  const normalized = items
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .filter((item, index, array) => array.findIndex((value) => value.toLowerCase() === item.toLowerCase()) === index);
+
+  const merged = [...normalized];
+  for (const fallback of fallbackBrands) {
+    if (merged.length >= 18) break;
+    if (!merged.some((item) => item.toLowerCase() === fallback.toLowerCase())) {
+      merged.push(fallback);
+    }
+  }
+
+  return merged;
+}
+
+function expandBrandRow(items: string[]) {
+  if (items.length === 0) return fallbackBrands;
+
+  const repeatCount = Math.max(2, Math.ceil(16 / items.length));
+  return Array.from({ length: repeatCount }, () => items).flat();
 }

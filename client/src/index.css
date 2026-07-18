@@ -30,32 +30,28 @@ body {
 
 @keyframes marqueeRight {
   from {
-    transform: translateX(0%);
+    transform: translateX(-50%);
   }
   to {
-    transform: translateX(-50%);
+    transform: translateX(0%);
   }
 }
 
 .marquee-left {
   display: flex;
   width: max-content;
-  animation: marqueeLeft 20s linear infinite;
+  animation: marqueeLeft 34s linear infinite;
 }
 
 .marquee-right {
   display: flex;
   width: max-content;
-  animation: marqueeRight 20s linear infinite reverse;
+  animation: marqueeRight 34s linear infinite;
 }
 
 .marquee-group {
   display: flex;
   min-width: max-content;
+  padding-right: 4rem;
 }
 
-/* Hover thì dừng */
-.marquee-left:hover,
-.marquee-right:hover {
-  animation-play-state: paused;
-}
