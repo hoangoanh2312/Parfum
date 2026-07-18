@@ -1,4 +1,4 @@
-import { useState, CSSProperties } from "react";
+import { useEffect, useMemo, useState, CSSProperties } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   User,
@@ -10,9 +10,12 @@ import {
   ShoppingBag,
   LogOut,
   Clock,
+  Sparkles,
 } from "lucide-react";
 import { useAuth } from "../store/auth.store";
 import { useCart } from "../store/cart.store";
+import { api } from "../lib/api";
+import { toast } from "../store/toast.store";
 
 const c = {
   pageBg: "#FDF9F4",
@@ -28,6 +31,7 @@ type SectionKey =
   | "orders"
   | "wishlist"
   | "reviews"
+  | "scent"
   | "addresses"
   | "password";
 
@@ -64,6 +68,12 @@ const menu: MenuItem[] = [
     ready: false,
   },
   {
+    key: "scent",
+    label: "Scent Profile",
+    icon: <Sparkles size={17} />,
+    ready: true,
+  },
+  {
     key: "addresses",
     label: "Sổ địa chỉ",
     icon: <MapPin size={17} />,
@@ -82,11 +92,12 @@ const sLabel: Record<SectionKey, string> = {
   orders: "Đơn hàng của tôi",
   wishlist: "Danh sách yêu thích",
   reviews: "Đánh giá của tôi",
+  scent: "Scent Profile",
   addresses: "Sổ địa chỉ",
   password: "Đổi mật khẩu",
 };
 
-const sDesc: Record<Exclude<SectionKey, "profile">, string> = {
+const sDesc: Record<Exclude<SectionKey, "profile" | "scent">, string> = {
   orders:
     "Lịch sử đơn hàng sẽ hiển thị ở đây sau khi hoàn thiện API tạo & tra cứu đơn hàng (hiện mới có bước chuẩn bị thanh toán / kiểm tồn kho).",
   wishlist:
@@ -97,6 +108,19 @@ const sDesc: Record<Exclude<SectionKey, "profile">, string> = {
     "Thêm và quản lý địa chỉ giao hàng. Trường địa chỉ đã có trong hồ sơ người dùng, phần quản lý đang được phát triển.",
   password:
     "Tính năng đổi mật khẩu đang được phát triển. Sẽ yêu cầu mật khẩu hiện tại và mật khẩu mới.",
+};
+
+type ProductListItem = {
+  id: string;
+  notes?: {
+    top?: string[];
+    middle?: string[];
+    base?: string[];
+  };
+};
+
+type ProductListResponse = {
+  data: ProductListItem[];
 };
 
 const pageStyle: CSSProperties = {
@@ -285,6 +309,50 @@ const csBadgeStyle: CSSProperties = {
   padding: "6px 14px",
 };
 const profileComingWrapStyle: CSSProperties = { marginTop: 24 };
+const scentGridStyle: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "1fr 1fr",
+  gap: 18,
+};
+const noteBoxStyle: CSSProperties = {
+  border: `1px solid ${c.border}`,
+  borderRadius: 12,
+  background: c.pageBg,
+  padding: 16,
+};
+const noteBoxTitleStyle: CSSProperties = {
+  fontSize: 12,
+  textTransform: "uppercase",
+  letterSpacing: 1,
+  color: c.gold,
+  marginBottom: 12,
+  fontWeight: 700,
+};
+const noteChipWrapStyle: CSSProperties = {
+  display: "flex",
+  flexWrap: "wrap",
+  gap: 8,
+  maxHeight: 230,
+  overflowY: "auto",
+};
+const noteHelperStyle: CSSProperties = {
+  color: c.body,
+  fontSize: 13,
+  lineHeight: 1.6,
+  marginTop: -6,
+  marginBottom: 18,
+};
+
+const noteChipStyle = (active: boolean, disabled: boolean): CSSProperties => ({
+  border: `1px solid ${active ? c.gold : c.border}`,
+  background: active ? c.gold : "#fff",
+  color: active ? "#fff" : c.ink,
+  borderRadius: 999,
+  padding: "8px 12px",
+  fontSize: 12,
+  cursor: disabled ? "not-allowed" : "pointer",
+  opacity: disabled ? 0.38 : 1,
+});
 
 const navBtn = (isActive: boolean): CSSProperties => ({
   display: "flex",
@@ -330,6 +398,98 @@ export default function Dashboard() {
   const logout = useAuth((s) => s.logout);
   const cartCount = useCart((s) => s.count);
   const navigate = useNavigate();
+  const storageKey = `scent-profile:${user?.id || "guest"}`;
+  const [availableNotes, setAvailableNotes] = useState<string[]>([]);
+  const [likedNotes, setLikedNotes] = useState<string[]>([]);
+  const [dislikedNotes, setDislikedNotes] = useState<string[]>([]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    api
+      .get<ProductListResponse>("/products", { params: { page: 1, limit: 100 } })
+      .then(({ data }) => {
+        if (!mounted) return;
+
+        const notes = data.data.flatMap((product) => [
+          ...(product.notes?.top || []),
+          ...(product.notes?.middle || []),
+          ...(product.notes?.base || []),
+        ]);
+
+        setAvailableNotes(Array.from(new Set(notes.filter(Boolean))).sort());
+      })
+      .catch(() => {
+        if (mounted) setAvailableNotes([]);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    const saved = localStorage.getItem(storageKey);
+
+    if (!saved) {
+      setLikedNotes([]);
+      setDislikedNotes([]);
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(saved) as {
+        likedNotes?: string[];
+        dislikedNotes?: string[];
+      };
+
+      setLikedNotes(Array.isArray(parsed.likedNotes) ? parsed.likedNotes : []);
+      setDislikedNotes(Array.isArray(parsed.dislikedNotes) ? parsed.dislikedNotes : []);
+    } catch {
+      setLikedNotes([]);
+      setDislikedNotes([]);
+    }
+  }, [storageKey]);
+
+  const saveScentProfile = (nextLiked: string[], nextDisliked: string[]) => {
+    localStorage.setItem(
+      storageKey,
+      JSON.stringify({ likedNotes: nextLiked, dislikedNotes: nextDisliked }),
+    );
+  };
+
+  const toggleLikedNote = (note: string) => {
+    if (dislikedNotes.includes(note)) {
+      toast.error("Nốt hương đã nằm trong danh sách không thích");
+      return;
+    }
+
+    const nextLiked = likedNotes.includes(note)
+      ? likedNotes.filter((item) => item !== note)
+      : [...likedNotes, note];
+
+    setLikedNotes(nextLiked);
+    saveScentProfile(nextLiked, dislikedNotes);
+  };
+
+  const toggleDislikedNote = (note: string) => {
+    if (likedNotes.includes(note)) {
+      toast.error("Nốt hương đã nằm trong danh sách yêu thích");
+      return;
+    }
+
+    const nextDisliked = dislikedNotes.includes(note)
+      ? dislikedNotes.filter((item) => item !== note)
+      : [...dislikedNotes, note];
+
+    setDislikedNotes(nextDisliked);
+    saveScentProfile(likedNotes, nextDisliked);
+  };
+
+  const suggestedLink = useMemo(() => {
+    const firstLiked = likedNotes[0];
+    return firstLiked ? `/shop?search=${encodeURIComponent(firstLiked)}` : "/shop";
+  }, [likedNotes]);
 
   function handleLogout() {
     logout();
@@ -411,7 +571,87 @@ export default function Dashboard() {
               </div>
             )}
 
-            {active !== "profile" && (
+            {active === "scent" && (
+              <div>
+                <h2 style={sectionH2Style}>Scent Profile</h2>
+                <p style={noteHelperStyle}>
+                  Chọn nốt hương bạn yêu thích và không thích. Danh sách này
+                  được lấy từ notes của sản phẩm trong MongoDB.
+                </p>
+
+                <div style={scentGridStyle}>
+                  <div style={noteBoxStyle}>
+                    <div style={noteBoxTitleStyle}>Nốt hương yêu thích</div>
+                    <div style={noteChipWrapStyle}>
+                      {availableNotes.length === 0 && (
+                        <p style={csDescStyle}>Chưa có notes trong sản phẩm.</p>
+                      )}
+
+                      {availableNotes.map((note) => {
+                        const activeNote = likedNotes.includes(note);
+                        const disabled = dislikedNotes.includes(note);
+
+                        return (
+                          <button
+                            key={note}
+                            type="button"
+                            disabled={disabled}
+                            onClick={() => toggleLikedNote(note)}
+                            style={noteChipStyle(activeNote, disabled)}
+                          >
+                            {note}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div style={noteBoxStyle}>
+                    <div style={noteBoxTitleStyle}>Nốt hương không thích</div>
+                    <div style={noteChipWrapStyle}>
+                      {availableNotes.length === 0 && (
+                        <p style={csDescStyle}>Chưa có notes trong sản phẩm.</p>
+                      )}
+
+                      {availableNotes.map((note) => {
+                        const activeNote = dislikedNotes.includes(note);
+                        const disabled = likedNotes.includes(note);
+
+                        return (
+                          <button
+                            key={note}
+                            type="button"
+                            disabled={disabled}
+                            onClick={() => toggleDislikedNote(note)}
+                            style={noteChipStyle(activeNote, disabled)}
+                          >
+                            {note}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => navigate(suggestedLink)}
+                  style={{
+                    ...logoutStyle,
+                    justifyContent: "center",
+                    color: "#fff",
+                    background: c.gold,
+                    borderColor: c.gold,
+                    marginTop: 18,
+                    maxWidth: 280,
+                  }}
+                >
+                  Khám phá sản phẩm phù hợp
+                </button>
+              </div>
+            )}
+
+            {active !== "profile" && active !== "scent" && (
               <div>
                 <h2 style={sectionH2Style}>{sLabel[active]}</h2>
                 <ComingSoon title={sLabel[active]} desc={sDesc[active]} />

@@ -1,4 +1,20 @@
+import { useState } from "react";
+import { toast } from "../store/toast.store";
+
 export default function Newsletter() {
+  const [email, setEmail] = useState("");
+
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      toast.error("Email không hợp lệ");
+      return;
+    }
+
+    toast.success("Đã đăng ký nhận tin");
+    setEmail("");
+  };
+
   return (
     <section className="bg-[#f8f5ef] py-24">
 
@@ -17,10 +33,12 @@ export default function Newsletter() {
           chương trình khuyến mãi và các bộ sưu tập độc quyền.
         </p>
 
-        <div className="flex mt-12 shadow-lg">
+        <form onSubmit={handleSubmit} className="flex mt-12 shadow-lg">
 
           <input
             type="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
             placeholder="Nhập email của bạn"
             className="flex-1 px-6 py-5 outline-none"
           />
@@ -29,7 +47,7 @@ export default function Newsletter() {
             Đăng ký
           </button>
 
-        </div>
+        </form>
 
       </div>
 

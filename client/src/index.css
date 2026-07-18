@@ -30,10 +30,10 @@ body {
 
 @keyframes marqueeRight {
   from {
-    transform: translateX(-50%);
+    transform: translateX(0%);
   }
   to {
-    transform: translateX(0%);
+    transform: translateX(-50%);
   }
 }
 
@@ -46,7 +46,12 @@ body {
 .marquee-right {
   display: flex;
   width: max-content;
-  animation: marqueeRight 20s linear infinite;
+  animation: marqueeRight 20s linear infinite reverse;
+}
+
+.marquee-group {
+  display: flex;
+  min-width: max-content;
 }
 
 /* Hover thì dừng */

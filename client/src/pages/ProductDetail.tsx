@@ -37,6 +37,8 @@ type ProductDetailData = {
   description?: string;
   fragranceFamily?: string;
   concentration?: string;
+  gender?: string;
+  season?: string[];
   gallery: string[];
   notes: {
     top: string[];
@@ -162,6 +164,13 @@ export default function ProductDetail() {
       items: product?.notes.base || [],
     },
   ];
+  const allNotes = Array.from(
+    new Set([
+      ...(product?.notes.top || []),
+      ...(product?.notes.middle || []),
+      ...(product?.notes.base || []),
+    ]),
+  );
 
   async function handleAddToCart() {
     if (!product || !selectedVariant) return;
@@ -387,6 +396,84 @@ export default function ProductDetail() {
           </div>
         </section>
 
+        {/* Scent Profile */}
+        <section className="bg-[#fbf8f2] py-20">
+          <div className="mx-auto grid max-w-[1240px] gap-10 px-6 md:px-10 lg:grid-cols-[0.75fr_1.25fr] lg:px-14">
+            <div>
+              <p className="text-[8px] font-semibold uppercase tracking-[3px] text-[#8b7100]">
+                Scent profile
+              </p>
+
+              <h2 className="mt-4 font-serif text-[34px] leading-tight">
+                The Character
+                <br />
+                Behind the Bottle
+              </h2>
+
+              <p className="mt-5 max-w-[420px] text-[11px] leading-[1.8] text-[#77736b]">
+                Profile được lấy trực tiếp từ dữ liệu sản phẩm trong MongoDB:
+                nhóm hương, giới tính, mùa dùng và các nốt hương chính.
+              </p>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <article className="border border-[#ebe3d5] bg-[#f5f1eb] p-7">
+                <p className="text-[7px] uppercase tracking-[1.4px] text-[#aaa59c]">
+                  Fragrance family
+                </p>
+                <Link
+                  to={`/shop?scent=${encodeURIComponent(product.fragranceFamily || "")}`}
+                  className="mt-3 inline-block font-serif text-[23px] text-[#2f2d28] transition hover:text-[#8b7100]"
+                >
+                  {product.fragranceFamily || "Đang cập nhật"}
+                </Link>
+              </article>
+
+              <article className="border border-[#ebe3d5] bg-[#f5f1eb] p-7">
+                <p className="text-[7px] uppercase tracking-[1.4px] text-[#aaa59c]">
+                  Wear profile
+                </p>
+                <p className="mt-3 font-serif text-[23px] text-[#2f2d28]">
+                  {product.gender || "Unisex"}
+                </p>
+              </article>
+
+              <article className="border border-[#ebe3d5] bg-[#f5f1eb] p-7">
+                <p className="text-[7px] uppercase tracking-[1.4px] text-[#aaa59c]">
+                  Season
+                </p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {(product.season?.length ? product.season : ["all"]).map((season) => (
+                    <Link
+                      key={season}
+                      to={`/shop?season=${encodeURIComponent(season)}`}
+                      className="border border-[#d8cfbf] px-3 py-2 text-[8px] uppercase tracking-[1.4px] text-[#6b665d] transition hover:border-[#8b7100] hover:text-[#8b7100]"
+                    >
+                      {season}
+                    </Link>
+                  ))}
+                </div>
+              </article>
+
+              <article className="border border-[#ebe3d5] bg-[#f5f1eb] p-7">
+                <p className="text-[7px] uppercase tracking-[1.4px] text-[#aaa59c]">
+                  Signature notes
+                </p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {(allNotes.length ? allNotes.slice(0, 8) : ["Đang cập nhật"]).map((note) => (
+                    <span
+                      key={note}
+                      className="bg-[#fbf8f2] px-3 py-2 text-[8px] uppercase tracking-[1.2px] text-[#5f5a52]"
+                    >
+                      {note}
+                    </span>
+                  ))}
+                </div>
+              </article>
+            </div>
+          </div>
+        </section>
+
         {/* Related products */}
         <section className="bg-[#fbf8f2] py-24">
           <div className="mx-auto max-w-[1240px] px-6 md:px-10 lg:px-14">
@@ -580,6 +667,17 @@ interface FooterColumnProps {
   links: string[];
 }
 
+const footerRouteMap: Record<string, string> = {
+  "Our Story": "/about",
+  "Shipping & Returns": "/about",
+  "Privacy Policy": "/about",
+  Contact: "/about",
+  "The Resin Archive": "/shop?scent=Woody",
+  "Floral Monologues": "/shop?scent=Floral",
+  "Citrus Studies": "/shop?scent=Citrus",
+  "Limited Editions": "/shop?sort=newest",
+};
+
 function FooterColumn({ title, links }: FooterColumnProps) {
   return (
     <div>
@@ -587,13 +685,13 @@ function FooterColumn({ title, links }: FooterColumnProps) {
 
       <div className="mt-6 space-y-4">
         {links.map((link) => (
-          <a
+          <Link
             key={link}
-            href="#"
+            to={footerRouteMap[link] || "/shop"}
             className="block text-[9px] text-[#8b867e] transition hover:text-[#8b7100]"
           >
             {link}
-          </a>
+          </Link>
         ))}
       </div>
     </div>

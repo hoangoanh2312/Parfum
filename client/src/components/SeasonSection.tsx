@@ -1,8 +1,11 @@
+import { Link } from "react-router-dom";
+
 const collections = [
   {
     id: 1,
     title: "Bộ sưu tập mùa đông",
     desc: "Hương thơm ấm áp, sang trọng",
+    link: "/shop?season=winter",
     image:
       "https://images.unsplash.com/photo-1519669556878-63bdad8a1a49?w=700",
   },
@@ -10,6 +13,7 @@ const collections = [
     id: 2,
     title: "Phiên bản giới hạn",
     desc: "Sang trọng và đẳng cấp",
+    link: "/shop?sort=newest",
     image:
       "https://images.unsplash.com/photo-1547996160-81dfa63595aa?w=700",
   },
@@ -17,6 +21,7 @@ const collections = [
     id: 3,
     title: "Bộ sưu tập hoa cỏ",
     desc: "Nhẹ nhàng - Thanh lịch",
+    link: "/shop?scent=Floral",
     image:
       "https://images.unsplash.com/photo-1615634260167-c8cdede054de?w=700",
   },
@@ -34,8 +39,9 @@ export default function SeasonSection() {
         <div className="grid md:grid-cols-3 gap-8">
 
           {collections.map((item) => (
-            <div
+            <Link
               key={item.id}
+              to={item.link}
               className="group cursor-pointer"
             >
 
@@ -58,13 +64,13 @@ export default function SeasonSection() {
                   {item.desc}
                 </p>
 
-                <button className="uppercase tracking-[4px] mt-5 text-sm hover:text-yellow-700">
+                <span className="mt-5 inline-block uppercase tracking-[4px] text-sm hover:text-yellow-700">
                   Khám phá
-                </button>
+                </span>
 
               </div>
 
-            </div>
+            </Link>
           ))}
 
         </div>

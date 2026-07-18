@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
 import ProductCard, { ProductCardData } from './ProductCard';
 
@@ -29,13 +30,20 @@ export default function FeaturedProducts() {
   }, []);
 
   return (
-    <section className="py-20 bg-[#faf7f2]">
+    <section id="featured-products" className="scroll-mt-24 py-20 bg-[#faf7f2]">
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-12">
           <div>
             <h2 className="text-5xl font-serif">Sản phẩm nổi bật</h2>
             <p className="text-gray-500 mt-4">Những mùi hương được yêu thích nhất</p>
           </div>
+
+          <Link
+            to="/shop"
+            className="border border-[#735C00] px-6 py-3 text-[10px] uppercase tracking-[0.18em] text-[#735C00] transition hover:bg-[#735C00] hover:text-white"
+          >
+            Xem tất cả
+          </Link>
         </div>
 
         {loading && <p className="text-center text-gray-400">Đang tải sản phẩm...</p>}

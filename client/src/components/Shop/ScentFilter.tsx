@@ -11,10 +11,16 @@ export default function ScentFilter({
   selected,
   onToggle,
 }: ScentFilterProps) {
+  const options = Array.from(new Set([...selected, ...scents])).filter(Boolean);
+
   return (
     <FilterSection title="Scent Profile">
       <div className="space-y-3">
-        {scents.map((item) => (
+        {options.length === 0 && (
+          <p className="text-xs text-[#8A8176]">Đang cập nhật</p>
+        )}
+
+        {options.map((item) => (
           <label
             key={item}
             className="flex items-center gap-3 cursor-pointer text-sm text-[#1C1C19]"

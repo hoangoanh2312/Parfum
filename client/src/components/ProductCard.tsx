@@ -65,7 +65,7 @@ export default function ProductCard({ item }: { item: ProductCardData }) {
   }
 
   return (
-    <article className="group">
+    <article className="group flex h-full flex-col">
       <div className="relative overflow-hidden bg-[#F3EEE7] aspect-[4/5]">
         <Link to={detailPath} className="block h-full w-full">
           <img
@@ -105,22 +105,22 @@ export default function ProductCard({ item }: { item: ProductCardData }) {
         </div>
       </div>
 
-      <Link to={detailPath} className="mt-6 block">
+      <Link to={detailPath} className="mt-6 flex flex-1 flex-col">
         <p className="uppercase tracking-[3px] text-[10px] text-[#735C00]">
           {item.brand || "Eau De Parfum"}
         </p>
 
-        <h3 className="mt-2 text-2xl font-semibold text-[#1C1C19]">
+        <h3 className="mt-2 min-h-[64px] text-2xl font-semibold leading-tight text-[#1C1C19] line-clamp-2">
           {item.name}
         </h3>
 
-        <p className="mt-3 text-sm text-[#5F5E5E] leading-7 line-clamp-2">
+        <p className="mt-3 min-h-[56px] text-sm text-[#5F5E5E] leading-7 line-clamp-2">
           {item.description || "Mùi hương tinh tế, sang trọng."}
         </p>
       </Link>
 
-      <div className="flex items-center justify-between mt-6">
-        <span className="text-2xl font-semibold text-[#1C1C19]">
+      <div className="mt-6 flex min-h-[34px] items-center justify-between gap-4">
+        <span className="text-2xl font-semibold text-[#1C1C19] whitespace-nowrap">
           {item.priceText || (item.price ? `${(item.price || 0).toLocaleString("vi-VN")}đ` : "Liên hệ")}
         </span>
 

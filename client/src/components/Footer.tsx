@@ -9,6 +9,23 @@ import {
   FaInstagram,
   FaYoutube,
 } from "react-icons/fa";
+import { Link } from "react-router-dom";
+
+const categoryLinks = [
+  { label: "Trang chủ", to: "/" },
+  { label: "Sản phẩm", to: "/shop" },
+  { label: "Thương hiệu", to: "/brand" },
+  { label: "Tin tức", to: "/blog" },
+  { label: "Giới thiệu", to: "/about#info" },
+];
+
+const supportLinks = [
+  { label: "Chính sách đổi trả", to: "/about#returns" },
+  { label: "Thanh toán", to: "/checkout" },
+  { label: "Vận chuyển", to: "/about#shipping" },
+  { label: "Bảo hành", to: "/about#warranty" },
+  { label: "Liên hệ", to: "/about#contact" },
+];
 
 export default function Footer() {
   return (
@@ -29,9 +46,15 @@ export default function Footer() {
           </p>
 
           <div className="flex gap-4 mt-8 text-[#A8A29E]">
-            <FaFacebookF size={18} />
-            <FaInstagram size={18} />
-            <FaYoutube size={18} />
+            <a href="https://facebook.com" target="_blank" rel="noreferrer" aria-label="Facebook" className="transition hover:text-[#735C00]">
+              <FaFacebookF size={18} />
+            </a>
+            <a href="https://instagram.com" target="_blank" rel="noreferrer" aria-label="Instagram" className="transition hover:text-[#735C00]">
+              <FaInstagram size={18} />
+            </a>
+            <a href="https://youtube.com" target="_blank" rel="noreferrer" aria-label="Youtube" className="transition hover:text-[#735C00]">
+              <FaYoutube size={18} />
+            </a>
           </div>
         </div>
 
@@ -41,11 +64,13 @@ export default function Footer() {
           </h3>
 
           <ul className="space-y-4 text-[#78716C] text-xs tracking-[0.3px]">
-            <li>Trang chủ</li>
-            <li>Sản phẩm</li>
-            <li>Thương hiệu</li>
-            <li>Tin tức</li>
-            <li>Giới thiệu</li>
+            {categoryLinks.map((item) => (
+              <li key={item.to}>
+                <Link to={item.to} className="transition hover:text-[#735C00]">
+                  {item.label}
+                </Link>
+              </li>
+            ))}
           </ul>
         </div>
 
@@ -55,11 +80,13 @@ export default function Footer() {
           </h3>
 
           <ul className="space-y-4 text-[#78716C] text-xs tracking-[0.3px]">
-            <li>Chính sách đổi trả</li>
-            <li>Thanh toán</li>
-            <li>Vận chuyển</li>
-            <li>Bảo hành</li>
-            <li>Liên hệ</li>
+            {supportLinks.map((item) => (
+              <li key={item.to}>
+                <Link to={item.to} className="transition hover:text-[#735C00]">
+                  {item.label}
+                </Link>
+              </li>
+            ))}
           </ul>
         </div>
 
@@ -69,20 +96,25 @@ export default function Footer() {
           </h3>
 
           <div className="space-y-5 text-[#78716C] text-xs tracking-[0.3px]">
-            <div className="flex gap-3">
+            <a
+              href="https://www.google.com/maps/search/?api=1&query=Vinh%20Long"
+              target="_blank"
+              rel="noreferrer"
+              className="flex gap-3 transition hover:text-[#735C00]"
+            >
               <MapPin size={16} className="text-[#735C00] shrink-0" />
               <span>Vĩnh Long</span>
-            </div>
+            </a>
 
-            <div className="flex gap-3">
+            <a href="tel:0328779845" className="flex gap-3 transition hover:text-[#735C00]">
               <Phone size={16} className="text-[#735C00] shrink-0" />
               <span>0328 779 845</span>
-            </div>
+            </a>
 
-            <div className="flex gap-3">
+            <a href="mailto:contact4w@perfume.vn" className="flex gap-3 transition hover:text-[#735C00]">
               <Mail size={16} className="text-[#735C00] shrink-0" />
               <span>contact4w@perfume.vn</span>
-            </div>
+            </a>
           </div>
         </div>
       </div>

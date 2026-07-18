@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { api } from "../lib/api";
 
 const fallbackBrands = [
@@ -55,14 +56,29 @@ export default function BrandSection() {
   }, []);
 
   const [brandsTop, brandsBottom] = useMemo(() => {
-    const midpoint = Math.ceil(brands.length / 2);
-    const top = brands.slice(0, midpoint);
-    const bottom = brands.slice(midpoint);
+    const uniqueBrands = Array.from(new Set(brands));
+    const top = uniqueBrands.filter((_, index) => index % 2 === 0);
+    const bottom = uniqueBrands.filter((_, index) => index % 2 === 1);
+
     return [top.length ? top : fallbackBrands.slice(0, 8), bottom.length ? bottom : top];
   }, [brands]);
 
-  const repeatedTop = useMemo(() => repeatBrands(brandsTop), [brandsTop]);
-  const repeatedBottom = useMemo(() => repeatBrands(brandsBottom), [brandsBottom]);
+  const renderBrandRow = (items: string[]) =>
+    items.map((brand, index) => (
+      <Link
+        key={`${brand}-${index}`}
+        to={`/shop?brand=${encodeURIComponent(brand)}`}
+        onMouseEnter={() => setActive(brand)}
+        className={`shrink-0 whitespace-nowrap uppercase tracking-[4px] transition-all duration-300
+        ${
+          active === brand
+            ? "text-[#b8860b] scale-110 font-normal"
+            : "text-gray-400 hover:text-[#b8860b]"
+        }`}
+      >
+        {brand}
+      </Link>
+    ));
 
   return (
     <section className="bg-[#faf7f2] py-16 overflow-hidden">
@@ -74,53 +90,19 @@ export default function BrandSection() {
       {/* Hàng 1 */}
 <div className="overflow-hidden mb-8 flex justify-start">
   <div className="marquee-left gap-16">
-
-    {repeatedTop.map((brand, index) => (
-      <button
-        key={index}
-        onClick={() => setActive(brand)}
-        className={`shrink-0 whitespace-nowrap uppercase tracking-[4px] transition-all duration-300
-        ${
-          active === brand
-            ? "text-[#b8860b] scale-110 font-normal"
-            : "text-gray-400 hover:text-[#b8860b]"
-        }`}
-      >
-        {brand}
-      </button>
-    ))}
-
+    <div className="marquee-group gap-16">{renderBrandRow(brandsTop)}</div>
+    <div className="marquee-group gap-16" aria-hidden="true">{renderBrandRow(brandsTop)}</div>
   </div>
 </div>
 
       {/* Hàng 2 (lệch sang phải) */}
     <div className="overflow-hidden flex justify-end">
   <div className="marquee-right gap-16">
-
-    {repeatedBottom.map((brand, index) => (
-      <button
-        key={index}
-        onClick={() => setActive(brand)}
-        className={`shrink-0 whitespace-nowrap uppercase tracking-[4px] transition-all duration-300
-        ${
-          active === brand
-            ? "text-[#b8860b] scale-110 font-normal"
-            : "text-gray-400 hover:text-[#b8860b]"
-        }`}
-      >
-        {brand}
-      </button>
-    ))}
-
+    <div className="marquee-group gap-16">{renderBrandRow(brandsBottom)}</div>
+    <div className="marquee-group gap-16" aria-hidden="true">{renderBrandRow(brandsBottom)}</div>
   </div>
 </div>
 
     </section>
   );
-}
-
-function repeatBrands(items: string[]) {
-  const source = items.length ? items : fallbackBrands;
-  const repeatCount = Math.max(4, Math.ceil(18 / source.length));
-  return Array.from({ length: repeatCount }, () => source).flat();
 }
