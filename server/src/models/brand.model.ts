@@ -17,7 +17,6 @@ const brandSchema = new Schema(
   {
     timestamps: true,
   },
-  { timestamps: true },
 );
 
 export const Brand = model('Brand', brandSchema);
