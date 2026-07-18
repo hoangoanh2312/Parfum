@@ -3,6 +3,7 @@ import ProductGrid from "../components/Shop/ProductGrid";
 import { useEffect, useMemo, useState } from "react";
 import Footer from "../components/Footer";
 import { api } from "../lib/api";
+import { useSearchParams } from "react-router-dom";
 
 type Product = {
   id: string;
@@ -40,7 +41,11 @@ const occasionSeasonMap: Record<string, string[]> = {
   Work: ["spring", "summer", "autumn", "all"],
 };
 
+const sameOption = (left?: string, right?: string) =>
+  String(left || "").trim().toLowerCase() === String(right || "").trim().toLowerCase();
+
 export default function Shop() {
+  const [searchParams] = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
@@ -86,6 +91,18 @@ const toggleScent = (value: string) => {
       : [...prev, value]
   );
 };
+
+useEffect(() => {
+  const scentsFromUrl = searchParams.get("scent");
+  if (!scentsFromUrl) return;
+
+  setSelectedScents(
+    scentsFromUrl
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean),
+  );
+}, [searchParams]);
 
 useEffect(() => {
   let active = true;
@@ -135,6 +152,7 @@ useEffect(() => {
   selectedGenders,
   selectedScents,
   selectedSizes,
+  selectedOccasions,
   selectedConcentrations,
   price,
   sort,
@@ -198,13 +216,13 @@ const filteredProducts = useMemo(
       const matchesSearch = product.name.toLowerCase().includes(search.toLowerCase());
       const matchesBrand =
         selectedBrands.length === 0 ||
-        (product.brand ? selectedBrands.includes(product.brand) : false);
+        (product.brand ? selectedBrands.some((brand) => sameOption(product.brand, brand)) : false);
       const matchesGender =
         selectedGenders.length === 0 ||
-        (product.gender ? selectedGenders.includes(product.gender) : false);
+        (product.gender ? selectedGenders.some((gender) => sameOption(product.gender, gender)) : false);
       const matchesScent =
         selectedScents.length === 0 ||
-        (product.fragranceFamily ? selectedScents.includes(product.fragranceFamily) : false);
+        (product.fragranceFamily ? selectedScents.some((scent) => sameOption(product.fragranceFamily, scent)) : false);
       const matchesSize =
         selectedSizes.length === 0 ||
         selectedSizes.some((size) => product.sizes?.includes(size));
@@ -215,7 +233,9 @@ const filteredProducts = useMemo(
         );
       const matchesConcentration =
         selectedConcentrations.length === 0 ||
-        (product.concentration ? selectedConcentrations.includes(product.concentration) : false);
+        (product.concentration
+          ? selectedConcentrations.some((concentration) => sameOption(product.concentration, concentration))
+          : false);
       const matchesPrice = (product.price ?? 0) <= price;
 
       return (

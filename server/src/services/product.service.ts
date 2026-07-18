@@ -33,6 +33,7 @@ type ProductCard = {
   sizes: string[];
   image: string | null;
   images?: string[];
+  notes?: { top: string[]; middle: string[]; base: string[] };
   price: number | null;
   priceText: string;
   variantId: string | null;
@@ -178,6 +179,11 @@ export async function getProducts(query: ProductListQuery = {}) {
       sizes,
       image: product.images?.[0] || cheapest?.images?.[0] || null,
       images: product.images || [],
+      notes: {
+        top: product.notes?.top?.length ? product.notes.top : product.topNotes || [],
+        middle: product.notes?.middle?.length ? product.notes.middle : product.heartNotes || [],
+        base: product.notes?.base?.length ? product.notes.base : product.baseNotes || [],
+      },
       price: cheapest?.price ?? null,
       priceText: formatVnd(cheapest?.price),
       variantId: cheapest ? String(cheapest._id) : null,
