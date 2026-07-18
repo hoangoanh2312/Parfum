@@ -57,6 +57,8 @@ export default function Shop() {
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 const [search,setSearch]=useState("");
 const [selectedScents, setSelectedScents] = useState<string[]>([]);
 const [selectedBrands,setSelectedBrands]=useState<string[]>([]);
@@ -140,6 +142,21 @@ useEffect(() => {
 }, []);
 
 useEffect(() => {
+  setPage(1);
+}, [
+  search,
+  selectedBrands,
+  selectedGenders,
+  selectedScents,
+  selectedSizes,
+  selectedOccasions,
+  selectedSeasons,
+  selectedConcentrations,
+  price,
+  sort,
+]);
+
+useEffect(() => {
   let active = true;
 
   async function loadProducts() {
@@ -147,8 +164,8 @@ useEffect(() => {
       setLoading(true);
       const { data } = await api.get<ProductListResponse>("/products", {
         params: {
-          page: 1,
-          limit: 100,
+          page,
+          limit: 12,
           search: search || undefined,
           brand: selectedBrands.join(",") || undefined,
           gender: selectedGenders.join(",") || undefined,
@@ -167,6 +184,7 @@ useEffect(() => {
       if (active) {
         setProducts(data.data);
         setTotal(data.total);
+        setTotalPages(data.totalPages || 1);
       }
     } catch (error) {
       console.error("Failed to load products", error);
@@ -193,6 +211,7 @@ useEffect(() => {
   selectedConcentrations,
   price,
   sort,
+  page,
 ]);
 
 const brands = useMemo(
@@ -398,7 +417,7 @@ toggleConcentration={toggleConcentration}
           {/* Toolbar */}
           <div className="flex justify-between border-b pb-5 border-[#e8deca]">
             <p className="uppercase text-xs tracking-widest text-[#5F5E5E]">
-              Showing {filteredProducts.length} of {total} products
+              Showing {products.length} of {total} products
             </p>
 
             <label className="flex items-center gap-3">
@@ -422,15 +441,46 @@ toggleConcentration={toggleConcentration}
           <ProductGrid products={filteredProducts} loading={loading} />
           {/* Pagination */}
           <div className="border-t mt-16 pt-8 flex justify-center items-center gap-8">
-            <button className="uppercase text-xs text-gray-400">
+            <button
+              type="button"
+              onClick={() => setPage((current) => Math.max(1, current - 1))}
+              disabled={page <= 1}
+              className="uppercase text-xs text-[#735C00] disabled:text-gray-400 disabled:cursor-not-allowed"
+            >
               Previous
             </button>
 
-            <button className="text-[#735C00] font-bold">1</button>
-            <button>2</button>
-            <button>3</button>
+            {Array.from({ length: totalPages }, (_, index) => index + 1)
+              .filter((item) => {
+                if (totalPages <= 5) return true;
+                return item === 1 || item === totalPages || Math.abs(item - page) <= 1;
+              })
+              .map((item, index, array) => (
+                <span key={item} className="flex items-center gap-8">
+                  {index > 0 && item - array[index - 1] > 1 && (
+                    <span className="text-gray-400">...</span>
+                  )}
 
-            <button className="uppercase text-xs text-[#735C00]">
+                  <button
+                    type="button"
+                    onClick={() => setPage(item)}
+                    className={
+                      item === page
+                        ? "text-[#735C00] font-bold"
+                        : "text-[#4F4942] hover:text-[#735C00]"
+                    }
+                  >
+                    {item}
+                  </button>
+                </span>
+              ))}
+
+            <button
+              type="button"
+              onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+              disabled={page >= totalPages}
+              className="uppercase text-xs text-[#735C00] disabled:text-gray-400 disabled:cursor-not-allowed"
+            >
               Next
             </button>
           </div>
