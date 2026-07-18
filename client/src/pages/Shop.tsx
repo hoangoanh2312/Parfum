@@ -40,6 +40,11 @@ const occasionSeasonMap: Record<string, string[]> = {
   Work: ["spring", "summer", "autumn", "all"],
 };
 
+const getSizeNumber = (size: string) => {
+  const match = size.match(/\d+(\.\d+)?/);
+  return match ? Number(match[0]) : Number.MAX_SAFE_INTEGER;
+};
+
 export default function Shop() {
   const [products, setProducts] = useState<Product[]>([]);
   const [allProducts, setAllProducts] = useState<Product[]>([]);
@@ -191,7 +196,10 @@ const scents = useMemo(
 );
 
 const sizes = useMemo(
-  () => Array.from(new Set(allProducts.flatMap((product) => product.sizes ?? []))),
+  () =>
+    Array.from(new Set(allProducts.flatMap((product) => product.sizes ?? []))).sort(
+      (left, right) => getSizeNumber(left) - getSizeNumber(right) || left.localeCompare(right),
+    ),
   [allProducts],
 );
 
@@ -282,17 +290,7 @@ prev.includes(brand)
 
 }
 const toggleGender=(gender:string)=>{
-
-setSelectedGenders(prev=>
-
-prev.includes(gender)
-
-?prev.filter(item=>item!==gender)
-
-:[...prev,gender]
-
-);
-
+  setSelectedGenders([gender]);
 }
   return (
     <>
@@ -338,6 +336,7 @@ prev.includes(gender)
     ]}
     selectedGenders={selectedGenders}
     toggleGender={toggleGender}
+    clearGender={() => setSelectedGenders([])}
     price={price}
     maxPrice={maxPrice}
     setPrice={setPrice}
@@ -365,15 +364,21 @@ toggleConcentration={toggleConcentration}
               Showing {filteredProducts.length} of {total} products
             </p>
 
-            <select
-              className="uppercase text-xs tracking-widest bg-transparent outline-none"
-              value={sort}
-              onChange={(e) => setSort(e.target.value)}
-            >
-              <option value="newest">Newest</option>
-              <option value="price_asc">Price ↑</option>
-              <option value="price_desc">Price ↓</option>
-            </select>
+            <label className="flex items-center gap-3">
+              <span className="text-[10px] uppercase tracking-[0.18em] text-[#8A8176]">
+                Sắp xếp
+              </span>
+
+              <select
+                value={sort}
+                onChange={(event) => setSort(event.target.value)}
+                className="min-w-[190px] border border-[#e8deca] bg-[#FDF9F4] px-4 py-2 text-[10px] uppercase tracking-[0.16em] text-[#4F4942] outline-none transition hover:border-[#735C00] focus:border-[#735C00]"
+              >
+                <option value="newest">Mới nhất</option>
+                <option value="price_asc">Giá tăng dần</option>
+                <option value="price_desc">Giá giảm dần</option>
+              </select>
+            </label>
           </div>
 
           {/* Grid */}

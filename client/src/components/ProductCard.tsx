@@ -66,19 +66,20 @@ export default function ProductCard({ item }: { item: ProductCardData }) {
 
   return (
     <article className="group">
-      {/* Image */}
       <div className="relative overflow-hidden bg-[#F3EEE7] aspect-[4/5]">
-        <img
-          src={image}
-          alt={item.name}
-          onError={(e) => {
-            (e.currentTarget as HTMLImageElement).src = PLACEHOLDER;
-          }}
-          className={
-            "w-full h-full object-cover duration-500 group-hover:scale-105 " +
-            (outOfStock ? "opacity-60 grayscale" : "")
-          }
-        />
+        <Link to={detailPath} className="block h-full w-full">
+          <img
+            src={image}
+            alt={item.name}
+            onError={(e) => {
+              (e.currentTarget as HTMLImageElement).src = PLACEHOLDER;
+            }}
+            className={
+              "w-full h-full object-cover duration-500 group-hover:scale-105 " +
+              (outOfStock ? "opacity-60 grayscale" : "")
+            }
+          />
+        </Link>
 
         {outOfStock && (
           <span className="absolute top-3 left-3 bg-red-600 text-white text-xs px-3 py-1 uppercase tracking-widest">
@@ -104,8 +105,7 @@ export default function ProductCard({ item }: { item: ProductCardData }) {
         </div>
       </div>
 
-      {/* Info */}
-      <div className="mt-6">
+      <Link to={detailPath} className="mt-6 block">
         <p className="uppercase tracking-[3px] text-[10px] text-[#735C00]">
           {item.brand || "Eau De Parfum"}
         </p>
@@ -117,19 +117,19 @@ export default function ProductCard({ item }: { item: ProductCardData }) {
         <p className="mt-3 text-sm text-[#5F5E5E] leading-7 line-clamp-2">
           {item.description || "Mùi hương tinh tế, sang trọng."}
         </p>
+      </Link>
 
-        <div className="flex items-center justify-between mt-6">
-          <span className="text-2xl font-semibold text-[#1C1C19]">
-            {item.priceText || (item.price ? `${(item.price || 0).toLocaleString("vi-VN")}đ` : "Liên hệ")}
-          </span>
+      <div className="flex items-center justify-between mt-6">
+        <span className="text-2xl font-semibold text-[#1C1C19]">
+          {item.priceText || (item.price ? `${(item.price || 0).toLocaleString("vi-VN")}đ` : "Liên hệ")}
+        </span>
 
-          <Link
-            to={detailPath}
-            className="uppercase tracking-[2px] text-[11px] font-semibold text-[#735C00] hover:underline"
-          >
-            View
-          </Link>
-        </div>
+        <Link
+          to={detailPath}
+          className="uppercase tracking-[2px] text-[11px] font-semibold text-[#735C00] hover:underline"
+        >
+          View
+        </Link>
       </div>
     </article>
   );
