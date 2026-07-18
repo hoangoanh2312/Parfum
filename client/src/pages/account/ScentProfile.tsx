@@ -52,6 +52,9 @@ const defaultPreferredNotes = [
 
 const defaultDislikedNotes = ["Tobacco", "Leather"];
 
+const hasNote = (notes: string[], note: string) =>
+  notes.some((item) => item.trim().toLowerCase() === note.trim().toLowerCase());
+
 interface ScentProfileData {
   families: string[];
   preferredNotes: string[];
@@ -155,8 +158,13 @@ export default function ScentProfile() {
     }
 
     if (type === "preferred") {
-      if (preferredNotes.includes(matchedOption)) {
+      if (hasNote(preferredNotes, matchedOption)) {
         toast.error("Nốt hương này đã có trong danh sách");
+        return;
+      }
+
+      if (hasNote(dislikedNotes, matchedOption)) {
+        toast.error("Nốt hương này đang nằm trong danh sách không yêu thích");
         return;
       }
 
@@ -165,8 +173,13 @@ export default function ScentProfile() {
       return;
     }
 
-    if (dislikedNotes.includes(matchedOption)) {
+    if (hasNote(dislikedNotes, matchedOption)) {
       toast.error("Nốt hương này đã có trong danh sách");
+      return;
+    }
+
+    if (hasNote(preferredNotes, matchedOption)) {
+      toast.error("Nốt hương này đang nằm trong danh sách yêu thích");
       return;
     }
 
@@ -332,7 +345,7 @@ export default function ScentProfile() {
               <NotePicker
                 value={preferredDraft}
                 options={noteOptions}
-                selected={preferredNotes}
+                selected={[...preferredNotes, ...dislikedNotes]}
                 placeholder="Chọn nốt hương yêu thích"
                 accentClassName="bg-[#8A7000] hover:bg-[#6D5900]"
                 open={preferredOpen}
@@ -341,7 +354,11 @@ export default function ScentProfile() {
                 onAdd={() => addNote("preferred")}
                 onSelect={(note) => {
                   setPreferredDraft(note);
-                  if (!preferredNotes.includes(note)) setPreferredNotes((prev) => [...prev, note]);
+                  if (hasNote(dislikedNotes, note)) {
+                    toast.error("Nốt hương này đang nằm trong danh sách không yêu thích");
+                  } else if (!hasNote(preferredNotes, note)) {
+                    setPreferredNotes((prev) => [...prev, note]);
+                  }
                   setPreferredDraft("");
                   setPreferredOpen(false);
                 }}
@@ -373,7 +390,7 @@ export default function ScentProfile() {
               <NotePicker
                 value={dislikedDraft}
                 options={noteOptions}
-                selected={dislikedNotes}
+                selected={[...dislikedNotes, ...preferredNotes]}
                 placeholder="Chọn nốt hương không thích"
                 accentClassName="bg-[#6F6861] hover:bg-[#514B45]"
                 open={dislikedOpen}
@@ -382,7 +399,11 @@ export default function ScentProfile() {
                 onAdd={() => addNote("disliked")}
                 onSelect={(note) => {
                   setDislikedDraft(note);
-                  if (!dislikedNotes.includes(note)) setDislikedNotes((prev) => [...prev, note]);
+                  if (hasNote(preferredNotes, note)) {
+                    toast.error("Nốt hương này đang nằm trong danh sách yêu thích");
+                  } else if (!hasNote(dislikedNotes, note)) {
+                    setDislikedNotes((prev) => [...prev, note]);
+                  }
                   setDislikedDraft("");
                   setDislikedOpen(false);
                 }}

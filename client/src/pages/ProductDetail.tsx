@@ -76,6 +76,10 @@ export default function ProductDetail() {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+  }, [idOrSlug]);
+
+  useEffect(() => {
     let active = true;
 
     async function loadProduct() {
@@ -527,16 +531,21 @@ export default function ProductDetail() {
 
           <FooterColumn
             title="NAVIGATION"
-            links={["Our Story", "Shipping & Returns", "Privacy Policy", "Contact"]}
+            links={[
+              { label: "Our Story", to: "/" },
+              { label: "Shipping & Returns", to: "/cart" },
+              { label: "Privacy Policy", to: "/account/settings" },
+              { label: "Contact", to: "/" },
+            ]}
           />
 
           <FooterColumn
             title="COLLECTIONS"
             links={[
-              "The Resin Archive",
-              "Floral Monologues",
-              "Citrus Studies",
-              "Limited Editions",
+              { label: "The Resin Archive", to: "/shop" },
+              { label: "Floral Monologues", to: "/shop?scent=Floral" },
+              { label: "Citrus Studies", to: "/shop?search=citrus" },
+              { label: "Limited Editions", to: "/shop?sort=newest" },
             ]}
           />
 
@@ -577,7 +586,7 @@ export default function ProductDetail() {
 
 interface FooterColumnProps {
   title: string;
-  links: string[];
+  links: Array<{ label: string; to: string }>;
 }
 
 function FooterColumn({ title, links }: FooterColumnProps) {
@@ -587,13 +596,13 @@ function FooterColumn({ title, links }: FooterColumnProps) {
 
       <div className="mt-6 space-y-4">
         {links.map((link) => (
-          <a
-            key={link}
-            href="#"
+          <Link
+            key={link.label}
+            to={link.to}
             className="block text-[9px] text-[#8b867e] transition hover:text-[#8b7100]"
           >
-            {link}
-          </a>
+            {link.label}
+          </Link>
         ))}
       </div>
     </div>

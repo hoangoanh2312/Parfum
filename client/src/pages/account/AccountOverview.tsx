@@ -339,7 +339,11 @@ export default function AccountOverview() {
 
           <div className="grid gap-8 md:grid-cols-3">
             {items.map((item) => (
-              <article key={item.id || item.name} className="group">
+              <Link
+                key={item.id || item.name}
+                to={item.id || item.slug ? `/products/${item.slug || item.id}` : "/shop"}
+                className="group block"
+              >
                 <div className="overflow-hidden bg-[#ECE7E0]">
                   <img
                     src={item.image}
@@ -365,7 +369,7 @@ export default function AccountOverview() {
                 <p className="mt-3 text-sm leading-6 text-[#7D746B]">
                   {item.description}
                 </p>
-              </article>
+              </Link>
             ))}
           </div>
         </section>

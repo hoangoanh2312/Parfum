@@ -3,6 +3,7 @@ import {
   Mail,
   MapPin,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 
 import {
   FaFacebookF,
@@ -11,6 +12,21 @@ import {
 } from "react-icons/fa";
 
 export default function Footer() {
+  const categoryLinks = [
+    { label: "Trang chủ", to: "/" },
+    { label: "Sản phẩm", to: "/shop" },
+    { label: "Thương hiệu", to: "/shop" },
+    { label: "Tin tức", to: "/" },
+    { label: "Giới thiệu", to: "/" },
+  ];
+  const supportLinks = [
+    { label: "Chính sách đổi trả", to: "/cart" },
+    { label: "Thanh toán", to: "/cart" },
+    { label: "Vận chuyển", to: "/account/orders" },
+    { label: "Bảo hành", to: "/shop" },
+    { label: "Liên hệ", to: "/" },
+  ];
+
   return (
     <footer className="bg-[#F5F5F4] pt-20 font-['Manrope']">
       <div className="max-w-7xl mx-auto grid md:grid-cols-4 gap-12 pb-20">
@@ -41,11 +57,13 @@ export default function Footer() {
           </h3>
 
           <ul className="space-y-4 text-[#78716C] text-xs tracking-[0.3px]">
-            <li>Trang chủ</li>
-            <li>Sản phẩm</li>
-            <li>Thương hiệu</li>
-            <li>Tin tức</li>
-            <li>Giới thiệu</li>
+            {categoryLinks.map((item) => (
+              <li key={item.label}>
+                <Link to={item.to} className="transition hover:text-[#735C00]">
+                  {item.label}
+                </Link>
+              </li>
+            ))}
           </ul>
         </div>
 
@@ -55,11 +73,13 @@ export default function Footer() {
           </h3>
 
           <ul className="space-y-4 text-[#78716C] text-xs tracking-[0.3px]">
-            <li>Chính sách đổi trả</li>
-            <li>Thanh toán</li>
-            <li>Vận chuyển</li>
-            <li>Bảo hành</li>
-            <li>Liên hệ</li>
+            {supportLinks.map((item) => (
+              <li key={item.label}>
+                <Link to={item.to} className="transition hover:text-[#735C00]">
+                  {item.label}
+                </Link>
+              </li>
+            ))}
           </ul>
         </div>
 
