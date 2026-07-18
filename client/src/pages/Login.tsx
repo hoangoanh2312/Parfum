@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
 import { useAuth } from "../store/auth.store";
 import { useCart } from "../store/cart.store";
+import { toast } from "../store/toast.store";
 
 const color = {
   pageBg: "#FDF9F4",
@@ -103,6 +104,7 @@ export default function Login() {
       useAuth.getState().setTokens(data.accessToken, data.refreshToken);
       setUser(data.user);
       await useCart.getState().syncOnLogin(); // gộp giỏ khách + nạp giỏ từ DB
+      toast.success("Đăng nhập thành công");
       navigate("/");
     } catch (err: any) {
       setError(err.response?.data?.message || "Đăng nhập thất bại");

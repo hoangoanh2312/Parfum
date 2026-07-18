@@ -72,7 +72,7 @@ export default function OrderDetail() {
         </Link>
 
         {loading && (
-          <p className="font-['Manrope'] text-[#5F5E5E]">Đang tải…</p>
+          <div className="space-y-5" aria-label="Đang tải chi tiết đơn hàng"><div className="h-16 animate-pulse rounded bg-white motion-reduce:animate-none" /><div className="h-64 animate-pulse rounded bg-white motion-reduce:animate-none" /><div className="grid gap-5 md:grid-cols-2"><div className="h-36 animate-pulse rounded bg-white motion-reduce:animate-none" /><div className="h-36 animate-pulse rounded bg-white motion-reduce:animate-none" /></div></div>
         )}
         {!loading && error && (
           <p className="font-['Manrope'] text-red-600">{error}</p>

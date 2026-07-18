@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 export default function HeroSection() {
   return (
     <section
-      className="relative h-[720px] bg-cover bg-center"
+      className="relative min-h-[680px] bg-cover bg-center sm:h-[720px]"
       style={{
         backgroundImage:
           "url('https://images.unsplash.com/photo-1594035910387-fea47794261f')",
@@ -11,7 +11,7 @@ export default function HeroSection() {
     >
       <div className="absolute inset-0 bg-black/25" />
 
-      <div className="relative max-w-7xl mx-auto h-full flex items-center justify-end">
+      <div className="relative mx-auto flex h-full max-w-7xl items-center px-5 py-14 sm:px-8 lg:justify-end lg:px-10">
 
         <div className="max-w-xl text-white">
 
@@ -19,11 +19,11 @@ export default function HeroSection() {
             Thương hiệu cao cấp
           </p>
 
-          <h2 className="text-6xl font-light">
+          <h2 className="text-4xl font-light sm:text-6xl">
             NƯỚC HOA
           </h2>
 
-          <h1 className="text-8xl font-extrabold leading-none mb-5">
+          <h1 className="mb-5 text-6xl font-extrabold leading-none sm:text-8xl">
             HOA CỎ
           </h1>
 
@@ -37,19 +37,10 @@ export default function HeroSection() {
             tinh tế và lưu hương suốt cả ngày.
           </p>
 
-          <a
-            href="#featured-products"
-            className="mt-10 inline-block border border-white px-8 py-4 uppercase tracking-[3px] hover:bg-white hover:text-black transition"
-          >
-            Khám phá ngay
-          </a>
-
-          <Link
-            to="/shop"
-            className="ml-4 mt-10 inline-block bg-white px-8 py-4 uppercase tracking-[3px] text-black transition hover:bg-[#735C00] hover:text-white"
-          >
-            Xem tất cả
-          </Link>
+          <div className="mt-8 flex flex-col gap-3 min-[480px]:flex-row sm:mt-10">
+            <a href="#featured-products" className="inline-flex min-h-11 items-center justify-center border border-white px-5 py-3 text-center text-xs uppercase tracking-[2px] transition hover:bg-white hover:text-black sm:px-8 sm:py-4 sm:tracking-[3px]">Khám phá ngay</a>
+            <Link to="/shop" className="inline-flex min-h-11 items-center justify-center bg-white px-5 py-3 text-center text-xs uppercase tracking-[2px] text-black transition hover:bg-[#735C00] hover:text-white sm:px-8 sm:py-4 sm:tracking-[3px]">Xem tất cả</Link>
+          </div>
 
         </div>
 

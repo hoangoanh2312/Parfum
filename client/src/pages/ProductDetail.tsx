@@ -4,6 +4,7 @@ import {
   Sun,
   Moon,
   Quote,
+  Search,
 } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
@@ -201,21 +202,24 @@ export default function ProductDetail() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#fbf8f2] px-6 py-24 text-[#615e57]">
-        <div className="mx-auto max-w-[1240px]">Đang tải sản phẩm...</div>
+      <div className="min-h-screen bg-[#fbf8f2] px-5 pb-8 pt-6 sm:px-8 sm:py-10 lg:py-16">
+        <div className="mx-auto grid max-w-[1240px] gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:gap-14">
+          <div className="h-[300px] w-full animate-pulse bg-[#eee9e1] motion-reduce:animate-none sm:h-auto sm:aspect-square" />
+          <div className="space-y-5 py-4"><div className="h-4 w-28 animate-pulse rounded bg-[#e4ded5] motion-reduce:animate-none" /><div className="h-12 w-4/5 animate-pulse rounded bg-[#e4ded5] motion-reduce:animate-none" /><div className="h-7 w-36 animate-pulse rounded bg-[#e4ded5] motion-reduce:animate-none" /><div className="h-24 animate-pulse rounded bg-[#eee9e1] motion-reduce:animate-none" /><div className="h-12 animate-pulse rounded bg-[#ded6ca] motion-reduce:animate-none" /></div>
+        </div>
       </div>
     );
   }
 
   if (error || !product) {
     return (
-      <div className="min-h-screen bg-[#fbf8f2] px-6 py-24 text-[#615e57]">
-        <div className="mx-auto max-w-[1240px]">
-          <Link to="/shop" className="text-[#8b7100] underline">
-            Quay lại Shop
-          </Link>
-          <p className="mt-6 text-red-600">{error || "Không tìm thấy sản phẩm"}</p>
-        </div>
+      <div className="flex min-h-[70vh] items-center justify-center bg-[#fbf8f2] px-5 py-16 text-center text-[#615e57]">
+        <section className="w-full max-w-lg rounded-xl border border-[#DED6CA] bg-white px-6 py-10">
+          <Search size={38} className="mx-auto text-[#8b7100]" />
+          <h1 className="mt-5 font-serif text-3xl font-semibold text-[#292824]">Không tìm thấy sản phẩm</h1>
+          <p className="mt-3 text-sm leading-6">{error || "Sản phẩm không tồn tại hoặc đã ngừng hiển thị."}</p>
+          <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row"><Link to="/shop" className="inline-flex min-h-11 items-center justify-center bg-[#1C1C19] px-6 py-3 text-sm font-semibold text-white hover:bg-[#735C00]">Xem sản phẩm</Link><Link to="/" className="inline-flex min-h-11 items-center justify-center border border-[#735C00] px-6 py-3 text-sm font-semibold text-[#735C00]">Về trang chủ</Link></div>
+        </section>
       </div>
     );
   }
@@ -226,13 +230,13 @@ export default function ProductDetail() {
       <main>
         {/* Product Hero */}
         <section className="bg-[#fbf8f2]">
-          <div className="mx-auto grid max-w-[1240px] gap-14 px-6 py-12 md:px-10 lg:grid-cols-[1.1fr_0.9fr] lg:px-14 lg:py-16">
+          <div className="mx-auto grid max-w-[1240px] gap-5 px-6 pb-8 pt-6 sm:gap-14 sm:py-12 md:px-10 lg:grid-cols-[1.1fr_0.9fr] lg:px-14 lg:py-16">
             {/* Image */}
-            <div className="relative min-h-[570px] bg-[#f5f1eb]">
+            <div className="relative h-[300px] w-full min-h-0 bg-[#f5f1eb] sm:h-auto sm:aspect-square lg:min-h-[570px] lg:aspect-auto">
               <img
                 src={currentImage}
                 alt={product.name}
-                className="h-full min-h-[570px] w-full object-contain p-12"
+                className="h-full w-full object-contain p-6 sm:p-10 lg:min-h-[570px] lg:p-12"
                 onError={(e) => {
                   e.currentTarget.src = PLACEHOLDER;
                 }}
@@ -256,12 +260,12 @@ export default function ProductDetail() {
             </div>
 
             {/* Information */}
-            <div className="flex flex-col justify-center py-6 lg:pl-2">
-              <p className="mb-7 text-[8px] uppercase tracking-[1.5px] text-[#aaa69e]">
+            <div className="flex flex-col justify-center py-0 sm:py-6 lg:pl-2">
+              <p className="mb-3 text-[8px] uppercase tracking-[1.5px] text-[#aaa69e] sm:mb-7">
                 {product.category || "Collections"}&nbsp;&nbsp;/&nbsp;&nbsp;{product.fragranceFamily || "Signature"}
               </p>
 
-              <h1 className="font-serif text-[44px] leading-[1.05] tracking-[-1px] md:text-[58px]">
+              <h1 className="break-words font-serif text-[40px] leading-[1.05] tracking-[-1px] sm:text-[44px] md:text-[58px]">
                 {product.name}
               </h1>
 

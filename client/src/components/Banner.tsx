@@ -11,7 +11,7 @@ export default function BannerSection() {
     >
       <div className="absolute inset-0 bg-black/55"></div>
 
-      <div className="relative h-full max-w-7xl mx-auto flex items-center">
+      <div className="relative mx-auto flex h-full max-w-7xl items-center px-5 sm:px-8 lg:px-10">
 
         <div className="max-w-xl text-white">
 
@@ -19,7 +19,7 @@ export default function BannerSection() {
             Bộ sưu tập đặc biệt
           </span>
 
-          <h2 className="text-6xl font-serif mt-6 leading-tight">
+          <h2 className="mt-6 font-serif text-4xl leading-tight sm:text-6xl">
             Tinh hoa của
             <br />
             nghệ thuật nước hoa

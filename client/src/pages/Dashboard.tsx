@@ -494,6 +494,7 @@ export default function Dashboard() {
   function handleLogout() {
     logout();
     useCart.getState().clear(); // reset badge giỏ trên Header
+    toast.info("Đã đăng xuất");
     navigate("/");
   }
 

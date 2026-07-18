@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import Footer from "../components/Footer";
 import { api } from "../lib/api";
+import { SlidersHorizontal, X } from "lucide-react";
 
 type Product = {
   id: string;
@@ -72,6 +73,30 @@ const [selectedSeasons, setSelectedSeasons] = useState<string[]>([]);
 const [selectedConcentrations, setSelectedConcentrations] = useState<string[]>([]);
 const [price,setPrice]=useState(Number.MAX_SAFE_INTEGER);
 const [sort,setSort]=useState("newest");
+const [filterOpen, setFilterOpen] = useState(false);
+
+useEffect(() => {
+  if (!filterOpen) return;
+
+  const closeOnEscape = (event: KeyboardEvent) => {
+    if (event.key === "Escape") setFilterOpen(false);
+  };
+  const desktopQuery = window.matchMedia("(min-width: 1024px)");
+  const closeOnDesktop = (event: MediaQueryListEvent) => {
+    if (event.matches) setFilterOpen(false);
+  };
+
+  document.addEventListener("keydown", closeOnEscape);
+  desktopQuery.addEventListener("change", closeOnDesktop);
+  document.body.style.overflow = "hidden";
+
+  return () => {
+    document.removeEventListener("keydown", closeOnEscape);
+    desktopQuery.removeEventListener("change", closeOnDesktop);
+    document.body.style.overflow = "";
+  };
+}, [filterOpen]);
+
 const toggleSize = (value: string) => {
   setSelectedSizes((prev) =>
     prev.includes(value)
@@ -352,33 +377,41 @@ const toggleGender=(gender:string)=>{
     <>
     <main className="bg-[#FDF9F4]">
       {/* Hero */}
-      <section className="max-w-[1536px] mx-auto px-10 pt-32 pb-16">
-       <div className="grid lg:grid-cols-2 gap-16 items-center">
+      <section className="mx-auto max-w-[1536px] px-5 pb-4 pt-8 sm:px-8 sm:pb-10 sm:pt-20 lg:px-10 lg:pb-16 lg:pt-32">
+       <div className="grid items-center gap-5 sm:gap-8 lg:grid-cols-2 lg:gap-16">
           <div>
-            <h1 className="font-heading text-[88px] leading-[88px] text-[#1C1C19]">
+            <h1 className="font-heading text-[44px] leading-[0.98] text-[#1C1C19] sm:text-6xl sm:leading-none lg:text-[88px] lg:leading-[88px]">
               The Seasonal
               <br />
               Archives
             </h1>
 
-            <p className="mt-8 max-w-md text-[#5F5E5E] leading-8">
+            <p className="mt-4 max-w-md text-base leading-6 text-[#5F5E5E] sm:mt-8 sm:leading-8">
               Discover timeless fragrances curated from the world's finest
               perfume houses.
             </p>
           </div>
 
-          <div className="bg-[#F3EEE7] h-[330px] rounded-sm overflow-hidden">
+          <div className="h-[250px] overflow-hidden rounded-sm bg-[#F3EEE7] sm:h-auto sm:aspect-[16/9] lg:h-[330px] lg:aspect-auto">
             <img
               src="https://images.unsplash.com/photo-1594035910387-fea47794261f?w=1200"
-              alt=""
-              className="w-full h-full object-cover"
+              alt="Bộ sưu tập nước hoa theo mùa"
+              className="h-full w-full object-cover object-center"
+              loading="eager"
+              decoding="async"
             />
           </div>
         </div>
       </section>
 
-<section className="max-w-[1536px] mx-auto px-10 flex gap-16 pb-24">
-  <ShopSidebar
+<section className="mx-auto max-w-[1536px] px-5 pb-16 sm:px-8 lg:flex lg:gap-12 lg:px-10 lg:pb-24 xl:gap-16">
+  {filterOpen && <button type="button" className="fixed inset-0 z-40 bg-black/45 lg:hidden" onClick={() => setFilterOpen(false)} aria-label="Đóng bộ lọc" />}
+  <div
+    className={`fixed inset-y-0 left-0 z-50 w-[min(86vw,320px)] overflow-y-auto bg-[#FDF9F4] p-5 shadow-2xl transition-transform duration-300 lg:visible lg:static lg:z-auto lg:block lg:w-64 lg:shrink-0 lg:translate-x-0 lg:overflow-visible lg:bg-transparent lg:p-0 lg:shadow-none lg:pointer-events-auto ${filterOpen ? "visible translate-x-0" : "invisible -translate-x-full pointer-events-none"}`}
+    aria-label="Bộ lọc sản phẩm"
+  >
+    <div className="mb-4 flex items-center justify-between lg:hidden"><h2 className="font-semibold">Bộ lọc sản phẩm</h2><button type="button" onClick={() => setFilterOpen(false)} className="flex h-11 w-11 items-center justify-center rounded-full border" aria-label="Đóng bộ lọc"><X size={20} /></button></div>
+    <ShopSidebar
 
     search={search}
     setSearch={setSearch}
@@ -410,17 +443,19 @@ toggleOccasion={toggleOccasion}
 selectedConcentrations={selectedConcentrations}
 concentrations={concentrations}
 toggleConcentration={toggleConcentration}
-  />
+    />
+  </div>
 
         {/* Content */}
-        <section className="flex-1">
+        <section className="min-w-0 flex-1">
+          <button type="button" onClick={() => setFilterOpen(true)} className="mb-5 inline-flex min-h-11 items-center gap-2 border border-[#D0C5AF] px-4 text-sm font-semibold text-[#4F4942] lg:hidden"><SlidersHorizontal size={18} /> Bộ lọc</button>
           {/* Toolbar */}
-          <div className="flex justify-between border-b pb-5 border-[#e8deca]">
-            <p className="uppercase text-xs tracking-widest text-[#5F5E5E]">
+          <div className="flex flex-col gap-3 border-b border-[#e8deca] pb-5 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-xs uppercase tracking-widest text-[#5F5E5E]">
               Showing {products.length} of {total} products
             </p>
 
-            <label className="flex items-center gap-3">
+            <label className="flex min-w-0 items-center justify-between gap-3 sm:justify-end">
               <span className="text-[10px] uppercase tracking-[0.18em] text-[#8A8176]">
                 Sắp xếp
               </span>
@@ -428,7 +463,7 @@ toggleConcentration={toggleConcentration}
               <select
                 value={sort}
                 onChange={(event) => setSort(event.target.value)}
-                className="min-w-[190px] border border-[#e8deca] bg-[#FDF9F4] px-4 py-2 text-[10px] uppercase tracking-[0.16em] text-[#4F4942] outline-none transition hover:border-[#735C00] focus:border-[#735C00]"
+                className="min-w-0 flex-1 border border-[#e8deca] bg-[#FDF9F4] px-3 py-2 text-[10px] uppercase tracking-[0.12em] text-[#4F4942] outline-none transition hover:border-[#735C00] focus:border-[#735C00] sm:w-[190px] sm:flex-none sm:px-4 sm:tracking-[0.16em]"
               >
                 <option value="newest">Mới nhất</option>
                 <option value="price_asc">Giá tăng dần</option>
