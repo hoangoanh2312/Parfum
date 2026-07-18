@@ -7,6 +7,7 @@ import AdminLayout from "./components/AdminLayout";
 import AdminRoute from "./components/AdminRoute";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminBrands from "./pages/admin/AdminBrands";
+import AdminCategories from "./pages/admin/AdminCategories";
 
 import Home from "./pages/Home";
 import Shop from "./pages/Shop";
@@ -60,6 +61,7 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <AdminDashboard /> },
       { path: "brands", element: <AdminBrands /> },
+      { path: "categories", element: <AdminCategories /> },
     ],
   },
 ]);

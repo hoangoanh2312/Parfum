@@ -10,6 +10,8 @@ import productRoutes from './product.routes';
 
 import cartRoutes from './cart.routes';
 import orderRoutes from './order.routes';
+import adminBrandRoutes from './admin-brand.routes';
+import adminCategoryRoutes from './admin-category.routes';
 
 const router = Router();
 
@@ -25,5 +27,8 @@ router.use('/products', productRoutes); // danh sách/chi tiết sản phẩm ch
 
 router.use('/cart', cartRoutes);   // PF-27 Giỏ hàng
 router.use('/orders', orderRoutes); // PF-29 Chuẩn bị checkout / kiểm tồn kho
+
+router.use('/admin/brands', adminBrandRoutes);
+router.use('/admin/categories', adminCategoryRoutes);
 
 export default router;
