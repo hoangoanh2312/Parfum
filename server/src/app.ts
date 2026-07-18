@@ -12,17 +12,10 @@ export function createApp() {
   app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
   app.use(cors({ origin: env.clientUrl, credentials: true }));
   app.use(express.json());
-<<<<<<< HEAD
   app.use('/uploads', express.static(path.resolve(process.cwd(), 'uploads')));
-  app.get('/', (_, res) => {
-  res.json({
-    status: 'ok',
-    message: 'HOC Perfume API running'
-=======
 
   app.get('/', (_req, res) => {
     res.json({ status: 'ok', message: 'HOC Perfume API running' });
->>>>>>> feature/pf-32-category-brand-crud
   });
 
   app.use('/api', routes);

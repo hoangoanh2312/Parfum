@@ -29,14 +29,7 @@ export default function FeaturedProducts() {
     api
       .get<ProductListResponse>("/products", { params: { page: 1, limit: 32, sort: "newest" } })
       .then(({ data }) => {
-<<<<<<< HEAD
-        if (!active) return;
-        const list = Array.isArray(data) ? data : data.data;
-        setProducts(Array.isArray(list) ? list.slice(0, 8) : []);
-        setError('');
-=======
         if (mounted) setProducts(Array.isArray(data.data) ? data.data : []);
->>>>>>> feature/pf-32-category-brand-crud
       })
       .catch(() => {
         if (mounted) setProducts([]);

@@ -1,13 +1,8 @@
 interface GenderFilterProps {
-<<<<<<< HEAD
-    genders:string[];
-    selected:string[];
-    onToggle:(gender:string)=>void;
-=======
   genders: string[];
   selected: string[];
   onToggle: (gender: string) => void;
->>>>>>> feature/pf-32-category-brand-crud
+  onClear?: () => void;
 }
 
 const genderLabels: Record<string, string> = {

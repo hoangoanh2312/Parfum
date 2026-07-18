@@ -1,11 +1,6 @@
-<<<<<<< HEAD
-import { Heart, ShoppingBag } from "lucide-react";
-import { Link } from "react-router-dom";
-=======
 import { Heart, ChevronDown } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useMemo, useState } from "react";
->>>>>>> feature/pf-32-category-brand-crud
 import { useCart } from "../store/cart.store";
 import { toast } from "../store/toast.store";
 
@@ -17,13 +12,9 @@ export interface ProductCardData {
   slug?: string;
   name: string;
   brand?: string;
-<<<<<<< HEAD
-  description?: string;
-=======
   category?: string;
   description?: string;
   fragranceFamily?: string;
->>>>>>> feature/pf-32-category-brand-crud
   price?: number | null;
   priceText?: string;
   image?: string | null;
@@ -35,17 +26,11 @@ export interface ProductCardData {
   gender?: string; // female | male | unisex (lọc Shop)
 }
 
-<<<<<<< HEAD
-export default function ProductCard({ item }: { item: ProductCardData }) {
-  const addItem = useCart((s) => s.addItem);
-  const detailPath = `/products/${item.slug || item.id}`;
-=======
 interface ProductCardProps {
   item: ProductCardData;
   liked?: boolean;
   onWishlist?: (id: string) => void;
 }
->>>>>>> feature/pf-32-category-brand-crud
 
 export default function ProductCard({
   item,
@@ -69,16 +54,7 @@ export default function ProductCard({
   const outOfStock =
     !item.variantId || (typeof item.stock === "number" && item.stock <= 0);
 
-<<<<<<< HEAD
-  const image =
-    item.images?.[0] ||
-    item.image ||
-    PLACEHOLDER;
-
-  async function handleAdd() {
-=======
   async function handleAddToCart() {
->>>>>>> feature/pf-32-category-brand-crud
     if (!item.variantId) {
       toast.error("Sản phẩm chưa có phiên bản để bán");
       return;
@@ -116,74 +92,6 @@ export default function ProductCard({
   }
 
   return (
-<<<<<<< HEAD
-    <article className="group">
-      {/* Image */}
-      <div className="relative overflow-hidden bg-[#F3EEE7] aspect-[4/5]">
-        <img
-          src={image}
-          alt={item.name}
-          onError={(e) => {
-            (e.currentTarget as HTMLImageElement).src = PLACEHOLDER;
-          }}
-          className={
-            "w-full h-full object-cover duration-500 group-hover:scale-105 " +
-            (outOfStock ? "opacity-60 grayscale" : "")
-          }
-        />
-
-        {outOfStock && (
-          <span className="absolute top-3 left-3 bg-red-600 text-white text-xs px-3 py-1 uppercase tracking-widest">
-            Hết hàng
-          </span>
-        )}
-
-        {/* Wishlist */}
-        <button className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white shadow flex items-center justify-center hover:bg-[#1C1C19] hover:text-white duration-300">
-          <Heart size={18} />
-        </button>
-
-        {/* Add to cart */}
-        <div className="absolute left-0 right-0 bottom-0 translate-y-full group-hover:translate-y-0 duration-300">
-          <button
-            onClick={handleAdd}
-            disabled={outOfStock}
-            className="w-full h-14 bg-[#1C1C19] text-white uppercase tracking-[2px] text-xs flex items-center justify-center gap-2 hover:bg-[#735C00] disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <ShoppingBag size={16} />
-            {outOfStock ? "Hết hàng" : "Add to cart"}
-          </button>
-        </div>
-      </div>
-
-      {/* Info */}
-      <div className="mt-6">
-        <p className="uppercase tracking-[3px] text-[10px] text-[#735C00]">
-          {item.brand || "Eau De Parfum"}
-        </p>
-
-        <h3 className="mt-2 text-2xl font-semibold text-[#1C1C19]">
-          {item.name}
-        </h3>
-
-        <p className="mt-3 text-sm text-[#5F5E5E] leading-7 line-clamp-2">
-          {item.description || "Mùi hương tinh tế, sang trọng."}
-        </p>
-
-        <div className="flex items-center justify-between mt-6">
-          <span className="text-2xl font-semibold text-[#1C1C19]">
-            {item.priceText || (item.price ? `${(item.price || 0).toLocaleString("vi-VN")}đ` : "Liên hệ")}
-          </span>
-
-          <Link
-            to={detailPath}
-            className="uppercase tracking-[2px] text-[11px] font-semibold text-[#735C00] hover:underline"
-          >
-            View
-          </Link>
-        </div>
-      </div>
-=======
     <article className="group flex h-full min-h-[560px] w-full flex-col bg-[#FCF8F3] p-8">
       <Link
         to={detailPath}
@@ -253,7 +161,6 @@ export default function ProductCard({
           </button>
         </div>
       </div>
->>>>>>> feature/pf-32-category-brand-crud
     </article>
   );
 }

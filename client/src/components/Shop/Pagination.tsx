@@ -52,8 +52,4 @@ export default function Pagination({
       </button>
     </div>
   );
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> feature/pf-32-category-brand-crud

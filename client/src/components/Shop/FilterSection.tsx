@@ -39,8 +39,4 @@ export default function FilterSection({
       </div>
     </div>
   );
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> feature/pf-32-category-brand-crud

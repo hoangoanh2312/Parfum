@@ -1,11 +1,7 @@
 import { Request, Response } from 'express';
 import * as productService from '../services/product.service';
 
-<<<<<<< HEAD
-// GET /api/products -> danh sách sản phẩm cho web, có filter/sort/pagination
-=======
 // GET /api/products  -> danh sách sản phẩm cho web, có filter/sort/pagination
->>>>>>> feature/pf-32-category-brand-crud
 export const getProducts = async (req: Request, res: Response) => {
   try {
     const data = await productService.getProducts(req.query);

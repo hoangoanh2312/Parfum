@@ -25,13 +25,7 @@ interface ProductCardProps {
   product: Product;
 }
 
-<<<<<<< HEAD
-export default function ProductCard({
-  product,
-}: ProductCardProps) {
-=======
 export default function ProductCard({ product }: ProductCardProps) {
->>>>>>> feature/pf-32-category-brand-crud
   const addItem = useCart((s) => s.addItem);
   const detailPath = `/products/${product.slug || product.id || product._id}`;
   const outOfStock =
@@ -45,14 +39,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           currency: "VND",
         }).format(product.price)
       : "Liên hệ");
-<<<<<<< HEAD
-  const image =
-    product.images?.[0] ||
-    product.image ||
-    PLACEHOLDER;
-=======
   const image = product.images?.[0] || product.image || PLACEHOLDER;
->>>>>>> feature/pf-32-category-brand-crud
 
   async function handleAdd() {
     if (!product.variantId) {
@@ -82,13 +69,9 @@ export default function ProductCard({ product }: ProductCardProps) {
       );
       toast.success("Đã thêm vào giỏ");
     } catch (e: any) {
-<<<<<<< HEAD
-      toast.error(e?.response?.data?.message || e?.message || "Không thể thêm vào giỏ");
-=======
       toast.error(
         e?.response?.data?.message || e?.message || "Không thể thêm vào giỏ",
       );
->>>>>>> feature/pf-32-category-brand-crud
     }
   }
 
@@ -138,30 +121,18 @@ export default function ProductCard({ product }: ProductCardProps) {
           {product.brand || "Eau De Parfum"}
         </p>
 
-<<<<<<< HEAD
-        <h3 className="mt-2 text-2xl font-semibold text-[#1C1C19]">
-          {product.name}
-        </h3>
-=======
         <Link to={detailPath}>
           <h3 className="h-[62px] overflow-hidden font-noto-serif text-[24px] text-[#1E1D1A]">
             {product.name}
           </h3>
         </Link>
->>>>>>> feature/pf-32-category-brand-crud
 
         <p className="mt-3 text-sm text-[#5F5E5E] leading-7 line-clamp-2">
           {product.description || "No description available."}
         </p>
 
         <div className="flex items-center justify-between mt-6">
-<<<<<<< HEAD
-          <span className="text-2xl font-semibold text-[#1C1C19]">
-            {price}
-          </span>
-=======
           <span className="text-2xl font-semibold text-[#1C1C19]">{price}</span>
->>>>>>> feature/pf-32-category-brand-crud
 
           <Link
             to={detailPath}

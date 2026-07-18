@@ -35,8 +35,4 @@ export default function OccasionFilter({
       </div>
     </FilterSection>
   );
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> feature/pf-32-category-brand-crud

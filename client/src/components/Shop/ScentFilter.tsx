@@ -32,8 +32,4 @@ export default function ScentFilter({
       </div>
     </FilterSection>
   );
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> feature/pf-32-category-brand-crud

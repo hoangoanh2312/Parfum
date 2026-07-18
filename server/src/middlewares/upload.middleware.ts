@@ -40,7 +40,6 @@ const localStorage = multer.diskStorage({
   },
 });
 
-<<<<<<< HEAD
 export const upload = multer({
   storage: cloudinaryStorage || localStorage,
   limits: { fileSize: 5 * 1024 * 1024 },
@@ -52,15 +51,3 @@ export const upload = multer({
     cb(null, true);
   },
 });
-=======
-const storage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: async () => ({
-    folder: 'parfum',
-    format: 'jpg', 
-    public_id: Date.now().toString(),
-  }),
-});
-
-export const upload = multer({ storage: storage });
->>>>>>> feature/pf-32-category-brand-crud

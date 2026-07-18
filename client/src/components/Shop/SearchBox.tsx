@@ -3,14 +3,7 @@ interface SearchBoxProps {
   onChange: (value: string) => void;
 }
 
-<<<<<<< HEAD
-export default function SearchBox({
-  value,
-  onChange,
-}: SearchBoxProps) {
-=======
 export default function SearchBox({ value, onChange }: SearchBoxProps) {
->>>>>>> feature/pf-32-category-brand-crud
   return (
     <div className="relative">
       <input
