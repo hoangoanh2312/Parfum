@@ -56,6 +56,20 @@ async function uniqueSlug(name: string, ignoreId?: string) {
   return slug;
 }
 
+// Sinh slug duy nhat cho mot Model bat ky (Brand, Category, ...).
+async function uniqueSlugFor(Model: any, name: string, ignoreId?: string) {
+  const base = slugify(name) || 'muc';
+  let slug = base;
+  let i = 1;
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const existed: any = await Model.findOne({ slug }).select('_id').lean();
+    if (!existed || (ignoreId && String(existed._id) === String(ignoreId))) break;
+    slug = `${base}-${i++}`;
+  }
+  return slug;
+}
+
 function paginate(page?: unknown, limit?: unknown) {
   const p = Math.max(1, toInt(page, 1));
   const l = Math.min(100, Math.max(1, toInt(limit, 20)));
@@ -389,7 +403,10 @@ export async function createBrand(input: any) {
   if (!input?.name?.trim()) throw httpError('Ten thuong hieu la bat buoc');
   const existed = await Brand.findOne({ name: input.name.trim() });
   if (existed) throw httpError('Thuong hieu da ton tai', 409);
-  const brand: any = await Brand.create({ name: input.name.trim() });
+  const brand: any = await Brand.create({
+    name: input.name.trim(),
+    slug: await uniqueSlugFor(Brand, input.name.trim()),
+  });
   return { id: String(brand._id), name: brand.name, productCount: 0 };
 }
 
@@ -397,7 +414,7 @@ export async function updateBrand(id: string, input: any) {
   if (!input?.name?.trim()) throw httpError('Ten thuong hieu la bat buoc');
   const brand: any = await Brand.findByIdAndUpdate(
     id,
-    { name: input.name.trim() },
+    { name: input.name.trim(), slug: await uniqueSlugFor(Brand, input.name.trim(), id) },
     { new: true, runValidators: true },
   );
   if (!brand) throw httpError('Khong tim thay thuong hieu', 404);
@@ -432,7 +449,10 @@ export async function createCategory(input: any) {
   if (!input?.name?.trim()) throw httpError('Ten danh muc la bat buoc');
   const existed = await Category.findOne({ name: input.name.trim() });
   if (existed) throw httpError('Danh muc da ton tai', 409);
-  const category: any = await Category.create({ name: input.name.trim() });
+  const category: any = await Category.create({
+    name: input.name.trim(),
+    slug: await uniqueSlugFor(Category, input.name.trim()),
+  });
   return { id: String(category._id), name: category.name, productCount: 0 };
 }
 
@@ -440,7 +460,7 @@ export async function updateCategory(id: string, input: any) {
   if (!input?.name?.trim()) throw httpError('Ten danh muc la bat buoc');
   const category: any = await Category.findByIdAndUpdate(
     id,
-    { name: input.name.trim() },
+    { name: input.name.trim(), slug: await uniqueSlugFor(Category, input.name.trim(), id) },
     { new: true, runValidators: true },
   );
   if (!category) throw httpError('Khong tim thay danh muc', 404);

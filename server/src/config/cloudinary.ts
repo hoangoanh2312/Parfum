@@ -20,7 +20,7 @@ export const isCloudinaryConfigured = Boolean(
 // Thu muc tren Cloudinary dung lam thu vien anh cho web.
 // Doi bang bien moi truong CLOUDINARY_FOLDER trong file .env (mac dinh 'parfum').
 // Ho tro folder long nhau, vd: CLOUDINARY_FOLDER=lessence/products
-export const CLOUDINARY_FOLDER = (env.cloudinaryFolder || 'parfum')
+export const CLOUDINARY_FOLDER = (env.cloudinaryFolder || 'parfumeshop')
   .trim()
   .replace(/^\/+|\/+$/g, '');
 
