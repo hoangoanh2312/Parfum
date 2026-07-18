@@ -77,22 +77,29 @@ export default function Wishlist() {
             <p className="mt-2 max-w-md text-sm text-[#7C746C]">
               Những sản phẩm bạn yêu thích sẽ xuất hiện tại đây.
             </p>
+            <Link
+              to="/shop"
+              className="mt-6 inline-flex items-center gap-2 border border-[#8B7200] px-6 py-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6F5C00] transition hover:bg-[#8B7200] hover:text-white"
+            >
+              Khám phá sản phẩm
+            </Link>
           </div>
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
             {products.map((product) => {
               const image = product.images?.[0] || product.image || PLACEHOLDER;
+              const href = `/products/${product.slug || product.id}`;
 
               return (
                 <article
                   key={product.id}
-                  className="border border-[#E2DBD2] bg-[#FFFDF9]"
+                  className="group border border-[#E2DBD2] bg-[#FFFDF9] transition hover:border-[#C9B77A]"
                 >
-                  <Link to={`/products/${product.slug || product.id}`}>
+                  <Link to={href} className="block overflow-hidden">
                     <img
                       src={image}
                       alt={product.name}
-                      className="aspect-[4/5] w-full bg-[#F0ECE7] object-cover"
+                      className="aspect-[4/5] w-full bg-[#F0ECE7] object-cover transition duration-700 group-hover:scale-[1.04]"
                       onError={(event) => {
                         event.currentTarget.src = PLACEHOLDER;
                       }}
@@ -103,19 +110,32 @@ export default function Wishlist() {
                     <p className="text-[9px] uppercase tracking-[0.18em] text-[#9A7D00]">
                       {product.brand || product.category || "Parfum"}
                     </p>
-                    <h2 className="mt-2 font-serif text-xl">{product.name}</h2>
+                    <Link to={href}>
+                      <h2 className="mt-2 font-serif text-xl transition hover:text-[#8B7200]">
+                        {product.name}
+                      </h2>
+                    </Link>
                     <p className="mt-2 line-clamp-2 text-sm leading-6 text-[#6F6861]">
                       {product.description || "Mùi hương tinh tế, sang trọng."}
                     </p>
 
-                    <button
-                      type="button"
-                      onClick={() => remove(product.id)}
-                      className="mt-5 flex items-center gap-2 text-[10px] uppercase tracking-[0.12em] text-[#8D8379] hover:text-red-700"
-                    >
-                      <Trash2 size={13} />
-                      Xóa khỏi wishlist
-                    </button>
+                    <div className="mt-5 flex items-center justify-between">
+                      <Link
+                        to={href}
+                        className="inline-flex items-center gap-1 border-b border-[#A8944B] pb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#6F5C00] transition hover:text-[#8B7200]"
+                      >
+                        Xem chi tiết
+                      </Link>
+
+                      <button
+                        type="button"
+                        onClick={() => remove(product.id)}
+                        className="flex items-center gap-2 text-[10px] uppercase tracking-[0.12em] text-[#8D8379] transition hover:text-red-700"
+                      >
+                        <Trash2 size={13} />
+                        Xóa
+                      </button>
+                    </div>
                   </div>
                 </article>
               );

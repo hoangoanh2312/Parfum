@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { api } from "../lib/api";
 import Footer from "../components/Footer";
+import BrandJournal from "./BrandJournal";
 import { toast } from "../store/toast.store";
 import { BLOG_ARTICLES, ARCHETYPE_SLUG_MAP } from "./blogData";
 
@@ -62,6 +63,8 @@ const fallbackArchetypes: Archetype[] = [
 ];
 
 export default function Blog() {
+  const [searchParams] = useSearchParams();
+  const brandParam = searchParams.get("brand");
   const sliderRef = useRef<HTMLDivElement>(null);
   const [products, setProducts] = useState<ProductListItem[]>([]);
   const [email, setEmail] = useState("");
@@ -147,6 +150,11 @@ export default function Blog() {
     toast.success("Đã đăng ký nhận journal");
     setEmail("");
   };
+
+  // Nếu có ?brand=... -> hiển thị trang tin riêng của brand đó
+  if (brandParam) {
+    return <BrandJournal brand={brandParam} />;
+  }
 
   return (
     <>

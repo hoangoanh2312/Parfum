@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import ProductCard, { ProductCardData } from "./ProductCard";
 import { api } from "../lib/api";
+import { useWishlist } from "../store/wishlist.store";
 
 type ProductTab = "favorites" | "featured" | "new-arrivals" | "bundle-deals";
 
@@ -19,9 +20,16 @@ export default function FeaturedProducts() {
   const sectionRef = useRef<HTMLElement>(null);
   const [activeTab, setActiveTab] = useState<ProductTab>("featured");
   const [products, setProducts] = useState<ProductCardData[]>([]);
-  const [wishlist, setWishlist] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
+
+  // Wishlist đồng bộ backend (dùng cho tab "The Favorites")
+  const wishlistIds = useWishlist((state) => state.ids);
+  const ensureWishlist = useWishlist((state) => state.ensureLoaded);
+
+  useEffect(() => {
+    ensureWishlist();
+  }, [ensureWishlist]);
 
   useEffect(() => {
     let mounted = true;
@@ -63,7 +71,7 @@ export default function FeaturedProducts() {
 
     if (activeTab === "favorites") {
       const likedProducts = sorted.filter((product) =>
-        wishlist.includes(product.id || product._id || ""),
+        wishlistIds.includes(product.id || product._id || ""),
       );
 
       return likedProducts.length
@@ -74,21 +82,13 @@ export default function FeaturedProducts() {
     return sorted.filter((product) => (product.stock ?? 0) > 0).length
       ? sorted.filter((product) => (product.stock ?? 0) > 0)
       : sorted;
-  }, [activeTab, products, wishlist]);
+  }, [activeTab, products, wishlistIds]);
 
   const totalPages = Math.max(1, Math.ceil(filteredProducts.length / 8));
   const displayedProducts = useMemo(
     () => filteredProducts.slice((page - 1) * 8, page * 8),
     [filteredProducts, page],
   );
-
-  const toggleWishlist = (productId: string) => {
-    setWishlist((current) =>
-      current.includes(productId)
-        ? current.filter((id) => id !== productId)
-        : [...current, productId],
-    );
-  };
 
   const changeTab = (nextTab: ProductTab) => {
     setActiveTab(nextTab);
@@ -148,14 +148,7 @@ export default function FeaturedProducts() {
             displayedProducts.map((product) => {
               const productId = product.id || product._id || "";
 
-              return (
-                <ProductCard
-                  key={productId}
-                  item={product}
-                  liked={wishlist.includes(productId)}
-                  onWishlist={toggleWishlist}
-                />
-              );
+              return <ProductCard key={productId} item={product} />;
             })}
         </div>
 

@@ -1,7 +1,8 @@
 import { Heart, ChevronDown } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useCart } from "../store/cart.store";
+import { useWishlist } from "../store/wishlist.store";
 import { toast } from "../store/toast.store";
 
 const PLACEHOLDER = "https://placehold.co/500x500?text=No+Image";
@@ -32,13 +33,21 @@ interface ProductCardProps {
   onWishlist?: (id: string) => void;
 }
 
-export default function ProductCard({
-  item,
-  liked = false,
-  onWishlist,
-}: ProductCardProps) {
+export default function ProductCard({ item, liked = false }: ProductCardProps) {
   const addItem = useCart((state) => state.addItem);
   const productId = item.id || item._id || "";
+
+  // Wishlist đồng bộ với backend (MongoDB)
+  const wishlisted = useWishlist((state) => state.ids.includes(productId));
+  const toggleWishlist = useWishlist((state) => state.toggle);
+  const ensureWishlist = useWishlist((state) => state.ensureLoaded);
+
+  useEffect(() => {
+    ensureWishlist();
+  }, [ensureWishlist]);
+
+  const isLiked = wishlisted || liked;
+
   const sizeOptions = useMemo(
     () => Array.from(new Set([...(item.sizes || []), item.volume].filter(Boolean))) as string[],
     [item.sizes, item.volume],
@@ -153,11 +162,12 @@ export default function ProductCard({
 
           <button
             type="button"
-            onClick={() => onWishlist?.(productId)}
-            aria-label="Add to wishlist"
+            onClick={() => toggleWishlist(productId)}
+            aria-label={isLiked ? "Bỏ khỏi wishlist" : "Thêm vào wishlist"}
+            title={isLiked ? "Bỏ khỏi wishlist" : "Thêm vào wishlist"}
             className="flex h-[50px] w-[42px] items-center justify-center text-[#816500] transition-transform duration-200 hover:scale-110"
           >
-            <Heart size={22} strokeWidth={1.6} fill={liked ? "currentColor" : "none"} />
+            <Heart size={22} strokeWidth={1.6} fill={isLiked ? "currentColor" : "none"} />
           </button>
         </div>
       </div>

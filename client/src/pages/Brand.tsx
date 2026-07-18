@@ -216,6 +216,7 @@ export default function Brand() {
           .filter((brand) => brand.name);
 
         setBrands(mongoBrands.length ? mongoBrands : brandFallbacks);
+        setCurrentPage(1);
       })
       .catch(() => {
         if (mounted) setBrands(brandFallbacks);
@@ -234,7 +235,7 @@ export default function Brand() {
   const displayedBrands = useMemo(() => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
     return brands.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-  }, [currentPage]);
+  }, [brands, currentPage]);
 
   const changePage = (page: number) => {
     if (page < 1 || page > totalPages) return;
@@ -294,11 +295,7 @@ export default function Brand() {
         <section className="px-6 pb-16 sm:px-10 lg:px-16 lg:pb-24">
           <div className="mx-auto grid max-w-[1420px] gap-x-10 gap-y-16 md:grid-cols-2 xl:grid-cols-3 xl:gap-x-12 xl:gap-y-20">
             {displayedBrands.map((brand) => (
-              <Link
-                key={brand.id}
-                to={`/shop?brand=${encodeURIComponent(brand.slug)}`}
-                className="group block"
-              >
+              <div key={brand.id} className="group block">
                 <div className="overflow-hidden bg-[#EFECE7]">
                   <img
                     src={brand.image}
@@ -319,11 +316,22 @@ export default function Brand() {
                     {brand.description}
                   </p>
 
-                  <span className="mt-5 inline-flex items-center border-b border-[#A8944B] pb-1 text-[8px] font-semibold uppercase tracking-[0.2em] text-[#675711] transition group-hover:text-[#9A7C00]">
-                    View collection
-                  </span>
+                  <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-2">
+                    <Link
+                      to={`/shop?brand=${encodeURIComponent(brand.name)}`}
+                      className="inline-flex items-center border-b border-[#A8944B] pb-1 text-[8px] font-semibold uppercase tracking-[0.2em] text-[#675711] transition hover:text-[#9A7C00]"
+                    >
+                      View collection
+                    </Link>
+                    <Link
+                      to={`/blog?brand=${encodeURIComponent(brand.name)}`}
+                      className="inline-flex items-center border-b border-transparent pb-1 text-[8px] font-semibold uppercase tracking-[0.2em] text-[#9A8A63] transition hover:border-[#A8944B] hover:text-[#675711]"
+                    >
+                      Read journal
+                    </Link>
+                  </div>
                 </div>
-              </Link>
+              </div>
             ))}
           </div>
         </section>

@@ -1,6 +1,8 @@
 import { Heart, ShoppingBag } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useEffect } from "react";
 import { useCart } from "../../store/cart.store";
+import { useWishlist } from "../../store/wishlist.store";
 import { toast } from "../../store/toast.store";
 
 const PLACEHOLDER = "https://placehold.co/400x500?text=No+Image";
@@ -28,6 +30,17 @@ interface ProductCardProps {
 export default function ProductCard({ product }: ProductCardProps) {
   const addItem = useCart((s) => s.addItem);
   const detailPath = `/products/${product.slug || product.id || product._id}`;
+
+  // Wishlist đồng bộ với backend (MongoDB)
+  const productId = product.id || product._id || "";
+  const wishlisted = useWishlist((s) => s.ids.includes(productId));
+  const toggleWishlist = useWishlist((s) => s.toggle);
+  const ensureWishlist = useWishlist((s) => s.ensureLoaded);
+
+  useEffect(() => {
+    ensureWishlist();
+  }, [ensureWishlist]);
+
   const outOfStock =
     !product.variantId ||
     (typeof product.stock === "number" && product.stock <= 0);
@@ -98,8 +111,19 @@ export default function ProductCard({ product }: ProductCardProps) {
         )}
 
         {/* Wishlist */}
-        <button className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white shadow flex items-center justify-center hover:bg-[#1C1C19] hover:text-white duration-300">
-          <Heart size={18} />
+        <button
+          type="button"
+          onClick={() => toggleWishlist(productId)}
+          aria-label={wishlisted ? "Bỏ khỏi wishlist" : "Thêm vào wishlist"}
+          title={wishlisted ? "Bỏ khỏi wishlist" : "Thêm vào wishlist"}
+          className={
+            "absolute top-4 right-4 w-10 h-10 rounded-full shadow flex items-center justify-center duration-300 " +
+            (wishlisted
+              ? "bg-[#735C00] text-white"
+              : "bg-white text-[#1C1C19] hover:bg-[#1C1C19] hover:text-white")
+          }
+        >
+          <Heart size={18} fill={wishlisted ? "currentColor" : "none"} />
         </button>
 
         {/* Add to cart */}

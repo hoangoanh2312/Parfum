@@ -1,5 +1,6 @@
 import ShopSidebar from "../components/Shop/ShopSidebar";
 import ProductGrid from "../components/Shop/ProductGrid";
+import Pagination from "../components/Shop/Pagination";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import Footer from "../components/Footer";
@@ -39,11 +40,16 @@ type ProductListResponse = {
   totalPages: number;
 };
 
-const occasionSeasonMap: Record<string, string[]> = {
-  Day: ["spring", "summer", "all"],
-  Night: ["autumn", "winter", "all"],
-  Formal: ["autumn", "winter", "all"],
-  Work: ["spring", "summer", "autumn", "all"],
+type ProductFilters = {
+  brands: string[];
+  fragranceFamilies: string[];
+  concentrations: string[];
+  genders: string[];
+  seasons: string[];
+  categories: string[];
+  sizes: string[];
+  maxPrice: number;
+  total: number;
 };
 
 const getSizeNumber = (size: string) => {
@@ -51,39 +57,44 @@ const getSizeNumber = (size: string) => {
   return match ? Number(match[0]) : Number.MAX_SAFE_INTEGER;
 };
 
+const normBrand = (value: string) =>
+  value
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "");
+
+// 4 cot x 3 hang = 12 san pham / trang; so trang tang theo so luong san pham
+const PAGE_SIZE = 12;
+
 export default function Shop() {
   const [searchParams] = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
-  const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [filters, setFilters] = useState<ProductFilters | null>(null);
   const [loading, setLoading] = useState(true);
-  const [total, setTotal] = useState(0);
   const [search, setSearch] = useState("");
   const [selectedScents, setSelectedScents] = useState<string[]>([]);
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
-
   const [selectedGenders, setSelectedGenders] = useState<string[]>([]);
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
-
   const [selectedOccasions, setSelectedOccasions] = useState<string[]>([]);
   const [selectedSeasons, setSelectedSeasons] = useState<string[]>([]);
-
-  const [selectedConcentrations, setSelectedConcentrations] = useState<
-    string[]
-  >([]);
+  const [selectedConcentrations, setSelectedConcentrations] = useState<string[]>([]);
   const [price, setPrice] = useState(Number.MAX_SAFE_INTEGER);
   const [sort, setSort] = useState("newest");
+  const [page, setPage] = useState(1);
+
   const toggleSize = (value: string) => {
     setSelectedSizes((prev) =>
       prev.includes(value) ? prev.filter((x) => x !== value) : [...prev, value],
     );
   };
-
   const toggleOccasion = (value: string) => {
     setSelectedOccasions((prev) =>
       prev.includes(value) ? prev.filter((x) => x !== value) : [...prev, value],
     );
   };
-
   const toggleConcentration = (value: string) => {
     setSelectedConcentrations((prev) =>
       prev.includes(value) ? prev.filter((x) => x !== value) : [...prev, value],
@@ -91,9 +102,7 @@ export default function Shop() {
   };
   const toggleScent = (value: string) => {
     setSelectedScents((prev) =>
-      prev.includes(value)
-        ? prev.filter((item) => item !== value)
-        : [...prev, value],
+      prev.includes(value) ? prev.filter((item) => item !== value) : [...prev, value],
     );
   };
 
@@ -108,42 +117,29 @@ export default function Shop() {
     setSelectedBrands(nextBrand ? [nextBrand] : []);
     setSelectedScents(
       nextScent
-        ? nextScent
-            .split(",")
-            .map((item) => item.trim())
-            .filter(Boolean)
+        ? nextScent.split(",").map((item) => item.trim()).filter(Boolean)
         : [],
     );
     setSelectedSeasons(
       nextSeason
-        ? nextSeason
-            .split(",")
-            .map((item) => item.trim())
-            .filter(Boolean)
+        ? nextSeason.split(",").map((item) => item.trim()).filter(Boolean)
         : [],
     );
     if (nextSort) setSort(nextSort);
   }, [searchParams]);
 
+  // Facet loc lay tu TOAN BO san pham trong MongoDB (khong bi gioi han 100)
   useEffect(() => {
     let active = true;
-
     async function loadFilterOptions() {
       try {
-        const { data } = await api.get<ProductListResponse>("/products", {
-          params: { page: 1, limit: 100, sort: "newest" },
-        });
-
-        if (active) {
-          setAllProducts(data.data);
-        }
+        const { data } = await api.get<ProductFilters>("/products/filters");
+        if (active) setFilters(data);
       } catch (error) {
         console.error("Failed to load filter options", error);
       }
     }
-
     loadFilterOptions();
-
     return () => {
       active = false;
     };
@@ -151,7 +147,6 @@ export default function Shop() {
 
   useEffect(() => {
     let active = true;
-
     async function loadProducts() {
       try {
         setLoading(true);
@@ -165,33 +160,21 @@ export default function Shop() {
             scent: selectedScents.join(",") || undefined,
             size: selectedSizes.join(",") || undefined,
             season:
-              [
-                ...selectedOccasions.flatMap(
-                  (occasion) => occasionSeasonMap[occasion] ?? [],
-                ),
-                ...selectedSeasons,
-              ].join(",") || undefined,
+              [...selectedOccasions, ...selectedSeasons].join(",") ||
+              undefined,
             concentration: selectedConcentrations.join(",") || undefined,
             maxPrice: price === Number.MAX_SAFE_INTEGER ? undefined : price,
             sort,
           },
         });
-
-        if (active) {
-          setProducts(data.data);
-          setTotal(data.total);
-        }
+        if (active) setProducts(data.data);
       } catch (error) {
         console.error("Failed to load products", error);
       } finally {
-        if (active) {
-          setLoading(false);
-        }
+        if (active) setLoading(false);
       }
     }
-
     loadProducts();
-
     return () => {
       active = false;
     };
@@ -208,69 +191,19 @@ export default function Shop() {
     sort,
   ]);
 
-  const brands = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          allProducts
-            .map((product) => product.brand)
-            .filter((brand): brand is string => Boolean(brand)),
-        ),
-      ),
-    [allProducts],
-  );
-
-  const scents = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          allProducts
-            .flatMap((product) => [
-              ...(product.notes?.top || []),
-              ...(product.notes?.middle || []),
-              ...(product.notes?.base || []),
-              ...(product.fragranceFamily ? [product.fragranceFamily] : []),
-            ])
-            .filter(Boolean),
-        ),
-      ).sort((left, right) => left.localeCompare(right)),
-    [allProducts],
-  );
-
+  // Cac lua chon filter deu lay tu facet MongoDB de dong bo ten & so luong
+  const brands = useMemo(() => filters?.brands ?? [], [filters]);
+  const scents = useMemo(() => filters?.fragranceFamilies ?? [], [filters]);
+  const concentrations = useMemo(() => filters?.concentrations ?? [], [filters]);
   const sizes = useMemo(
     () =>
-      Array.from(
-        new Set(allProducts.flatMap((product) => product.sizes ?? [])),
-      ).sort(
+      [...(filters?.sizes ?? [])].sort(
         (left, right) =>
-          getSizeNumber(left) - getSizeNumber(right) ||
-          left.localeCompare(right),
+          getSizeNumber(left) - getSizeNumber(right) || left.localeCompare(right),
       ),
-    [allProducts],
+    [filters],
   );
-
-  const concentrations = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          allProducts
-            .map((product) => product.concentration)
-            .filter((concentration): concentration is string =>
-              Boolean(concentration),
-            ),
-        ),
-      ),
-    [allProducts],
-  );
-
-  const maxPrice = useMemo(
-    () =>
-      allProducts.reduce(
-        (max, product) => Math.max(max, product.price ?? 0),
-        0,
-      ),
-    [allProducts],
-  );
+  const maxPrice = filters?.maxPrice ?? 0;
 
   useEffect(() => {
     if (maxPrice > 0 && price === Number.MAX_SAFE_INTEGER) {
@@ -286,7 +219,11 @@ export default function Shop() {
           .includes(search.toLowerCase());
         const matchesBrand =
           selectedBrands.length === 0 ||
-          (product.brand ? selectedBrands.includes(product.brand) : false);
+          (product.brand
+            ? selectedBrands.some(
+                (brand) => normBrand(brand) === normBrand(product.brand!),
+              )
+            : false);
         const matchesGender =
           selectedGenders.length === 0 ||
           (product.gender ? selectedGenders.includes(product.gender) : false);
@@ -305,9 +242,7 @@ export default function Shop() {
         const matchesOccasion =
           selectedOccasions.length === 0 ||
           selectedOccasions.some((occasion) =>
-            occasionSeasonMap[occasion]?.some((season) =>
-              product.season?.includes(season),
-            ),
+            product.season?.includes(occasion),
           );
         const matchesSeason =
           selectedSeasons.length === 0 ||
@@ -345,62 +280,94 @@ export default function Shop() {
     ],
   );
 
+  // Reset ve trang 1 khi doi bo loc / tim kiem / sap xep
+  useEffect(() => {
+    setPage(1);
+  }, [
+    search,
+    selectedBrands,
+    selectedGenders,
+    selectedScents,
+    selectedSizes,
+    selectedOccasions,
+    selectedSeasons,
+    selectedConcentrations,
+    price,
+    sort,
+  ]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const paginatedProducts = useMemo(
+    () =>
+      filteredProducts.slice(
+        (currentPage - 1) * PAGE_SIZE,
+        (currentPage - 1) * PAGE_SIZE + PAGE_SIZE,
+      ),
+    [filteredProducts, currentPage],
+  );
+
+  const changePage = (next: number) => {
+    if (next < 1 || next > totalPages) return;
+    setPage(next);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   const toggleBrand = (brand: string) => {
     setSelectedBrands((prev) =>
-      prev.includes(brand)
-        ? prev.filter((item) => item !== brand)
+      prev.some((item) => normBrand(item) === normBrand(brand))
+        ? prev.filter((item) => normBrand(item) !== normBrand(brand))
         : [...prev, brand],
     );
   };
   const toggleGender = (gender: string) => {
     setSelectedGenders([gender]);
   };
+
   return (
     <>
       <main className="bg-[#FDF9F4]">
-      {/* Hero */}
-<section className="max-w-[1536px] mx-auto px-10 pt-32 pb-16">
-  <div className="grid lg:grid-cols-2 gap-16 items-center">
-    <div>
-      <h1 className="font-heading text-[88px] leading-[88px] text-[#1C1C19]">
-        The Seasonal
-        <br />
-        <span className="italic text-[#8A6D0E]">Archives</span>
-      </h1>
+        {/* Hero */}
+        <section className="max-w-[1536px] mx-auto px-10 pt-32 pb-16">
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
+            <div>
+              <h1 className="font-heading text-[88px] leading-[88px] text-[#1C1C19]">
+                The Seasonal
+                <br />
+                <span className="italic text-[#8A6D0E]">Archives</span>
+              </h1>
 
-      <p className="mt-8 max-w-md text-[#5F5E5E] leading-8">
-        A curated selection of olfactory experiences, from the smoky
-        resins of the Orient to the dew-kissed petals of a Grasse
-        morning.
-      </p>
-    </div>
+              <p className="mt-8 max-w-md text-[#5F5E5E] leading-8">
+                A curated selection of olfactory experiences, from the smoky
+                resins of the Orient to the dew-kissed petals of a Grasse
+                morning.
+              </p>
+            </div>
 
-    <div className="relative bg-[#0E0D0C] h-[330px] rounded-sm overflow-hidden">
-      <img
-        src="https://res.cloudinary.com/dwj2trmn0/image/upload/v1784370620/Gemini_Generated_Image_b00ra5b00ra5b00r_hqe2zp.png"
-        alt=""
-        className="w-full h-full object-cover opacity-90"
-      />
+            <div className="relative bg-[#0E0D0C] h-[330px] rounded-sm overflow-hidden">
+              <img
+                src="https://res.cloudinary.com/dwj2trmn0/image/upload/v1784370620/Gemini_Generated_Image_b00ra5b00ra5b00r_hqe2zp.png"
+                alt=""
+                className="w-full h-full object-cover opacity-90"
+              />
 
-      {/* Overlay text - bottom left */}
-      <div className="absolute left-6 bottom-8 text-[#E8E3D8]">
-        <p className="text-[11px] tracking-[0.15em] uppercase leading-tight">
-          Amber Oud
-        </p>
-        <p className="text-[11px] tracking-[0.15em] uppercase leading-tight">
-          Rare Wood
-        </p>
-      </div>
+              <div className="absolute left-6 bottom-8 text-[#E8E3D8]">
+                <p className="text-[11px] tracking-[0.15em] uppercase leading-tight">
+                  Amber Oud
+                </p>
+                <p className="text-[11px] tracking-[0.15em] uppercase leading-tight">
+                  Rare Wood
+                </p>
+              </div>
 
-      {/* Overlay text - bottom right */}
-      <div className="absolute right-6 bottom-3">
-        <p className="text-[10px] tracking-[0.2em] uppercase text-[#B9B4A8]">
-          Issue No. 04 — Autumn/Winter
-        </p>
-      </div>
-    </div>
-  </div>
-</section>
+              <div className="absolute right-6 bottom-3">
+                <p className="text-[10px] tracking-[0.2em] uppercase text-[#B9B4A8]">
+                  Issue No. 04 — Autumn/Winter
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
 
         <section className="max-w-[1536px] mx-auto px-10 flex gap-16 pb-24">
           <ShopSidebar
@@ -423,7 +390,7 @@ export default function Shop() {
             sizes={sizes}
             toggleSize={toggleSize}
             selectedOccasions={selectedOccasions}
-            occasions={["Day", "Night", "Formal", "Work"]}
+            occasions={filters?.seasons ?? []}
             toggleOccasion={toggleOccasion}
             selectedConcentrations={selectedConcentrations}
             concentrations={concentrations}
@@ -435,7 +402,7 @@ export default function Shop() {
             {/* Toolbar */}
             <div className="flex justify-between border-b pb-5 border-[#e8deca]">
               <p className="uppercase text-xs tracking-widest text-[#5F5E5E]">
-                Showing {filteredProducts.length} of {total} products
+                Showing {paginatedProducts.length} of {filteredProducts.length} products
               </p>
 
               <label className="flex items-center gap-3">
@@ -455,20 +422,15 @@ export default function Shop() {
               </label>
             </div>
 
-            {/* Grid */}
-            <ProductGrid products={filteredProducts} loading={loading} />
+            {/* Grid 4 x 3 */}
+            <ProductGrid products={paginatedProducts} loading={loading} />
+
             {/* Pagination */}
-            <div className="border-t mt-16 pt-8 flex justify-center items-center gap-8">
-              <button className="uppercase text-xs text-gray-400">
-                Previous
-              </button>
-
-              <button className="text-[#735C00] font-bold">1</button>
-              <button>2</button>
-              <button>3</button>
-
-              <button className="uppercase text-xs text-[#735C00]">Next</button>
-            </div>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={changePage}
+            />
           </section>
         </section>
       </main>

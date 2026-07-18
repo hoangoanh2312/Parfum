@@ -16,6 +16,7 @@ import { api } from "../lib/api";
 import { useCart } from "../store/cart.store";
 import { toast } from "../store/toast.store";
 import { useAuth } from "../store/auth.store";
+import { useWishlist } from "../store/wishlist.store";
 
 const PLACEHOLDER = "https://placehold.co/900x1100?text=No+Image";
 
@@ -82,6 +83,11 @@ export default function ProductDetail() {
   const addItem = useCart((state) => state.addItem);
   const user = useAuth((state) => state.user);
   const [product, setProduct] = useState<ProductDetailData | null>(null);
+  const toggleWishlist = useWishlist((state) => state.toggle);
+  const ensureWishlist = useWishlist((state) => state.ensureLoaded);
+  const wishlisted = useWishlist((state) =>
+    product ? state.ids.includes(product.id) : false,
+  );
   const [relatedProducts, setRelatedProducts] = useState<ProductListItem[]>([]);
   const [reviews, setReviews] = useState<ReviewItem[]>([]);
   const [selectedVariantId, setSelectedVariantId] = useState("");
@@ -99,6 +105,10 @@ export default function ProductDetail() {
   const [reviewImagePreview, setReviewImagePreview] = useState("");
   const [reviewMessage, setReviewMessage] = useState("");
   const [submittingReview, setSubmittingReview] = useState(false);
+
+  useEffect(() => {
+    ensureWishlist();
+  }, [ensureWishlist]);
 
   useEffect(() => {
     let active = true;
@@ -441,6 +451,23 @@ export default function ProductDetail() {
               >
                 <ShoppingBag size={14} />
                 {canAdd ? "Add to bag" : "Sold out"}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => product && toggleWishlist(product.id)}
+                className={`mt-3 flex h-[48px] w-full max-w-[410px] items-center justify-center gap-2 border text-[9px] font-semibold uppercase tracking-[1.8px] transition ${
+                  wishlisted
+                    ? "border-[#8b7100] bg-[#8b7100]/5 text-[#8b7100]"
+                    : "border-[#e7dfd1] bg-transparent text-[#615e57] hover:border-[#8b7100] hover:text-[#8b7100]"
+                }`}
+              >
+                <Heart
+                  size={14}
+                  strokeWidth={1.6}
+                  fill={wishlisted ? "currentColor" : "none"}
+                />
+                {wishlisted ? "Đã lưu vào wishlist" : "Thêm vào wishlist"}
               </button>
 
               <button className="mt-3 h-[48px] w-full max-w-[410px] border border-[#e7dfd1] bg-transparent text-[9px] font-semibold uppercase tracking-[1.8px] text-[#615e57]">

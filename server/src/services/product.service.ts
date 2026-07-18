@@ -306,3 +306,70 @@ export async function getProductDetail(idOrSlug: string) {
     isActive: product.isActive !== false,
   };
 }
+
+
+/**
+ * Lấy toàn bộ facet lọc (brand, nhóm mùi hương, nồng độ, size, giới tính, mùa, giá max)
+ * tính trên TẤT CẢ sản phẩm đang active trong MongoDB (không giới hạn phân trang).
+ * Dùng cho sidebar filter của trang Shop để luôn đồng bộ với dữ liệu thật.
+ */
+export async function getProductFilters() {
+  const products: any[] = await Product.find({ isActive: true })
+    .populate('brand', 'name')
+    .populate('category', 'name')
+    .lean();
+
+  const ids = products.map((product) => product._id);
+  const variants: any[] = await Variant.find({ product: { $in: ids } }).lean();
+
+  const byProduct: Record<string, any[]> = {};
+  for (const variant of variants) {
+    (byProduct[String(variant.product)] ||= []).push(variant);
+  }
+
+  const brandSet = new Set<string>();
+  const familySet = new Set<string>();
+  const concentrationSet = new Set<string>();
+  const genderSet = new Set<string>();
+  const seasonSet = new Set<string>();
+  const categorySet = new Set<string>();
+  const sizeSet = new Set<string>();
+  let maxPrice = 0;
+
+  for (const product of products) {
+    if (product.brand?.name) brandSet.add(String(product.brand.name).trim());
+    if (product.category?.name) categorySet.add(String(product.category.name).trim());
+    if (product.fragranceFamily) familySet.add(String(product.fragranceFamily).trim());
+    if (product.concentration) concentrationSet.add(String(product.concentration).trim());
+    if (product.gender) genderSet.add(String(product.gender).trim());
+    for (const season of product.season || []) {
+      if (season) seasonSet.add(String(season).trim());
+    }
+
+    for (const variant of byProduct[String(product._id)] || []) {
+      const size = variant.size || variant.volume;
+      if (size) sizeSet.add(String(size).trim());
+      if (typeof variant.price === 'number' && variant.price > maxPrice) {
+        maxPrice = variant.price;
+      }
+    }
+  }
+
+  const alpha = (a: string, b: string) => a.localeCompare(b);
+  const sizeNumber = (size: string) => {
+    const match = size.match(/\d+(\.\d+)?/);
+    return match ? Number(match[0]) : Number.MAX_SAFE_INTEGER;
+  };
+
+  return {
+    brands: Array.from(brandSet).sort(alpha),
+    fragranceFamilies: Array.from(familySet).sort(alpha),
+    concentrations: Array.from(concentrationSet).sort(alpha),
+    genders: Array.from(genderSet).sort(alpha),
+    seasons: Array.from(seasonSet).sort(alpha),
+    categories: Array.from(categorySet).sort(alpha),
+    sizes: Array.from(sizeSet).sort((a, b) => sizeNumber(a) - sizeNumber(b) || alpha(a, b)),
+    maxPrice,
+    total: products.length,
+  };
+}
