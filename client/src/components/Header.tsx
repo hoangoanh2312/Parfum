@@ -100,7 +100,7 @@ export default function Header() {
             </Link>
 
             <Link
-              to={user ? "/dashboard" : "/login"}
+              to={user ? "/account" : "/login"}
               title={user ? user.name : "Đăng nhập"}
             >
               <User

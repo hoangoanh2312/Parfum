@@ -115,4 +115,5 @@ r.get('/media', media.list);
 r.post('/media/upload', upload.array('images', 10), uploadImages);
 r.post('/media/delete', media.remove);
 
+
 export default r;

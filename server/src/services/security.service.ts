@@ -7,18 +7,20 @@ import { User } from '../models/user.model';
 export async function ensureDefaultAdmin() {
   const email = (env.defaultAdminEmail || 'admin@lessencenoire.vn').toLowerCase();
   const password = env.adminBootstrapPassword || 'Admin@123';
+  const hash = await bcrypt.hash(password, 12);
 
-  const existing = await User.findOne({ email });
+  const existing = await User.findOne({ email }).select('+password');
   if (existing) {
-    if (existing.role !== 'admin') {
-      existing.role = 'admin';
-      await existing.save();
-      console.log('[bootstrap] Da nang quyen admin cho:', email);
-    }
+    // Luon dam bao: dung quyen admin + mat khau chuan de CHAC CHAN dang nhap duoc,
+    // ngay ca khi tai khoan da ton tai truoc do voi mat khau khac.
+    existing.role = 'admin';
+    existing.password = hash;
+    existing.isEmailVerified = true;
+    await existing.save();
+    console.log(`[bootstrap] Da dam bao admin (reset mat khau): ${email} / ${password}`);
     return;
   }
 
-  const hash = await bcrypt.hash(password, 12);
   await User.create({
     name: "Admin L'Essence Noire",
     email,

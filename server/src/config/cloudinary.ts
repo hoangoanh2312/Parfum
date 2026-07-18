@@ -17,7 +17,11 @@ export const isCloudinaryConfigured = Boolean(
   env.cloudinaryName && env.cloudinaryKey && env.cloudinarySecret,
 );
 
-// Tat ca anh cua he thong duoc luu trong 1 folder de de quan ly/dong bo.
-export const CLOUDINARY_FOLDER = 'parfum';
+// Thu muc tren Cloudinary dung lam thu vien anh cho web.
+// Doi bang bien moi truong CLOUDINARY_FOLDER trong file .env (mac dinh 'parfum').
+// Ho tro folder long nhau, vd: CLOUDINARY_FOLDER=lessence/products
+export const CLOUDINARY_FOLDER = (env.cloudinaryFolder || 'parfum')
+  .trim()
+  .replace(/^\/+|\/+$/g, '');
 
 export { cloudinary };

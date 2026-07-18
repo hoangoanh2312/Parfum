@@ -27,6 +27,8 @@ export const env = {
   cloudinaryName: process.env.CLOUDINARY_CLOUD_NAME || '',
   cloudinaryKey: process.env.CLOUDINARY_API_KEY || '',
   cloudinarySecret: process.env.CLOUDINARY_API_SECRET || '',
+  // Thu muc tren Cloudinary dung lam thu vien anh cho web (doi tuy y qua .env)
+  cloudinaryFolder: process.env.CLOUDINARY_FOLDER || 'parfum',
   // pf54: VietQR (demo) cho thanh toan chuyen khoan QR
   vietqr: {
     bankBin: process.env.VIETQR_BANK_BIN || '970415',
