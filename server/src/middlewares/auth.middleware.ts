@@ -12,6 +12,17 @@ export function authenticate(req: Request, res: Response, next: NextFunction) {
   }
 }
 
+export function optionalAuthenticate(req: Request, res: Response, next: NextFunction) {
+  const header = req.headers.authorization;
+  if (!header?.startsWith('Bearer ')) return next();
+  try {
+    (req as any).user = verifyAccess(header.slice(7));
+  } catch {
+    // Checkout guest vẫn được phép tiếp tục; route cần login vẫn dùng authenticate.
+  }
+  next();
+}
+
 export const authorize = (...roles: string[]) =>
   (req: Request, res: Response, next: NextFunction) => {
     const role = (req as any).user?.role;
