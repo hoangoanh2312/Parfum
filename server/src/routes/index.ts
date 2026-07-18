@@ -10,6 +10,7 @@ import productRoutes from './product.routes';
 
 import cartRoutes from './cart.routes';
 import orderRoutes from './order.routes';
+import adminOrderRoutes from './admin-order.routes';
 
 const router = Router();
 
@@ -25,5 +26,6 @@ router.use('/products', productRoutes); // danh sách/chi tiết sản phẩm ch
 
 router.use('/cart', cartRoutes);   // PF-27 Giỏ hàng
 router.use('/orders', orderRoutes); // PF-29 Chuẩn bị checkout / kiểm tồn kho
+router.use('/admin/orders', adminOrderRoutes); // PF-30 Admin quản lý đơn hàng
 
 export default router;
