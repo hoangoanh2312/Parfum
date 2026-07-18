@@ -24,7 +24,6 @@ const shippingAddressSchema = new Schema(
     district: String,
     province: String,
   },
-  { _id: false },
 );
 
 const orderSchema = new Schema(

@@ -11,7 +11,7 @@ const paymentSchema = new Schema(
     },
     status: {
       type: String,
-      enum: ['pending', 'paid', 'failed', 'refunded'],
+      enum: ['pending', 'paid', 'failed', 'refunded', 'unpaid'],
       default: 'pending',
     },
     amount: { type: Number, required: true, min: 0 },

@@ -33,12 +33,17 @@ type ProductCard = {
   sizes: string[];
   image: string | null;
   images?: string[];
-  notes?: { top: string[]; middle: string[]; base: string[] };
   price: number | null;
   priceText: string;
   variantId: string | null;
   volume: string;
   stock: number;
+
+  notes?: {
+    top: string[];
+    middle: string[];
+    base: string[];
+  };
   createdAt?: Date;
 };
 
@@ -81,6 +86,18 @@ function overlaps(values: string[] | undefined, filters: string[]) {
   if (filters.length === 0) return true;
   const normalizedValues = (values ?? []).map(normalize);
   return filters.some((filter) => normalizedValues.includes(normalize(filter)));
+}
+
+
+function matchesScentProfile(product: ProductCard, filters: string[]) {
+  if (filters.length === 0) return true;
+
+  return (
+    includesAny(product.fragranceFamily, filters) ||
+    overlaps(product.notes?.top, filters) ||
+    overlaps(product.notes?.middle, filters) ||
+    overlaps(product.notes?.base, filters)
+  );
 }
 
 function sortProducts(products: ProductCard[], sort?: string) {
@@ -179,16 +196,16 @@ export async function getProducts(query: ProductListQuery = {}) {
       sizes,
       image: product.images?.[0] || cheapest?.images?.[0] || null,
       images: product.images || [],
-      notes: {
-        top: product.notes?.top?.length ? product.notes.top : product.topNotes || [],
-        middle: product.notes?.middle?.length ? product.notes.middle : product.heartNotes || [],
-        base: product.notes?.base?.length ? product.notes.base : product.baseNotes || [],
-      },
       price: cheapest?.price ?? null,
       priceText: formatVnd(cheapest?.price),
       variantId: cheapest ? String(cheapest._id) : null,
       volume: cheapest?.size || cheapest?.volume || '',
       stock,
+      notes: {
+        top: product.notes?.top?.length ? product.notes.top : product.topNotes || [],
+        middle: product.notes?.middle?.length ? product.notes.middle : product.heartNotes || [],
+        base: product.notes?.base?.length ? product.notes.base : product.baseNotes || [],
+      },
       createdAt: product.createdAt,
     };
   });
@@ -200,7 +217,7 @@ export async function getProducts(query: ProductListQuery = {}) {
       includesAny(product.brand, brandFilters) &&
       includesAny(product.category, categoryFilters) &&
       includesAny(product.gender, genderFilters) &&
-      includesAny(product.fragranceFamily, scentFilters) &&
+      matchesScentProfile(product, scentFilters) &&
       includesAny(product.concentration, concentrationFilters) &&
       overlaps(product.season, seasonFilters) &&
       overlaps(product.sizes, sizeFilters) &&
