@@ -35,4 +35,8 @@ export default function SizeFilter({
       </div>
     </FilterSection>
   );
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> feature/pf-32-category-brand-crud

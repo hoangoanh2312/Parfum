@@ -1,14 +1,6 @@
-import {
-  Phone,
-  Mail,
-  MapPin,
-} from "lucide-react";
+import { Phone, Mail, MapPin } from "lucide-react";
 
-import {
-  FaFacebookF,
-  FaInstagram,
-  FaYoutube,
-} from "react-icons/fa";
+import { FaFacebookF, FaInstagram, FaYoutube } from "react-icons/fa";
 
 export default function Footer() {
   return (
@@ -24,8 +16,8 @@ export default function Footer() {
           </h3>
 
           <p className="text-[#78716C] text-xs leading-5 tracking-[0.3px]">
-            Chuyên cung cấp nước hoa chính hãng,
-            đa dạng thương hiệu nổi tiếng trên thế giới.
+            Chuyên cung cấp nước hoa chính hãng, đa dạng thương hiệu nổi tiếng
+            trên thế giới.
           </p>
 
           <div className="flex gap-4 mt-8 text-[#A8A29E]">

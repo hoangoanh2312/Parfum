@@ -1,5 +1,10 @@
+<<<<<<< HEAD
 import { create } from 'zustand';
 import { api } from '../lib/api';
+=======
+import { create } from "zustand";
+import { api } from "../lib/api";
+>>>>>>> feature/pf-32-category-brand-crud
 
 interface User {
   id: string;
@@ -43,8 +48,13 @@ const isValidToken = (token: string | null): boolean => {
 };
 
 function decodeJwt<T>(token: string): T {
+<<<<<<< HEAD
   const payload = token.split('.')[1];
   const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
+=======
+  const payload = token.split(".")[1];
+  const normalized = payload.replace(/-/g, "+").replace(/_/g, "/");
+>>>>>>> feature/pf-32-category-brand-crud
   const decoded = atob(normalized);
   return JSON.parse(decoded) as T;
 }
@@ -58,6 +68,7 @@ export const useAuth = create<AuthState>((set, get) => ({
   setBootstrapped: (value) => set({ isBootstrapped: value }),
 
   setTokens: (access, refresh) => {
+<<<<<<< HEAD
     localStorage.setItem('accessToken', access);
     localStorage.setItem('refreshToken', refresh);
   },
@@ -65,14 +76,30 @@ export const useAuth = create<AuthState>((set, get) => ({
   logout: () => {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
+=======
+    localStorage.setItem("accessToken", access);
+    localStorage.setItem("refreshToken", refresh);
+  },
+
+  logout: () => {
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+>>>>>>> feature/pf-32-category-brand-crud
     set({ user: null, isBootstrapped: true });
   },
 
   bootstrap: async () => {
+<<<<<<< HEAD
     const token = localStorage.getItem('accessToken');
     if (isValidToken(token)) {
       try {
         const { data } = await api.get('/auth/me');
+=======
+    const token = localStorage.getItem("accessToken");
+    if (isValidToken(token)) {
+      try {
+        const { data } = await api.get("/auth/me");
+>>>>>>> feature/pf-32-category-brand-crud
         set({
           user: {
             id: data._id || data.id,
@@ -85,7 +112,14 @@ export const useAuth = create<AuthState>((set, get) => ({
         });
       } catch {
         const decoded = decodeJwt<User & JWTPayload>(token!);
+<<<<<<< HEAD
         set({ user: { id: decoded.id, name: '', email: '', role: decoded.role }, isBootstrapped: true });
+=======
+        set({
+          user: { id: decoded.id, name: "", email: "", role: decoded.role },
+          isBootstrapped: true,
+        });
+>>>>>>> feature/pf-32-category-brand-crud
       }
     } else {
       set({ user: null, isBootstrapped: true });

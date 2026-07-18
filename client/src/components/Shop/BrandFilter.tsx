@@ -23,6 +23,7 @@ export default function BrandFilter({
 
       <div className="space-y-3">
         {brands.map((brand) => (
+<<<<<<< HEAD
           <label
             key={brand}
             className="flex items-center gap-3 cursor-pointer"
@@ -31,6 +32,13 @@ export default function BrandFilter({
               type="checkbox"
               checked={selected.includes(brand)}
              onChange={() => onToggle(brand)}
+=======
+          <label key={brand} className="flex items-center gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={selected.includes(brand)}
+              onChange={() => onToggle(brand)}
+>>>>>>> feature/pf-32-category-brand-crud
               className="accent-[#735C00]"
             />
 
@@ -40,4 +48,8 @@ export default function BrandFilter({
       </div>
     </div>
   );
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> feature/pf-32-category-brand-crud

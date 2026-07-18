@@ -51,8 +51,17 @@ export default function Checkout() {
   const shippingFee = shippingFees[shipping];
   const grandTotal = total + shippingFee;
   const fullName = (firstName.trim() + " " + lastName.trim()).trim();
+<<<<<<< HEAD
   const addressLine = [address.trim(), apartment.trim()].filter(Boolean).join(", ");
   const addressCity = [city.trim(), postalCode.trim(), country.trim()].filter(Boolean).join(", ");
+=======
+  const addressLine = [address.trim(), apartment.trim()]
+    .filter(Boolean)
+    .join(", ");
+  const addressCity = [city.trim(), postalCode.trim(), country.trim()]
+    .filter(Boolean)
+    .join(", ");
+>>>>>>> feature/pf-32-category-brand-crud
 
   const addressValid = useMemo(
     () =>
@@ -67,7 +76,13 @@ export default function Checkout() {
 
   function nextStep() {
     if (step === 1 && !addressValid) {
+<<<<<<< HEAD
       toast.error("Vui lòng nhập đủ địa chỉ và số điện thoại 10 số bắt đầu bằng 0.");
+=======
+      toast.error(
+        "Vui lòng nhập đủ địa chỉ và số điện thoại 10 số bắt đầu bằng 0.",
+      );
+>>>>>>> feature/pf-32-category-brand-crud
       return;
     }
     setStep((current) => Math.min(4, current + 1));
@@ -131,7 +146,13 @@ export default function Checkout() {
     return (
       <>
         <section className="min-h-[60vh] bg-[#FDF9F4] px-6 py-20 text-center">
+<<<<<<< HEAD
           <h1 className="font-['Noto_Serif'] text-4xl text-[#1C1C19]">Giỏ hàng trống</h1>
+=======
+          <h1 className="font-['Noto_Serif'] text-4xl text-[#1C1C19]">
+            Giỏ hàng trống
+          </h1>
+>>>>>>> feature/pf-32-category-brand-crud
           <p className="mt-3 font-['Manrope'] text-[#5F5E5E]">
             Thêm sản phẩm vào giỏ trước khi thanh toán.
           </p>
@@ -199,11 +220,27 @@ export default function Checkout() {
                 <div className="mt-4 grid gap-4 sm:grid-cols-2">
                   <div>
                     <label className={labelCls}>Họ</label>
+<<<<<<< HEAD
                     <input className={inputCls} value={firstName} onChange={(e) => setFirstName(e.target.value)} />
                   </div>
                   <div>
                     <label className={labelCls}>Tên</label>
                     <input className={inputCls} value={lastName} onChange={(e) => setLastName(e.target.value)} />
+=======
+                    <input
+                      className={inputCls}
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Tên</label>
+                    <input
+                      className={inputCls}
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                    />
+>>>>>>> feature/pf-32-category-brand-crud
                   </div>
                 </div>
 
@@ -219,12 +256,21 @@ export default function Checkout() {
 
                 <div className="mt-4">
                   <label className={labelCls}>Căn hộ, tầng (tùy chọn)</label>
+<<<<<<< HEAD
                   <input className={inputCls} value={apartment} onChange={(e) => setApartment(e.target.value)} />
+=======
+                  <input
+                    className={inputCls}
+                    value={apartment}
+                    onChange={(e) => setApartment(e.target.value)}
+                  />
+>>>>>>> feature/pf-32-category-brand-crud
                 </div>
 
                 <div className="mt-4 grid gap-4 sm:grid-cols-3">
                   <div>
                     <label className={labelCls}>Mã bưu chính</label>
+<<<<<<< HEAD
                     <input className={inputCls} value={postalCode} onChange={(e) => setPostalCode(e.target.value)} />
                   </div>
                   <div>
@@ -234,6 +280,29 @@ export default function Checkout() {
                   <div>
                     <label className={labelCls}>Quốc gia</label>
                     <input className={inputCls} value={country} onChange={(e) => setCountry(e.target.value)} />
+=======
+                    <input
+                      className={inputCls}
+                      value={postalCode}
+                      onChange={(e) => setPostalCode(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Thành phố</label>
+                    <input
+                      className={inputCls}
+                      value={city}
+                      onChange={(e) => setCity(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Quốc gia</label>
+                    <input
+                      className={inputCls}
+                      value={country}
+                      onChange={(e) => setCountry(e.target.value)}
+                    />
+>>>>>>> feature/pf-32-category-brand-crud
                   </div>
                 </div>
 
@@ -243,7 +312,13 @@ export default function Checkout() {
                     className={inputCls}
                     placeholder="09xxxxxxxx"
                     value={phone}
+<<<<<<< HEAD
                     onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
+=======
+                    onChange={(e) =>
+                      setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))
+                    }
+>>>>>>> feature/pf-32-category-brand-crud
                   />
                 </div>
               </Panel>
@@ -287,7 +362,13 @@ export default function Checkout() {
                   onClick={() => setMethod("bank_qr")}
                 />
                 <div className="mt-6">
+<<<<<<< HEAD
                   <label className={labelCls}>Ghi chú đơn hàng (tùy chọn)</label>
+=======
+                  <label className={labelCls}>
+                    Ghi chú đơn hàng (tùy chọn)
+                  </label>
+>>>>>>> feature/pf-32-category-brand-crud
                   <textarea
                     className={inputCls + " min-h-[90px] resize-y"}
                     value={note}
@@ -303,9 +384,28 @@ export default function Checkout() {
                   <SummaryRow label="Người nhận" value={fullName} />
                   <SummaryRow label="Email" value={email} />
                   <SummaryRow label="Điện thoại" value={phone} />
+<<<<<<< HEAD
                   <SummaryRow label="Địa chỉ" value={[addressLine, addressCity].filter(Boolean).join(" - ")} />
                   <SummaryRow label="Vận chuyển" value={shipping === "standard" ? "Tiêu chuẩn" : "Giao nhanh"} />
                   <SummaryRow label="Thanh toán" value={method === "cod" ? "COD" : "VietQR"} />
+=======
+                  <SummaryRow
+                    label="Địa chỉ"
+                    value={[addressLine, addressCity]
+                      .filter(Boolean)
+                      .join(" - ")}
+                  />
+                  <SummaryRow
+                    label="Vận chuyển"
+                    value={
+                      shipping === "standard" ? "Tiêu chuẩn" : "Giao nhanh"
+                    }
+                  />
+                  <SummaryRow
+                    label="Thanh toán"
+                    value={method === "cod" ? "COD" : "VietQR"}
+                  />
+>>>>>>> feature/pf-32-category-brand-crud
                 </div>
               </Panel>
             )}
@@ -313,7 +413,15 @@ export default function Checkout() {
             <div className="mt-8 flex flex-wrap justify-between gap-3">
               <button
                 type="button"
+<<<<<<< HEAD
                 onClick={() => (step === 1 ? navigate("/cart") : setStep((current) => current - 1))}
+=======
+                onClick={() =>
+                  step === 1
+                    ? navigate("/cart")
+                    : setStep((current) => current - 1)
+                }
+>>>>>>> feature/pf-32-category-brand-crud
                 className="border border-[#735C00] px-7 py-3 font-['Manrope'] text-xs uppercase tracking-[2px] text-[#735C00]"
               >
                 {step === 1 ? "Quay lại giỏ" : "Quay lại"}
@@ -374,11 +482,29 @@ export default function Checkout() {
               </div>
 
               <div className="border-t border-[rgba(208,197,175,0.5)] mt-6 pt-5 space-y-3 font-['Manrope'] text-sm">
+<<<<<<< HEAD
                 <SummaryRow label={`Tạm tính (${count} sản phẩm)`} value={vnd(total)} />
                 <SummaryRow label="Phí vận chuyển" value={shippingFee ? vnd(shippingFee) : "Miễn phí"} />
                 <div className="flex justify-between items-center border-t border-[rgba(208,197,175,0.5)] pt-4 mt-1">
                   <span className="font-['Noto_Serif'] text-lg text-[#1C1C19]">Tổng cộng</span>
                   <span className="font-['Noto_Serif'] text-2xl text-[#1C1C19]">{vnd(grandTotal)}</span>
+=======
+                <SummaryRow
+                  label={`Tạm tính (${count} sản phẩm)`}
+                  value={vnd(total)}
+                />
+                <SummaryRow
+                  label="Phí vận chuyển"
+                  value={shippingFee ? vnd(shippingFee) : "Miễn phí"}
+                />
+                <div className="flex justify-between items-center border-t border-[rgba(208,197,175,0.5)] pt-4 mt-1">
+                  <span className="font-['Noto_Serif'] text-lg text-[#1C1C19]">
+                    Tổng cộng
+                  </span>
+                  <span className="font-['Noto_Serif'] text-2xl text-[#1C1C19]">
+                    {vnd(grandTotal)}
+                  </span>
+>>>>>>> feature/pf-32-category-brand-crud
                 </div>
               </div>
 
@@ -397,7 +523,13 @@ export default function Checkout() {
 function Panel({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="border border-[rgba(208,197,175,0.4)] bg-white p-6">
+<<<<<<< HEAD
       <h2 className="mb-6 font-['Noto_Serif'] text-2xl text-[#1C1C19]">{title}</h2>
+=======
+      <h2 className="mb-6 font-['Noto_Serif'] text-2xl text-[#1C1C19]">
+        {title}
+      </h2>
+>>>>>>> feature/pf-32-category-brand-crud
       {children}
     </section>
   );
@@ -431,10 +563,23 @@ function Choice({
     >
       <span className="text-[#735C00] shrink-0">{icon}</span>
       <span className="flex-1">
+<<<<<<< HEAD
         <span className="block font-['Manrope'] font-semibold text-[#1C1C19]">{title}</span>
         <span className="block font-['Manrope'] text-xs text-[#5F5E5E] mt-0.5">{detail}</span>
       </span>
       {price && <span className="font-['Manrope'] text-sm text-[#735C00]">{price}</span>}
+=======
+        <span className="block font-['Manrope'] font-semibold text-[#1C1C19]">
+          {title}
+        </span>
+        <span className="block font-['Manrope'] text-xs text-[#5F5E5E] mt-0.5">
+          {detail}
+        </span>
+      </span>
+      {price && (
+        <span className="font-['Manrope'] text-sm text-[#735C00]">{price}</span>
+      )}
+>>>>>>> feature/pf-32-category-brand-crud
     </button>
   );
 }

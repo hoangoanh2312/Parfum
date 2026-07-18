@@ -1,17 +1,15 @@
-import 'dotenv/config'; // nạp .env vào process.env ngay khi import
+import "dotenv/config"
 
-/**
- * Đọc 1 biến môi trường bắt buộc. Nếu thiếu -> báo lỗi rõ ngay lúc khởi động.
- */
 function required(key: string): string {
-  const value = process.env[key];
-  if (!value) {
-    throw new Error(`❌ Thiếu biến môi trường: ${key} (kiểm tra file .env)`);
-  }
-  return value;
+	const value = process.env[key]
+	if (!value) {
+		throw new Error(`❌ Thiếu biến môi trường: ${key} (kiểm tra file .env)`)
+	}
+	return value
 }
 
 export const env = {
+<<<<<<< HEAD
   nodeEnv: process.env.NODE_ENV ?? 'development',
   port: Number(process.env.PORT ?? 5000),
   mongoUri: required('MONGO_URI'),
@@ -28,3 +26,13 @@ export const env = {
     accountName: process.env.VIETQR_ACCOUNT_NAME || 'HOC PARFUM DEMO',
   },
 };
+=======
+	nodeEnv: process.env.NODE_ENV ?? "development",
+	port: Number(process.env.PORT ?? 5000),
+	mongoUri: required("MONGO_URI"),
+	jwtAccessSecret: required("JWT_ACCESS_SECRET"),
+	jwtRefreshSecret: required("JWT_REFRESH_SECRET"),
+	// URL frontend — dùng bởi CORS trong app.ts
+	clientUrl: process.env.CLIENT_URL ?? "http://localhost:5173",
+}
+>>>>>>> feature/pf-32-category-brand-crud

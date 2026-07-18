@@ -19,6 +19,7 @@ export default function Hero({
             {title.split(" ").slice(2).join(" ")}
           </h1>
 
+<<<<<<< HEAD
           <p className="mt-8 max-w-md text-[#666] leading-8">
             {subtitle}
           </p>
@@ -30,8 +31,19 @@ export default function Hero({
             alt={title}
             className="w-full h-full object-cover"
           />
+=======
+          <p className="mt-8 max-w-md text-[#666] leading-8">{subtitle}</p>
+        </div>
+
+        <div className="overflow-hidden bg-[#F3EEE7] aspect-[16/9]">
+          <img src={image} alt={title} className="w-full h-full object-cover" />
+>>>>>>> feature/pf-32-category-brand-crud
         </div>
       </div>
     </section>
   );
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> feature/pf-32-category-brand-crud

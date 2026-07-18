@@ -40,7 +40,7 @@ body {
 .marquee-left {
   display: flex;
   width: max-content;
-  animation: marqueeLeft 20s linear infinite;
+  animation: marqueeLeft 34s linear infinite;
 }
 
 .marquee-right {

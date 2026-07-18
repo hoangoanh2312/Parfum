@@ -8,29 +8,23 @@ import Newsletter from "../components/Newsletter";
 import Footer from "../components/Footer";
 
 export default function Home() {
+  return (
+    <>
+      <HeroSection />
 
-return (
+      <BrandSection />
 
-<>
+      <FeaturedProducts />
 
-<HeroSection />
+      <SeasonSection />
 
-<BrandSection />
+      <BannerSection />
 
-<FeaturedProducts />
+      <WhyChoose />
 
-<SeasonSection />
+      <Newsletter />
 
-<BannerSection />
-
-<WhyChoose />
-
-<Newsletter />
-
-<Footer />
-
-</>
-
-);
-
+      <Footer />
+    </>
+  );
 }

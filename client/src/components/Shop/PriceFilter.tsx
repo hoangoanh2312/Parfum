@@ -1,8 +1,16 @@
+<<<<<<< HEAD
 interface PriceFilterProps{
     value:number;
     onChange:(value:number)=>void;
     min?: number;
     max?: number;
+=======
+interface PriceFilterProps {
+  value: number;
+  onChange: (value: number) => void;
+  min?: number;
+  max?: number;
+>>>>>>> feature/pf-32-category-brand-crud
 }
 
 export default function PriceFilter({
