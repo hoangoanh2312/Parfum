@@ -11,16 +11,10 @@ export default function SizeFilter({
   selected,
   onToggle,
 }: SizeFilterProps) {
-  const options = Array.from(new Set([...selected, ...sizes])).filter(Boolean);
-
   return (
     <FilterSection title="Size">
       <div className="flex flex-wrap gap-3">
-        {options.length === 0 && (
-          <p className="text-xs text-[#8A8176]">Đang cập nhật</p>
-        )}
-
-        {options.map((size) => {
+        {sizes.map((size) => {
           const active = selected.includes(size);
 
           return (

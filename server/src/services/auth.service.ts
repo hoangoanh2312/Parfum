@@ -11,13 +11,11 @@ export async function register(name: string, email: string, password: string) {
 }
 
 export async function login(email: string, password: string) {
+  // FIXED: select +password vì field được mark select:false trong schema
   const user = await User.findOne({ email }).select('+password');
-  if (!user) {
-    throw Object.assign(new Error('Sai thong tin'), { status: 401 });
-  }
-  
-	const ok = await bcrypt.compare(password, String(user.password));
-  if (!ok) throw Object.assign(new Error('Sai thong tin'), { status: 401 });
+  if (!user) throw Object.assign(new Error('Sai thong tin dang nhap'), { status: 401 });
+  const ok = await bcrypt.compare(password, user.password as string);
+  if (!ok) throw Object.assign(new Error('Sai thong tin dang nhap'), { status: 401 });
   return issueTokens(user);
 }
 
