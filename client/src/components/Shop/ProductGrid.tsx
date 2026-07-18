@@ -1,4 +1,4 @@
-import ProductCard from "./ProductCard";
+import ProductCard, { type ProductCardData } from "./ProductCard";
 
 interface Product {
   _id?: string;

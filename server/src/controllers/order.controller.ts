@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import * as orderService from '../services/order.service';
 
-const uid = (req: Request) => (req as any).user.id;
+const uid = (req: Request) => (req as any).user?.id;
 
 // GET /api/orders/checkout-preview
 // Chuẩn bị checkout: kiểm tra tồn kho giỏ hàng + tính tổng (chưa tạo đơn)
