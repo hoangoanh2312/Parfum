@@ -84,6 +84,39 @@ const features: FeatureItem[] = [
   },
 ];
 
+function getApiErrorMessage(error: any) {
+  const data = error?.response?.data;
+  const fieldErrors = data?.errors?.fieldErrors;
+
+  if (fieldErrors) {
+    const firstField = Object.keys(fieldErrors)[0];
+    const firstMessage = fieldErrors[firstField]?.[0];
+    if (firstMessage) return translateAuthError(firstMessage);
+  }
+
+  return translateAuthError(data?.message || "Đăng ký thất bại");
+}
+
+function translateAuthError(message: string) {
+  const lower = message.toLowerCase();
+
+  if (lower.includes("at least 8")) return "Mật khẩu phải có ít nhất 8 ký tự";
+  if (lower.includes("uppercase")) return "Mật khẩu phải có ít nhất 1 chữ hoa";
+  if (lower.includes("lowercase")) return "Mật khẩu phải có ít nhất 1 chữ thường";
+  if (lower.includes("number")) return "Mật khẩu phải có ít nhất 1 chữ số";
+  if (lower.includes("email")) return "Email không hợp lệ hoặc đã tồn tại";
+
+  return message;
+}
+
+function getPasswordError(password: string) {
+  if (password.length < 8) return "Mật khẩu phải có ít nhất 8 ký tự";
+  if (!/[A-Z]/.test(password)) return "Mật khẩu phải có ít nhất 1 chữ hoa";
+  if (!/[a-z]/.test(password)) return "Mật khẩu phải có ít nhất 1 chữ thường";
+  if (!/[0-9]/.test(password)) return "Mật khẩu phải có ít nhất 1 chữ số";
+  return "";
+}
+
 export default function Register() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -101,6 +134,11 @@ export default function Register() {
       setError("Mật khẩu xác nhận không khớp");
       return;
     }
+    const passwordError = getPasswordError(password);
+    if (passwordError) {
+      setError(passwordError);
+      return;
+    }
     setLoading(true);
     try {
       const { data } = await api.post("/auth/register", { name, email, password });
@@ -108,7 +146,7 @@ export default function Register() {
       setUser(data.user);
       navigate("/");
     } catch (err: any) {
-      setError(err.response?.data?.message || "Đăng ký thất bại");
+      setError(getApiErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -320,8 +358,11 @@ export default function Register() {
                   placeholder="••••••••"
                   style={fieldInputStyle}
                   required
-                  minLength={6}
+                  minLength={8}
                 />
+                <span style={{ fontFamily: font.sans, fontSize: 11, lineHeight: "16px", color: color.body }}>
+                  Tối thiểu 8 ký tự, có chữ hoa, chữ thường và số.
+                </span>
               </label>
 
               <label style={{ display: "flex", flexDirection: "column", gap: 8 }}>
