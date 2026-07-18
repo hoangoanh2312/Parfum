@@ -15,6 +15,7 @@ import { useEffect, useMemo, useState } from "react";
 import { api } from "../lib/api";
 import { useCart } from "../store/cart.store";
 import { toast } from "../store/toast.store";
+import { useAuth } from "../store/auth.store";
 
 const PLACEHOLDER = "https://placehold.co/900x1100?text=No+Image";
 
@@ -79,13 +80,14 @@ const vnd = (value: number) => `${(value || 0).toLocaleString("vi-VN")}đ`;
 export default function ProductDetail() {
   const { idOrSlug } = useParams();
   const addItem = useCart((state) => state.addItem);
+  const user = useAuth((state) => state.user);
   const [product, setProduct] = useState<ProductDetailData | null>(null);
   const [relatedProducts, setRelatedProducts] = useState<ProductListItem[]>([]);
+  const [reviews, setReviews] = useState<ReviewItem[]>([]);
   const [selectedVariantId, setSelectedVariantId] = useState("");
   const [selectedImage, setSelectedImage] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [reviews, setReviews] = useState<ReviewItem[]>([]);
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [reviewForm, setReviewForm] = useState({
     guestName: "",
@@ -149,14 +151,14 @@ export default function ProductDetail() {
   }, []);
 
   useEffect(() => {
+    if (!product?.id) return;
+
     let active = true;
 
-    if (!idOrSlug) return;
-
     api
-      .get<ReviewItem[]>(`/reviews/products/${idOrSlug}`)
+      .get<ReviewItem[]>(`/reviews/product/${product.id}`)
       .then(({ data }) => {
-        if (active) setReviews(data);
+        if (active) setReviews(Array.isArray(data) ? data : []);
       })
       .catch(() => {
         if (active) setReviews([]);
@@ -165,7 +167,7 @@ export default function ProductDetail() {
     return () => {
       active = false;
     };
-  }, [idOrSlug]);
+  }, [product?.id]);
 
   const selectedVariant = useMemo(
     () =>
@@ -236,6 +238,12 @@ export default function ProductDetail() {
 
   async function handleSubmitReview(e: React.FormEvent) {
     e.preventDefault();
+    if (!product) return;
+
+    if (!user && (!reviewForm.guestName.trim() || !reviewForm.guestEmail.trim())) {
+      toast.error("Vui lòng nhập tên và email để gửi đánh giá");
+      return;
+    }
 
     try {
       setSubmittingReview(true);
@@ -250,11 +258,12 @@ export default function ProductDetail() {
         imageUrl = data.url;
       }
 
-      await api.post(`/reviews/products/${idOrSlug}`, {
-        guestName: reviewForm.guestName,
-        guestEmail: reviewForm.guestEmail,
+      await api.post("/reviews", {
+        product: product.id,
+        guestName: user ? undefined : reviewForm.guestName.trim(),
+        guestEmail: user ? undefined : reviewForm.guestEmail.trim(),
         rating: Number(reviewForm.rating),
-        comment: reviewForm.comment,
+        comment: reviewForm.comment.trim(),
         images: imageUrl ? [imageUrl] : [],
       });
       setReviewForm({ guestName: "", guestEmail: "", rating: 5, comment: "" });
@@ -679,9 +688,12 @@ export default function ProductDetail() {
               >
                 <h3 className="font-serif text-[26px]">Write a review</h3>
                 <p className="mt-3 text-[11px] leading-[1.7] text-[#6e6a63]">
-                  Review sẽ được hiển thị sau khi admin duyệt.
+                  {user
+                    ? `Đang gửi bằng tài khoản ${user.name || user.email || "của bạn"}. Review sẽ được hiển thị sau khi admin duyệt.`
+                    : "Bạn chưa đăng nhập, vui lòng nhập tên/email. Review sẽ được hiển thị sau khi admin duyệt."}
                 </p>
 
+                {!user && (
                 <div className="mt-7 grid gap-5 md:grid-cols-2">
                   <label className="block">
                     <span className="text-[8px] uppercase tracking-[1.5px] text-[#8b7100]">
@@ -712,6 +724,7 @@ export default function ProductDetail() {
                     />
                   </label>
                 </div>
+                )}
 
                 <label className="mt-5 block">
                   <span className="text-[8px] uppercase tracking-[1.5px] text-[#8b7100]">
