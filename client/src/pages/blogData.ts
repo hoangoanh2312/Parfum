@@ -39,7 +39,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       {
         heading: "Hợp tác với ba nghệ sĩ",
         body: "Chúng tôi mời ba nghệ sĩ kỹ thuật số từ Tokyo, Amsterdam và São Paulo. Mỗi người nhận một chai nước hoa từ bộ sưu tập Dark Series mà không có bất kỳ mô tả nào. Nhiệm vụ của họ: tạo ra một tác phẩm hình ảnh dựa hoàn toàn vào cảm nhận khứu giác. Kết quả là ba thế giới hoàn toàn khác nhau — từ những đường cong ánh sáng vàng của Noir Intense đến những xoáy nước màu tím của Velvet Oud.",
-        image: "https://images.unsplash.com/photo-1547826039-bfc35e0f1ea8?w=1200&q=80",
+        image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT9O7RuzAY9dotSVNOmqwGjL6iy6APcFLC7eoYEhOT_mA&s=10",
         imageCaption: "Tác phẩm 'Noir Intense' của nghệ sĩ Yuki Tanaka, Tokyo — 2025",
       },
       {
@@ -84,7 +84,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       {
         heading: "Bois Silencieux — Kết quả",
         body: "Bois Silencieux ra đời từ thử nghiệm này. Hinoki wood và cold incense tạo nên cảm giác của một không gian rộng lớn, im lặng và đầy ánh sáng tự nhiên. Không phải mùi hương để gây ấn tượng từ xa — mà là thứ chỉ bộc lộ hoàn toàn khi bạn đến rất gần.",
-        image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=1200&q=80",
+        image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTJMbwQSC1bTCc8zqEM39PIziojviFJfFSGLGMNKBVioA&s=10",
         imageCaption: "Bois Silencieux — ra mắt Thu Đông 2025",
       },
     ],
@@ -97,8 +97,8 @@ export const BLOG_ARTICLES: BlogArticle[] = [
     title: "The Ethics of Extraction: Preserving Endangered Florals",
     description:
       "A deep dive into our partnership with local conservatories to protect rare botanical species through sustainable technology.",
-    image: "https://images.unsplash.com/photo-1490750967868-88df5691cc87?w=800&q=80",
-    heroImage: "https://images.unsplash.com/photo-1490750967868-88df5691cc87?w=1600&q=80",
+    image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS__htyuJgvZWWlJPkJTpMlgM6ej2uVAbxXjAnsUoiIEg&s=10",
+    heroImage: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS__htyuJgvZWWlJPkJTpMlgM6ej2uVAbxXjAnsUoiIEg&s=10",
     date: "14 tháng 6, 2025",
     readTime: "10 phút đọc",
     author: "Amara Osei",
@@ -109,7 +109,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
       {
         heading: "Hợp tác với vườn bách thảo",
         body: "Từ năm 2022, chúng tôi hợp tác với ba vườn bách thảo tại Pháp, Sri Lanka và Madagascar để xây dựng chương trình nhân giống và bảo tồn các loài hoa đang bị đe dọa. Không chỉ dừng ở việc thu mua công bằng — chúng tôi đầu tư vào cơ sở hạ tầng, đào tạo nông dân địa phương và nghiên cứu phương pháp chiết xuất ít xâm lấn hơn.",
-        image: "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=1200&q=80",
+        image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS__htyuJgvZWWlJPkJTpMlgM6ej2uVAbxXjAnsUoiIEg&s=10",
         imageCaption: "Vườn nhân giống hoa nhài Sambac, Sri Lanka — đối tác từ 2022",
       },
       {
@@ -239,8 +239,8 @@ export const BLOG_ARTICLES: BlogArticle[] = [
     title: "Ancient Resin: The Language of Sacred Smoke",
     description:
       "Frankincense, myrrh, labdanum — resins are the oldest perfumery materials on earth. We explore what makes them timeless.",
-    image: "https://images.unsplash.com/photo-1541643600914-78b084683702?w=800&q=80",
-    heroImage: "https://images.unsplash.com/photo-1541643600914-78b084683702?w=1600&q=80",
+    image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQJKAx_T_e9r6qfkItNyyPv4s4viAzq_L3thp2h4W4k9w&s=10",
+    heroImage: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQJKAx_T_e9r6qfkItNyyPv4s4viAzq_L3thp2h4W4k9w&s=10",
     date: "19 tháng 6, 2025",
     readTime: "9 phút đọc",
     author: "Amara Osei",
@@ -274,8 +274,8 @@ export const BLOG_ARTICLES: BlogArticle[] = [
     title: "Highland Lavender: The Scent of Altitude",
     description:
       "True lavender only grows above 800 metres. We explore why elevation transforms this familiar flower into something extraordinary.",
-    image: "https://images.unsplash.com/photo-1490750967868-88df5691cc87?w=800&q=80",
-    heroImage: "https://images.unsplash.com/photo-1490750967868-88df5691cc87?w=1600&q=80",
+    image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQms7H-rohIGVXMGswOospL49KfBax9mDIGFMr4iluH3g&s=10",
+    heroImage: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQms7H-rohIGVXMGswOospL49KfBax9mDIGFMr4iluH3g&s=10",
     date: "30 tháng 5, 2025",
     readTime: "6 phút đọc",
     author: "Élise Moreau",
@@ -309,8 +309,8 @@ export const BLOG_ARTICLES: BlogArticle[] = [
     title: "Bitter Bergamot: Sunlight Pressed Into Skin",
     description:
       "The rind of a Calabrian bergamot holds more complexity than any other citrus. We document a harvest that can only happen once a year.",
-    image: "https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=800&q=80",
-    heroImage: "https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=1600&q=80",
+    image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQgxMdfC1MN1eLPBymaHTM83hXvoyVXToC0jSjP3S4JVA&s=10",
+    heroImage: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQgxMdfC1MN1eLPBymaHTM83hXvoyVXToC0jSjP3S4JVA&s=10",
     date: "10 tháng 5, 2025",
     readTime: "5 phút đọc",
     author: "Marcus de Vries",
@@ -344,8 +344,8 @@ export const BLOG_ARTICLES: BlogArticle[] = [
     title: "Damask Rose: The Queen That Only Blooms at Dawn",
     description:
       "Every harvest begins before the sun rises. We travel to Bulgaria's Rose Valley to witness the fleeting peak of Rosa damascena.",
-    image: "https://images.unsplash.com/photo-1490750967868-88df5691cc87?w=800&q=80",
-    heroImage: "https://images.unsplash.com/photo-1490750967868-88df5691cc87?w=1600&q=80",
+    image: "https://www.thisisdimashq.com/wp-content/uploads/2025/09/530350225_122133517022864116_8041839167718942976_n-1024x576.jpg",
+    heroImage: "https://www.thisisdimashq.com/wp-content/uploads/2025/09/530350225_122133517022864116_8041839167718942976_n-1024x576.jpg",
     date: "25 tháng 4, 2025",
     readTime: "8 phút đọc",
     author: "Céleste Fontaine",
@@ -407,6 +407,200 @@ export const BLOG_ARTICLES: BlogArticle[] = [
     ],
     relatedSlugs: ["archetype-ancient-resin", "molecular-poetry-cedarwood"],
   },
+  {
+    id: 12,
+    slug: "archetype-oud-assam",
+    category: "Ingredient Focus",
+    title: "Oud Assam: Liquid Gold of the Forest",
+    description:
+      "Oud is the most valuable raw material in perfumery. We follow the slow transformation of infected agarwood into liquid gold.",
+    image: "https://images.unsplash.com/photo-1503435980610-a51f3ddfee50?w=800&q=80",
+    heroImage: "https://images.unsplash.com/photo-1503435980610-a51f3ddfee50?w=1600&q=80",
+    date: "2 thang 4, 2025",
+    readTime: "9 phut doc",
+    author: "Dr. Jean-Pierre Volat",
+    sections: [
+      {
+        body: "Oud khong phai la mot mui huong ma sinh ra tu su khoe manh, no sinh ra tu ton thuong. Khi cay tram huong Aquilaria bi nhiem mot loai nam dac biet, no tiet ra mot loai nhua sam mau de tu bao ve. Chinh phan go tam nhua do, sau hang chuc nam, tro thanh oud. Day la ly do oud vua quy vua mang mot chieu sau gan nhu khong the mo ta bang ngon tu.",
+      },
+      {
+        heading: "Vi sao oud dat den vay",
+        body: "Chi khoang 2 phan tram cay tram huong hoang da tu nhien tao ra nhua oud, va qua trinh hinh thanh keo dai hang thap ky. Su khan hiem cong voi nhu cau khong ngung tang o Trung Dong va chau A khien oud tro thanh nguyen lieu dat nhat nganh nuoc hoa, co the vuot ca vang tinh theo trong luong.",
+        image: "https://images.unsplash.com/photo-1448375240586-882707db888b?w=1200&q=80",
+        imageCaption: "Go tram huong chua nhua oud, Assam - An Do",
+      },
+      {
+        heading: "Oud Assam va tinh cach rieng",
+        body: "Oud tu vung Assam va Bac An mang tinh cach am, mat ong va hoi da thuoc, khac voi oud Campuchia sang va ngot hon hay oud Borneo mang huong go tuoi. Chung toi chon Assam cho cac sang tac can chieu sau tram va toi.",
+      },
+      {
+        heading: "Oud trong bo suu tap Archetypes",
+        body: "Nuoc hoa Nuit Boisee dat oud Assam lam trung tam, bao quanh boi hoa hong Damask va mot chut saffron. Day khong phai mui huong de tiep can ngay, no doi hoi thoi gian, nhung mot khi da quen thi kho ma quay lai voi bat ky thu gi khac.",
+        image: "https://images.unsplash.com/photo-1541643600914-78b084683702?w=1200&q=80",
+        imageCaption: "Nuit Boisee - khi oud gap hoa hong",
+      },
+    ],
+    relatedSlugs: ["archetype-ancient-resin", "archetype-sandalwood"],
+  },
+  {
+    id: 13,
+    slug: "archetype-ambergris",
+    category: "Ingredient Focus",
+    title: "Ambergris: The Ocean\'s Slow Alchemy",
+    description:
+      "Born in the sea and aged by sun and salt for years, ambergris is one of perfumery\'s strangest and most magical materials.",
+    image: "https://images.unsplash.com/photo-1501004318641-b39e6451bec6?w=800&q=80",
+    heroImage: "https://images.unsplash.com/photo-1501004318641-b39e6451bec6?w=1600&q=80",
+    date: "22 thang 3, 2025",
+    readTime: "7 phut doc",
+    author: "Amara Osei",
+    sections: [
+      {
+        body: "Ho phach bien - ambergris - co mot nguon goc ky la nhat trong nganh nuoc hoa. No hinh thanh trong duong ruot ca nha tang, roi troi noi tren dai duong hang nam troi. Duoi tac dong cua nuoc bien, anh nang va thoi gian, khoi vat tho ban dau bien thanh mot chat sap thom co mui am, man va ngot dieu ky.",
+      },
+      {
+        heading: "Alchemy cua bien ca",
+        body: "Ambergris tuoi gan nhu khong the ngui duoc. Chi sau nhieu nam oxy hoa tu nhien tren mat bien, no moi phat trien mui huong dac trung: mot su pha tron giua da nguoi am, khoi bien man va mot net ngot gan nhu khong the goi ten. Day la vi du hoan hao cho viec thoi gian la mot thanh phan trong nuoc hoa.",
+        image: "https://images.unsplash.com/photo-1486325212027-8081e485255e?w=1200&q=80",
+        imageCaption: "Bo bien noi ambergris duoc tim thay sau nhieu nam troi dat",
+      },
+      {
+        heading: "Ambroxan va cac lua chon co dao duc",
+        body: "Vi ambergris tu nhien vua hiem vua lien quan den viec bao ton ca nha tang, hau het nganh nuoc hoa hien dai dung Ambroxan - mot phan tu tong hop tai tao net am, mat va toa cua ambergris ma khong anh huong den dong vat. Chung toi dung Ambroxan cho gan nhu toan bo cac sang tac.",
+      },
+      {
+        heading: "Ambergris trong bo suu tap",
+        body: "Peau de Sel su dung Ambroxan lam nen, ket hop voi muoi bien va mot chut xa huong trang, tai tao cam giac lan da am sau mot ngay ngoai bien. Day la mot trong nhung mui huong gan gui nhat ma chung toi tung tao ra.",
+        image: "https://images.unsplash.com/photo-1455390582262-044cdead277a?w=1200&q=80",
+        imageCaption: "Peau de Sel - mui huong cua lan da va bien",
+      },
+    ],
+    relatedSlugs: ["archetype-sea-salt", "archetype-sandalwood"],
+  },
+  {
+    id: 14,
+    slug: "archetype-tonka-bean",
+    category: "Ingredient Focus",
+    title: "Tonka Bean: Warmth With a Shadow",
+    description:
+      "Vanilla, almond, tobacco and hay in a single seed. Tonka bean is the warmest note in perfumery, and the most misunderstood.",
+    image: "https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=800&q=80",
+    heroImage: "https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=1600&q=80",
+    date: "11 thang 3, 2025",
+    readTime: "6 phut doc",
+    author: "Celeste Fontaine",
+    sections: [
+      {
+        body: "Hat tonka - hat cua cay Dipteryx odorata vung Nam My - la mot trong nhung nguyen lieu am ap nhat trong bang mau nuoc hoa. Trong mot hat nho be, ban co the tim thay vani, hanh nhan, thuoc la, co kho va mot net ngot am gan nhu am thuc. Nhung phia sau su am ap do luon co mot bong toi nhe.",
+      },
+      {
+        heading: "Coumarin - phan tu khai sinh nuoc hoa hien dai",
+        body: "Tonka giau coumarin, phan tu tao nen mui co kho vua cat. Nam 1882, coumarin tong hop dau tien duoc dung trong Fougere Royale, mo ra ky nguyen nuoc hoa hien dai. Nhu vay tonka khong chi la mot nguyen lieu, no la mot phan cua lich su nghe pha che.",
+        image: "https://images.unsplash.com/photo-1503435980610-a51f3ddfee50?w=1200&q=80",
+        imageCaption: "Hat tonka phoi kho truoc khi ngam chiet",
+      },
+      {
+        heading: "Tonka trong bo suu tap",
+        body: "Ombre Douce dat tonka canh ben cafe rang va mot chut oakmoss, tao ra mot mui huong am nhu buoi chieu mua dong. Tonka o day khong ngot gat, no duoc giu lai boi net kho va toi de tro nen truong thanh.",
+        image: "https://images.unsplash.com/photo-1448375240586-882707db888b?w=1200&q=80",
+        imageCaption: "Ombre Douce - am ap co chieu sau",
+      },
+    ],
+    relatedSlugs: ["archetype-tobacco-leaf", "archetype-sandalwood"],
+  },
+  {
+    id: 15,
+    slug: "archetype-iris-pallida",
+    category: "Ingredient Focus",
+    title: "Iris Pallida: The Most Expensive Silence",
+    description:
+      "Iris butter takes six years to make and costs more than gold. We explore why patience is the true ingredient.",
+    image: "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=800&q=80",
+    heroImage: "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=1600&q=80",
+    date: "28 thang 2, 2025",
+    readTime: "7 phut doc",
+    author: "Elise Moreau",
+    sections: [
+      {
+        body: "Iris - hay chinh xac hon la orris - khong den tu hoa ma tu re cu. Va de re cu iris toa huong, no phai duoc phoi kho va u trong it nhat ba nam, doi khi den sau nam. Ket qua la orris butter, mot trong nhung nguyen lieu dat nhat the gioi, dat hon vang tinh theo trong luong.",
+      },
+      {
+        heading: "Sau nam cho mot mui huong",
+        body: "Trong thoi gian u, cac phan tu irone dan hinh thanh, tao nen mui huong dac trung cua iris: bot phan, go lanh, mot chut rau qua va mot net kim loai tinh khiet. Khong co cach nao rut ngan qua trinh nay. Iris day su kien nhan cua chinh no.",
+        image: "https://images.unsplash.com/photo-1490750967868-88df5691cc87?w=1200&q=80",
+        imageCaption: "Re cu iris pallida phoi kho tai Tuscany",
+      },
+      {
+        heading: "Iris trong bo suu tap",
+        body: "Poudre Grise dua iris pallida len vi tri trung tam, bao quanh boi xa huong trang va mot chut karot seed. Day la mui huong cua su im lang sang trong, khong pho truong, chi danh cho nhung ai chiu dung lai du lau de cam nhan.",
+        image: "https://images.unsplash.com/photo-1455390582262-044cdead277a?w=1200&q=80",
+        imageCaption: "Poudre Grise - su im lang dat gia",
+      },
+    ],
+    relatedSlugs: ["archetype-damask-rose", "archetype-highland-lavender"],
+  },
+  {
+    id: 16,
+    slug: "archetype-sea-salt",
+    category: "Ingredient Focus",
+    title: "Sea Salt: The Scent of Distance",
+    description:
+      "How do you bottle the horizon? We explore the molecules that recreate salt, spray and open air.",
+    image: "https://images.unsplash.com/photo-1486325212027-8081e485255e?w=800&q=80",
+    heroImage: "https://images.unsplash.com/photo-1486325212027-8081e485255e?w=1600&q=80",
+    date: "16 thang 2, 2025",
+    readTime: "5 phut doc",
+    author: "Marcus de Vries",
+    sections: [
+      {
+        body: "Muoi bien khong co mui theo nghia hoa hoc thong thuong. Cai ma chung ta goi la mui bien thuc ra la mot hop tau cua tao bien, khoang chat am va khong khi mo rong. Tai tao duoc cam giac do la mot trong nhung thu thach thu vi nhat cua nghe pha che hien dai.",
+      },
+      {
+        heading: "Phan tu cua khong gian",
+        body: "Cac phan tu nhu Calone tao ra net dua hau va khong khi bien, trong khi Ambroxan va mot chut xa huong tao cam giac man va toa rong. Ket hop lai, chung goi len khong phai mui cua nuoc, ma mui cua khoang cach - cua duong chan troi.",
+        image: "https://images.unsplash.com/photo-1501004318641-b39e6451bec6?w=1200&q=80",
+        imageCaption: "Duong chan troi - nguon cam hung cho Grand Large",
+      },
+      {
+        heading: "Sea Salt trong bo suu tap",
+        body: "Grand Large ket hop muoi bien voi bergamot va mot nen go nhat, tao ra mot mui huong thoang, sang va rong. Day la mui huong cua tu do, cua nhung buoi sang mo cua so nhin ra bien.",
+        image: "https://images.unsplash.com/photo-1455390582262-044cdead277a?w=1200&q=80",
+        imageCaption: "Grand Large - mui huong cua tu do",
+      },
+    ],
+    relatedSlugs: ["archetype-ambergris", "archetype-bitter-bergamot"],
+  },
+  {
+    id: 17,
+    slug: "archetype-tobacco-leaf",
+    category: "Ingredient Focus",
+    title: "Tobacco Leaf: Honeyed Smoke and Old Libraries",
+    description:
+      "Cured tobacco leaf smells of honey, dried fruit and old paper. We trace its journey from field to fragrance.",
+    image: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&q=80",
+    heroImage: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1600&q=80",
+    date: "4 thang 2, 2025",
+    readTime: "6 phut doc",
+    author: "Dr. Jean-Pierre Volat",
+    sections: [
+      {
+        body: "La thuoc la sau khi u len men khong con lien quan gi den dieu thuoc. No mang mui mat ong, trai cay kho, da thuoc va giay cu - mot mui huong am va co dien nhu buoc vao mot thu vien lau nam. Day la mot trong nhung nguyen lieu am nam tinh va sang trong nhat.",
+      },
+      {
+        heading: "Nghe thuat u la",
+        body: "Qua trinh curing - u va len men la thuoc la - moi la nơi mui huong that su hinh thanh. Duong tu nhien trong la caramel hoa, cac hop chat thom phat trien chieu sau mat ong va co kho. Loai la va cach u quyet dinh hoan toan tinh cach cuoi cung.",
+        image: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1200&q=80",
+        imageCaption: "La thuoc la u len men - buoc quyet dinh mui huong",
+      },
+      {
+        heading: "Tobacco trong bo suu tap",
+        body: "Cuir et Miel ket hop la thuoc la voi tonka va mot net da thuoc, tao ra mot mui huong am nhu mot chiec ghe da trong thu vien. Day la mui huong cua mua thu, cua sach va cua nhung buoi toi dai.",
+        image: "https://images.unsplash.com/photo-1503435980610-a51f3ddfee50?w=1200&q=80",
+        imageCaption: "Cuir et Miel - khoi ngot va giay cu",
+      },
+    ],
+    relatedSlugs: ["archetype-tonka-bean", "archetype-ancient-resin"],
+  },
 ];
 
 /**
@@ -420,4 +614,30 @@ export const ARCHETYPE_SLUG_MAP: Record<string, string> = {
   "Bitter Bergamot":  "archetype-bitter-bergamot",
   "Damask Rose":      "archetype-damask-rose",
   "Sandalwood":       "archetype-sandalwood",
+  "Oud Assam":        "archetype-oud-assam",
+  "Ambergris":        "archetype-ambergris",
+  "Tonka Bean":       "archetype-tonka-bean",
+  "Iris Pallida":     "archetype-iris-pallida",
+  "Sea Salt":         "archetype-sea-salt",
+  "Tobacco Leaf":     "archetype-tobacco-leaf",
 };
+
+export interface ArchetypeCard {
+  name: string;
+  image: string;
+  slug: string;
+}
+
+const SLUG_TO_NAME: Record<string, string> = Object.fromEntries(
+  Object.entries(ARCHETYPE_SLUG_MAP).map(([name, slug]) => [slug, name]),
+);
+
+// Slider Olfactory Archetypes lay truc tiep tu bai viet -> dung dung anh trong blogData
+export const ARCHETYPES: ArchetypeCard[] = BLOG_ARTICLES.filter((a) =>
+  a.slug.startsWith("archetype-"),
+).map((a) => ({
+  name: SLUG_TO_NAME[a.slug] ?? a.title,
+  image: a.image,
+  slug: a.slug,
+}));
+

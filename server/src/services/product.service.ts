@@ -33,6 +33,12 @@ type ProductCard = {
   concentration: string;
   season: string[];
   sizes: string[];
+  variants?: {
+    variantId: string;
+    size: string;
+    price: number | null;
+    stock: number;
+  }[];
   image: string | null;
   images?: string[];
   price: number | null;
@@ -202,6 +208,15 @@ export async function getProducts(query: ProductListQuery = {}) {
       concentration: product.concentration || '',
       season: product.season || [],
       sizes,
+      variants: productVariants
+        .filter((v: any) => v.size || v.volume)
+        .map((v: any) => ({
+          variantId: String(v._id),
+          size: v.size || v.volume || '',
+          price: v.price ?? null,
+          stock: v.stock ?? 0,
+        }))
+        .sort((a: any, b: any) => (a.price ?? Infinity) - (b.price ?? Infinity)),
       image: product.images?.[0] || cheapest?.images?.[0] || null,
       images: product.images || [],
       price: cheapest?.price ?? null,
@@ -335,9 +350,16 @@ export async function getProductFilters() {
   const categorySet = new Set<string>();
   const sizeSet = new Set<string>();
   let maxPrice = 0;
+  let minPrice = Number.POSITIVE_INFINITY;
+  const brandCounts: Record<string, number> = {};
+  const productPrices: number[] = [];
 
   for (const product of products) {
-    if (product.brand?.name) brandSet.add(String(product.brand.name).trim());
+    if (product.brand?.name) {
+      const brandName = String(product.brand.name).trim();
+      brandSet.add(brandName);
+      brandCounts[brandName] = (brandCounts[brandName] || 0) + 1;
+    }
     if (product.category?.name) categorySet.add(String(product.category.name).trim());
     if (product.fragranceFamily) familySet.add(String(product.fragranceFamily).trim());
     if (product.concentration) concentrationSet.add(String(product.concentration).trim());
@@ -346,13 +368,30 @@ export async function getProductFilters() {
       if (season) seasonSet.add(String(season).trim());
     }
 
+    let cheapest = Number.POSITIVE_INFINITY;
     for (const variant of byProduct[String(product._id)] || []) {
       const size = variant.size || variant.volume;
       if (size) sizeSet.add(String(size).trim());
-      if (typeof variant.price === 'number' && variant.price > maxPrice) {
-        maxPrice = variant.price;
+      if (typeof variant.price === 'number') {
+        if (variant.price > maxPrice) maxPrice = variant.price;
+        if (variant.price < cheapest) cheapest = variant.price;
       }
     }
+    if (cheapest !== Number.POSITIVE_INFINITY) {
+      productPrices.push(cheapest);
+      if (cheapest < minPrice) minPrice = cheapest;
+    }
+  }
+
+  const PRICE_BUCKETS = 28;
+  const priceLo = Number.isFinite(minPrice) ? minPrice : 0;
+  const priceHi = maxPrice > priceLo ? maxPrice : priceLo + 1;
+  const priceBuckets = new Array(PRICE_BUCKETS).fill(0);
+  for (const value of productPrices) {
+    let idx = Math.floor(((value - priceLo) / (priceHi - priceLo)) * PRICE_BUCKETS);
+    if (idx < 0) idx = 0;
+    if (idx >= PRICE_BUCKETS) idx = PRICE_BUCKETS - 1;
+    priceBuckets[idx] += 1;
   }
 
   const alpha = (a: string, b: string) => a.localeCompare(b);
@@ -370,6 +409,9 @@ export async function getProductFilters() {
     categories: Array.from(categorySet).sort(alpha),
     sizes: Array.from(sizeSet).sort((a, b) => sizeNumber(a) - sizeNumber(b) || alpha(a, b)),
     maxPrice,
+    minPrice: Number.isFinite(minPrice) ? minPrice : 0,
+    brandCounts,
+    priceBuckets,
     total: products.length,
   };
 }

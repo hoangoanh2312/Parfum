@@ -160,7 +160,7 @@ export default function About() {
 
             <div className="h-[420px] overflow-hidden bg-[#363636] sm:h-[520px] lg:h-[600px]">
               <img
-                src="/images/about/about-hero.jpg"
+                src="https://res.cloudinary.com/dwj2trmn0/image/upload/v1784434420/perfume-bottle-green-plant-and-open-book-royalty-free-image-1760057187_x0ps86.avif"
                 alt="Luxury perfume bottle"
                 className="h-full w-full object-cover grayscale"
               />
@@ -204,7 +204,7 @@ export default function About() {
             <div className="relative mx-auto min-h-[470px] w-full max-w-[650px]">
               <div className="absolute right-0 top-0 h-[420px] w-[72%] overflow-hidden shadow-[0_22px_45px_rgba(0,0,0,0.13)]">
                 <img
-                  src="/images/about/heritage-lab.jpg"
+                  src="https://res.cloudinary.com/dwj2trmn0/image/upload/v1784433419/Screenshot_2026-07-19_105646_sbbhq0.png"
                   alt="Perfume laboratory"
                   className="h-full w-full object-cover grayscale"
                 />
@@ -212,7 +212,7 @@ export default function About() {
 
               <div className="absolute bottom-0 left-0 z-10 w-[48%] border-[10px] border-[#F7F4EF] bg-[#F7F4EF] shadow-sm">
                 <img
-                  src="/images/about/heritage-hands.jpg"
+                  src="https://res.cloudinary.com/dwj2trmn0/image/upload/t_j/images_3_ypjabi.jpg"
                   alt="Hands holding a flower"
                   className="aspect-[4/5] w-full object-cover grayscale"
                 />
@@ -226,14 +226,12 @@ export default function About() {
           <div className="mx-auto grid max-w-[1080px] items-center gap-12 lg:grid-cols-2">
             <div className="relative">
               <img
-                src="/images/about/perfumer.jpg"
+                src="https://res.cloudinary.com/dwj2trmn0/image/upload/v1784433506/Senza_titolo-14_1024x1024_gkqyw6.webp"
                 alt="Master perfumer"
                 className="aspect-[1.05/1] w-full object-cover grayscale"
               />
 
-              <div className="absolute right-[-18px] top-[-18px] flex h-24 w-24 items-center justify-center bg-[#846E00] text-2xl font-semibold text-white">
-                N°1
-              </div>
+              
             </div>
 
             <div>
@@ -372,20 +370,20 @@ export default function About() {
 
             <div className="grid min-h-[390px] grid-cols-2 gap-3">
               <img
-                src="/images/about/sustainable-drop.jpg"
+                src="https://res.cloudinary.com/dwj2trmn0/image/upload/v1784434666/images_6_okorl3.jpg"
                 alt="Perfume drop"
                 className="h-full w-full object-cover grayscale"
               />
 
               <div className="grid grid-rows-2 gap-3">
                 <img
-                  src="/images/about/sustainable-white.jpg"
+                  src="https://res.cloudinary.com/dwj2trmn0/image/upload/v1784434665/images_7_mcvnoy.jpg"
                   alt="Minimal white surface"
                   className="h-full w-full object-cover grayscale"
                 />
 
                 <img
-                  src="/images/about/sustainable-field.jpg"
+                  src="https://res.cloudinary.com/dwj2trmn0/image/upload/v1784434665/images_8_su7gzr.jpg"
                   alt="Natural landscape"
                   className="h-full w-full object-cover grayscale"
                 />
