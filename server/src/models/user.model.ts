@@ -10,36 +10,33 @@ const addressSchema = new Schema(
 );
 
 const userSchema = new Schema(
-  {
-    name: { type: String, required: true, trim: true },
-    email: {
-      type: String,
-      required: true,
-      unique: true,
-      lowercase: true,
-      trim: true,
-    },
-    password: { type: String, required: true, select: false },
-    role: {
-      type: String,
-      enum: ['customer', 'admin'],
-      default: 'customer',
-    },
-    addresses: { type: [addressSchema], default: [] },
-    refreshToken: { type: String },
-  },
-  {
-    timestamps: true,
-    toJSON: {
-      transform(_doc, ret: any) {
-        delete ret.password;
-        delete ret.refreshToken;
-        delete ret.__v;
-        return ret;
-      },
-    },
-  },
-);
+	{
+		name: { type: String, required: true, trim: true },
+		email: {
+			type: String,
+			required: true,
+			unique: true,
+			lowercase: true,
+			trim: true,
+		},
+		password: { type: String, required: true, select: false }, // mặc định KHÔNG trả về
+		role: {
+			type: String,
+			enum: ["customer", "admin"],
+			default: "customer",
+		},
+		addresses: [{ label: String, phone: String, detail: String }],
+	},
+	{
+		timestamps: true, // tự thêm createdAt / updatedAt
+		toJSON: {
+			transform(_doc, ret) {
+				const { password: _password, __v, ...safe } = ret
+				return safe
+			},
+		},
+	},
+)
 
 export type UserDoc = InferSchemaType<typeof userSchema>;
 

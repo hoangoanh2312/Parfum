@@ -23,8 +23,19 @@ export interface ProductCardData {
   volume?: string;
   sizes?: string[];
   stock?: number;
-  gender?: string; // female | male | unisex (lọc Shop)
+  variants?: ProductCardVariant[];
 }
+
+type ProductCardVariant = {
+  id: string;
+  size?: string;
+  volume?: string;
+  price?: number;
+  priceText?: string;
+  stock?: number;
+  images?: string[];
+  isActive?: boolean;
+};
 
 interface ProductCardProps {
   item: ProductCardData;
@@ -39,28 +50,58 @@ export default function ProductCard({
 }: ProductCardProps) {
   const addItem = useCart((state) => state.addItem);
   const productId = item.id || item._id || "";
+  const variants = useMemo<ProductCardVariant[]>(
+    () =>
+      item.variants?.length
+        ? item.variants
+        : item.variantId
+          ? [
+              {
+                id: item.variantId,
+                size: item.volume,
+                volume: item.volume,
+                price: item.price ?? undefined,
+                priceText: item.priceText,
+                stock: item.stock,
+                images: item.images,
+                isActive: true,
+              },
+            ]
+          : [],
+    [item.images, item.price, item.priceText, item.variantId, item.variants, item.volume, item.stock],
+  );
   const sizeOptions = useMemo(
-    () => Array.from(new Set([...(item.sizes || []), item.volume].filter(Boolean))) as string[],
-    [item.sizes, item.volume],
+    () =>
+      variants.length
+        ? variants.map((variant) => variant.size || variant.volume || "Default")
+        : (Array.from(new Set([...(item.sizes || []), item.volume].filter(Boolean))) as string[]),
+    [item.sizes, item.volume, variants],
   );
   const [selectedSizeIndex, setSelectedSizeIndex] = useState(0);
+  const selectedVariant = variants[selectedSizeIndex] || variants[0];
   const detailPath = `/products/${item.slug || productId}`;
-  const image = item.images?.[0] || item.image || PLACEHOLDER;
+  const image = selectedVariant?.images?.[0] || item.images?.[0] || item.image || PLACEHOLDER;
   const category = item.fragranceFamily || item.category || item.brand || "Signature";
-  const selectedSize = sizeOptions[selectedSizeIndex] || "Default";
+  const selectedSize =
+    selectedVariant?.size || selectedVariant?.volume || sizeOptions[selectedSizeIndex] || "Default";
   const price =
-    item.priceText ||
-    (item.price != null ? `${item.price.toLocaleString("vi-VN")}đ` : "Liên hệ");
+    selectedVariant?.priceText ||
+    (selectedVariant?.price != null
+      ? `${selectedVariant.price.toLocaleString("vi-VN")}đ`
+      : item.priceText ||
+        (item.price != null ? `${item.price.toLocaleString("vi-VN")}đ` : "Liên hệ"));
   const outOfStock =
-    !item.variantId || (typeof item.stock === "number" && item.stock <= 0);
+    !selectedVariant?.id ||
+    selectedVariant.isActive === false ||
+    (typeof selectedVariant.stock === "number" && selectedVariant.stock <= 0);
 
   async function handleAddToCart() {
-    if (!item.variantId) {
+    if (!selectedVariant?.id) {
       toast.error("Sản phẩm chưa có phiên bản để bán");
       return;
     }
 
-    if (typeof item.stock === "number" && item.stock <= 0) {
+    if (typeof selectedVariant.stock === "number" && selectedVariant.stock <= 0) {
       toast.error("Sản phẩm đã hết hàng");
       return;
     }
@@ -68,14 +109,14 @@ export default function ProductCard({
     try {
       await addItem(
         {
-          variant: item.variantId,
+          variant: selectedVariant.id,
           product: productId,
           name: item.name,
           slug: item.slug,
           image,
           volume: selectedSize,
-          price: item.price || 0,
-          stock: item.stock,
+          price: selectedVariant.price || item.price || 0,
+          stock: selectedVariant.stock ?? item.stock,
           quantity: 1,
         },
         1,
