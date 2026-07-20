@@ -35,6 +35,13 @@ export default function AdminLayout() {
           </Link>
 
           <Link
+            to="/admin/products"
+            className="block rounded-lg px-4 py-3 text-sm font-medium hover:bg-gray-800"
+          >
+            Quản lý sản phẩm
+          </Link>
+
+          <Link
             to="/"
             className="block rounded-lg px-4 py-3 text-sm font-medium hover:bg-gray-800"
           >
