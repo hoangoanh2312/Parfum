@@ -133,7 +133,7 @@ export default function Login() {
   const setUser = useAuth((s) => s.setUser);
   const navigate = useNavigate();
 
-  async function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
     setLoading(true);

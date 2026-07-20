@@ -57,26 +57,28 @@ export default function Shop() {
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
-  const [search, setSearch] = useState("");
-  const [selectedScents, setSelectedScents] = useState<string[]>([]);
-  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+const [search,setSearch]=useState("");
+const [selectedScents, setSelectedScents] = useState<string[]>([]);
+const [selectedBrands,setSelectedBrands]=useState<string[]>([]);
 
-  const [selectedGenders, setSelectedGenders] = useState<string[]>([]);
-  const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
+const [selectedGenders,setSelectedGenders]=useState<string[]>([]);
+const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
 
-  const [selectedOccasions, setSelectedOccasions] = useState<string[]>([]);
-  const [selectedSeasons, setSelectedSeasons] = useState<string[]>([]);
+const [selectedOccasions, setSelectedOccasions] = useState<string[]>([]);
+const [selectedSeasons, setSelectedSeasons] = useState<string[]>([]);
 
-  const [selectedConcentrations, setSelectedConcentrations] = useState<
-    string[]
-  >([]);
-  const [price, setPrice] = useState(Number.MAX_SAFE_INTEGER);
-  const [sort, setSort] = useState("newest");
-  const toggleSize = (value: string) => {
-    setSelectedSizes((prev) =>
-      prev.includes(value) ? prev.filter((x) => x !== value) : [...prev, value],
-    );
-  };
+const [selectedConcentrations, setSelectedConcentrations] = useState<string[]>([]);
+const [price,setPrice]=useState(Number.MAX_SAFE_INTEGER);
+const [sort,setSort]=useState("newest");
+const toggleSize = (value: string) => {
+  setSelectedSizes((prev) =>
+    prev.includes(value)
+      ? prev.filter((x) => x !== value)
+      : [...prev, value]
+  );
+};
 
   const toggleOccasion = (value: string) => {
     setSelectedOccasions((prev) =>
@@ -142,60 +144,189 @@ export default function Shop() {
       }
     }
 
-    loadFilterOptions();
+  return () => {
+    active = false;
+  };
+}, []);
 
-    return () => {
-      active = false;
-    };
-  }, []);
+useEffect(() => {
+  setPage(1);
+}, [
+  search,
+  selectedBrands,
+  selectedGenders,
+  selectedScents,
+  selectedSizes,
+  selectedOccasions,
+  selectedSeasons,
+  selectedConcentrations,
+  price,
+  sort,
+]);
 
-  useEffect(() => {
-    let active = true;
+useEffect(() => {
+  let active = true;
 
-    async function loadProducts() {
-      try {
-        setLoading(true);
-        const { data } = await api.get<ProductListResponse>("/products", {
-          params: {
-            page: 1,
-            limit: 100,
-            search: search || undefined,
-            brand: selectedBrands.join(",") || undefined,
-            gender: selectedGenders.join(",") || undefined,
-            scent: selectedScents.join(",") || undefined,
-            size: selectedSizes.join(",") || undefined,
-            season:
-              [
-                ...selectedOccasions.flatMap(
-                  (occasion) => occasionSeasonMap[occasion] ?? [],
-                ),
-                ...selectedSeasons,
-              ].join(",") || undefined,
-            concentration: selectedConcentrations.join(",") || undefined,
-            maxPrice: price === Number.MAX_SAFE_INTEGER ? undefined : price,
-            sort,
-          },
-        });
+  async function loadProducts() {
+    try {
+      setLoading(true);
+      const { data } = await api.get<ProductListResponse>("/products", {
+        params: {
+          page,
+          limit: 12,
+          search: search || undefined,
+          brand: selectedBrands.join(",") || undefined,
+          gender: selectedGenders.join(",") || undefined,
+          scent: selectedScents.join(",") || undefined,
+          size: selectedSizes.join(",") || undefined,
+          season: [
+            ...selectedOccasions.flatMap((occasion) => occasionSeasonMap[occasion] ?? []),
+            ...selectedSeasons,
+          ].join(",") || undefined,
+          concentration: selectedConcentrations.join(",") || undefined,
+          maxPrice: price === Number.MAX_SAFE_INTEGER ? undefined : price,
+          sort,
+        },
+      });
 
-        if (active) {
-          setProducts(data.data);
-          setTotal(data.total);
-        }
-      } catch (error) {
-        console.error("Failed to load products", error);
-      } finally {
-        if (active) {
-          setLoading(false);
-        }
+      if (active) {
+        setProducts(data.data);
+        setTotal(data.total);
+        setTotalPages(data.totalPages || 1);
+      }
+    } catch (error) {
+      console.error("Failed to load products", error);
+    } finally {
+      if (active) {
+        setLoading(false);
       }
     }
 
     loadProducts();
 
-    return () => {
-      active = false;
-    };
-  }, [
+  return () => {
+    active = false;
+  };
+}, [
+  search,
+  selectedBrands,
+  selectedGenders,
+  selectedScents,
+  selectedSizes,
+  selectedOccasions,
+  selectedSeasons,
+  selectedConcentrations,
+  price,
+  sort,
+  page,
+]);
+
+const brands = useMemo(
+  () =>
+    Array.from(
+      new Set(
+        allProducts
+          .map((product) => product.brand)
+          .filter((brand): brand is string => Boolean(brand)),
+      ),
+    ),
+  [allProducts],
+);
+
+const scents = useMemo(
+  () =>
+    Array.from(
+      new Set(
+        allProducts.flatMap((product) => [
+          ...(product.notes?.top || []),
+          ...(product.notes?.middle || []),
+          ...(product.notes?.base || []),
+          ...(product.fragranceFamily ? [product.fragranceFamily] : []),
+        ]).filter(Boolean),
+      ),
+    ).sort((left, right) => left.localeCompare(right)),
+  [allProducts],
+);
+
+const sizes = useMemo(
+  () =>
+    Array.from(new Set(allProducts.flatMap((product) => product.sizes ?? []))).sort(
+      (left, right) => getSizeNumber(left) - getSizeNumber(right) || left.localeCompare(right),
+    ),
+  [allProducts],
+);
+
+const concentrations = useMemo(
+  () =>
+    Array.from(
+      new Set(
+        allProducts
+          .map((product) => product.concentration)
+          .filter((concentration): concentration is string => Boolean(concentration)),
+      ),
+    ),
+  [allProducts],
+);
+
+const maxPrice = useMemo(
+  () => allProducts.reduce((max, product) => Math.max(max, product.price ?? 0), 0),
+  [allProducts],
+);
+
+useEffect(() => {
+  if (maxPrice > 0 && price === Number.MAX_SAFE_INTEGER) {
+    setPrice(maxPrice);
+  }
+}, [maxPrice, price]);
+
+const filteredProducts = useMemo(
+  () =>
+    products.filter((product) => {
+      const matchesSearch = product.name.toLowerCase().includes(search.toLowerCase());
+      const matchesBrand =
+        selectedBrands.length === 0 ||
+        (product.brand ? selectedBrands.includes(product.brand) : false);
+      const matchesGender =
+        selectedGenders.length === 0 ||
+        (product.gender ? selectedGenders.includes(product.gender) : false);
+      const matchesScent =
+        selectedScents.length === 0 ||
+        selectedScents.some((scent) =>
+          product.fragranceFamily === scent ||
+          product.notes?.top?.includes(scent) ||
+          product.notes?.middle?.includes(scent) ||
+          product.notes?.base?.includes(scent),
+        );
+      const matchesSize =
+        selectedSizes.length === 0 ||
+        selectedSizes.some((size) => product.sizes?.includes(size));
+      const matchesOccasion =
+        selectedOccasions.length === 0 ||
+        selectedOccasions.some((occasion) =>
+          occasionSeasonMap[occasion]?.some((season) => product.season?.includes(season)),
+        );
+      const matchesSeason =
+        selectedSeasons.length === 0 ||
+        selectedSeasons.some((season) => product.season?.includes(season));
+      const matchesConcentration =
+        selectedConcentrations.length === 0 ||
+        (product.concentration ? selectedConcentrations.includes(product.concentration) : false);
+      const matchesPrice = (product.price ?? 0) <= price;
+
+      return (
+        matchesSearch &&
+        matchesBrand &&
+        matchesGender &&
+        matchesScent &&
+        matchesSize &&
+        matchesOccasion &&
+        matchesSeason &&
+        matchesConcentration &&
+        matchesPrice
+      );
+    }),
+  [
+    products,
     search,
     selectedBrands,
     selectedGenders,
@@ -359,117 +490,138 @@ export default function Shop() {
     <>
       <main className="bg-[#FDF9F4]">
       {/* Hero */}
-<section className="max-w-[1536px] mx-auto px-10 pt-32 pb-16">
-  <div className="grid lg:grid-cols-2 gap-16 items-center">
-    <div>
-      <h1 className="font-heading text-[88px] leading-[88px] text-[#1C1C19]">
-        The Seasonal
-        <br />
-        <span className="italic text-[#8A6D0E]">Archives</span>
-      </h1>
+      <section className="max-w-[1536px] mx-auto px-10 pt-32 pb-16">
+       <div className="grid lg:grid-cols-2 gap-16 items-center">
+          <div>
+            <h1 className="font-heading text-[88px] leading-[88px] text-[#1C1C19]">
+              The Seasonal
+              <br />
+              Archives
+            </h1>
 
-      <p className="mt-8 max-w-md text-[#5F5E5E] leading-8">
-        A curated selection of olfactory experiences, from the smoky
-        resins of the Orient to the dew-kissed petals of a Grasse
-        morning.
-      </p>
-    </div>
+            <p className="mt-8 max-w-md text-[#5F5E5E] leading-8">
+              Discover timeless fragrances curated from the world's finest
+              perfume houses.
+            </p>
+          </div>
 
-    <div className="relative bg-[#0E0D0C] h-[330px] rounded-sm overflow-hidden">
-      <img
-        src="https://res.cloudinary.com/dwj2trmn0/image/upload/v1784370620/Gemini_Generated_Image_b00ra5b00ra5b00r_hqe2zp.png"
-        alt=""
-        className="w-full h-full object-cover opacity-90"
-      />
+          <div className="bg-[#F3EEE7] h-[330px] rounded-sm overflow-hidden">
+            <img
+              src="https://images.unsplash.com/photo-1594035910387-fea47794261f?w=1200"
+              alt=""
+              className="w-full h-full object-cover"
+            />
+          </div>
+        </div>
+      </section>
 
-      {/* Overlay text - bottom left */}
-      <div className="absolute left-6 bottom-8 text-[#E8E3D8]">
-        <p className="text-[11px] tracking-[0.15em] uppercase leading-tight">
-          Amber Oud
-        </p>
-        <p className="text-[11px] tracking-[0.15em] uppercase leading-tight">
-          Rare Wood
-        </p>
-      </div>
+<section className="max-w-[1536px] mx-auto px-10 flex gap-16 pb-24">
+  <ShopSidebar
 
-      {/* Overlay text - bottom right */}
-      <div className="absolute right-6 bottom-3">
-        <p className="text-[10px] tracking-[0.2em] uppercase text-[#B9B4A8]">
-          Issue No. 04 — Autumn/Winter
-        </p>
-      </div>
-    </div>
-  </div>
-</section>
+    search={search}
+    setSearch={setSearch}
+    brands={brands}
+    selectedBrands={selectedBrands}
+    toggleBrand={toggleBrand}
+    genders={[
+      "female",
+      "male",
+      "unisex",
+    ]}
+    selectedGenders={selectedGenders}
+    toggleGender={toggleGender}
+    clearGender={() => setSelectedGenders([])}
+    price={price}
+    maxPrice={maxPrice}
+    setPrice={setPrice}
+      selectedScents={selectedScents}
+      scents={scents}
+toggleScent={toggleScent}
+    selectedSizes={selectedSizes}
+sizes={sizes}
+toggleSize={toggleSize}
 
-        <section className="max-w-[1536px] mx-auto px-10 flex gap-16 pb-24">
-          <ShopSidebar
-            search={search}
-            setSearch={setSearch}
-            brands={brands}
-            selectedBrands={selectedBrands}
-            toggleBrand={toggleBrand}
-            genders={["female", "male", "unisex"]}
-            selectedGenders={selectedGenders}
-            toggleGender={toggleGender}
-            clearGender={() => setSelectedGenders([])}
-            price={price}
-            maxPrice={maxPrice}
-            setPrice={setPrice}
-            selectedScents={selectedScents}
-            scents={scents}
-            toggleScent={toggleScent}
-            selectedSizes={selectedSizes}
-            sizes={sizes}
-            toggleSize={toggleSize}
-            selectedOccasions={selectedOccasions}
-            occasions={["Day", "Night", "Formal", "Work"]}
-            toggleOccasion={toggleOccasion}
-            selectedConcentrations={selectedConcentrations}
-            concentrations={concentrations}
-            toggleConcentration={toggleConcentration}
-          />
+selectedOccasions={selectedOccasions}
+occasions={["Day", "Night", "Formal", "Work"]}
+toggleOccasion={toggleOccasion}
 
-          {/* Content */}
-          <section className="flex-1">
-            {/* Toolbar */}
-            <div className="flex justify-between border-b pb-5 border-[#e8deca]">
-              <p className="uppercase text-xs tracking-widest text-[#5F5E5E]">
-                Showing {filteredProducts.length} of {total} products
-              </p>
+selectedConcentrations={selectedConcentrations}
+concentrations={concentrations}
+toggleConcentration={toggleConcentration}
+  />
 
-              <label className="flex items-center gap-3">
-                <span className="text-[10px] uppercase tracking-[0.18em] text-[#8A8176]">
-                  Sắp xếp
+        {/* Content */}
+        <section className="flex-1">
+          {/* Toolbar */}
+          <div className="flex justify-between border-b pb-5 border-[#e8deca]">
+            <p className="uppercase text-xs tracking-widest text-[#5F5E5E]">
+              Showing {products.length} of {total} products
+            </p>
+
+            <label className="flex items-center gap-3">
+              <span className="text-[10px] uppercase tracking-[0.18em] text-[#8A8176]">
+                Sắp xếp
+              </span>
+
+              <select
+                value={sort}
+                onChange={(event) => setSort(event.target.value)}
+                className="min-w-[190px] border border-[#e8deca] bg-[#FDF9F4] px-4 py-2 text-[10px] uppercase tracking-[0.16em] text-[#4F4942] outline-none transition hover:border-[#735C00] focus:border-[#735C00]"
+              >
+                <option value="newest">Mới nhất</option>
+                <option value="price_asc">Giá tăng dần</option>
+                <option value="price_desc">Giá giảm dần</option>
+              </select>
+            </label>
+          </div>
+
+          {/* Grid */}
+          <ProductGrid products={filteredProducts} loading={loading} />
+          {/* Pagination */}
+          <div className="border-t mt-16 pt-8 flex justify-center items-center gap-8">
+            <button
+              type="button"
+              onClick={() => setPage((current) => Math.max(1, current - 1))}
+              disabled={page <= 1}
+              className="uppercase text-xs text-[#735C00] disabled:text-gray-400 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+
+            {Array.from({ length: totalPages }, (_, index) => index + 1)
+              .filter((item) => {
+                if (totalPages <= 5) return true;
+                return item === 1 || item === totalPages || Math.abs(item - page) <= 1;
+              })
+              .map((item, index, array) => (
+                <span key={item} className="flex items-center gap-8">
+                  {index > 0 && item - array[index - 1] > 1 && (
+                    <span className="text-gray-400">...</span>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => setPage(item)}
+                    className={
+                      item === page
+                        ? "text-[#735C00] font-bold"
+                        : "text-[#4F4942] hover:text-[#735C00]"
+                    }
+                  >
+                    {item}
+                  </button>
                 </span>
+              ))}
 
-                <select
-                  value={sort}
-                  onChange={(event) => setSort(event.target.value)}
-                  className="min-w-[190px] border border-[#e8deca] bg-[#FDF9F4] px-4 py-2 text-[10px] uppercase tracking-[0.16em] text-[#4F4942] outline-none transition hover:border-[#735C00] focus:border-[#735C00]"
-                >
-                  <option value="newest">Mới nhất</option>
-                  <option value="price_asc">Giá tăng dần</option>
-                  <option value="price_desc">Giá giảm dần</option>
-                </select>
-              </label>
-            </div>
-
-            {/* Grid */}
-            <ProductGrid products={filteredProducts} loading={loading} />
-            {/* Pagination */}
-            <div className="border-t mt-16 pt-8 flex justify-center items-center gap-8">
-              <button className="uppercase text-xs text-gray-400">
-                Previous
-              </button>
-
-              <button className="text-[#735C00] font-bold">1</button>
-              <button>2</button>
-              <button>3</button>
-
-              <button className="uppercase text-xs text-[#735C00]">Next</button>
-            </div>
-          </section>
+            <button
+              type="button"
+              onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+              disabled={page >= totalPages}
+              className="uppercase text-xs text-[#735C00] disabled:text-gray-400 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          </div>
         </section>
       </main>
 

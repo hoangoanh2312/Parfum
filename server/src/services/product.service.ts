@@ -38,6 +38,16 @@ type ProductCard = {
   variantId: string | null;
   volume: string;
   stock: number;
+  variants: Array<{
+    id: string;
+    size: string;
+    volume: string;
+    price: number;
+    priceText: string;
+    stock: number;
+    images?: string[];
+    isActive?: boolean;
+  }>;
   notes?: {
     top: string[];
     middle: string[];
@@ -167,6 +177,18 @@ export async function getProducts(query: ProductListQuery = {}) {
 
   const cards: ProductCard[] = products.map((product) => {
     const productVariants = byProduct[String(product._id)] || [];
+    const normalizedVariants = productVariants
+      .map((variant: any) => ({
+        id: String(variant._id),
+        size: variant.size || variant.volume || '',
+        volume: variant.size || variant.volume || '',
+        price: variant.price,
+        priceText: formatVnd(variant.price),
+        stock: variant.stock || 0,
+        images: variant.images || [],
+        isActive: variant.isActive !== false,
+      }))
+      .sort((a: any, b: any) => (a.price ?? 0) - (b.price ?? 0));
     const cheapest = productVariants.reduce(
       (min: any, variant: any) => (min == null || variant.price < min.price ? variant : min),
       null as any,
@@ -199,6 +221,7 @@ export async function getProducts(query: ProductListQuery = {}) {
       variantId: cheapest ? String(cheapest._id) : null,
       volume: cheapest?.size || cheapest?.volume || '',
       stock,
+      variants: normalizedVariants,
       notes: {
         top: product.notes?.top?.length ? product.notes.top : product.topNotes || [],
         middle: product.notes?.middle?.length ? product.notes.middle : product.heartNotes || [],

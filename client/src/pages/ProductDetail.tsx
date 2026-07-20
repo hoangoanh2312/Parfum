@@ -4,15 +4,13 @@ import {
   Sun,
   Moon,
   Quote,
-  Share2,
-  MessageSquare,
-  AtSign,
 } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../lib/api";
 import { useCart } from "../store/cart.store";
 import { toast } from "../store/toast.store";
+import Footer from "../components/Footer";
 
 const PLACEHOLDER = "https://placehold.co/900x1100?text=No+Image";
 
@@ -688,106 +686,7 @@ export default function ProductDetail() {
         </section>
       </main>
 
-      {/* Footer */}
-      <footer className="bg-[#fbf8f2]">
-        <div className="mx-auto grid max-w-[1240px] gap-12 px-6 py-16 md:grid-cols-2 md:px-10 lg:grid-cols-[1.1fr_0.8fr_0.8fr_1.2fr] lg:px-14">
-          <div>
-            <div className="flex h-[62px] w-[62px] items-center justify-center rounded-full bg-black text-[11px] text-white">
-              LOGO
-            </div>
-
-            <h3 className="mt-6 font-serif text-[17px] font-semibold">
-              The Olfactory Editorial
-            </h3>
-
-            <p className="mt-6 max-w-[250px] text-[9px] leading-[1.7] text-[#8c877f]">
-              A curated archive of high-end scents and the stories they tell.
-              Elevating the art of perfumery through editorial precision.
-            </p>
-
-            <div className="mt-5 flex gap-3 text-[#aaa59d]">
-              <Share2 size={15} strokeWidth={1.4} />
-              <MessageSquare size={15} strokeWidth={1.4} />
-              <AtSign size={15} strokeWidth={1.4} />
-            </div>
-          </div>
-
-          <FooterColumn
-            title="NAVIGATION"
-            links={[
-              "Our Story",
-              "Shipping & Returns",
-              "Privacy Policy",
-              "Contact",
-            ]}
-          />
-
-          <FooterColumn
-            title="COLLECTIONS"
-            links={[
-              "The Resin Archive",
-              "Floral Monologues",
-              "Citrus Studies",
-              "Limited Editions",
-            ]}
-          />
-
-          <div>
-            <h4 className="text-[9px] font-semibold tracking-[1px]">
-              NEWSLETTER
-            </h4>
-
-            <p className="mt-6 max-w-[260px] text-[9px] leading-[1.6] text-[#8b867e]">
-              Join our list for exclusive releases and editorial insights.
-            </p>
-
-            <div className="mt-7 flex border-b border-[#d9d4cb] pb-3">
-              <input
-                type="email"
-                placeholder="Email Address"
-                className="w-full bg-transparent text-[9px] outline-none placeholder:text-[#aaa59e]"
-              />
-
-              <button className="text-[14px]">→</button>
-            </div>
-          </div>
-        </div>
-
-        <div className="mx-auto flex max-w-[1240px] flex-col items-center justify-between gap-4 border-t border-[#e4dfd6] px-6 py-7 text-[7px] uppercase tracking-[0.6px] text-[#99948c] md:flex-row md:px-10 lg:px-14">
-          <p>© 2024 The Olfactory Editorial. All Rights Reserved.</p>
-
-          <div className="flex gap-7">
-            <span>Paris</span>
-            <span>Grasse</span>
-            <span>New York</span>
-          </div>
-        </div>
-      </footer>
-    </div>
-  );
-}
-
-interface FooterColumnProps {
-  title: string;
-  links: string[];
-}
-
-function FooterColumn({ title, links }: FooterColumnProps) {
-  return (
-    <div>
-      <h4 className="text-[9px] font-semibold tracking-[1px]">{title}</h4>
-
-      <div className="mt-6 space-y-4">
-        {links.map((link) => (
-          <a
-            key={link}
-            href="#"
-            className="block text-[9px] text-[#8b867e] transition hover:text-[#8b7100]"
-          >
-            {link}
-          </a>
-        ))}
-      </div>
+      <Footer />
     </div>
   );
 }
