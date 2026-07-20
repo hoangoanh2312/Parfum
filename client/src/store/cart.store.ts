@@ -1,8 +1,8 @@
-import { create } from 'zustand';
-import { api } from '../lib/api';
+import { create } from "zustand";
+import { api } from "../lib/api";
 
 export interface CartItem {
-  variant: string;       // id của Variant (khóa định danh item trong giỏ)
+  variant: string; // id của Variant (khóa định danh item trong giỏ)
   product?: string;
   name?: string;
   slug?: string;
@@ -26,13 +26,13 @@ interface CartState {
   syncOnLogin: () => Promise<void>;
 }
 
-const GUEST_KEY = 'guest_cart';
+const GUEST_KEY = "guest_cart";
 // Đã đăng nhập hay chưa? (dựa vào accessToken trong localStorage)
-const isAuthed = () => !!localStorage.getItem('accessToken');
+const isAuthed = () => !!localStorage.getItem("accessToken");
 
 function readGuest(): CartItem[] {
   try {
-    return JSON.parse(localStorage.getItem(GUEST_KEY) || '[]');
+    return JSON.parse(localStorage.getItem(GUEST_KEY) || "[]");
   } catch {
     return [];
   }
@@ -42,7 +42,10 @@ function writeGuest(items: CartItem[]) {
 }
 // Tính lại tổng tiền + tổng số lượng cho giỏ khách vãng lai
 function totals(items: CartItem[]) {
-  const withLine = items.map((i) => ({ ...i, lineTotal: i.price * i.quantity }));
+  const withLine = items.map((i) => ({
+    ...i,
+    lineTotal: i.price * i.quantity,
+  }));
   const total = withLine.reduce((s, x) => s + (x.lineTotal || 0), 0);
   const count = withLine.reduce((s, x) => s + x.quantity, 0);
   return { items: withLine, total, count };
@@ -56,8 +59,12 @@ export const useCart = create<CartState>((set, get) => ({
   // Nạp giỏ: đăng nhập -> lấy từ DB; chưa -> lấy từ localStorage
   loadCart: async () => {
     if (isAuthed()) {
-      const { data } = await api.get('/cart');
-      set({ items: data.data.items, total: data.data.total, count: data.data.count });
+      const { data } = await api.get("/cart");
+      set({
+        items: data.data.items,
+        total: data.data.total,
+        count: data.data.count,
+      });
     } else {
       set(totals(readGuest()));
     }
@@ -65,16 +72,24 @@ export const useCart = create<CartState>((set, get) => ({
 
   addItem: async (item, quantity = 1) => {
     if (isAuthed()) {
-      const { data } = await api.post('/cart/items', { variant: item.variant, quantity });
-      set({ items: data.data.items, total: data.data.total, count: data.data.count });
+      const { data } = await api.post("/cart/items", {
+        variant: item.variant,
+        quantity,
+      });
+      set({
+        items: data.data.items,
+        total: data.data.total,
+        count: data.data.count,
+      });
     } else {
       // stock là số > 0 -> giới hạn; = 0 -> hết hàng; undefined -> không giới hạn
-      if (typeof item.stock === 'number' && item.stock <= 0) {
-        throw Object.assign(new Error('Sản phẩm đã hết hàng'), { status: 409 });
+      if (typeof item.stock === "number" && item.stock <= 0) {
+        throw Object.assign(new Error("Sản phẩm đã hết hàng"), { status: 409 });
       }
       const items = readGuest();
       const line = items.find((i) => i.variant === item.variant);
-      const cap = typeof item.stock === 'number' ? item.stock : Number.MAX_SAFE_INTEGER;
+      const cap =
+        typeof item.stock === "number" ? item.stock : Number.MAX_SAFE_INTEGER;
       if (line) line.quantity = Math.min(line.quantity + quantity, cap);
       else items.push({ ...item, quantity: Math.min(quantity, cap) });
       writeGuest(items);
@@ -85,7 +100,11 @@ export const useCart = create<CartState>((set, get) => ({
   updateItem: async (variantId, quantity) => {
     if (isAuthed()) {
       const { data } = await api.put(`/cart/items/${variantId}`, { quantity });
-      set({ items: data.data.items, total: data.data.total, count: data.data.count });
+      set({
+        items: data.data.items,
+        total: data.data.total,
+        count: data.data.count,
+      });
     } else {
       let items = readGuest();
       if (quantity <= 0) {
@@ -93,7 +112,13 @@ export const useCart = create<CartState>((set, get) => ({
       } else {
         items = items.map((i) =>
           i.variant === variantId
-            ? { ...i, quantity: Math.min(quantity, i.stock ?? Number.MAX_SAFE_INTEGER) }
+            ? {
+                ...i,
+                quantity: Math.min(
+                  quantity,
+                  i.stock ?? Number.MAX_SAFE_INTEGER,
+                ),
+              }
             : i,
         );
       }
@@ -105,7 +130,11 @@ export const useCart = create<CartState>((set, get) => ({
   removeItem: async (variantId) => {
     if (isAuthed()) {
       const { data } = await api.delete(`/cart/items/${variantId}`);
-      set({ items: data.data.items, total: data.data.total, count: data.data.count });
+      set({
+        items: data.data.items,
+        total: data.data.total,
+        count: data.data.count,
+      });
     } else {
       const items = readGuest().filter((i) => i.variant !== variantId);
       writeGuest(items);
@@ -115,8 +144,12 @@ export const useCart = create<CartState>((set, get) => ({
 
   clear: async () => {
     if (isAuthed()) {
-      const { data } = await api.delete('/cart');
-      set({ items: data.data.items, total: data.data.total, count: data.data.count });
+      const { data } = await api.delete("/cart");
+      set({
+        items: data.data.items,
+        total: data.data.total,
+        count: data.data.count,
+      });
     } else {
       writeGuest([]);
       set({ items: [], total: 0, count: 0 });
@@ -128,7 +161,7 @@ export const useCart = create<CartState>((set, get) => ({
   syncOnLogin: async () => {
     const guest = readGuest();
     if (guest.length) {
-      await api.post('/cart/merge', {
+      await api.post("/cart/merge", {
         items: guest.map((g) => ({ variant: g.variant, quantity: g.quantity })),
       });
       writeGuest([]);
