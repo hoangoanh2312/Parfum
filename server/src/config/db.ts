@@ -1,7 +1,35 @@
-import mongoose from 'mongoose';
-import { env } from './env';
+import mongoose from "mongoose"
+import { env } from "./env"
+
+function getMongoTarget(uri: string) {
+	try {
+		const sanitized = uri.replace(/\/\/([^@]+)@/, "//")
+		const [target] = sanitized.split("?")
+		return target
+	} catch {
+		return "<invalid mongo uri>"
+	}
+}
 
 export async function connectDB() {
-  await mongoose.connect(env.mongoUri);
-  console.log('[db] MongoDB connected');
+	try {
+		console.log("Mongo target:", getMongoTarget(env.mongoUri))
+		await mongoose.connect(env.mongoUri)
+		console.log("✅ MongoDB connected")
+	} catch (err) {
+		console.error("❌ MongoDB connection error:", err)
+		process.exit(1) // không kết nối được DB thì dừng app
+	}
+
+	// lắng nghe sự kiện để biết khi mất kết nối
+	mongoose.connection.on("disconnected", () =>
+		console.warn("⚠️ MongoDB disconnected"),
+	)
+
+	// tắt êm khi Ctrl+C
+	process.on("SIGINT", async () => {
+		await mongoose.connection.close()
+		console.log("MongoDB connection closed")
+		process.exit(0)
+	})
 }

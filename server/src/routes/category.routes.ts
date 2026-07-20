@@ -1,15 +1,8 @@
-import { Router } from 'express';
-import { Category } from '../models/category.model';
+import express from "express";
+import * as controller from "../controllers/category.controller";
 
-const router = Router();
+const router = express.Router();
 
-router.get('/', async (_, res) => {
-  const categories = await Category.find().sort({ name: 1 });
-
-  res.json({
-    success: true,
-    data: categories,
-  });
-});
+router.get("/", controller.getCategories);
 
 export default router;

@@ -1,15 +1,8 @@
-import { Router } from 'express';
-import { Brand } from '../models/brand.model';
+import express from "express";
+import * as controller from "../controllers/brand.controller";
 
-const router = Router();
+const router = express.Router();
 
-router.get('/', async (_, res) => {
-  const brands = await Brand.find().sort({ name: 1 });
-
-  res.json({
-    success: true,
-    data: brands,
-  });
-});
+router.get("/", controller.getBrands);
 
 export default router;

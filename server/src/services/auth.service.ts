@@ -16,22 +16,13 @@ const user = await User.create({
 }
 
 export async function login(email: string, password: string) {
-  console.log('EMAIL:', email);
-
-  const user = await User.findOne({ email });
-
-  console.log('USER:', user);
-
-  if (!user)
+  const user = await User.findOne({ email }).select('+password');
+  if (!user) {
     throw Object.assign(new Error('Sai thong tin'), { status: 401 });
-
-  const ok = await bcrypt.compare(password, user.password);
-
-  console.log('PASSWORD MATCH:', ok);
-
-  if (!ok)
-    throw Object.assign(new Error('Sai thong tin'), { status: 401 });
-
+  }
+  
+	const ok = await bcrypt.compare(password, String(user.password));
+  if (!ok) throw Object.assign(new Error('Sai thong tin'), { status: 401 });
   return issueTokens(user);
 }
 
