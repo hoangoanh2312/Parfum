@@ -1,10 +1,19 @@
-import { create } from 'zustand';
+import { create } from "zustand";
+import { api } from "../lib/api";
 
 interface User {
   id: string;
   name: string;
   email: string;
   role: string;
+  addresses?: Address[];
+}
+
+export interface Address {
+  _id: string;
+  label: string;
+  phone: string;
+  detail: string;
 }
 
 interface AuthState {
@@ -14,6 +23,7 @@ interface AuthState {
   setUser: (u: User | null) => void;
   setAuth: (payload: { accessToken: string; refreshToken: string; user: User }) => void;
   logout: () => void;
+  bootstrap: () => Promise<void>;
 }
 
 const getStoredAuth = () => {

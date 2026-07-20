@@ -11,7 +11,7 @@ export default function AdminLayout() {
 
   function handleLogout() {
     logout();
-    navigate('/login');
+    navigate("/login");
   }
 
   useEffect(() => {
@@ -105,7 +105,7 @@ export default function AdminLayout() {
           ))}
         </nav>
 
-        <div className="absolute bottom-0 w-full border-t border-gray-800 p-4">
+        <div className="border-t border-gray-800 p-4">
           <button
             onClick={() => {
               handleLogout();

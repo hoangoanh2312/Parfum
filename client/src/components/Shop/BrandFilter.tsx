@@ -23,14 +23,11 @@ export default function BrandFilter({
 
       <div className="space-y-3">
         {brands.map((brand) => (
-          <label
-            key={brand}
-            className="flex items-center gap-3 cursor-pointer"
-          >
+          <label key={brand} className="flex items-center gap-3 cursor-pointer">
             <input
               type="checkbox"
               checked={selected.includes(brand)}
-             onChange={() => onToggle(brand)}
+              onChange={() => onToggle(brand)}
               className="accent-[#735C00]"
             />
 

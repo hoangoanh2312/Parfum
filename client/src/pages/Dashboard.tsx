@@ -407,7 +407,9 @@ export default function Dashboard() {
     let mounted = true;
 
     api
-      .get<ProductListResponse>("/products", { params: { page: 1, limit: 100 } })
+      .get<ProductListResponse>("/products", {
+        params: { page: 1, limit: 100 },
+      })
       .then(({ data }) => {
         if (!mounted) return;
 
@@ -444,7 +446,9 @@ export default function Dashboard() {
       };
 
       setLikedNotes(Array.isArray(parsed.likedNotes) ? parsed.likedNotes : []);
-      setDislikedNotes(Array.isArray(parsed.dislikedNotes) ? parsed.dislikedNotes : []);
+      setDislikedNotes(
+        Array.isArray(parsed.dislikedNotes) ? parsed.dislikedNotes : [],
+      );
     } catch {
       setLikedNotes([]);
       setDislikedNotes([]);
@@ -488,7 +492,9 @@ export default function Dashboard() {
 
   const suggestedLink = useMemo(() => {
     const firstLiked = likedNotes[0];
-    return firstLiked ? `/shop?search=${encodeURIComponent(firstLiked)}` : "/shop";
+    return firstLiked
+      ? `/shop?search=${encodeURIComponent(firstLiked)}`
+      : "/shop";
   }, [likedNotes]);
 
   function handleLogout() {
