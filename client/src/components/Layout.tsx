@@ -3,6 +3,9 @@ import Header from "../components/Header";
 import Toaster from "./Toaster";
 
 export default function Layout() {
+  const user = useAuth((s) => s.user);
+  const count = useWishlist((s) => s.products.length);
+
   return (
     <div className="bg-[#f8f5ef] min-h-screen">
       <Header />
