@@ -40,12 +40,11 @@ body {
 .marquee-right {
   display: flex;
   width: max-content;
-  animation: marqueeRight 34s linear infinite;
+  animation: marqueeRight 20s linear infinite;
 }
 
-.marquee-group {
-  display: flex;
-  min-width: max-content;
-  padding-right: 4rem;
+/* Hover thì dừng */
+.marquee-left:hover,
+.marquee-right:hover {
+  animation-play-state: paused;
 }
-

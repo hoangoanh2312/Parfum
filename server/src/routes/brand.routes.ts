@@ -1,8 +1,8 @@
-import express from "express";
-import * as controller from "../controllers/brand.controller";
+import { Router } from 'express';
+import { getAllBrands } from '../controllers/brand.controller';
 
-const router = express.Router();
+const router = Router();
 
-router.get("/", controller.getBrands);
+router.get('/', getAllBrands);
 
 export default router;

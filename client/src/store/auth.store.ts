@@ -1,43 +1,64 @@
-import { create } from 'zustand';
+import { create } from "zustand";
+import { api } from "../lib/api";
 
 interface User {
   id: string;
   name: string;
   email: string;
   role: string;
+  addresses?: Address[];
+}
+
+export interface Address {
+  _id: string;
+  label: string;
+  phone: string;
+  detail: string;
 }
 
 interface AuthState {
   user: User | null;
+  accessToken: string | null;
+  refreshToken: string | null;
   setUser: (u: User | null) => void;
-  setTokens: (accessToken: string, refreshToken?: string) => void;
+  setAuth: (payload: { accessToken: string; refreshToken: string; user: User }) => void;
   logout: () => void;
+  bootstrap: () => Promise<void>;
 }
 
-const savedUser = localStorage.getItem('user');
+const getStoredAuth = () => {
+  if (typeof window === 'undefined') {
+    return { user: null, accessToken: null, refreshToken: null };
+  }
 
-export const useAuth = create<AuthState>((set) => ({
-  user: savedUser ? JSON.parse(savedUser) : null,
+  const savedUser = localStorage.getItem('user');
+  return {
+    user: savedUser ? JSON.parse(savedUser) : null,
+    accessToken: localStorage.getItem('accessToken'),
+    refreshToken: localStorage.getItem('refreshToken'),
+  };
+};
 
-  setUser: (user) => {
-    if (user) {
-      localStorage.setItem('user', JSON.stringify(user));
-    } else {
-      localStorage.removeItem('user');
-    }
-    set({ user });
-  },
+export const useAuth = create<AuthState>((set) => {
+  const initial = getStoredAuth();
 
-  // Lưu token sau khi đăng nhập/đăng ký. lib/api.ts sẽ tự đính kèm
-  // "Authorization: Bearer <accessToken>" cho mọi request nhờ đọc localStorage.
-  setTokens: (accessToken, refreshToken) => {
-    if (accessToken) localStorage.setItem('accessToken', accessToken);
-    if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
-  },
+  return {
+    user: initial.user,
+    accessToken: initial.accessToken,
+    refreshToken: initial.refreshToken,
+
+    setUser: (user) => {
+      if (user) {
+        localStorage.setItem('user', JSON.stringify(user));
+      } else {
+        localStorage.removeItem('user');
+      }
+
+      set({ user });
+    },
 
   logout: () => {
     localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
     set({ user: null });
   },

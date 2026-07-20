@@ -3,9 +3,7 @@ import { connectDB } from "./config/db"
 
 // Lưu ý: file ./app (khởi tạo Express app) thuộc skeleton HT-05.
 // Ở đây minh họa cách ráp connectDB vào điểm khởi động.
-import { createApp } from "./app";
-
-const app = createApp();
+import { app } from "./app"
 
 async function start() {
 	await connectDB()
