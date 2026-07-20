@@ -1,8 +1,8 @@
-node_modules
-dist
-build
+node_modules/
 .env
-.env.local
-*.log
+*.env
+!.env.example
+dist/
+build/
 .DS_Store
-coverage
+*.log

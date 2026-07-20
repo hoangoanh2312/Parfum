@@ -1,6 +1,7 @@
 {
   "name": "hoc-parfum",
   "private": true,
+<<<<<<< HEAD
   "workspaces": [
     "server",
     "client"
@@ -17,4 +18,15 @@
   "dependencies": {
     "react-router-dom": "^7.18.0"
   }
+=======
+  "workspaces": ["server", "client"],
+ "scripts": {
+  "dev": "concurrently -n SERVER,CLIENT -c blue,green \"npm:dev -w server\" \"npm:dev -w client\"",
+  "build": "npm run build -w server && npm run build -w client",
+  "lint": "npm run lint -w server && npm run lint -w client",
+  "test": "npm run test -w server --if-present && npm run test -w client --if-present"
+},
+  "devDependencies": { "concurrently": "^9.0.0" }
+>>>>>>> origin/PF-51-khoi-tao-ha-tang
 }
+
