@@ -13,6 +13,14 @@ interface User {
   name: string;
   email: string;
   role: string;
+  addresses?: Address[];
+}
+
+export interface Address {
+  _id: string;
+  label: string;
+  phone: string;
+  detail: string;
 }
 
 interface AuthState {
@@ -21,7 +29,11 @@ interface AuthState {
   logout: () => Promise<void>;
 }
 
-const savedUser = localStorage.getItem('user');
+interface JWTPayload {
+  id: string;
+  role: string;
+  exp: number;
+}
 
 export const useAuth = create<AuthState>((set) => ({
   user: null,

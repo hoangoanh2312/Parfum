@@ -1,5 +1,51 @@
 import { Product } from '../models/product.model';
 import { Variant } from '../models/variant.model';
+import '../models/brand.model';
+import '../models/category.model';
+
+type ProductListQuery = {
+  page?: string | number;
+  limit?: string | number;
+  search?: string;
+  brand?: string | string[];
+  category?: string | string[];
+  gender?: string | string[];
+  scent?: string | string[];
+  fragranceFamily?: string | string[];
+  concentration?: string | string[];
+  season?: string | string[];
+  occasion?: string | string[];
+  size?: string | string[];
+  minPrice?: string | number;
+  maxPrice?: string | number;
+  sort?: string;
+};
+
+type ProductCard = {
+  id: string;
+  slug?: string;
+  name: string;
+  brand: string;
+  category: string;
+  description?: string;
+  gender: string;
+  fragranceFamily: string;
+  concentration: string;
+  season: string[];
+  sizes: string[];
+  image: string | null;
+  images?: string[];
+  price: number | null;
+  priceText: string;
+  variantId: string | null;
+  volume: string;
+  stock: number;
+  createdAt?: Date;
+};
+
+const DEFAULT_PAGE = 1;
+const DEFAULT_LIMIT = 12;
+const MAX_LIMIT = 100;
 
 type ProductListQuery = {
   page?: string | number;
@@ -262,11 +308,8 @@ export async function getProducts(query: ProductListQuery = {}) {
   };
 }
 
-/** Chi tiết 1 sản phẩm theo id hoặc slug, kèm toàn bộ variant. */
 export async function getProductDetail(idOrSlug: string) {
-  const query = /^[0-9a-fA-F]{24}$/.test(idOrSlug)
-    ? { _id: idOrSlug }
-    : { slug: idOrSlug };
+  const query = /^[0-9a-fA-F]{24}$/.test(idOrSlug) ? { _id: idOrSlug } : { slug: idOrSlug };
 
   const product: any = await Product.findOne(query as any)
     .populate('brand', 'name')

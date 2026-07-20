@@ -3,6 +3,7 @@ import { Cart } from '../models/cart.model';
 import { Order } from '../models/order.model';
 import { Payment } from '../models/payment.model';
 import { env } from '../config/env';
+import '../models/product.model';
 
 export type StockItem = { variant: string; quantity: number };
 
@@ -112,18 +113,24 @@ export async function prepareCheckout(userId: string) {
  * Nếu tạo Order/Payment lỗi -> HOÀN lại kho đã trừ.
  */
 export async function createOrder(
-  userId: string,
-  opts: { method?: 'cod' | 'bank_qr'; address?: any; note?: string } = {},
+  userId: string | undefined,
+  opts: { method?: 'cod' | 'bank_qr'; address?: any; note?: string; items?: StockItem[] } = {},
 ) {
-  const cart: any = await Cart.findOne({ user: userId });
-  if (!cart || cart.items.length === 0) {
+  const cart: any = userId ? await Cart.findOne({ user: userId }) : null;
+
+  const stockItems: StockItem[] = cart?.items?.length
+    ? cart.items.map((i: any) => ({
+        variant: String(i.variant),
+        quantity: i.quantity,
+      }))
+    : (opts.items || []).map((item) => ({
+        variant: String(item.variant),
+        quantity: Number(item.quantity),
+      }));
+
+  if (!stockItems.length) {
     throw Object.assign(new Error('Giỏ hàng trống'), { status: 400 });
   }
-
-  const stockItems: StockItem[] = cart.items.map((i: any) => ({
-    variant: String(i.variant),
-    quantity: i.quantity,
-  }));
 
   // 1) Kiểm tra tồn kho trước khi trừ
   const check = await checkStock(stockItems);
@@ -142,7 +149,7 @@ export async function createOrder(
 
     // 3) Tạo đơn (lưu snapshot tên/giá tại thời điểm mua)
     const order: any = await Order.create({
-      user: userId,
+      ...(userId ? { user: userId } : {}),
       items: check.items.map((x: any) => ({
         variant: x.variant,
         name: x.name,
@@ -165,8 +172,10 @@ export async function createOrder(
     });
 
     // 5) Xóa sạch giỏ sau khi đặt hàng
-    cart.items = [];
-    await cart.save();
+    if (cart) {
+      cart.items = [];
+      await cart.save();
+    }
 
     return {
       orderId: String(order._id),
@@ -213,10 +222,10 @@ export async function getMyOrders(userId: string) {
  * PF-35: CHI TIẾT 1 đơn hàng của user.
  * Chặn xem đơn của người khác bằng điều kiện { _id, user }.
  */
-export async function getOrderById(userId: string, orderId: string) {
+export async function getOrderById(userId: string | undefined, orderId: string) {
   let order: any = null;
   try {
-    order = await Order.findOne({ _id: orderId, user: userId }).lean();
+    order = await Order.findOne(userId ? { _id: orderId, user: userId } : { _id: orderId }).lean();
   } catch {
     // orderId sai định dạng ObjectId -> coi như không tìm thấy
     throw Object.assign(new Error('Không tìm thấy đơn hàng'), { status: 404 });
@@ -254,10 +263,10 @@ export async function getOrderById(userId: string, orderId: string) {
  * Với bank_qr sẽ sinh link ảnh QR động từ cấu hình VietQR trong .env.
  * Chặn xem đơn của người khác bằng điều kiện { _id, user }.
  */
-export async function getPaymentInfo(userId: string, orderId: string) {
+export async function getPaymentInfo(userId: string | undefined, orderId: string) {
   let order: any = null;
   try {
-    order = await Order.findOne({ _id: orderId, user: userId }).lean();
+    order = await Order.findOne(userId ? { _id: orderId, user: userId } : { _id: orderId }).lean();
   } catch {
     throw Object.assign(new Error('Không tìm thấy đơn hàng'), { status: 404 });
   }

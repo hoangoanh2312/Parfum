@@ -1,4 +1,13 @@
-import { Schema, model, InferSchemaType } from "mongoose"
+import { Schema, model, InferSchemaType } from 'mongoose';
+
+const addressSchema = new Schema(
+  {
+    label: String,
+    phone: String,
+    detail: String,
+  },
+  { _id: true },
+);
 
 const userSchema = new Schema(
 	{
@@ -29,7 +38,6 @@ const userSchema = new Schema(
 	},
 )
 
-// Suy ra kiểu TypeScript từ schema -> dùng cho cả service/controller
-export type UserDoc = InferSchemaType<typeof userSchema>
+export type UserDoc = InferSchemaType<typeof userSchema>;
 
-export const User = model("User", userSchema)
+export const User = model('User', userSchema);
