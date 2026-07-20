@@ -1,4 +1,12 @@
 import { create } from 'zustand';
+import { api } from '../lib/api';
+
+export interface AuthUser {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+}
 
 interface User {
   id: string;
@@ -8,29 +16,24 @@ interface User {
 }
 
 interface AuthState {
-  user: User | null;
-  setUser: (u: User | null) => void;
-  logout: () => void;
+  user: AuthUser | null;
+  setUser: (u: AuthUser | null) => void;
+  logout: () => Promise<void>;
 }
 
 const savedUser = localStorage.getItem('user');
 
 export const useAuth = create<AuthState>((set) => ({
-  user: savedUser ? JSON.parse(savedUser) : null,
-
-  setUser: (user) => {
-    if (user) {
-      localStorage.setItem('user', JSON.stringify(user));
-    } else {
-      localStorage.removeItem('user');
+  user: null,
+  setUser: (user) => set({ user }),
+  logout: async () => {
+    try {
+      await api.post('/auth/logout');
+    } catch {
+      // token het han van xoa local
     }
-
-    set({ user });
-  },
-
-  logout: () => {
     localStorage.removeItem('accessToken');
-    localStorage.removeItem('user');
+    localStorage.removeItem('refreshToken');
     set({ user: null });
   },
 }));

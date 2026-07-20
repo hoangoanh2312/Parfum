@@ -12,9 +12,11 @@
     "test": "npm run test -w server --if-present && npm run test -w client --if-present"
   },
   "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
     "concurrently": "^9.0.0"
   },
   "dependencies": {
-    "lucide-react": "^1.23.0"
+    "bcrypt": "^6.0.0",
+    "zod": "^4.4.3"
   }
 }
