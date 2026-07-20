@@ -10,7 +10,6 @@ interface User {
 interface AuthState {
   user: User | null;
   setUser: (u: User | null) => void;
-  setTokens: (accessToken: string, refreshToken?: string) => void;
   logout: () => void;
 }
 
@@ -25,19 +24,12 @@ export const useAuth = create<AuthState>((set) => ({
     } else {
       localStorage.removeItem('user');
     }
-    set({ user });
-  },
 
-  // Lưu token sau khi đăng nhập/đăng ký. lib/api.ts sẽ tự đính kèm
-  // "Authorization: Bearer <accessToken>" cho mọi request nhờ đọc localStorage.
-  setTokens: (accessToken, refreshToken) => {
-    if (accessToken) localStorage.setItem('accessToken', accessToken);
-    if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
+    set({ user });
   },
 
   logout: () => {
     localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
     set({ user: null });
   },
