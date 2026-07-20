@@ -40,14 +40,4 @@ const localStorage = multer.diskStorage({
   },
 });
 
-export const upload = multer({
-  storage: cloudinaryStorage || localStorage,
-  limits: { fileSize: 5 * 1024 * 1024 },
-  fileFilter: (_req, file, cb) => {
-    if (!file.mimetype.startsWith('image/')) {
-      cb(new Error('Chỉ được upload file ảnh'));
-      return;
-    }
-    cb(null, true);
-  },
-});
+export const upload = multer({ storage: storage });

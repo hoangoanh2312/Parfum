@@ -1,6 +1,7 @@
 import ShopSidebar from "../components/Shop/ShopSidebar";
 import ProductGrid from "../components/Shop/ProductGrid";
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import Footer from "../components/Footer";
 import { api } from "../lib/api";
 
@@ -17,6 +18,11 @@ type Product = {
   volume?: string;
   stock?: number;
   fragranceFamily?: string;
+  notes?: {
+    top?: string[];
+    middle?: string[];
+    base?: string[];
+  };
   concentration?: string;
   gender?: string;
   season?: string[];
@@ -40,10 +46,19 @@ const occasionSeasonMap: Record<string, string[]> = {
   Work: ["spring", "summer", "autumn", "all"],
 };
 
+const getSizeNumber = (size: string) => {
+  const match = size.match(/\d+(\.\d+)?/);
+  return match ? Number(match[0]) : Number.MAX_SAFE_INTEGER;
+};
+
 export default function Shop() {
+  const [searchParams] = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 const [search,setSearch]=useState("");
 const [selectedScents, setSelectedScents] = useState<string[]>([]);
 const [selectedBrands,setSelectedBrands]=useState<string[]>([]);
@@ -52,6 +67,7 @@ const [selectedGenders,setSelectedGenders]=useState<string[]>([]);
 const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
 
 const [selectedOccasions, setSelectedOccasions] = useState<string[]>([]);
+const [selectedSeasons, setSelectedSeasons] = useState<string[]>([]);
 
 const [selectedConcentrations, setSelectedConcentrations] = useState<string[]>([]);
 const [price,setPrice]=useState(Number.MAX_SAFE_INTEGER);
@@ -88,6 +104,59 @@ const toggleScent = (value: string) => {
 };
 
 useEffect(() => {
+  const nextSearch = searchParams.get("search") || "";
+  const nextBrand = searchParams.get("brand") || "";
+  const nextScent = searchParams.get("scent") || "";
+  const nextSeason = searchParams.get("season") || "";
+  const nextSort = searchParams.get("sort") || "";
+
+  setSearch(nextSearch);
+  setSelectedBrands(nextBrand ? [nextBrand] : []);
+  setSelectedScents(nextScent ? nextScent.split(",").map((item) => item.trim()).filter(Boolean) : []);
+  setSelectedSeasons(nextSeason ? nextSeason.split(",").map((item) => item.trim()).filter(Boolean) : []);
+  if (nextSort) setSort(nextSort);
+}, [searchParams]);
+
+useEffect(() => {
+  let active = true;
+
+  async function loadFilterOptions() {
+    try {
+      const { data } = await api.get<ProductListResponse>("/products", {
+        params: { page: 1, limit: 100, sort: "newest" },
+      });
+
+      if (active) {
+        setAllProducts(data.data);
+      }
+    } catch (error) {
+      console.error("Failed to load filter options", error);
+    }
+  }
+
+  loadFilterOptions();
+
+  return () => {
+    active = false;
+  };
+}, []);
+
+useEffect(() => {
+  setPage(1);
+}, [
+  search,
+  selectedBrands,
+  selectedGenders,
+  selectedScents,
+  selectedSizes,
+  selectedOccasions,
+  selectedSeasons,
+  selectedConcentrations,
+  price,
+  sort,
+]);
+
+useEffect(() => {
   let active = true;
 
   async function loadProducts() {
@@ -95,16 +164,17 @@ useEffect(() => {
       setLoading(true);
       const { data } = await api.get<ProductListResponse>("/products", {
         params: {
-          page: 1,
-          limit: 100,
+          page,
+          limit: 12,
           search: search || undefined,
           brand: selectedBrands.join(",") || undefined,
           gender: selectedGenders.join(",") || undefined,
           scent: selectedScents.join(",") || undefined,
           size: selectedSizes.join(",") || undefined,
-          season: selectedOccasions
-            .flatMap((occasion) => occasionSeasonMap[occasion] ?? [])
-            .join(",") || undefined,
+          season: [
+            ...selectedOccasions.flatMap((occasion) => occasionSeasonMap[occasion] ?? []),
+            ...selectedSeasons,
+          ].join(",") || undefined,
           concentration: selectedConcentrations.join(",") || undefined,
           maxPrice: price === Number.MAX_SAFE_INTEGER ? undefined : price,
           sort,
@@ -114,6 +184,7 @@ useEffect(() => {
       if (active) {
         setProducts(data.data);
         setTotal(data.total);
+        setTotalPages(data.totalPages || 1);
       }
     } catch (error) {
       console.error("Failed to load products", error);
@@ -135,55 +206,64 @@ useEffect(() => {
   selectedGenders,
   selectedScents,
   selectedSizes,
+  selectedOccasions,
+  selectedSeasons,
   selectedConcentrations,
   price,
   sort,
+  page,
 ]);
 
 const brands = useMemo(
   () =>
     Array.from(
       new Set(
-        products
+        allProducts
           .map((product) => product.brand)
           .filter((brand): brand is string => Boolean(brand)),
       ),
     ),
-  [products],
+  [allProducts],
 );
 
 const scents = useMemo(
   () =>
     Array.from(
       new Set(
-        products
-          .map((product) => product.fragranceFamily)
-          .filter((scent): scent is string => Boolean(scent)),
+        allProducts.flatMap((product) => [
+          ...(product.notes?.top || []),
+          ...(product.notes?.middle || []),
+          ...(product.notes?.base || []),
+          ...(product.fragranceFamily ? [product.fragranceFamily] : []),
+        ]).filter(Boolean),
       ),
-    ),
-  [products],
+    ).sort((left, right) => left.localeCompare(right)),
+  [allProducts],
 );
 
 const sizes = useMemo(
-  () => Array.from(new Set(products.flatMap((product) => product.sizes ?? []))),
-  [products],
+  () =>
+    Array.from(new Set(allProducts.flatMap((product) => product.sizes ?? []))).sort(
+      (left, right) => getSizeNumber(left) - getSizeNumber(right) || left.localeCompare(right),
+    ),
+  [allProducts],
 );
 
 const concentrations = useMemo(
   () =>
     Array.from(
       new Set(
-        products
+        allProducts
           .map((product) => product.concentration)
           .filter((concentration): concentration is string => Boolean(concentration)),
       ),
     ),
-  [products],
+  [allProducts],
 );
 
 const maxPrice = useMemo(
-  () => products.reduce((max, product) => Math.max(max, product.price ?? 0), 0),
-  [products],
+  () => allProducts.reduce((max, product) => Math.max(max, product.price ?? 0), 0),
+  [allProducts],
 );
 
 useEffect(() => {
@@ -204,7 +284,12 @@ const filteredProducts = useMemo(
         (product.gender ? selectedGenders.includes(product.gender) : false);
       const matchesScent =
         selectedScents.length === 0 ||
-        (product.fragranceFamily ? selectedScents.includes(product.fragranceFamily) : false);
+        selectedScents.some((scent) =>
+          product.fragranceFamily === scent ||
+          product.notes?.top?.includes(scent) ||
+          product.notes?.middle?.includes(scent) ||
+          product.notes?.base?.includes(scent),
+        );
       const matchesSize =
         selectedSizes.length === 0 ||
         selectedSizes.some((size) => product.sizes?.includes(size));
@@ -213,6 +298,9 @@ const filteredProducts = useMemo(
         selectedOccasions.some((occasion) =>
           occasionSeasonMap[occasion]?.some((season) => product.season?.includes(season)),
         );
+      const matchesSeason =
+        selectedSeasons.length === 0 ||
+        selectedSeasons.some((season) => product.season?.includes(season));
       const matchesConcentration =
         selectedConcentrations.length === 0 ||
         (product.concentration ? selectedConcentrations.includes(product.concentration) : false);
@@ -225,6 +313,7 @@ const filteredProducts = useMemo(
         matchesScent &&
         matchesSize &&
         matchesOccasion &&
+        matchesSeason &&
         matchesConcentration &&
         matchesPrice
       );
@@ -237,6 +326,7 @@ const filteredProducts = useMemo(
     selectedScents,
     selectedSizes,
     selectedOccasions,
+    selectedSeasons,
     selectedConcentrations,
     price,
   ],
@@ -256,17 +346,7 @@ prev.includes(brand)
 
 }
 const toggleGender=(gender:string)=>{
-
-setSelectedGenders(prev=>
-
-prev.includes(gender)
-
-?prev.filter(item=>item!==gender)
-
-:[...prev,gender]
-
-);
-
+  setSelectedGenders([gender]);
 }
   return (
     <>
@@ -312,6 +392,7 @@ prev.includes(gender)
     ]}
     selectedGenders={selectedGenders}
     toggleGender={toggleGender}
+    clearGender={() => setSelectedGenders([])}
     price={price}
     maxPrice={maxPrice}
     setPrice={setPrice}
@@ -336,33 +417,70 @@ toggleConcentration={toggleConcentration}
           {/* Toolbar */}
           <div className="flex justify-between border-b pb-5 border-[#e8deca]">
             <p className="uppercase text-xs tracking-widest text-[#5F5E5E]">
-              Showing {filteredProducts.length} of {total} products
+              Showing {products.length} of {total} products
             </p>
 
-            <select
-              className="uppercase text-xs tracking-widest bg-transparent outline-none"
-              value={sort}
-              onChange={(e) => setSort(e.target.value)}
-            >
-              <option value="newest">Newest</option>
-              <option value="price_asc">Price ↑</option>
-              <option value="price_desc">Price ↓</option>
-            </select>
+            <label className="flex items-center gap-3">
+              <span className="text-[10px] uppercase tracking-[0.18em] text-[#8A8176]">
+                Sắp xếp
+              </span>
+
+              <select
+                value={sort}
+                onChange={(event) => setSort(event.target.value)}
+                className="min-w-[190px] border border-[#e8deca] bg-[#FDF9F4] px-4 py-2 text-[10px] uppercase tracking-[0.16em] text-[#4F4942] outline-none transition hover:border-[#735C00] focus:border-[#735C00]"
+              >
+                <option value="newest">Mới nhất</option>
+                <option value="price_asc">Giá tăng dần</option>
+                <option value="price_desc">Giá giảm dần</option>
+              </select>
+            </label>
           </div>
 
           {/* Grid */}
           <ProductGrid products={filteredProducts} loading={loading} />
           {/* Pagination */}
           <div className="border-t mt-16 pt-8 flex justify-center items-center gap-8">
-            <button className="uppercase text-xs text-gray-400">
+            <button
+              type="button"
+              onClick={() => setPage((current) => Math.max(1, current - 1))}
+              disabled={page <= 1}
+              className="uppercase text-xs text-[#735C00] disabled:text-gray-400 disabled:cursor-not-allowed"
+            >
               Previous
             </button>
 
-            <button className="text-[#735C00] font-bold">1</button>
-            <button>2</button>
-            <button>3</button>
+            {Array.from({ length: totalPages }, (_, index) => index + 1)
+              .filter((item) => {
+                if (totalPages <= 5) return true;
+                return item === 1 || item === totalPages || Math.abs(item - page) <= 1;
+              })
+              .map((item, index, array) => (
+                <span key={item} className="flex items-center gap-8">
+                  {index > 0 && item - array[index - 1] > 1 && (
+                    <span className="text-gray-400">...</span>
+                  )}
 
-            <button className="uppercase text-xs text-[#735C00]">
+                  <button
+                    type="button"
+                    onClick={() => setPage(item)}
+                    className={
+                      item === page
+                        ? "text-[#735C00] font-bold"
+                        : "text-[#4F4942] hover:text-[#735C00]"
+                    }
+                  >
+                    {item}
+                  </button>
+                </span>
+              ))}
+
+            <button
+              type="button"
+              onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+              disabled={page >= totalPages}
+              className="uppercase text-xs text-[#735C00] disabled:text-gray-400 disabled:cursor-not-allowed"
+            >
               Next
             </button>
           </div>

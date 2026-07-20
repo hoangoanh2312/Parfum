@@ -40,17 +40,18 @@ body {
 .marquee-left {
   display: flex;
   width: max-content;
-  animation: marqueeLeft 20s linear infinite;
+  animation: marqueeLeft 34s linear infinite;
 }
 
 .marquee-right {
   display: flex;
   width: max-content;
-  animation: marqueeRight 20s linear infinite;
+  animation: marqueeRight 34s linear infinite;
 }
 
-/* Hover thì dừng */
-.marquee-left:hover,
-.marquee-right:hover {
-  animation-play-state: paused;
+.marquee-group {
+  display: flex;
+  min-width: max-content;
+  padding-right: 4rem;
 }
+

@@ -1,3 +1,6 @@
+import './brand.model';
+import './category.model';
+
 import { Schema, model, Types } from 'mongoose';
 
 const productSchema = new Schema(

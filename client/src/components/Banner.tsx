@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 export default function BannerSection() {
   return (
     <section
@@ -30,9 +32,12 @@ export default function BannerSection() {
             chính hãng và dịch vụ cao cấp.
           </p>
 
-          <button className="mt-10 px-8 py-4 border border-white uppercase tracking-[4px] hover:bg-white hover:text-black duration-300">
+          <Link
+            to="/shop"
+            className="mt-10 inline-block px-8 py-4 border border-white uppercase tracking-[4px] hover:bg-white hover:text-black duration-300"
+          >
             Xem bộ sưu tập
-          </button>
+          </Link>
 
         </div>
 

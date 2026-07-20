@@ -31,6 +31,7 @@ toggleScent: (value: string) => void;
     genders:string[];
     selectedGenders:string[];
     toggleGender:(gender:string)=>void;
+    clearGender:()=>void;
 
     price:number;
     maxPrice:number;
@@ -55,6 +56,7 @@ export default function ShopSidebar(props:Props){
     genders={props.genders}
     selected={props.selectedGenders}
     onToggle={props.toggleGender}
+    onClear={props.clearGender}
 />
 
 <PriceFilter
