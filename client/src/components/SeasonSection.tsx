@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../lib/api";
+import { optimizeCloudinaryImage } from "../lib/image";
 
 interface ProductItem {
   id: string;
@@ -88,8 +89,12 @@ export default function SeasonSection() {
                 className="mx-auto block aspect-[0.98/1] w-full max-w-[390px] overflow-hidden bg-[#EEEAE3]"
               >
                 <img
-                  src={item.image}
+                  src={optimizeCloudinaryImage(item.image, 640)}
                   alt={item.name}
+                  loading="lazy"
+                  decoding="async"
+                  width={640}
+                  height={653}
                   className="h-full w-full object-cover transition duration-700 hover:scale-105"
                 />
               </Link>

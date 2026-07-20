@@ -2,6 +2,7 @@ import { Heart, ShoppingBag } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useCart } from "../../store/cart.store";
 import { toast } from "../../store/toast.store";
+import { optimizeCloudinaryImage } from "../../lib/image";
 
 const PLACEHOLDER = "https://placehold.co/400x500?text=No+Image";
 

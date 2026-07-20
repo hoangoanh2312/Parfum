@@ -72,7 +72,7 @@ export const router = createBrowserRouter([
     path: '/admin',
     element: (
       <AdminRoute>
-        <AdminLayout />
+        {lazyElement(<AdminLayout />)}
       </AdminRoute>
     ),
     children: [

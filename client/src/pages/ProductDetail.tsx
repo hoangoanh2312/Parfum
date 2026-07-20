@@ -8,6 +8,7 @@ import {
 import { Link, useParams } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../lib/api";
+import { optimizeCloudinaryImage } from "../lib/image";
 import { useCart } from "../store/cart.store";
 import { toast } from "../store/toast.store";
 import Footer from "../components/Footer";
@@ -307,8 +308,12 @@ export default function ProductDetail() {
             {/* Image */}
             <div className="relative min-h-[570px] bg-[#f5f1eb]">
               <img
-                src={currentImage}
+                src={optimizeCloudinaryImage(currentImage, 1000)}
                 alt={product.name}
+                width={1000}
+                height={1000}
+                decoding="async"
+                fetchPriority="high"
                 className="h-full min-h-[570px] w-full object-contain p-12"
                 onError={(e) => {
                   e.currentTarget.src = PLACEHOLDER;
@@ -497,8 +502,12 @@ export default function ProductDetail() {
                 >
                   <div className="aspect-square overflow-hidden bg-[#f2eee7]">
                     <img
-                      src={item.images?.[0] || item.image || PLACEHOLDER}
+                      src={optimizeCloudinaryImage(item.images?.[0] || item.image || PLACEHOLDER, 480)}
                       alt={item.name}
+                      loading="lazy"
+                      decoding="async"
+                      width={480}
+                      height={480}
                       className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                       onError={(e) => {
                         e.currentTarget.src = PLACEHOLDER;
