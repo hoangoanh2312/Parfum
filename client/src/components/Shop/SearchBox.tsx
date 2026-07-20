@@ -3,10 +3,7 @@ interface SearchBoxProps {
   onChange: (value: string) => void;
 }
 
-export default function SearchBox({
-  value,
-  onChange,
-}: SearchBoxProps) {
+export default function SearchBox({ value, onChange }: SearchBoxProps) {
   return (
     <div className="relative">
       <input

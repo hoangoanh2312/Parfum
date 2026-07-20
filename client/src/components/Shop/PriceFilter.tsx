@@ -1,8 +1,8 @@
-interface PriceFilterProps{
-    value:number;
-    onChange:(value:number)=>void;
-    min?: number;
-    max?: number;
+interface PriceFilterProps {
+  value: number;
+  onChange: (value: number) => void;
+  min?: number;
+  max?: number;
 }
 
 export default function PriceFilter({

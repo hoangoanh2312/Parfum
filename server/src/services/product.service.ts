@@ -106,7 +106,6 @@ const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 12;
 const MAX_LIMIT = 100;
 
-// Định dạng tiền VND
 function formatVnd(n?: number | null) {
   if (n == null) return 'Liên hệ';
   return n.toLocaleString('vi-VN') + 'đ';
@@ -342,7 +341,7 @@ export async function getProductDetail(idOrSlug: string) {
 
   return {
     id: String(product._id),
-    slug: product.slug,
+    slug: product.slug || String(product._id),
     name: product.name,
     brand: product.brand?.name || '',
     category: product.category?.name || '',

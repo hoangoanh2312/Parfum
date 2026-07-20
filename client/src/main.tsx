@@ -34,7 +34,25 @@ function App() {
   return <RouterProvider router={router} />;
 }
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
+function App() {
+  const isBootstrapped = useAuth((s) => s.isBootstrapped);
+
+  useEffect(() => {
+    useAuth.getState().bootstrap();
+  }, []);
+
+  if (!isBootstrapped) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        Loading...
+      </div>
+    );
+  }
+
+  return <RouterProvider router={router} />;
+}
+
+ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <App />
   </React.StrictMode>,

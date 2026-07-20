@@ -9,7 +9,7 @@ import Shop from './pages/Shop';
 import Login from './pages/Login';
 import Register from './pages/Register';
 
-const router = createBrowserRouter([
+export const router = createBrowserRouter([
   {
     path: '/',
     element: <Layout />,

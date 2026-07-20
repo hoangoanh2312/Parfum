@@ -26,10 +26,7 @@ export default function ProductGrid({
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 mt-10">
         {Array.from({ length: 8 }).map((_, index) => (
-          <div
-            key={index}
-            className="animate-pulse"
-          >
+          <div key={index} className="animate-pulse">
             <div className="aspect-[4/5] bg-gray-200 rounded" />
 
             <div className="h-6 bg-gray-200 rounded mt-5" />
@@ -48,9 +45,7 @@ export default function ProductGrid({
   if (!products.length) {
     return (
       <div className="py-24 text-center">
-        <h2 className="text-3xl font-semibold">
-          No products found
-        </h2>
+        <h2 className="text-3xl font-semibold">No products found</h2>
 
         <p className="text-gray-500 mt-3">
           Try changing your search or filters.
@@ -62,10 +57,7 @@ export default function ProductGrid({
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 mt-10">
       {products.map((product) => (
-        <ProductCard
-          key={product._id || product.id}
-          product={product}
-        />
+        <ProductCard key={product._id || product.id} product={product} />
       ))}
     </div>
   );

@@ -22,9 +22,5 @@ router.use('/categories', categoryRoutes);
 
 router.use('/categories', categoryRoutes);
 router.use('/brands', brandRoutes);
-router.use('/products', productRoutes); // danh sách/chi tiết sản phẩm cho web
-
-router.use('/cart', cartRoutes);   // PF-27 Giỏ hàng
-router.use('/orders', orderRoutes); // PF-29 Chuẩn bị checkout / kiểm tồn kho
 
 export default router;
