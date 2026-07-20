@@ -1,8 +1,19 @@
 import mongoose from "mongoose"
 import { env } from "./env"
 
+function getMongoTarget(uri: string) {
+	try {
+		const sanitized = uri.replace(/\/\/([^@]+)@/, "//")
+		const [target] = sanitized.split("?")
+		return target
+	} catch {
+		return "<invalid mongo uri>"
+	}
+}
+
 export async function connectDB() {
 	try {
+		console.log("Mongo target:", getMongoTarget(env.mongoUri))
 		await mongoose.connect(env.mongoUri)
 		console.log("✅ MongoDB connected")
 	} catch (err) {

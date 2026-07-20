@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 export default function HeroSection() {
   return (
     <section
@@ -35,9 +37,19 @@ export default function HeroSection() {
             tinh tế và lưu hương suốt cả ngày.
           </p>
 
-          <button className="mt-10 border border-white px-8 py-4 uppercase tracking-[3px] hover:bg-white hover:text-black transition">
+          <a
+            href="#featured-products"
+            className="mt-10 inline-block border border-white px-8 py-4 uppercase tracking-[3px] hover:bg-white hover:text-black transition"
+          >
             Khám phá ngay
-          </button>
+          </a>
+
+          <Link
+            to="/shop"
+            className="ml-4 mt-10 inline-block bg-white px-8 py-4 uppercase tracking-[3px] text-black transition hover:bg-[#735C00] hover:text-white"
+          >
+            Xem tất cả
+          </Link>
 
         </div>
 

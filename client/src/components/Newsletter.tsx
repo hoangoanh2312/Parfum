@@ -1,38 +1,63 @@
+import { FormEvent, useState } from "react";
+import { toast } from "../store/toast.store";
+
 export default function Newsletter() {
+  const [email, setEmail] = useState("");
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      toast.error("Email không hợp lệ");
+      return;
+    }
+
+    toast.success("Đã đăng ký nhận tin");
+    setEmail("");
+  };
+
   return (
-    <section className="bg-[#f8f5ef] py-24">
-
-      <div className="max-w-3xl mx-auto text-center">
-
-        <span className="uppercase tracking-[5px] text-gray-500">
-          Đăng ký nhận ưu đãi
-        </span>
-
-<h2 className="font-serif text-6xl text-center leading-tight w-full">
-  Nhận tin tức mới nhất
-</h2>
-
-        <p className="mt-6 text-gray-500 leading-8">
-          Đăng ký email để nhận thông tin về sản phẩm mới,
-          chương trình khuyến mãi và các bộ sưu tập độc quyền.
+    <section className="border-t border-[#EEEAE2] bg-[#F8F5F0] px-5 py-20 md:px-10 lg:py-24">
+      <div className="mx-auto max-w-[760px] text-center">
+        <p className="text-[9px] uppercase tracking-[0.38em] text-[#77736C]">
+          The inner circle
         </p>
 
-        <div className="flex mt-12 shadow-lg">
+        <h2 className="mt-5 font-serif text-4xl font-semibold text-[#1D1C19] md:text-5xl">
+          Join the Editorial
+        </h2>
 
+        <p className="mx-auto mt-5 max-w-[650px] text-sm leading-6 text-[#706C65]">
+          Receive curated insights into the intersection of olfactory art,
+          seasonal narratives, and exclusive early access to our limited
+          botanical extractions.
+        </p>
+
+        <form
+          onSubmit={handleSubmit}
+          className="mx-auto mt-9 flex max-w-[550px] flex-col gap-3 sm:flex-row"
+        >
           <input
             type="email"
-            placeholder="Nhập email của bạn"
-            className="flex-1 px-6 py-5 outline-none"
+            required
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            placeholder="Your email address"
+            className="h-[52px] min-w-0 flex-1 border border-[#D8D2C8] bg-transparent px-4 text-sm outline-none placeholder:text-[#A19C94] focus:border-[#817000]"
           />
 
-          <button className="bg-black text-white px-10 uppercase tracking-[3px] hover:bg-yellow-700 duration-300">
-            Đăng ký
+          <button
+            type="submit"
+            className="h-[52px] bg-[#817000] px-10 text-[10px] uppercase tracking-[0.08em] text-white transition hover:bg-[#665800]"
+          >
+            Subscribe
           </button>
+        </form>
 
-        </div>
-
+        <p className="mt-3 text-[7px] uppercase tracking-[0.11em] text-[#AAA59E]">
+          By subscribing, you agree to our privacy policy and terms of service.
+        </p>
       </div>
-
     </section>
   );
 }

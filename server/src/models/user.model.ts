@@ -22,10 +22,10 @@ const userSchema = new Schema(
 		timestamps: true, // tự thêm createdAt / updatedAt
 		toJSON: {
 			transform(_doc, ret) {
-				const safeRet = ret as Record<string, unknown>
-				delete safeRet.password // chắc chắn không bao giờ lộ password ra API
-				delete safeRet.__v
-				return safeRet
+				const doc = ret as any
+				delete doc.password // chắc chắn không bao giờ lộ password ra API
+				delete doc.__v
+				return doc
 			},
 		},
 	},

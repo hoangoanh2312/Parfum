@@ -47,18 +47,9 @@ export const useAuth = create<AuthState>((set) => {
       set({ user });
     },
 
-    setAuth: ({ accessToken, refreshToken, user }) => {
-      localStorage.setItem('accessToken', accessToken);
-      localStorage.setItem('refreshToken', refreshToken);
-      localStorage.setItem('user', JSON.stringify(user));
-      set({ accessToken, refreshToken, user });
-    },
-
-    logout: () => {
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
-      localStorage.removeItem('user');
-      set({ user: null, accessToken: null, refreshToken: null });
-    },
-  };
-});
+  logout: () => {
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('user');
+    set({ user: null });
+  },
+}));
