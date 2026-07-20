@@ -1,0 +1,10 @@
+import { Router } from 'express';
+import * as controller from '../controllers/admin-category.controller';
+import { authenticate, authorize } from '../middlewares/auth.middleware';
+const router = Router();
+router.use(authenticate, authorize('admin'));
+router.get('/', controller.listCategories);
+router.post('/', controller.createCategory);
+router.patch('/:categoryId', controller.updateCategory);
+router.delete('/:categoryId', controller.deleteCategory);
+export default router;

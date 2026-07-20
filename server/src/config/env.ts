@@ -1,8 +1,5 @@
-import "dotenv/config" // nạp .env vào process.env ngay khi import
+import "dotenv/config"
 
-/**
- * Đọc 1 biến môi trường bắt buộc. Nếu thiếu -> báo lỗi rõ ngay lúc khởi động.
- */
 function required(key: string): string {
 	const value = process.env[key]
 	if (!value) {
@@ -18,4 +15,12 @@ export const env = {
 	jwtAccessSecret: required("JWT_ACCESS_SECRET"),
 	jwtRefreshSecret: required("JWT_REFRESH_SECRET"),
 	clientUrl: process.env.CLIENT_URL ?? "http://localhost:5173",
+	cloudinaryName: process.env.CLOUDINARY_CLOUD_NAME || "",
+	cloudinaryKey: process.env.CLOUDINARY_API_KEY || "",
+	cloudinarySecret: process.env.CLOUDINARY_API_SECRET || "",
+	vietqr: {
+		bankBin: process.env.VIETQR_BANK_BIN || "970415",
+		accountNo: process.env.VIETQR_ACCOUNT_NO || "0000000000",
+		accountName: process.env.VIETQR_ACCOUNT_NAME || "HOC PARFUM DEMO",
+	},
 }

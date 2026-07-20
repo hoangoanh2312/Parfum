@@ -8,14 +8,13 @@
   "scripts": {
     "dev": "concurrently -n SERVER,CLIENT -c blue,green \"npm:dev -w server\" \"npm:dev -w client\"",
     "build": "npm run build -w server && npm run build -w client",
-    "lint": "npm run lint -w server && npm run lint -w client"
+    "lint": "npm run lint -w server && npm run lint -w client",
+    "test": "npm run test -w server --if-present && npm run test -w client --if-present"
   },
   "devDependencies": {
-    "@types/bcrypt": "^6.0.0",
     "concurrently": "^9.0.0"
   },
   "dependencies": {
-    "bcrypt": "^6.0.0",
-    "zod": "^4.4.3"
+    "lucide-react": "^1.23.0"
   }
 }

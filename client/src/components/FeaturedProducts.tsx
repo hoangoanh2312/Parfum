@@ -1,0 +1,205 @@
+import { useEffect, useMemo, useRef, useState } from "react";
+import ProductCard, { ProductCardData } from "./ProductCard";
+import { api } from "../lib/api";
+
+type ProductTab = "favorites" | "featured" | "new-arrivals" | "bundle-deals";
+
+type ProductListResponse = {
+  data: ProductCardData[];
+};
+
+const tabs: { label: string; value: ProductTab }[] = [
+  { label: "The Favorites", value: "favorites" },
+  { label: "Featured", value: "featured" },
+  { label: "New Arrivals", value: "new-arrivals" },
+  { label: "Bundle Deals", value: "bundle-deals" },
+];
+
+export default function FeaturedProducts() {
+  const sectionRef = useRef<HTMLElement>(null);
+  const [activeTab, setActiveTab] = useState<ProductTab>("featured");
+  const [products, setProducts] = useState<ProductCardData[]>([]);
+  const [wishlist, setWishlist] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+
+  useEffect(() => {
+    let mounted = true;
+
+    api
+      .get<ProductListResponse>("/products", { params: { page: 1, limit: 32, sort: "newest" } })
+      .then(({ data }) => {
+        if (mounted) setProducts(Array.isArray(data.data) ? data.data : []);
+      })
+      .catch(() => {
+        if (mounted) setProducts([]);
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const filteredProducts = useMemo(() => {
+    const sorted = [...products];
+
+    if (activeTab === "new-arrivals") {
+      return sorted;
+    }
+
+    if (activeTab === "bundle-deals") {
+      const pricedProducts = sorted.filter((product) => (product.price ?? 0) > 0);
+      const averagePrice =
+        pricedProducts.reduce((sum, product) => sum + (product.price || 0), 0) /
+        Math.max(pricedProducts.length, 1);
+
+      return pricedProducts.filter(
+        (product) => (product.stock ?? 0) > 0 && (product.price || 0) <= averagePrice,
+      );
+    }
+
+    if (activeTab === "favorites") {
+      const likedProducts = sorted.filter((product) =>
+        wishlist.includes(product.id || product._id || ""),
+      );
+
+      return likedProducts.length
+        ? likedProducts
+        : sorted.filter((product) => product.fragranceFamily || product.brand);
+    }
+
+    return sorted.filter((product) => (product.stock ?? 0) > 0).length
+      ? sorted.filter((product) => (product.stock ?? 0) > 0)
+      : sorted;
+  }, [activeTab, products, wishlist]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / 8));
+  const displayedProducts = useMemo(
+    () => filteredProducts.slice((page - 1) * 8, page * 8),
+    [filteredProducts, page],
+  );
+
+  const toggleWishlist = (productId: string) => {
+    setWishlist((current) =>
+      current.includes(productId)
+        ? current.filter((id) => id !== productId)
+        : [...current, productId],
+    );
+  };
+
+  const changeTab = (nextTab: ProductTab) => {
+    setActiveTab(nextTab);
+    setPage(1);
+    sectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const changePage = (nextPage: number) => {
+    setPage(Math.min(Math.max(nextPage, 1), totalPages));
+    sectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  return (
+    <section
+      ref={sectionRef}
+      id="featured-products"
+      className="scroll-mt-24 bg-[#FCF9F4] px-5 py-16 md:px-10 lg:px-16 xl:px-20"
+    >
+      <div className="mx-auto max-w-[1500px]">
+        <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <h2 className="font-serif text-4xl font-semibold text-[#1B1B18] md:text-5xl">
+              Featured Fragrances
+            </h2>
+
+            <p className="mt-3 max-w-[560px] text-sm leading-6 text-[#706D68]">
+              A curation of our most evocative compositions, crafted with rare
+              botanicals and artisanal precision.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-3">
+            {tabs.map((tab) => (
+              <button
+                key={tab.value}
+                type="button"
+                onClick={() => changeTab(tab.value)}
+                className={`rounded-full px-5 py-3 text-[11px] font-medium uppercase tracking-[0.08em] shadow-[0_8px_25px_rgba(0,0,0,0.08)] transition ${
+                  activeTab === tab.value
+                    ? "bg-[#1B1B18] text-white"
+                    : "bg-[#FFFDF9] text-[#1B1B18] hover:bg-[#F1ECE3]"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-16 grid grid-cols-1 gap-x-8 gap-y-14 sm:grid-cols-2 lg:grid-cols-4">
+          {loading &&
+            Array.from({ length: 8 }).map((_, index) => (
+              <div key={index} className="h-[470px] animate-pulse bg-[#F3EEE7]" />
+            ))}
+
+          {!loading &&
+            displayedProducts.map((product) => {
+              const productId = product.id || product._id || "";
+
+              return (
+                <ProductCard
+                  key={productId}
+                  item={product}
+                  liked={wishlist.includes(productId)}
+                  onWishlist={toggleWishlist}
+                />
+              );
+            })}
+        </div>
+
+        {!loading && displayedProducts.length === 0 && (
+          <p className="mt-12 text-center text-sm text-[#706D68]">
+            Chưa có sản phẩm để hiển thị.
+          </p>
+        )}
+
+        <div className="mt-14 flex items-center justify-center gap-5 text-[9px] uppercase tracking-[0.15em] text-[#77736C]">
+          <button
+            type="button"
+            onClick={() => changePage(page - 1)}
+            disabled={page === 1}
+            className="disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Previous
+          </button>
+
+          {Array.from({ length: totalPages }, (_, index) => index + 1)
+            .slice(0, 3)
+            .map((item) => (
+              <button
+                key={item}
+                type="button"
+                onClick={() => changePage(item)}
+                className={
+                  item === page ? "border-b border-[#817000] pb-1 text-[#817000]" : ""
+                }
+              >
+                {String(item).padStart(2, "0")}
+              </button>
+            ))}
+
+          <button
+            type="button"
+            onClick={() => changePage(page + 1)}
+            disabled={page === totalPages}
+            className="disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Next
+          </button>
+        </div>
+      </div>
+    </section>
+  );
+}
