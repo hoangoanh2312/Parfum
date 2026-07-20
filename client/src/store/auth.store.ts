@@ -8,11 +8,20 @@ export interface AuthUser {
   role: string;
 }
 
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+}
+
 interface AuthState {
   user: AuthUser | null;
   setUser: (u: AuthUser | null) => void;
   logout: () => Promise<void>;
 }
+
+const savedUser = localStorage.getItem('user');
 
 export const useAuth = create<AuthState>((set) => ({
   user: null,

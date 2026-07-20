@@ -1,14 +1,14 @@
-import "dotenv/config" // nạp .env vào process.env ngay khi import
+import 'dotenv/config'; // nạp .env vào process.env ngay khi import
 
 /**
  * Đọc 1 biến môi trường bắt buộc. Nếu thiếu -> báo lỗi rõ ngay lúc khởi động.
  */
 function required(key: string): string {
-	const value = process.env[key]
-	if (!value) {
-		throw new Error(`❌ Thiếu biến môi trường: ${key} (kiểm tra file .env)`)
-	}
-	return value
+  const value = process.env[key];
+  if (!value) {
+    throw new Error(`❌ Thiếu biến môi trường: ${key} (kiểm tra file .env)`);
+  }
+  return value;
 }
 
 export const env = {

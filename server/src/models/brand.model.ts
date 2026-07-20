@@ -1,3 +1,15 @@
-import { Schema, model } from 'mongoose';
-const s = new Schema({ name: String, slug: { type: String, unique: true }, logo: String }, { timestamps: true });
-export const Brand = model('Brand', s);
+import mongoose from "mongoose";
+
+const brandSchema=new mongoose.Schema(
+{
+    name:{
+        type:String,
+        required:true
+    }
+},
+{
+    timestamps:true
+}
+);
+
+export default mongoose.model("Brand",brandSchema);

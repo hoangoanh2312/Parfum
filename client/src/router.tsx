@@ -1,13 +1,17 @@
 import { createBrowserRouter } from 'react-router-dom';
+
 import Layout from './components/Layout';
+import AdminLayout from './components/AdminLayout';
+import AdminRoute from './components/AdminRoute';
+
 import Home from './pages/Home';
 import Shop from './pages/Shop';
 import Login from './pages/Login';
 import Register from './pages/Register';
 
-export const router = createBrowserRouter([
+const router = createBrowserRouter([
   {
-    path: '/',
+    path: "/",
     element: <Layout />,
     children: [
       { index: true, element: <Home /> },
