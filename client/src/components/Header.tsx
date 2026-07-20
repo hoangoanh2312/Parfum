@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { NavLink, Link } from "react-router-dom";
-import { Heart, MapPin, Menu, Search, ShoppingBag, User, X } from "lucide-react";
+import { Search, Heart, ShoppingBag, User, Contact as ContactIcon } from "lucide-react";
 import { useCart } from "../store/cart.store";
 import { useAuth } from "../store/auth.store";
 
@@ -20,32 +20,108 @@ export default function Header() {
 
   useEffect(() => { void loadCart(); }, [user]);
   useEffect(() => {
-    if (!open) return;
-    const close = (event: KeyboardEvent) => event.key === "Escape" && setOpen(false);
-    document.addEventListener("keydown", close);
-    return () => document.removeEventListener("keydown", close);
-  }, [open]);
-
-  const navClass = ({ isActive }: { isActive: boolean }) =>
-    `block min-h-11 py-3 text-sm uppercase tracking-[2px] ${isActive ? "font-semibold text-black" : "text-[#8B6914] hover:text-black"}`;
+    loadCart();
+  }, [user]);
 
   return (
-    <header className="relative z-40 border-b bg-[#faf7f2]">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 lg:h-20 lg:px-6">
-        <button type="button" onClick={() => setOpen(true)} className="flex h-11 w-11 items-center justify-center rounded-full hover:bg-black/5 focus:outline-none focus:ring-2 focus:ring-[#735C00] lg:hidden" aria-label="Mở menu"><Menu size={22} /></button>
+    <header className="bg-[#faf7f2] border-b">
+      <div className="max-w-7xl mx-auto h-20 flex items-center">
+        {/* Menu trái */}
+        <div className="flex-1 flex justify-center gap-10">
+          {leftMenu.map((item) => (
+            <NavLink
+              key={item.name}
+              to={item.link}
+              className={({ isActive }) =>
+                `uppercase text-[11px] tracking-[3px] transition-colors duration-300 ${
+                  isActive ? "text-black" : "text-[#a67c1a] hover:text-black"
+                }`
+              }
+            >
+              {item.name}
+            </NavLink>
+          ))}
+        </div>
 
-        <nav className="hidden flex-1 items-center justify-center gap-8 lg:flex">
-          {menu.slice(0, 3).map((item) => <NavLink key={item.link} to={item.link} className={navClass}>{item.name}</NavLink>)}
-        </nav>
+        {/* Logo */}
+        <div className="w-14 flex justify-center">
+          <Link to="/">
+            <div className="w-14 h-14 rounded-full bg-black text-white flex items-center justify-center text-xs font-bold hover:scale-105 duration-300">
+              LOGO
+            </div>
+          </Link>
+        </div>
 
-        <Link to="/" aria-label="Trang chủ" className="flex h-12 w-12 items-center justify-center rounded-full bg-black text-[10px] font-bold text-white transition hover:scale-105 lg:h-14 lg:w-14">LOGO</Link>
+        {/* Menu phải + icon */}
+        <div className="flex-1 flex items-center justify-center gap-10">
+          {rightMenu.map((item) => (
+            <NavLink
+              key={item.name}
+              to={item.link}
+              className={({ isActive }) =>
+                `uppercase text-[11px] tracking-[3px] transition-colors duration-300 ${
+                  isActive ? "text-black" : "text-[#a67c1a] hover:text-black"
+                }`
+              }
+            >
+              {item.name}
+            </NavLink>
+          ))}
 
-        <div className="flex items-center justify-end gap-1 text-[#8B6914] lg:flex-1 lg:gap-4">
-          <nav className="mr-5 hidden items-center gap-8 lg:flex">{menu.slice(3).map((item) => <NavLink key={item.link} to={item.link} className={navClass}>{item.name}</NavLink>)}</nav>
-          <button type="button" className="hidden h-11 w-11 items-center justify-center rounded-full hover:bg-black/5 lg:flex" aria-label="Tìm kiếm"><Search size={17} /></button>
-          <button type="button" className="hidden h-11 w-11 items-center justify-center rounded-full hover:bg-black/5 lg:flex" aria-label="Danh sách yêu thích"><Heart size={17} /></button>
-          <Link to="/cart" className="relative flex h-11 w-11 items-center justify-center rounded-full hover:bg-black/5" aria-label={`Giỏ hàng, ${count} sản phẩm`}><ShoppingBag size={18} />{count > 0 && <span className="absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-black px-1 text-[9px] text-white">{count}</span>}</Link>
-          <Link to={user ? "/dashboard" : "/login"} className="flex h-11 w-11 items-center justify-center rounded-full hover:bg-black/5" aria-label={user ? "Tài khoản" : "Đăng nhập"}><User size={18} /></Link>
+          <div className="h-5 w-px bg-[#a67c1a]" />
+          <div className="flex items-center gap-4 text-[#a67c1a]">
+            <Link to="/contact">
+              <ContactIcon
+                size={15}
+                className="cursor-pointer hover:text-black duration-300"
+              />
+            </Link>
+            <Link to="/Shop">
+              <Search
+                size={15}
+                className="cursor-pointer hover:text-black duration-300"
+              />
+            </Link>
+            <Link to="/account/wishlist" className="relative">
+              <Heart
+                size={15}
+                className="cursor-pointer hover:text-black duration-300"
+              />
+            </Link>
+
+            {/* Giỏ hàng + badge số lượng */}
+            <Link to="/cart" className="relative">
+              <ShoppingBag
+                size={15}
+                className="cursor-pointer hover:text-black duration-300"
+              />
+              {count > 0 && (
+                <span className="absolute -top-2 -right-2 bg-black text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center">
+                  {count}
+                </span>
+              )}
+            </Link>
+
+            <Link
+              to={user ? "/account" : "/login"}
+              title={user ? user.name : "Đăng nhập"}
+            >
+              <User
+                size={15}
+                className="cursor-pointer hover:text-black duration-300"
+              />
+            </Link>
+
+            {/* Link vào khu vực quản trị - chỉ hiện với admin */}
+            {user?.role === "admin" && (
+              <Link
+                to="/admin"
+                className="uppercase text-[11px] tracking-[3px] text-[#a67c1a] hover:text-black duration-300"
+              >
+                Quản trị
+              </Link>
+            )}
+          </div>
         </div>
       </div>
 

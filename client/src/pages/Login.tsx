@@ -2,8 +2,6 @@ import React, { useState, CSSProperties } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
 import { useAuth } from "../store/auth.store";
-import { useCart } from "../store/cart.store";
-import { toast } from "../store/toast.store";
 
 const color = {
   pageBg: "#FDF9F4",
@@ -22,21 +20,54 @@ const font = {
 };
 
 const IconSparkles = (p: React.SVGProps<SVGSVGElement>) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} {...p}>
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.6}
+    {...p}
+  >
     <path d="M12 3v4M12 17v4M4 12h4M16 12h4" strokeLinecap="round" />
-    <path d="M7 7l1.5 1.5M17 17l-1.5-1.5M7 17l1.5-1.5M17 7l-1.5 1.5" strokeLinecap="round" />
+    <path
+      d="M7 7l1.5 1.5M17 17l-1.5-1.5M7 17l1.5-1.5M17 7l-1.5 1.5"
+      strokeLinecap="round"
+    />
   </svg>
 );
 const IconScroll = (p: React.SVGProps<SVGSVGElement>) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} {...p}>
-    <path d="M6 4h11a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V4Z" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M6 4a2 2 0 0 0-2 2v1h4" strokeLinecap="round" strokeLinejoin="round" />
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.6}
+    {...p}
+  >
+    <path
+      d="M6 4h11a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V4Z"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M6 4a2 2 0 0 0-2 2v1h4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
     <path d="M9 9h6M9 13h6" strokeLinecap="round" />
   </svg>
 );
 const IconTicket = (p: React.SVGProps<SVGSVGElement>) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} {...p}>
-    <path d="M3 9a2 2 0 0 0 0 4v2a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-2a2 2 0 0 1 0-4V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v2Z" strokeLinecap="round" strokeLinejoin="round" />
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.6}
+    {...p}
+  >
+    <path
+      d="M3 9a2 2 0 0 0 0 4v2a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-2a2 2 0 0 1 0-4V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v2Z"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
     <path d="M10 6v12" strokeDasharray="2 2" />
   </svg>
 );
@@ -66,23 +97,30 @@ const fieldInputStyle: CSSProperties = {
   outline: "none",
 };
 
-type FeatureItem = { icon: React.ReactNode; title: string; description: string };
+type FeatureItem = {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+};
 
 const features: FeatureItem[] = [
   {
     icon: <IconSparkles style={{ width: 20, height: 20 }} />,
     title: "Bespoke Curation",
-    description: "Personalized olfactory profiles designed by our master liquid curators.",
+    description:
+      "Personalized olfactory profiles designed by our master liquid curators.",
   },
   {
     icon: <IconScroll style={{ width: 19, height: 15 }} />,
     title: "The Manuscript",
-    description: "First access to limited edition scent stories and editorial releases.",
+    description:
+      "First access to limited edition scent stories and editorial releases.",
   },
   {
     icon: <IconTicket style={{ width: 19, height: 15 }} />,
     title: "Private Vernissages",
-    description: "Invitations to exclusive digital and physical fragrance unveilings globally.",
+    description:
+      "Invitations to exclusive digital and physical fragrance unveilings globally.",
   },
 ];
 
@@ -95,7 +133,7 @@ export default function Login() {
   const setUser = useAuth((s) => s.setUser);
   const navigate = useNavigate();
 
-  async function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
     setLoading(true);
@@ -103,8 +141,6 @@ export default function Login() {
       const { data } = await api.post("/auth/login", { email, password });
       useAuth.getState().setTokens(data.accessToken, data.refreshToken);
       setUser(data.user);
-      await useCart.getState().syncOnLogin(); // gộp giỏ khách + nạp giỏ từ DB
-      toast.success("Đăng nhập thành công");
       navigate("/");
     } catch (err: any) {
       setError(err.response?.data?.message || "Đăng nhập thất bại");
@@ -115,7 +151,13 @@ export default function Login() {
 
   return (
     <div style={{ minHeight: "100vh", background: color.pageBg }}>
-      <section style={{ position: "relative", background: color.pageBg, overflow: "hidden" }}>
+      <section
+        style={{
+          position: "relative",
+          background: color.pageBg,
+          overflow: "hidden",
+        }}
+      >
         <div
           style={{
             maxWidth: 1152,
@@ -170,7 +212,8 @@ export default function Login() {
                   margin: 0,
                 }}
               >
-                Join an elite circle of fragrance enthusiasts and receive curated insights into the world of luxury olfaction.
+                Join an elite circle of fragrance enthusiasts and receive
+                curated insights into the world of luxury olfaction.
               </p>
             </div>
 
@@ -185,7 +228,10 @@ export default function Login() {
               }}
             >
               {features.map((f) => (
-                <li key={f.title} style={{ display: "flex", alignItems: "flex-start", gap: 24 }}>
+                <li
+                  key={f.title}
+                  style={{ display: "flex", alignItems: "flex-start", gap: 24 }}
+                >
                   <div
                     style={{
                       width: 48,
@@ -200,7 +246,9 @@ export default function Login() {
                   >
                     {f.icon}
                   </div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                  <div
+                    style={{ display: "flex", flexDirection: "column", gap: 4 }}
+                  >
                     <h3
                       style={{
                         fontFamily: font.serif,
@@ -285,8 +333,18 @@ export default function Login() {
               </div>
             )}
 
-            <form onSubmit={onSubmit} style={{ marginTop: 48, display: "flex", flexDirection: "column", gap: 40 }}>
-              <label style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <form
+              onSubmit={onSubmit}
+              style={{
+                marginTop: 48,
+                display: "flex",
+                flexDirection: "column",
+                gap: 40,
+              }}
+            >
+              <label
+                style={{ display: "flex", flexDirection: "column", gap: 8 }}
+              >
                 <span style={fieldLabelStyle}>Email Address</span>
                 <input
                   type="email"
@@ -298,10 +356,25 @@ export default function Login() {
                 />
               </label>
 
-              <label style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between" }}>
+              <label
+                style={{ display: "flex", flexDirection: "column", gap: 8 }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-end",
+                    justifyContent: "space-between",
+                  }}
+                >
                   <span style={fieldLabelStyle}>Password</span>
-                  <a href="#" style={{ ...fieldLabelStyle, textDecoration: "none", color: color.gold }}>
+                  <a
+                    href="#"
+                    style={{
+                      ...fieldLabelStyle,
+                      textDecoration: "none",
+                      color: color.gold,
+                    }}
+                  >
                     Forgot?
                   </a>
                 </div>
@@ -315,7 +388,14 @@ export default function Login() {
                 />
               </label>
 
-              <label style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}>
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  cursor: "pointer",
+                }}
+              >
                 <input
                   type="checkbox"
                   checked={keepSignedIn}
@@ -329,12 +409,26 @@ export default function Login() {
                     flexShrink: 0,
                   }}
                 />
-                <span style={{ fontFamily: font.sans, fontSize: 12, lineHeight: "16px", color: color.body }}>
+                <span
+                  style={{
+                    fontFamily: font.sans,
+                    fontSize: 12,
+                    lineHeight: "16px",
+                    color: color.body,
+                  }}
+                >
                   Keep me signed in to the archives
                 </span>
               </label>
 
-              <div style={{ display: "flex", flexDirection: "column", gap: 24, marginTop: 24 }}>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 24,
+                  marginTop: 24,
+                }}
+              >
                 <button
                   type="submit"
                   disabled={loading}
@@ -358,7 +452,9 @@ export default function Login() {
                 </button>
 
                 <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                  <span style={{ flex: 1, height: 1, background: color.divider }} />
+                  <span
+                    style={{ flex: 1, height: 1, background: color.divider }}
+                  />
                   <span
                     style={{
                       fontFamily: font.sans,
@@ -371,7 +467,9 @@ export default function Login() {
                   >
                     Or
                   </span>
-                  <span style={{ flex: 1, height: 1, background: color.divider }} />
+                  <span
+                    style={{ flex: 1, height: 1, background: color.divider }}
+                  />
                 </div>
 
                 <Link

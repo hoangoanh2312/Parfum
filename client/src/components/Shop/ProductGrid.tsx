@@ -26,10 +26,7 @@ export default function ProductGrid({
     return (
       <div className="mt-8 grid grid-cols-1 gap-6 min-[480px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 xl:gap-8">
         {Array.from({ length: 8 }).map((_, index) => (
-          <div
-            key={index}
-            className="animate-pulse motion-reduce:animate-none"
-          >
+          <div key={index} className="animate-pulse">
             <div className="aspect-[4/5] bg-gray-200 rounded" />
 
             <div className="h-6 bg-gray-200 rounded mt-5" />
@@ -47,10 +44,8 @@ export default function ProductGrid({
 
   if (!products.length) {
     return (
-      <div className="rounded-lg border border-dashed border-[#D0C5AF] bg-[#F7F3EE] px-5 py-16 text-center">
-        <h2 className="text-2xl font-semibold text-[#1C1C19]">
-          Không tìm thấy sản phẩm phù hợp
-        </h2>
+      <div className="py-24 text-center">
+        <h2 className="text-3xl font-semibold">No products found</h2>
 
         <p className="text-gray-500 mt-3">
           Hãy thử thay đổi từ khóa hoặc bộ lọc sản phẩm.
@@ -62,10 +57,7 @@ export default function ProductGrid({
   return (
     <div className="mt-8 grid grid-cols-1 gap-6 min-[480px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 xl:gap-8">
       {products.map((product) => (
-        <ProductCard
-          key={product._id || product.id}
-          product={product}
-        />
+        <ProductCard key={product._id || product.id} product={product} />
       ))}
     </div>
   );

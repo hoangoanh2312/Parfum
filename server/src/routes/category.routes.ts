@@ -1,8 +1,8 @@
-import express from "express";
-import * as controller from "../controllers/category.controller";
+import { Router } from 'express';
+import { getAllCategories } from '../controllers/category.controller';
 
-const router = express.Router();
+const router = Router();
 
-router.get("/", controller.getCategories);
+router.get('/', getAllCategories);
 
 export default router;

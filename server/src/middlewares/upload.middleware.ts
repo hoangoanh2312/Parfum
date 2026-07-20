@@ -14,7 +14,7 @@ const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: async () => ({
     folder: 'parfum',
-    format: 'jpg', 
+    format: 'jpg',
     public_id: Date.now().toString(),
   }),
 });

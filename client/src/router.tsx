@@ -1,77 +1,90 @@
-import { lazy, Suspense, type ReactNode } from "react";
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter } from 'react-router-dom';
+
+import Layout from './components/Layout';
+import AdminLayout from './components/AdminLayout';
+import AdminRoute from './components/AdminRoute';
+
+import Home from './pages/Home';
+import Shop from './pages/Shop';
+import Login from './pages/Login';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminBrands from './pages/admin/AdminBrands';
 
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
-
 import AdminRoute from "./components/AdminRoute";
-import RouteErrorPage from "./components/RouteErrorPage";
+import AdminLayout from "./components/AdminLayout";
+import Home from "./pages/Home";
+import Shop from "./pages/Shop";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import Brand from "./pages/Brand";
+import Blog from "./pages/Blog";
+import BlogPost from "./pages/BlogPost";
+import About from "./pages/About";
+import Cart from "./pages/Cart";
+import Checkout from "./pages/Checkout";
+import ThankYou from "./pages/ThankYou";
+import Dashboard from "./pages/Dashboard";
+import Orders from "./pages/Orders";
+import OrderDetail from "./pages/OrderDetail";
+import ProductDetail from "./pages/ProductDetail";
+import AccountLayout from "./pages/Account";
+import AccountOverview from "./pages/account/AccountOverview";
+import OrderHistory from "./pages/account/OrderHistory";
+import Wishlist from "./pages/account/Wishlist";
+import SavedAddresses from "./pages/account/SavedAddresses";
+import ScentProfile from "./pages/account/ScentProfile";
+import Settings from "./pages/account/Settings";
+import Contact from "./pages/Contact";
+// Trang quản trị
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminProducts from "./pages/admin/AdminProducts";
+import AdminVariants from "./pages/admin/AdminVariants";
+import AdminBrands from "./pages/admin/AdminBrands";
+import AdminCategories from "./pages/admin/AdminCategories";
+import AdminMedia from "./pages/admin/AdminMedia";
+import AdminOrders from "./pages/admin/AdminOrders";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminReviewsPage from "./pages/admin/AdminReviews";
 
-const AdminLayout = lazy(() => import("./components/AdminLayout"));
-const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
-const AdminBrands = lazy(() => import("./pages/admin/AdminBrands"));
-const Home = lazy(() => import("./pages/Home"));
-const Shop = lazy(() => import("./pages/Shop"));
-const Brand = lazy(() => import("./pages/Brand"));
-const Blog = lazy(() => import("./pages/Blog"));
-const About = lazy(() => import("./pages/About"));
-const Login = lazy(() => import("./pages/Login"));
-const Register = lazy(() => import("./pages/Register"));
-const Cart = lazy(() => import("./pages/Cart"));
-const ProductDetail = lazy(() => import("./pages/ProductDetail"));
-const Dashboard = lazy(() => import("./pages/Dashboard"));
-const Orders = lazy(() => import("./pages/Orders"));
-const OrderDetail = lazy(() => import("./pages/OrderDetail"));
-const Checkout = lazy(() => import("./pages/Checkout"));
-const ThankYou = lazy(() => import("./pages/ThankYou"));
-
-function RouteFallback() {
-  return <div className="min-h-[55vh] bg-[#F8F5F0] px-5 py-12"><div className="mx-auto max-w-6xl space-y-4"><div className="h-9 w-56 animate-pulse rounded bg-stone-200 motion-reduce:animate-none" /><div className="h-4 w-80 max-w-full animate-pulse rounded bg-stone-200 motion-reduce:animate-none" /><div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">{Array.from({ length: 4 }).map((_, index) => <div key={index} className="aspect-[4/5] animate-pulse rounded bg-stone-200 motion-reduce:animate-none" />)}</div></div></div>;
-}
-
-const lazyElement = (element: ReactNode) => <Suspense fallback={<RouteFallback />}>{element}</Suspense>;
-
-const router = createBrowserRouter([
+export const router = createBrowserRouter([
   {
     path: "/",
     element: <Layout />,
     errorElement: <RouteErrorPage />,
     children: [
-      { index: true, element: lazyElement(<Home />) },
-      { path: "shop", element: lazyElement(<Shop />) },
-      { path: "brand", element: lazyElement(<Brand />) },
-      { path: "blog", element: lazyElement(<Blog />) },
-      { path: "about", element: lazyElement(<About />) },
-      { path: "login", element: lazyElement(<Login />) },
-      { path: "register", element: lazyElement(<Register />) },
-      { path: "cart", element: lazyElement(<Cart />) },
-      { path: "products/:idOrSlug", element: lazyElement(<ProductDetail />) },
-      // Khu vực cần đăng nhập
       {
-        element: <ProtectedRoute />,
-        children: [
-          { path: "dashboard", element: lazyElement(<Dashboard />) },
-          { path: "orders", element: lazyElement(<Orders />) },
-          { path: "orders/:id", element: lazyElement(<OrderDetail />) },
-          { path: "checkout", element: lazyElement(<Checkout />) },
-          { path: "thank-you/:id", element: lazyElement(<ThankYou />) },
-        ],
+        index: true,
+        element: <Home />,
+      },
+      {
+        path: 'shop',
+        element: <Shop />,
+      },
+      {
+        path: 'login',
+        element: <Login />,
       },
     ],
   },
+  // ======================= KHU VỰC QUẢN TRỊ (/admin) =======================
   {
-    path: "/admin",
-    errorElement: <RouteErrorPage />,
+    path: '/admin',
     element: (
       <AdminRoute>
         {lazyElement(<AdminLayout />)}
       </AdminRoute>
     ),
     children: [
-      { index: true, element: lazyElement(<AdminDashboard />) },
-      { path: "brands", element: lazyElement(<AdminBrands />) },
+      {
+        index: true,
+        element: <AdminDashboard />,
+      },
+      {
+        path: 'brands',
+        element: <AdminBrands />,
+      },
     ],
   },
 ]);
-
-export default router;

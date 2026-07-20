@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useMemo, useState } from "react";
 import { useCart } from "../store/cart.store";
 import { toast } from "../store/toast.store";
+import { optimizeCloudinaryImage } from "../lib/image";
 
 const PLACEHOLDER = "https://placehold.co/500x500?text=No+Image";
 
@@ -139,8 +140,12 @@ export default function ProductCard({
         className="flex aspect-square shrink-0 items-center justify-center overflow-hidden bg-[#F8F8F8]"
       >
         <img
-          src={image}
+          src={optimizeCloudinaryImage(image, 640)}
           alt={item.name}
+          loading="lazy"
+          decoding="async"
+          width={640}
+          height={640}
           onError={(event) => {
             event.currentTarget.src = PLACEHOLDER;
           }}
