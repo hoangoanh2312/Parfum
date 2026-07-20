@@ -3,11 +3,33 @@ import { JsonWebTokenError, TokenExpiredError } from 'jsonwebtoken';
 import { User } from '../models/user.model';
 import { signAccess, signRefresh, verifyRefresh } from '../utils/jwt';
 
+type UserDocument = HydratedDocument<UserDoc>;
+
+function normalizeEmail(email: string) {
+  return email.toLowerCase().trim();
+}
+
+function issueTokens(user: UserDocument) {
+  const payload = { id: user._id.toString(), role: user.role };
+  return {
+    accessToken: signAccess(payload),
+    refreshToken: signRefresh(payload),
+    user: {
+      id: user._id.toString(),
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    },
+  };
+}
+
 export async function register(name: string, email: string, password: string) {
-  const exists = await User.findOne({ email });
+  const normalizedEmail = normalizeEmail(email);
+  const exists = await User.findOne({ email: normalizedEmail });
   if (exists) throw Object.assign(new Error('Email da ton tai'), { status: 409 });
+
   const hash = await bcrypt.hash(password, 10);
-  const user = await User.create({ name, email, password: hash });
+  const user = await User.create({ name: name.trim(), email: normalizedEmail, password: hash });
   return issueTokens(user);
 }
 

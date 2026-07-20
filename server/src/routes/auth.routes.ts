@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import { z } from 'zod';
 import * as ctrl from '../controllers/auth.controller';
 import { validate } from '../middlewares/validate.middleware';
 import { authenticate } from '../middlewares/auth.middleware';
