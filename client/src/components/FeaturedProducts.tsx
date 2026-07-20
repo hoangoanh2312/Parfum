@@ -141,7 +141,7 @@ export default function FeaturedProducts() {
         <div className="mt-16 grid grid-cols-1 gap-x-8 gap-y-14 sm:grid-cols-2 lg:grid-cols-4">
           {loading &&
             Array.from({ length: 8 }).map((_, index) => (
-              <div key={index} className="h-[470px] animate-pulse bg-[#F3EEE7]" />
+              <div key={index} className="h-[470px] animate-pulse bg-[#F3EEE7] motion-reduce:animate-none" />
             ))}
 
           {!loading &&

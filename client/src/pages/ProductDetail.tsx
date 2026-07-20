@@ -4,6 +4,7 @@ import {
   Sun,
   Moon,
   Quote,
+  Search,
 } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
@@ -278,8 +279,11 @@ export default function ProductDetail() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#fbf8f2] px-6 py-24 text-[#615e57]">
-        <div className="mx-auto max-w-[1240px]">Đang tải sản phẩm...</div>
+      <div className="min-h-screen bg-[#fbf8f2] px-5 pb-8 pt-6 sm:px-8 sm:py-10 lg:py-16">
+        <div className="mx-auto grid max-w-[1240px] gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:gap-14">
+          <div className="h-[300px] w-full animate-pulse bg-[#eee9e1] motion-reduce:animate-none sm:h-auto sm:aspect-square" />
+          <div className="space-y-5 py-4"><div className="h-4 w-28 animate-pulse rounded bg-[#e4ded5] motion-reduce:animate-none" /><div className="h-12 w-4/5 animate-pulse rounded bg-[#e4ded5] motion-reduce:animate-none" /><div className="h-7 w-36 animate-pulse rounded bg-[#e4ded5] motion-reduce:animate-none" /><div className="h-24 animate-pulse rounded bg-[#eee9e1] motion-reduce:animate-none" /><div className="h-12 animate-pulse rounded bg-[#ded6ca] motion-reduce:animate-none" /></div>
+        </div>
       </div>
     );
   }
@@ -304,9 +308,9 @@ export default function ProductDetail() {
       <main>
         {/* Product Hero */}
         <section className="bg-[#fbf8f2]">
-          <div className="mx-auto grid max-w-[1240px] gap-14 px-6 py-12 md:px-10 lg:grid-cols-[1.1fr_0.9fr] lg:px-14 lg:py-16">
+          <div className="mx-auto grid max-w-[1240px] gap-5 px-6 pb-8 pt-6 sm:gap-14 sm:py-12 md:px-10 lg:grid-cols-[1.1fr_0.9fr] lg:px-14 lg:py-16">
             {/* Image */}
-            <div className="relative min-h-[570px] bg-[#f5f1eb]">
+            <div className="relative h-[300px] w-full min-h-0 bg-[#f5f1eb] sm:h-auto sm:aspect-square lg:min-h-[570px] lg:aspect-auto">
               <img
                 src={optimizeCloudinaryImage(currentImage, 1000)}
                 alt={product.name}
@@ -344,7 +348,7 @@ export default function ProductDetail() {
                 {product.fragranceFamily || "Signature"}
               </p>
 
-              <h1 className="font-serif text-[44px] leading-[1.05] tracking-[-1px] md:text-[58px]">
+              <h1 className="break-words font-serif text-[40px] leading-[1.05] tracking-[-1px] sm:text-[44px] md:text-[58px]">
                 {product.name}
               </h1>
 

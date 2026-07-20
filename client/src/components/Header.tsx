@@ -1,26 +1,24 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { NavLink, Link } from "react-router-dom";
 import { Search, Heart, ShoppingBag, User, Contact as ContactIcon } from "lucide-react";
 import { useCart } from "../store/cart.store";
 import { useAuth } from "../store/auth.store";
 
-const leftMenu = [
+const menu = [
   { name: "Trang chủ", link: "/" },
   { name: "Sản phẩm", link: "/shop" },
   { name: "Thương hiệu", link: "/brand" },
-];
-
-const rightMenu = [
   { name: "Tin tức", link: "/blog" },
   { name: "Giới thiệu", link: "/about" },
 ];
 
 export default function Header() {
-  const count = useCart((s) => s.count);
-  const loadCart = useCart((s) => s.loadCart);
-  const user = useAuth((s) => s.user);
+  const count = useCart((state) => state.count);
+  const loadCart = useCart((state) => state.loadCart);
+  const user = useAuth((state) => state.user);
+  const [open, setOpen] = useState(false);
 
-  // Nạp lại giỏ khi khởi động và mỗi khi trạng thái đăng nhập thay đổi
+  useEffect(() => { void loadCart(); }, [user]);
   useEffect(() => {
     loadCart();
   }, [user]);
@@ -126,6 +124,13 @@ export default function Header() {
           </div>
         </div>
       </div>
+
+      {open && <button type="button" className="fixed inset-0 z-40 bg-black/45 lg:hidden" onClick={() => setOpen(false)} aria-label="Đóng menu" />}
+      <aside className={`fixed inset-y-0 left-0 z-50 flex w-[min(82vw,320px)] flex-col bg-[#faf7f2] p-5 shadow-2xl transition-transform duration-300 lg:hidden ${open ? "translate-x-0" : "-translate-x-full"}`} aria-hidden={!open}>
+        <div className="flex items-center justify-between border-b pb-4"><span className="font-semibold tracking-wider">HOC PARFUM</span><button type="button" onClick={() => setOpen(false)} className="flex h-11 w-11 items-center justify-center rounded-full hover:bg-black/5" aria-label="Đóng menu"><X size={22} /></button></div>
+        <nav className="mt-4 flex-1 overflow-y-auto">{menu.map((item) => <NavLink key={item.link} to={item.link} onClick={() => setOpen(false)} className={navClass}>{item.name}</NavLink>)}</nav>
+        <div className="grid grid-cols-3 gap-2 border-t pt-4"><button type="button" className="flex min-h-11 items-center justify-center rounded-lg border" aria-label="Tìm kiếm"><Search size={18} /></button><button type="button" className="flex min-h-11 items-center justify-center rounded-lg border" aria-label="Danh sách yêu thích"><Heart size={18} /></button><button type="button" className="flex min-h-11 items-center justify-center rounded-lg border" aria-label="Vị trí cửa hàng"><MapPin size={18} /></button></div>
+      </aside>
     </header>
   );
 }

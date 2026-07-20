@@ -117,7 +117,9 @@ export default function Orders() {
         </header>
 
         {loading && (
-          <p className="font-['Manrope'] text-[#5F5E5E]">Đang tải…</p>
+          <div className="space-y-4" aria-label="Đang tải đơn hàng">
+            {Array.from({ length: 4 }).map((_, index) => <div key={index} className="h-24 animate-pulse border border-[rgba(208,197,175,0.4)] bg-white motion-reduce:animate-none" />)}
+          </div>
         )}
         {!loading && error && (
           <p className="font-['Manrope'] text-red-600">{error}</p>

@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { Menu, X } from 'lucide-react';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../store/auth.store';
+import Toaster from './Toaster';
+import { toast } from '../store/toast.store';
 
 export default function AdminLayout() {
   const user = useAuth((state) => state.user);
