@@ -13,10 +13,11 @@ import orderRoutes from './order.routes';
 import accountRoutes from './account.routes';
 import uploadRoutes from './upload.routes';
 import adminRoutes from './admin.routes';
+import adminOrderRoutes from './admin-order.routes';
 
 const router = Router();
 
-// pf52: gioi han so request de chong spam / brute-force
+// gioi han so request de chong spam / brute-force (chung cho toan API)
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 300,
@@ -37,7 +38,8 @@ router.use('/orders', orderRoutes);
 router.use('/account', accountRoutes);
 router.use('/', uploadRoutes);
 
-// Khu vuc quan tri: toan bo nghiep vu admin (da tu chan authenticate + admin)
+// Khu vuc quan tri. /admin/orders phai dat TRUOC /admin de khong bi nuot route.
+router.use('/admin/orders', adminOrderRoutes);
 router.use('/admin', adminRoutes);
 
 router.get('/admin-only', authenticate, authorize('admin'), (_req, res) =>

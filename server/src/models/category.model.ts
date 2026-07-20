@@ -17,7 +17,6 @@ const categorySchema = new Schema(
   {
     timestamps: true,
   },
-  { timestamps: true },
 );
 
 export const Category = model('Category', categorySchema);

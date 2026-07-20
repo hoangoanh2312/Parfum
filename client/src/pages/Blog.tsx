@@ -5,7 +5,7 @@ import { api } from "../lib/api";
 import Footer from "../components/Footer";
 import BrandJournal from "./BrandJournal";
 import { toast } from "../store/toast.store";
-import { BLOG_ARTICLES, ARCHETYPE_SLUG_MAP } from "./blogData";
+import { BLOG_ARTICLES, ARCHETYPES } from "./blogData";
 
 interface Archetype {
   name: string;
@@ -87,27 +87,7 @@ export default function Blog() {
   }, []);
 
   // Archetypes: mỗi item có slug trỏ tới bài viết /blog/:slug
-  const archetypes = useMemo<Archetype[]>(() => {
-    const seen = new Set<string>();
-    const items = products
-      .filter((p) => p.fragranceFamily && !seen.has(p.fragranceFamily))
-      .map((p) => {
-        seen.add(p.fragranceFamily!);
-        const name = p.fragranceFamily || p.name;
-        return {
-          name,
-          image:
-            p.images?.[0] ||
-            p.image ||
-            fallbackArchetypes[seen.size % fallbackArchetypes.length].image,
-          // Tra map để lấy slug bài viết; nếu không có thì dùng slug mặc định
-          slug:
-            ARCHETYPE_SLUG_MAP[name] ||
-            fallbackArchetypes[seen.size % fallbackArchetypes.length].slug,
-        };
-      });
-    return items.length ? items : fallbackArchetypes;
-  }, [products]);
+  const archetypes = ARCHETYPES.length ? ARCHETYPES : fallbackArchetypes;
 
   // Article grid: 5 bài tĩnh + bổ sung product nếu thiếu, tối đa 6
   const articles = useMemo(() => {
@@ -199,7 +179,7 @@ export default function Blog() {
               <Link to={`/blog/${BLOG_ARTICLES[2].slug}`}>
                 <div className="overflow-hidden bg-[#272727]">
                   <img
-                    src="https://images.unsplash.com/photo-1490750967868-88df5691cc87?w=1200&q=80"
+                    src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS__htyuJgvZWWlJPkJTpMlgM6ej2uVAbxXjAnsUoiIEg&s=10"
                     alt="Endangered florals"
                     className="aspect-[1.45/1] w-full object-cover grayscale transition duration-700 group-hover:scale-[1.03]"
                   />

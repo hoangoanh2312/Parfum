@@ -8,6 +8,7 @@ const s = new Schema({
   title: { type: String, trim: true },
   comment: { type: String, required: true, trim: true },
   images: [String],
+  verifiedPurchase: { type: Boolean, default: false },
   approved: { type: Boolean, default: false },
 }, { timestamps: true });
 

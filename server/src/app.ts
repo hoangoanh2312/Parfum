@@ -6,6 +6,7 @@ import routes from './routes';
 import { setupSwagger } from './config/swagger';
 import { errorHandler } from './middlewares/error.middleware';
 import { env } from './config/env';
+import { mongoSanitize } from './middlewares/sanitize.middleware';
 
 export function createApp() {
   const app = express();
@@ -19,6 +20,16 @@ export function createApp() {
 
   app.use(
     helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
+          scriptSrc: ["'self'"],
+          styleSrc: ["'self'", "'unsafe-inline'", 'https:'],
+          connectSrc: ["'self'", 'https:'],
+          fontSrc: ["'self'", 'https:', 'data:'],
+        },
+      },
       crossOriginResourcePolicy: { policy: 'cross-origin' },
     }),
   );
@@ -32,6 +43,7 @@ export function createApp() {
     }),
   );
   app.use(express.json({ limit: '100kb' }));
+  app.use(mongoSanitize);
   app.use('/uploads', express.static(path.resolve(process.cwd(), 'uploads')));
   app.get('/', (_, res) => {
     res.json({

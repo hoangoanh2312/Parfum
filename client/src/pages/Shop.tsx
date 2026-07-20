@@ -49,6 +49,9 @@ type ProductFilters = {
   categories: string[];
   sizes: string[];
   maxPrice: number;
+  minPrice?: number;
+  brandCounts?: Record<string, number>;
+  priceBuckets?: number[];
   total: number;
 };
 
@@ -81,7 +84,8 @@ export default function Shop() {
   const [selectedOccasions, setSelectedOccasions] = useState<string[]>([]);
   const [selectedSeasons, setSelectedSeasons] = useState<string[]>([]);
   const [selectedConcentrations, setSelectedConcentrations] = useState<string[]>([]);
-  const [price, setPrice] = useState(Number.MAX_SAFE_INTEGER);
+  const [priceMin, setPriceMin] = useState(0);
+  const [priceMax, setPriceMax] = useState(Number.MAX_SAFE_INTEGER);
   const [sort, setSort] = useState("newest");
   const [page, setPage] = useState(1);
 
@@ -163,7 +167,13 @@ export default function Shop() {
               [...selectedOccasions, ...selectedSeasons].join(",") ||
               undefined,
             concentration: selectedConcentrations.join(",") || undefined,
-            maxPrice: price === Number.MAX_SAFE_INTEGER ? undefined : price,
+            minPrice:
+              priceMin > (filters?.minPrice ?? 0) ? priceMin : undefined,
+            maxPrice:
+              priceMax !== Number.MAX_SAFE_INTEGER &&
+              priceMax < (filters?.maxPrice ?? Number.MAX_SAFE_INTEGER)
+                ? priceMax
+                : undefined,
             sort,
           },
         });
@@ -187,7 +197,8 @@ export default function Shop() {
     selectedOccasions,
     selectedSeasons,
     selectedConcentrations,
-    price,
+    priceMin,
+    priceMax,
     sort,
   ]);
 
@@ -204,12 +215,16 @@ export default function Shop() {
     [filters],
   );
   const maxPrice = filters?.maxPrice ?? 0;
+  const minPrice = filters?.minPrice ?? 0;
+  const brandCounts = useMemo(() => filters?.brandCounts ?? {}, [filters]);
+  const priceBuckets = useMemo(() => filters?.priceBuckets ?? [], [filters]);
 
   useEffect(() => {
-    if (maxPrice > 0 && price === Number.MAX_SAFE_INTEGER) {
-      setPrice(maxPrice);
+    if (maxPrice > 0 && priceMax === Number.MAX_SAFE_INTEGER) {
+      setPriceMin(minPrice);
+      setPriceMax(maxPrice);
     }
-  }, [maxPrice, price]);
+  }, [maxPrice, minPrice, priceMax]);
 
   const filteredProducts = useMemo(
     () =>
@@ -252,7 +267,20 @@ export default function Shop() {
           (product.concentration
             ? selectedConcentrations.includes(product.concentration)
             : false);
-        const matchesPrice = (product.price ?? 0) <= price;
+        const dataMin = filters?.minPrice ?? 0;
+        const dataMax = filters?.maxPrice ?? Number.MAX_SAFE_INTEGER;
+        const floor = priceMin > dataMin ? priceMin : null;
+        const ceil =
+          priceMax !== Number.MAX_SAFE_INTEGER && priceMax < dataMax
+            ? priceMax
+            : null;
+        const productPrice =
+          typeof product.price === "number" ? product.price : null;
+        const matchesPrice =
+          productPrice === null
+            ? floor === null
+            : (floor === null || productPrice >= floor) &&
+              (ceil === null || productPrice <= ceil);
 
         return (
           matchesSearch &&
@@ -276,7 +304,8 @@ export default function Shop() {
       selectedOccasions,
       selectedSeasons,
       selectedConcentrations,
-      price,
+      priceMin,
+      priceMax,
     ],
   );
 
@@ -292,7 +321,8 @@ export default function Shop() {
     selectedOccasions,
     selectedSeasons,
     selectedConcentrations,
-    price,
+    priceMin,
+    priceMax,
     sort,
   ]);
 
@@ -344,12 +374,15 @@ export default function Shop() {
               </p>
             </div>
 
-            <div className="relative bg-[#0E0D0C] h-[330px] rounded-sm overflow-hidden">
-              <img
-                src="https://res.cloudinary.com/dwj2trmn0/image/upload/v1784370620/Gemini_Generated_Image_b00ra5b00ra5b00r_hqe2zp.png"
-                alt=""
-                className="w-full h-full object-cover opacity-90"
-              />
+              <div className="relative bg-[#0E0D0C] h-[330px] rounded-sm overflow-hidden">
+                <video
+                  src="https://res.cloudinary.com/dwj2trmn0/video/upload/v1784437561/t%E1%BA%A1o_cho_t_video_gi%E1%BB%9Bi_thi%E1%BB%87u_m_fk3taq.mp4"
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  className="w-full h-full object-cover opacity-90"
+                />
 
               <div className="absolute left-6 bottom-8 text-[#E8E3D8]">
                 <p className="text-[11px] tracking-[0.15em] uppercase leading-tight">
@@ -380,9 +413,16 @@ export default function Shop() {
             selectedGenders={selectedGenders}
             toggleGender={toggleGender}
             clearGender={() => setSelectedGenders([])}
-            price={price}
+            priceMin={priceMin}
+            priceMax={priceMax}
+            minPrice={minPrice}
             maxPrice={maxPrice}
-            setPrice={setPrice}
+            setPriceRange={(lo, hi) => {
+              setPriceMin(lo);
+              setPriceMax(hi);
+            }}
+            brandCounts={brandCounts}
+            priceBuckets={priceBuckets}
             selectedScents={selectedScents}
             scents={scents}
             toggleScent={toggleScent}

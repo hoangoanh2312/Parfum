@@ -1,9 +1,12 @@
 import { Router } from 'express';
+import { z } from 'zod';
 import { authenticate, optionalAuthenticate } from '../middlewares/auth.middleware';
+import { validate } from '../middlewares/validate.middleware';
 import {
   checkoutPreview,
   checkStock,
   createOrder,
+  cancelOrder,
   myOrders,
   orderDetail,
   paymentInfo,
@@ -11,18 +14,36 @@ import {
 
 const router = Router();
 
+// Dia chi giao hang BAT BUOC co line + phone; cac truong khac tuy chon.
+const orderAddressSchema = z.object({
+  fullName: z.string().trim().min(1).optional(),
+  phone: z.string().trim().regex(/^0\d{9}$/, 'So dien thoai khong hop le'),
+  line: z.string().trim().min(1, 'Thieu dia chi giao hang'),
+  ward: z.string().trim().optional(),
+  district: z.string().trim().optional(),
+  province: z.string().trim().optional(),
+  city: z.string().trim().optional(),
+});
+
+const createOrderSchema = z.object({
+  method: z.enum(['cod', 'bank_qr']).optional(),
+  address: orderAddressSchema,
+  note: z.string().trim().max(500).optional(),
+  items: z
+    .array(z.object({ variant: z.string().trim().min(1), quantity: z.number().int().positive() }))
+    .optional(),
+  voucherCode: z.string().trim().min(1).optional(),
+});
+
 router.get('/checkout-preview', authenticate, checkoutPreview);
-// Không bắt buộc đăng nhập: chỉ đọc tồn kho theo danh sách item gửi lên
-// -> khách vãng lai cũng kiểm tra được giỏ hàng
 router.post('/check-stock', checkStock);
 
-// PF-35: danh sách đơn của khách đang đăng nhập
 router.get('/', authenticate, myOrders);
-// Tạo đơn hàng thật: kiểm tra tồn kho -> trừ kho -> tạo Order + Payment -> xóa giỏ
-router.post('/', optionalAuthenticate, createOrder);
-// PF-36: thông tin thanh toán + QR chuyển khoản (đặt TRƯỚC /:id)
+// Tao don: validate dia chi bat buoc; cho phep khach vang lai (optionalAuthenticate)
+router.post('/', optionalAuthenticate, validate(createOrderSchema), createOrder);
+// Huy don + hoan kho (chi user so huu, phai dang nhap)
+router.post('/:id/cancel', authenticate, cancelOrder);
 router.get('/:id/payment', optionalAuthenticate, paymentInfo);
-// PF-35: chi tiết 1 đơn (đặt CUỐI cùng để không nuốt /checkout-preview, /check-stock)
 router.get('/:id', optionalAuthenticate, orderDetail);
 
 export default router;

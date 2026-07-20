@@ -6,15 +6,29 @@ import { toast } from "../../store/toast.store";
 
 type AddressForm = {
   label: string;
+  fullName: string;
   phone: string;
-  detail: string;
+  line: string;
+  ward: string;
+  district: string;
+  province: string;
 };
 
 const emptyForm: AddressForm = {
   label: "",
+  fullName: "",
   phone: "",
-  detail: "",
+  line: "",
+  ward: "",
+  district: "",
+  province: "",
 };
+
+function formatAddress(item: Address) {
+  return [item.line || item.detail, item.ward, item.district, item.province]
+    .filter(Boolean)
+    .join(", ");
+}
 
 export default function SavedAddresses() {
   const user = useAuth((state) => state.user);
@@ -44,8 +58,12 @@ export default function SavedAddresses() {
     setEditingId(address._id);
     setForm({
       label: address.label || "",
+      fullName: address.fullName || "",
       phone: address.phone || "",
-      detail: address.detail || "",
+      line: address.line || address.detail || "",
+      ward: address.ward || "",
+      district: address.district || "",
+      province: address.province || "",
     });
     setShowForm(true);
   }
@@ -54,7 +72,7 @@ export default function SavedAddresses() {
     event.preventDefault();
 
     if (!/^0\d{9}$/.test(form.phone.trim())) {
-      toast.error("Số điện thoại phải bắt đầu bằng 0 và đủ 10 số");
+      toast.error("So dien thoai phai bat dau bang 0 va du 10 so");
       return;
     }
 
@@ -68,9 +86,9 @@ export default function SavedAddresses() {
       setShowForm(false);
       setEditingId(null);
       setForm(emptyForm);
-      toast.success(editingId ? "Đã cập nhật địa chỉ" : "Đã thêm địa chỉ");
+      toast.success(editingId ? "Da cap nhat dia chi" : "Da them dia chi");
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Không thể lưu địa chỉ");
+      toast.error(error?.response?.data?.message || "Khong the luu dia chi");
     } finally {
       setSaving(false);
     }
@@ -80,22 +98,24 @@ export default function SavedAddresses() {
     try {
       const { data } = await api.delete(`/auth/me/addresses/${addressId}`);
       syncAddresses(data);
-      toast.success("Đã xóa địa chỉ");
+      toast.success("Da xoa dia chi");
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Không thể xóa địa chỉ");
+      toast.error(error?.response?.data?.message || "Khong the xoa dia chi");
     }
   }
 
   async function setDefault(address: Address) {
     try {
-      const { data } = await api.patch(
-        `/auth/me/addresses/${address._id}/default`,
-      );
+      const { data } = await api.patch(`/auth/me/addresses/${address._id}/default`);
       syncAddresses(data);
-      toast.success("Đã đặt làm địa chỉ mặc định");
+      toast.success("Da dat lam dia chi mac dinh");
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Không thể đặt mặc định");
+      toast.error(error?.response?.data?.message || "Khong the dat mac dinh");
     }
+  }
+
+  function isDefault(item: Address, index: number) {
+    return item.isDefault ?? index === 0;
   }
 
   return (
@@ -105,23 +125,20 @@ export default function SavedAddresses() {
           Personal Portal
         </p>
 
-        <h1 className="mt-2 font-serif text-4xl lg:text-5xl">
-          Saved Addresses
-        </h1>
+        <h1 className="mt-2 font-serif text-4xl lg:text-5xl">Saved Addresses</h1>
 
         <p className="mt-3 max-w-2xl text-sm leading-6 text-[#7C746C]">
-          Quản lý địa chỉ nhận hàng và lựa chọn địa chỉ mặc định cho các đơn
-          hàng của bạn.
+          Quan ly dia chi nhan hang va lua chon dia chi mac dinh cho cac don hang cua ban.
         </p>
       </section>
 
       <main className="px-6 py-10 lg:px-12">
         <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <div>
-            <h2 className="font-serif text-2xl">Địa chỉ của bạn</h2>
+            <h2 className="font-serif text-2xl">Dia chi cua ban</h2>
 
             <p className="mt-1 text-sm text-[#8A8178]">
-              Bạn đang có {addresses.length} địa chỉ đã lưu.
+              Ban dang co {addresses.length} dia chi da luu.
             </p>
           </div>
 
@@ -131,26 +148,27 @@ export default function SavedAddresses() {
             className="flex w-fit items-center gap-2 bg-[#806900] px-5 py-3 text-[10px] uppercase tracking-[0.16em] text-white transition hover:bg-[#675500]"
           >
             <Plus size={15} />
-            Thêm địa chỉ
+            Them dia chi
           </button>
         </div>
 
         {showForm && (
-          <form
-            onSubmit={saveAddress}
-            className="mb-8 border border-[#E2DBD2] bg-[#FFFDF9] p-6"
-          >
+          <form onSubmit={saveAddress} className="mb-8 border border-[#E2DBD2] bg-[#FFFDF9] p-6">
             <h3 className="font-serif text-2xl">
-              {editingId ? "Chỉnh sửa địa chỉ" : "Thêm địa chỉ mới"}
+              {editingId ? "Chinh sua dia chi" : "Them dia chi moi"}
             </h3>
 
-            <div className="mt-5 grid gap-4 md:grid-cols-3">
+            <div className="mt-5 grid gap-4 md:grid-cols-2">
               <input
                 value={form.label}
-                onChange={(event) =>
-                  setForm((prev) => ({ ...prev, label: event.target.value }))
-                }
-                placeholder="Tên địa chỉ"
+                onChange={(event) => setForm((prev) => ({ ...prev, label: event.target.value }))}
+                placeholder="Nhan dia chi (Nha / Van phong)"
+                className="border border-[#DCD4CB] bg-[#FCF9F4] px-4 py-3 text-sm outline-none"
+              />
+              <input
+                value={form.fullName}
+                onChange={(event) => setForm((prev) => ({ ...prev, fullName: event.target.value }))}
+                placeholder="Ho ten nguoi nhan"
                 className="border border-[#DCD4CB] bg-[#FCF9F4] px-4 py-3 text-sm outline-none"
                 required
               />
@@ -162,18 +180,34 @@ export default function SavedAddresses() {
                     phone: event.target.value.replace(/\D/g, "").slice(0, 10),
                   }))
                 }
-                placeholder="Số điện thoại"
+                placeholder="So dien thoai"
                 className="border border-[#DCD4CB] bg-[#FCF9F4] px-4 py-3 text-sm outline-none"
                 required
               />
               <input
-                value={form.detail}
-                onChange={(event) =>
-                  setForm((prev) => ({ ...prev, detail: event.target.value }))
-                }
-                placeholder="Địa chỉ chi tiết"
-                className="border border-[#DCD4CB] bg-[#FCF9F4] px-4 py-3 text-sm outline-none md:col-span-1"
+                value={form.line}
+                onChange={(event) => setForm((prev) => ({ ...prev, line: event.target.value }))}
+                placeholder="So nha, ten duong"
+                className="border border-[#DCD4CB] bg-[#FCF9F4] px-4 py-3 text-sm outline-none"
                 required
+              />
+              <input
+                value={form.ward}
+                onChange={(event) => setForm((prev) => ({ ...prev, ward: event.target.value }))}
+                placeholder="Phuong / Xa"
+                className="border border-[#DCD4CB] bg-[#FCF9F4] px-4 py-3 text-sm outline-none"
+              />
+              <input
+                value={form.district}
+                onChange={(event) => setForm((prev) => ({ ...prev, district: event.target.value }))}
+                placeholder="Quan / Huyen"
+                className="border border-[#DCD4CB] bg-[#FCF9F4] px-4 py-3 text-sm outline-none"
+              />
+              <input
+                value={form.province}
+                onChange={(event) => setForm((prev) => ({ ...prev, province: event.target.value }))}
+                placeholder="Tinh / Thanh pho"
+                className="border border-[#DCD4CB] bg-[#FCF9F4] px-4 py-3 text-sm outline-none"
               />
             </div>
 
@@ -182,14 +216,14 @@ export default function SavedAddresses() {
                 disabled={saving}
                 className="bg-[#806900] px-5 py-3 text-[10px] uppercase tracking-[0.16em] text-white disabled:opacity-60"
               >
-                {saving ? "Đang lưu..." : "Lưu địa chỉ"}
+                {saving ? "Dang luu..." : "Luu dia chi"}
               </button>
               <button
                 type="button"
                 onClick={() => setShowForm(false)}
                 className="border border-[#CFC6BB] px-5 py-3 text-[10px] uppercase tracking-[0.16em]"
               >
-                Hủy
+                Huy
               </button>
             </div>
           </form>
@@ -201,15 +235,15 @@ export default function SavedAddresses() {
               key={item._id}
               className="relative border border-[#E2DBD2] bg-[#FFFDF9] p-6 transition hover:border-[#B39A37]"
             >
-              {index === 0 && (
+              {isDefault(item, index) && (
                 <span className="absolute right-5 top-5 bg-[#EEE8D4] px-3 py-1 text-[9px] uppercase tracking-[0.14em] text-[#846E0A]">
-                  Mặc định
+                  Mac dinh
                 </span>
               )}
 
               <div className="flex gap-4">
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center bg-[#F0ECE7]">
-                  {index === 0 ? (
+                  {isDefault(item, index) ? (
                     <Home size={18} strokeWidth={1.4} />
                   ) : (
                     <MapPin size={18} strokeWidth={1.4} />
@@ -218,15 +252,15 @@ export default function SavedAddresses() {
 
                 <div className="pr-20">
                   <p className="text-[9px] uppercase tracking-[0.18em] text-[#9A7D00]">
-                    {item.label}
+                    {item.label || "Dia chi"}
                   </p>
 
-                  <h3 className="mt-3 font-serif text-xl">{user?.name}</h3>
+                  <h3 className="mt-3 font-serif text-xl">{item.fullName || user?.name}</h3>
 
                   <p className="mt-2 text-sm text-[#6F6861]">{item.phone}</p>
 
                   <p className="mt-2 max-w-md text-sm leading-6 text-[#6F6861]">
-                    {item.detail}
+                    {formatAddress(item)}
                   </p>
                 </div>
               </div>
@@ -239,7 +273,7 @@ export default function SavedAddresses() {
                     className="flex items-center gap-2 text-[10px] uppercase tracking-[0.12em] text-[#544E48] hover:text-[#8B7200]"
                   >
                     <Pencil size={13} />
-                    Chỉnh sửa
+                    Chinh sua
                   </button>
 
                   <button
@@ -248,17 +282,17 @@ export default function SavedAddresses() {
                     className="flex items-center gap-2 text-[10px] uppercase tracking-[0.12em] text-[#8D8379] hover:text-red-700"
                   >
                     <Trash2 size={13} />
-                    Xóa
+                    Xoa
                   </button>
                 </div>
 
-                {index !== 0 && (
+                {!isDefault(item, index) && (
                   <button
                     type="button"
                     onClick={() => setDefault(item)}
                     className="text-[10px] uppercase tracking-[0.12em] text-[#8B7200]"
                   >
-                    Đặt làm mặc định
+                    Dat lam mac dinh
                   </button>
                 )}
               </div>
@@ -272,12 +306,10 @@ export default function SavedAddresses() {
           >
             <Plus size={28} strokeWidth={1.2} />
 
-            <span className="mt-4 text-[10px] uppercase tracking-[0.18em]">
-              Thêm địa chỉ mới
-            </span>
+            <span className="mt-4 text-[10px] uppercase tracking-[0.18em]">Them dia chi moi</span>
 
             <span className="mt-2 text-xs text-[#91887E]">
-              Thêm địa chỉ giao hàng hoặc nhận hóa đơn
+              Them dia chi giao hang hoac nhan hoa don
             </span>
           </button>
         </div>

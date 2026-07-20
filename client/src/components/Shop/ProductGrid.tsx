@@ -11,6 +11,17 @@ interface Product {
   brand?: string;
   images?: string[];
   slug?: string;
+  variantId?: string | null;
+  volume?: string;
+  sizes?: string[];
+  stock?: number;
+  variants?: {
+    variantId?: string | null;
+    size?: string;
+    volume?: string;
+    price?: number | null;
+    stock?: number;
+  }[];
 }
 
 interface ProductGridProps {

@@ -130,7 +130,7 @@ export default function AdminOrders() {
       <Card>
         {loading ? (
           <LoadingState />
-        ) : !list || list.data.length === 0 ? (
+        ) : !list || !list.data || list.data.length === 0 ? (
           <EmptyState message="Không có đơn hàng nào." />
         ) : (
           <div className="overflow-x-auto">

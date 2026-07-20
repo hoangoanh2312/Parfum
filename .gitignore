@@ -1,8 +1,28 @@
+# Dependencies
 node_modules/
-.env
-*.env
-!.env.example
+
+# Build output
 dist/
 build/
-.DS_Store
+
+# Env & secrets
+.env
+.env.*
+!.env.example
+
+# Uploads (anh nguoi dung tai len)
+uploads/
+
+# Logs
+logs/
 *.log
+npm-debug.log*
+
+# Test / coverage
+coverage/
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+*.local

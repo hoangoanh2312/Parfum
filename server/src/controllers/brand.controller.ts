@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { getBrands } from '../services/brand.services';
+import { getBrands } from '../services/brand.service';
 
 export const getAllBrands = async (
   req: Request,

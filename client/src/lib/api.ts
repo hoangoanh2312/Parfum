@@ -1,7 +1,9 @@
 import axios from "axios";
 
+// withCredentials: true de gui/nhan httpOnly cookie chua refresh token
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "/api",
+  withCredentials: true,
 });
 
 let isRefreshing = false;
@@ -25,14 +27,16 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const original = error.config;
-    if (error.response?.status !== 401 || original._retry)
+    if (error.response?.status !== 401 || original._retry || original.url?.includes("/auth/refresh"))
       return Promise.reject(error);
+
+    original._retry = true;
 
     if (!isRefreshing) {
       isRefreshing = true;
       try {
-        const refreshToken = localStorage.getItem("refreshToken");
-        const { data } = await api.post("/auth/refresh", { refreshToken });
+        // Refresh token nam trong httpOnly cookie -> khong can gui trong body
+        const { data } = await api.post("/auth/refresh", {});
         localStorage.setItem("accessToken", data.accessToken);
         original.headers.Authorization = `Bearer ${data.accessToken}`;
         processQueue(data.accessToken);

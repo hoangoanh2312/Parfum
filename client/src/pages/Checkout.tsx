@@ -107,8 +107,10 @@ export default function Checkout() {
       const { data } = await api.post("/orders", {
         method,
         address: {
+          fullName,
           line: addressLine,
           city: addressCity,
+          province: city.trim(),
           phone: phone.trim(),
         },
         note: fullNote,

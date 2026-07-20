@@ -9,11 +9,19 @@ interface User {
   addresses?: Address[];
 }
 
+// Shape dia chi thong nhat voi backend (fullName, phone, line, ward, district, province).
+// `detail` giu lai tuy chon de tuong thich du lieu cu.
 export interface Address {
   _id: string;
-  label: string;
+  label?: string;
+  fullName?: string;
   phone: string;
-  detail: string;
+  line?: string;
+  ward?: string;
+  district?: string;
+  province?: string;
+  isDefault?: boolean;
+  detail?: string;
 }
 
 interface AuthState {
@@ -21,7 +29,7 @@ interface AuthState {
   isBootstrapped: boolean;
   setUser: (user: User | null) => void;
   setBootstrapped: (value: boolean) => void;
-  setTokens: (access: string, refresh: string) => void;
+  setTokens: (access: string, refresh?: string) => void;
   logout: () => void;
   bootstrap: () => Promise<void>;
 }
@@ -49,7 +57,7 @@ function decodeJwt<T>(token: string): T {
   return JSON.parse(decoded) as T;
 }
 
-export const useAuth = create<AuthState>((set, get) => ({
+export const useAuth = create<AuthState>((set) => ({
   user: null,
   isBootstrapped: false,
 
@@ -57,14 +65,17 @@ export const useAuth = create<AuthState>((set, get) => ({
 
   setBootstrapped: (value) => set({ isBootstrapped: value }),
 
+  // Chi luu accessToken o localStorage; refresh token do server dat trong httpOnly cookie.
   setTokens: (access, refresh) => {
     localStorage.setItem("accessToken", access);
-    localStorage.setItem("refreshToken", refresh);
+    if (refresh) localStorage.setItem("refreshToken", refresh);
   },
 
   logout: () => {
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
+    // Bao server xoa cookie refresh (khong can chan neu that bai)
+    api.post("/auth/logout").catch(() => null);
     set({ user: null, isBootstrapped: true });
   },
 

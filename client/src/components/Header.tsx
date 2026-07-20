@@ -20,23 +20,23 @@ export default function Header() {
   const loadCart = useCart((s) => s.loadCart);
   const user = useAuth((s) => s.user);
 
-  // Nạp lại giỏ khi khởi động và mỗi khi trạng thái đăng nhập thay đổi
   useEffect(() => {
     loadCart();
   }, [user]);
 
   return (
-    <header className="bg-[#faf7f2] border-b">
-      <div className="max-w-7xl mx-auto h-20 flex items-center">
+    <header className="bg-[#EDE8DF] border-b border-[#E8E2D8]">
+      <div className="max-w-7xl mx-auto px-6 h-20 grid grid-cols-[1fr_auto_1fr] items-center">
+
         {/* Menu trái */}
-        <div className="flex-1 flex justify-center gap-10">
+        <div className="flex items-center gap-24">
           {leftMenu.map((item) => (
             <NavLink
               key={item.name}
               to={item.link}
               className={({ isActive }) =>
-                `uppercase text-[11px] tracking-[3px] transition-colors duration-300 ${
-                  isActive ? "text-black" : "text-[#a67c1a] hover:text-black"
+                `uppercase text-[11px] tracking-[3px] transition-colors duration-300 whitespace-nowrap ${
+                  isActive ? "text-[#8A8176]" : "text-[#B5A47A] hover:text-[#8A8176]"
                 }`
               }
             >
@@ -45,24 +45,26 @@ export default function Header() {
           ))}
         </div>
 
-        {/* Logo */}
-        <div className="w-14 flex justify-center">
+        {/* Logo — luôn ở giữa */}
+        <div className="flex justify-center">
           <Link to="/">
-            <div className="w-14 h-14 rounded-full bg-black text-white flex items-center justify-center text-xs font-bold hover:scale-105 duration-300">
-              LOGO
-            </div>
+            <img
+              src="https://res.cloudinary.com/dwj2trmn0/image/upload/v1784438101/Screenshot_2026-07-19_121449_kus9fn.png"
+              alt="Logo"
+              className="h-14 w-auto object-contain hover:scale-105 transition-transform duration-300"
+            />
           </Link>
         </div>
 
-        {/* Menu phải + icon */}
-        <div className="flex-1 flex items-center justify-center gap-10">
+        {/* Menu phải + icons */}
+        <div className="flex items-center justify-end gap-8">
           {rightMenu.map((item) => (
             <NavLink
               key={item.name}
               to={item.link}
               className={({ isActive }) =>
-                `uppercase text-[11px] tracking-[3px] transition-colors duration-300 ${
-                  isActive ? "text-black" : "text-[#a67c1a] hover:text-black"
+                `uppercase text-[11px] tracking-[3px] transition-colors duration-300 whitespace-nowrap ${
+                  isActive ? "text-[#8A8176]" : "text-[#B5A47A] hover:text-[#8A8176]"
                 }`
               }
             >
@@ -70,61 +72,40 @@ export default function Header() {
             </NavLink>
           ))}
 
-          <div className="h-5 w-px bg-[#a67c1a]" />
-          <div className="flex items-center gap-4 text-[#a67c1a]">
+          <div className="h-5 w-px bg-[#B5B0A8]" />
+
+          <div className="flex items-center gap-4 text-[#B5A47A]">
             <Link to="/contact">
-              <ContactIcon
-                size={15}
-                className="cursor-pointer hover:text-black duration-300"
-              />
+              <ContactIcon size={15} className="cursor-pointer hover:text-[#8A8176] duration-300" />
             </Link>
             <Link to="/Shop">
-              <Search
-                size={15}
-                className="cursor-pointer hover:text-black duration-300"
-              />
+              <Search size={15} className="cursor-pointer hover:text-[#8A8176] duration-300" />
             </Link>
-            <Link to="/account/wishlist" className="relative">
-              <Heart
-                size={15}
-                className="cursor-pointer hover:text-black duration-300"
-              />
+            <Link to="/account/wishlist">
+              <Heart size={15} className="cursor-pointer hover:text-[#8A8176] duration-300" />
             </Link>
-
-            {/* Giỏ hàng + badge số lượng */}
             <Link to="/cart" className="relative">
-              <ShoppingBag
-                size={15}
-                className="cursor-pointer hover:text-black duration-300"
-              />
+              <ShoppingBag size={15} className="cursor-pointer hover:text-[#8A8176] duration-300" />
               {count > 0 && (
-                <span className="absolute -top-2 -right-2 bg-black text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center">
+                <span className="absolute -top-2 -right-2 bg-[#8A8176] text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center">
                   {count}
                 </span>
               )}
             </Link>
-
-            <Link
-              to={user ? "/account" : "/login"}
-              title={user ? user.name : "Đăng nhập"}
-            >
-              <User
-                size={15}
-                className="cursor-pointer hover:text-black duration-300"
-              />
+            <Link to={user ? "/account" : "/login"} title={user ? user.name : "Đăng nhập"}>
+              <User size={15} className="cursor-pointer hover:text-[#8A8176] duration-300" />
             </Link>
-
-            {/* Link vào khu vực quản trị - chỉ hiện với admin */}
             {user?.role === "admin" && (
               <Link
                 to="/admin"
-                className="uppercase text-[11px] tracking-[3px] text-[#a67c1a] hover:text-black duration-300"
+                className="uppercase text-[11px] tracking-[3px] text-[#B5A47A] hover:text-[#8A8176] duration-300 whitespace-nowrap"
               >
                 Quản trị
               </Link>
             )}
           </div>
         </div>
+
       </div>
     </header>
   );

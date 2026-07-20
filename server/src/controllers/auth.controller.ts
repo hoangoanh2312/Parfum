@@ -1,10 +1,20 @@
 import { Request, Response, NextFunction } from 'express';
 import * as authService from '../services/auth.service';
+import { setRefreshCookie, clearRefreshCookie, parseCookies } from '../utils/cookies';
+
+const uid = (req: Request) => (req as any).user?.id;
+
+// Gui accessToken + user trong body, refreshToken luu vao httpOnly cookie (chong XSS danh cap token)
+function sendAuth(res: Response, result: any, status = 200) {
+  const { refreshToken, ...rest } = result;
+  if (refreshToken) setRefreshCookie(res, refreshToken);
+  res.status(status).json(rest);
+}
 
 export async function register(req: Request, res: Response, next: NextFunction) {
   try {
     const { name, email, password } = req.body;
-    res.status(201).json(await authService.register(name, email, password));
+    sendAuth(res, await authService.register(name, email, password), 201);
   } catch (e) {
     next(e);
   }
@@ -13,7 +23,7 @@ export async function register(req: Request, res: Response, next: NextFunction) 
 export async function login(req: Request, res: Response, next: NextFunction) {
   try {
     const { email, password } = req.body;
-    res.json(await authService.login(email, password));
+    sendAuth(res, await authService.login(email, password));
   } catch (e) {
     next(e);
   }
@@ -21,9 +31,10 @@ export async function login(req: Request, res: Response, next: NextFunction) {
 
 export async function refresh(req: Request, res: Response, next: NextFunction) {
   try {
-    const { refreshToken } = req.body;
-    if (!refreshToken) return res.status(400).json({ message: 'Missing refresh token' });
-    res.json(await authService.refreshAccessToken(refreshToken));
+    // Uu tien doc tu httpOnly cookie; van chap nhan body de tuong thich nguoc
+    const token = parseCookies(req).refreshToken || req.body?.refreshToken;
+    if (!token) return res.status(401).json({ message: 'Missing refresh token' });
+    res.json(await authService.refreshAccessToken(token));
   } catch (e) {
     next(e);
   }
@@ -31,8 +42,8 @@ export async function refresh(req: Request, res: Response, next: NextFunction) {
 
 export async function logout(req: Request, res: Response, next: NextFunction) {
   try {
-    const userId = (req as any).user?.id;
-    await authService.logout(userId);
+    await authService.logout(uid(req));
+    clearRefreshCookie(res);
     res.json({ message: 'Logged out' });
   } catch (e) {
     next(e);
@@ -41,8 +52,7 @@ export async function logout(req: Request, res: Response, next: NextFunction) {
 
 export async function me(req: Request, res: Response, next: NextFunction) {
   try {
-    const userId = (req as any).user?.id;
-    res.json(await authService.getMe(userId));
+    res.json(await authService.getMe(uid(req)));
   } catch (e) {
     next(e);
   }
@@ -50,8 +60,7 @@ export async function me(req: Request, res: Response, next: NextFunction) {
 
 export async function updateProfile(req: Request, res: Response, next: NextFunction) {
   try {
-    const userId = (req as any).user?.id;
-    res.json(await authService.updateProfile(userId, req.body));
+    res.json(await authService.updateProfile(uid(req), req.body));
   } catch (e) {
     next(e);
   }
@@ -59,8 +68,7 @@ export async function updateProfile(req: Request, res: Response, next: NextFunct
 
 export async function changePassword(req: Request, res: Response, next: NextFunction) {
   try {
-    const userId = (req as any).user?.id;
-    res.json(await authService.changePassword(userId, req.body));
+    res.json(await authService.changePassword(uid(req), req.body));
   } catch (e) {
     next(e);
   }
@@ -68,8 +76,7 @@ export async function changePassword(req: Request, res: Response, next: NextFunc
 
 export async function addAddress(req: Request, res: Response, next: NextFunction) {
   try {
-    const userId = (req as any).user?.id;
-    res.status(201).json(await authService.addAddress(userId, req.body));
+    res.status(201).json(await authService.addAddress(uid(req), req.body));
   } catch (e) {
     next(e);
   }
@@ -77,8 +84,7 @@ export async function addAddress(req: Request, res: Response, next: NextFunction
 
 export async function updateAddress(req: Request, res: Response, next: NextFunction) {
   try {
-    const userId = (req as any).user?.id;
-    res.json(await authService.updateAddress(userId, req.params.addressId, req.body));
+    res.json(await authService.updateAddress(uid(req), req.params.addressId, req.body));
   } catch (e) {
     next(e);
   }
@@ -86,8 +92,47 @@ export async function updateAddress(req: Request, res: Response, next: NextFunct
 
 export async function deleteAddress(req: Request, res: Response, next: NextFunction) {
   try {
-    const userId = (req as any).user?.id;
-    res.json(await authService.deleteAddress(userId, req.params.addressId));
+    res.json(await authService.deleteAddress(uid(req), req.params.addressId));
+  } catch (e) {
+    next(e);
+  }
+}
+
+export async function setDefaultAddress(req: Request, res: Response, next: NextFunction) {
+  try {
+    res.json(await authService.setDefaultAddress(uid(req), req.params.addressId));
+  } catch (e) {
+    next(e);
+  }
+}
+
+export async function forgotPassword(req: Request, res: Response, next: NextFunction) {
+  try {
+    res.json(await authService.requestPasswordReset(req.body.email));
+  } catch (e) {
+    next(e);
+  }
+}
+
+export async function resetPassword(req: Request, res: Response, next: NextFunction) {
+  try {
+    res.json(await authService.resetPassword(req.body.token, req.body.password));
+  } catch (e) {
+    next(e);
+  }
+}
+
+export async function sendVerification(req: Request, res: Response, next: NextFunction) {
+  try {
+    res.json(await authService.sendEmailVerification(uid(req)));
+  } catch (e) {
+    next(e);
+  }
+}
+
+export async function verifyEmail(req: Request, res: Response, next: NextFunction) {
+  try {
+    res.json(await authService.verifyEmail(req.body.token));
   } catch (e) {
     next(e);
   }

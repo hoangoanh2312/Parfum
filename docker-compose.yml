@@ -1,17 +1,55 @@
+# PF-44 / PF-6: chay toan bo he thong (mongo + server + client) bang 1 lenh:
+#   docker compose up --build
+# Sau khi chay:
+#   - Web (client):     http://localhost:8080
+#   - API (server):     http://localhost:5000/api
+#   - Swagger UI:       http://localhost:5000/api/docs
+#   - MongoDB:          mongodb://localhost:27017/parfum-shop
+
 services:
   mongo:
     image: mongo:7
+    container_name: parfum-mongo
     restart: unless-stopped
-    ports: ["27017:27017"]
-    volumes: ["mongo_data:/data/db"]
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
   server:
     build: ./server
-    env_file: ./server/.env
-    ports: ["5000:5000"]
-    depends_on: [mongo]
+    container_name: parfum-server
+    restart: unless-stopped
+    depends_on:
+      - mongo
+    ports:
+      - "5000:5000"
+    environment:
+      NODE_ENV: production
+      PORT: "5000"
+      MONGO_URI: mongodb://mongo:27017/parfum-shop
+      JWT_ACCESS_SECRET: change_me_access_secret
+      JWT_REFRESH_SECRET: change_me_refresh_secret
+      CLIENT_URL: http://localhost:8080
+      CORS_ORIGINS: http://localhost:8080,http://localhost:5173
+      DEFAULT_ADMIN_EMAIL: admin@lessencenoire.vn
+      ADMIN_BOOTSTRAP_PASSWORD: Admin@123
+      # Cloudinary / VietQR (tuy chon - dien de bat upload anh / QR that)
+      CLOUDINARY_CLOUD_NAME: ""
+      CLOUDINARY_API_KEY: ""
+      CLOUDINARY_API_SECRET: ""
+
   client:
-    build: ./client
-    ports: ["5173:80"]
-    depends_on: [server]
+    build:
+      context: ./client
+      args:
+        VITE_API_URL: http://localhost:5000/api
+    container_name: parfum-client
+    restart: unless-stopped
+    depends_on:
+      - server
+    ports:
+      - "8080:80"
+
 volumes:
   mongo_data:

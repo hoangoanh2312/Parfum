@@ -34,9 +34,14 @@ interface Props {
   toggleGender: (gender: string) => void;
   clearGender: () => void;
 
-  price: number;
+  priceMin: number;
+  priceMax: number;
+  minPrice: number;
   maxPrice: number;
-  setPrice: (value: number) => void;
+  setPriceRange: (min: number, max: number) => void;
+
+  brandCounts?: Record<string, number>;
+  priceBuckets?: number[];
 }
 
 // Anh banner o sidebar - THAY ANH CUA BAN TAI DAY
@@ -51,9 +56,9 @@ export default function ShopSidebar(props: Props) {
 
       <BrandFilter
         brands={props.brands}
+        counts={props.brandCounts}
         selected={props.selectedBrands}
         onToggle={props.toggleBrand}
-        initialVisible={6}
       />
 
       <GenderFilter
@@ -64,9 +69,12 @@ export default function ShopSidebar(props: Props) {
       />
 
       <PriceFilter
-        value={props.price}
+        min={props.minPrice}
         max={props.maxPrice || 500}
-        onChange={props.setPrice}
+        valueMin={props.priceMin}
+        valueMax={props.priceMax}
+        buckets={props.priceBuckets}
+        onChange={props.setPriceRange}
       />
 
       {/* Scent */}
@@ -99,18 +107,18 @@ export default function ShopSidebar(props: Props) {
           SECTION ANH TUY CHINH - chen anh cua ban vao day.
           Doi bien SIDEBAR_IMAGE o tren, hoac thay src ben duoi.
           ========================================================= */}
-      <div className="mt-10 border-t border-[#e8deca] pt-8">
+            <div className="mt-10 border-t border-[#e8deca] pt-8">
         <h3 className="uppercase tracking-[2px] text-[11px] font-semibold text-[#735C00] mb-4">
-          Featured
+          
         </h3>
         <div className="relative overflow-hidden rounded-sm bg-[#EFECE7]">
-          <img
-            src={SIDEBAR_IMAGE}
-            alt="Featured"
+          <video
+            src="https://res.cloudinary.com/dwj2trmn0/video/upload/v1784437000/Video_Project_4_fmziee.mp4"
+            autoPlay
+            loop
+            muted
+            playsInline
             className="aspect-[3/4] w-full object-cover"
-            onError={(event) => {
-              event.currentTarget.src = SIDEBAR_IMAGE_FALLBACK;
-            }}
           />
         </div>
       </div>

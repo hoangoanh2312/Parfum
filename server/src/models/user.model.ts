@@ -3,9 +3,9 @@ import { Schema, model, InferSchemaType } from 'mongoose';
 const addressSchema = new Schema(
   {
     label: { type: String, default: 'Nhà' }, // Nhà / Văn phòng / Khác
-    fullName: { type: String, required: true },
+    fullName: { type: String, trim: true },
     phone: { type: String, required: true },
-    line: { type: String, required: true }, // số nhà, tên đường
+    line: { type: String, trim: true }, // số nhà, tên đường
     ward: String, // phường/xã
     district: String, // quận/huyện
     province: String, // tỉnh/thành
@@ -46,6 +46,8 @@ const userSchema = new Schema(
     refreshToken: { type: String, select: false },
     passwordResetToken: { type: String, select: false },
     passwordResetExpires: { type: Date, select: false },
+    emailVerifyToken: { type: String, select: false },
+    emailVerifyExpires: { type: Date, select: false },
     lastLoginAt: Date,
   },
   {
@@ -56,6 +58,8 @@ const userSchema = new Schema(
         delete ret.refreshToken;
         delete ret.passwordResetToken;
         delete ret.passwordResetExpires;
+        delete ret.emailVerifyToken;
+        delete ret.emailVerifyExpires;
         delete ret.__v;
         return ret;
       },
