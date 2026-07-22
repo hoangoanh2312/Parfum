@@ -7,7 +7,7 @@ import {
   Settings,
   Sparkles,
 } from "lucide-react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import { api } from "../../lib/api";
 import { useAuth } from "../../store/auth.store";
 import { toast } from "../../store/toast.store";
@@ -104,9 +104,12 @@ export default function AccountSidebar() {
           Dedicated olfactory guidance available 24/7 for members.
         </p>
 
-        <button className="mt-5 border-b border-[#987B00] pb-1 text-[9px] uppercase tracking-widest text-[#806800]">
+        <Link
+          to="/contact"
+          className="mt-5 inline-block border-b border-[#987B00] pb-1 text-[9px] uppercase tracking-widest text-[#806800]"
+        >
           Contact Expert
-        </button>
+        </Link>
       </div>
     </aside>
   );

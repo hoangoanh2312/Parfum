@@ -7,7 +7,12 @@ import Footer from "../components/Footer";
 
 const vnd = (n: number) => (n || 0).toLocaleString("vi-VN") + "₫";
 
-type OrderInfo = { id: string; total: number; status: string };
+type OrderInfo = {
+  id: string;
+  total: number;
+  status: string;
+  paymentMethod: string;
+};
 type PayInfo = {
   method: string;
   status: string;
@@ -23,6 +28,7 @@ export default function ThankYou() {
   const [pay, setPay] = useState<PayInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [paymentError, setPaymentError] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -34,11 +40,21 @@ export default function ThankYou() {
           id: data.data.id,
           total: data.data.total,
           status: data.data.status,
+          paymentMethod: data.data.payment?.method || "cod",
         });
         const method = data.data.payment?.method;
         if (method === "bank_qr") {
-          const res = await api.get("/orders/" + id + "/payment");
-          if (active) setPay(res.data.data);
+          try {
+            const res = await api.get("/orders/" + id + "/payment");
+            if (active) setPay(res.data.data);
+          } catch (paymentRequestError: any) {
+            if (active) {
+              setPaymentError(
+                paymentRequestError?.response?.data?.message ||
+                  "Không tải được thông tin chuyển khoản.",
+              );
+            }
+          }
         }
       } catch (e: any) {
         if (active)
@@ -51,6 +67,30 @@ export default function ThankYou() {
       active = false;
     };
   }, [id]);
+
+  useEffect(() => {
+    if (!id || pay?.method !== "bank_qr" || pay.status === "paid") return;
+
+    let active = true;
+    const timer = window.setInterval(async () => {
+      try {
+        const { data } = await api.get("/orders/" + id + "/payment");
+        if (!active) return;
+        const nextPayment = data.data as PayInfo;
+        setPay(nextPayment);
+        if (nextPayment.status === "paid") {
+          toast.success("Admin đã xác nhận thanh toán cho đơn hàng");
+        }
+      } catch {
+        // Giu QR hien tai va thu lai o chu ky tiep theo.
+      }
+    }, 4000);
+
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
+  }, [id, pay?.method, pay?.status]);
 
   function copy(text: string) {
     navigator.clipboard?.writeText(text).then(
@@ -93,38 +133,61 @@ export default function ThankYou() {
             {pay && pay.method === "bank_qr" && (
               <div className="bg-white border border-[rgba(208,197,175,0.5)] p-6 mt-8 text-left">
                 <h2 className="font-['Noto_Serif'] text-xl text-[#1C1C19] text-center mb-5">
-                  Quét mã QR để thanh toán
+                  {pay.status === "paid"
+                    ? "Thanh toán thành công"
+                    : "Quét mã QR để thanh toán"}
                 </h2>
-                {pay.qrUrl && (
-                  <img
-                    src={pay.qrUrl}
-                    alt="VietQR"
-                    className="w-60 h-60 object-contain mx-auto border border-[rgba(208,197,175,0.4)] bg-white"
-                  />
+                {pay.status === "paid" ? (
+                  <div className="py-5 text-center">
+                    <CheckCircle2
+                      size={58}
+                      strokeWidth={1.5}
+                      className="mx-auto text-[#637144]"
+                    />
+                    <p className="mt-4 font-['Manrope'] text-sm text-[#4F5C37]">
+                      Thanh toán đã được admin xác nhận: {vnd(pay.amount)}.
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    {pay.qrUrl && (
+                      <img
+                        src={pay.qrUrl}
+                        alt="VietQR"
+                        className="w-60 h-60 object-contain mx-auto border border-[rgba(208,197,175,0.4)] bg-white"
+                      />
+                    )}
+                    <div className="font-['Manrope'] text-sm text-[#1C1C19] mt-6 space-y-2">
+                      <Row label="Ngân hàng (BIN)" value={pay.bank.bin} />
+                      <Row
+                        label="Số tài khoản"
+                        value={pay.bank.accountNo}
+                        onCopy={() => copy(pay.bank.accountNo)}
+                      />
+                      <Row label="Chủ tài khoản" value={pay.bank.accountName} />
+                      <Row label="Số tiền" value={vnd(pay.amount)} />
+                      <Row
+                        label="Nội dung CK"
+                        value={pay.transferContent}
+                        onCopy={() => copy(pay.transferContent)}
+                      />
+                    </div>
+                    <p className="font-['Manrope'] text-xs text-[#5F5E5E] mt-4 text-center">
+                      Sau khi chuyển khoản, giao dịch sẽ chờ admin đối soát và
+                      xác nhận. Vui lòng giữ nguyên số tiền và nội dung chuyển khoản.
+                    </p>
+                  </>
                 )}
-                <div className="font-['Manrope'] text-sm text-[#1C1C19] mt-6 space-y-2">
-                  <Row label="Ngân hàng (BIN)" value={pay.bank.bin} />
-                  <Row
-                    label="Số tài khoản"
-                    value={pay.bank.accountNo}
-                    onCopy={() => copy(pay.bank.accountNo)}
-                  />
-                  <Row label="Chủ tài khoản" value={pay.bank.accountName} />
-                  <Row label="Số tiền" value={vnd(pay.amount)} />
-                  <Row
-                    label="Nội dung CK"
-                    value={pay.transferContent}
-                    onCopy={() => copy(pay.transferContent)}
-                  />
-                </div>
-                <p className="font-['Manrope'] text-xs text-[#5F5E5E] mt-4 text-center">
-                  Vui lòng ghi đúng nội dung chuyển khoản để đơn được xác nhận
-                  nhanh.
-                </p>
               </div>
             )}
 
-            {pay === null && !error && (
+            {paymentError && (
+              <div className="mt-8 border border-[#D8A7A1] bg-[#F7EAE8] p-5 font-['Manrope'] text-sm text-[#7B3F39]">
+                {paymentError}
+              </div>
+            )}
+
+            {pay === null && !paymentError && order.paymentMethod === "cod" && (
               <div className="bg-[#F7F3EE] border border-[rgba(208,197,175,0.4)] p-5 mt-8 font-['Manrope'] text-sm text-[#1C1C19]">
                 Thanh toán khi nhận hàng (COD). Bạn sẽ trả tiền khi nhận sản
                 phẩm.

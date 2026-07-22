@@ -31,10 +31,6 @@ export const STATUS_MAP: Record<string, { label: string; cls: string }> = {
     label: "Chờ xử lý",
     cls: "bg-amber-50 text-amber-700 border-amber-200",
   },
-  paid: {
-    label: "Đã thanh toán",
-    cls: "bg-green-50 text-green-700 border-green-200",
-  },
   shipping: {
     label: "Đang giao",
     cls: "bg-blue-50 text-blue-700 border-blue-200",

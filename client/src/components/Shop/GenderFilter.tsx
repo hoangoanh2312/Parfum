@@ -29,9 +29,11 @@ export default function GenderFilter({
             className="flex items-center gap-3 cursor-pointer"
           >
             <input
-              type="checkbox"
+              type="radio"
+              name="shop-gender"
               checked={selected.includes(gender)}
-              onChange={() => onToggle(gender)}
+              onClick={() => onToggle(gender)}
+              onChange={() => undefined}
               className="accent-[#735C00]"
             />
 

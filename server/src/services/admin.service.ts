@@ -12,10 +12,14 @@ import { Order } from '../models/order.model';
 import { Payment } from '../models/payment.model';
 import { User } from '../models/user.model';
 import { Review } from '../models/review.model';
-import { restoreStock } from './order.service';
+import { BlogArticle } from '../models/blogArticle.model';
+import { SupportRequest } from '../models/supportRequest.model';
+import { releaseOrderPromotionReservations, restoreStock } from './order.service';
+import { normalizeOrderStatus } from '../utils/orderStatus';
+import { changeVariantBasePrice, ensurePriceHistory } from './promotion.service';
 
 // ------------------------------------------------------------------ helpers --
-const ORDER_STATUSES = ['pending', 'paid', 'shipping', 'done', 'cancelled'] as const;
+const ORDER_STATUSES = ['pending', 'shipping', 'done', 'cancelled', 'returned'] as const;
 const PAYMENT_STATUSES = ['unpaid', 'paid'] as const;
 type OrderStatus = (typeof ORDER_STATUSES)[number];
 type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
@@ -27,6 +31,10 @@ function httpError(message: string, status = 400) {
 function toInt(value: unknown, fallback: number) {
   const n = Number(value);
   return Number.isFinite(n) ? Math.floor(n) : fallback;
+}
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 function slugify(input: string) {
@@ -78,6 +86,11 @@ function paginate(page?: unknown, limit?: unknown) {
 
 // =============================================================== DASHBOARD ===
 export async function getStats() {
+  const now = new Date();
+  const trendStart = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+  const last30Days = new Date(now);
+  last30Days.setDate(last30Days.getDate() - 30);
+
   const [
     productCount,
     activeProductCount,
@@ -88,6 +101,7 @@ export async function getStats() {
     adminCount,
     orderCount,
     pendingReviews,
+    newCustomerCount,
   ] = await Promise.all([
     Product.countDocuments({}),
     Product.countDocuments({ isActive: true }),
@@ -98,6 +112,7 @@ export async function getStats() {
     User.countDocuments({ role: 'admin' }),
     Order.countDocuments({}),
     Review.countDocuments({ approved: false }),
+    User.countDocuments({ role: 'customer', createdAt: { $gte: last30Days } }),
   ]);
 
   // Doanh thu = tong cac don da thanh toan / hoan tat (khong tinh don huy)
@@ -113,18 +128,120 @@ export async function getStats() {
   ]);
   const ordersByStatus: Record<string, number> = {};
   for (const status of ORDER_STATUSES) ordersByStatus[status] = 0;
-  for (const row of byStatusAgg) ordersByStatus[row._id] = row.count;
+  for (const row of byStatusAgg) {
+    const status = normalizeOrderStatus(row._id);
+    ordersByStatus[status] = (ordersByStatus[status] || 0) + row.count;
+  }
 
-  // Canh bao ton kho thap (<= 5)
-  const lowStockCount = await Variant.countDocuments({ stock: { $lte: 5 } });
+  const [
+    lowStockCount,
+    recentOrdersRaw,
+    salesSummaryAgg,
+    revenueTrendAgg,
+    topProductsAgg,
+    revenueByBrandAgg,
+    revenueByCategoryAgg,
+    lowStockItemsRaw,
+    recentReviewsRaw,
+    newCustomersRaw,
+    paymentMethodsAgg,
+  ]: any[] = await Promise.all([
+    Variant.countDocuments({ stock: { $lte: 5 }, isActive: { $ne: false } }),
+    Order.find({}).sort({ createdAt: -1 }).limit(5).populate('user', 'name email').lean(),
+    Order.aggregate([
+      { $match: { status: { $in: ['paid', 'shipping', 'done'] } } },
+      { $unwind: '$items' },
+      { $group: { _id: null, quantity: { $sum: '$items.quantity' } } },
+    ]),
+    Order.aggregate([
+      {
+        $match: {
+          status: { $in: ['paid', 'shipping', 'done'] },
+          createdAt: { $gte: trendStart },
+        },
+      },
+      {
+        $group: {
+          _id: { $dateToString: { format: '%Y-%m', date: '$createdAt' } },
+          revenue: { $sum: '$total' },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]),
+    Order.aggregate([
+      { $match: { status: { $ne: 'cancelled' } } },
+      { $unwind: '$items' },
+      {
+        $group: {
+          _id: '$items.name',
+          quantity: { $sum: '$items.quantity' },
+          revenue: { $sum: { $multiply: ['$items.price', '$items.quantity'] } },
+        },
+      },
+      { $sort: { quantity: -1 } },
+      { $limit: 5 },
+    ]),
+    Order.aggregate([
+      { $match: { status: { $in: ['paid', 'shipping', 'done'] } } },
+      { $unwind: '$items' },
+      { $lookup: { from: 'variants', localField: 'items.variant', foreignField: '_id', as: 'variant' } },
+      { $unwind: { path: '$variant', preserveNullAndEmptyArrays: true } },
+      { $lookup: { from: 'products', localField: 'variant.product', foreignField: '_id', as: 'product' } },
+      { $unwind: { path: '$product', preserveNullAndEmptyArrays: true } },
+      { $lookup: { from: 'brands', localField: 'product.brand', foreignField: '_id', as: 'brand' } },
+      { $unwind: { path: '$brand', preserveNullAndEmptyArrays: true } },
+      {
+        $group: {
+          _id: { $ifNull: ['$brand.name', 'Khác'] },
+          value: { $sum: { $multiply: ['$items.price', '$items.quantity'] } },
+        },
+      },
+      { $sort: { value: -1 } },
+      { $limit: 4 },
+    ]),
+    Order.aggregate([
+      { $match: { status: { $in: ['paid', 'shipping', 'done'] } } },
+      { $unwind: '$items' },
+      { $lookup: { from: 'variants', localField: 'items.variant', foreignField: '_id', as: 'variant' } },
+      { $unwind: { path: '$variant', preserveNullAndEmptyArrays: true } },
+      { $lookup: { from: 'products', localField: 'variant.product', foreignField: '_id', as: 'product' } },
+      { $unwind: { path: '$product', preserveNullAndEmptyArrays: true } },
+      { $lookup: { from: 'categories', localField: 'product.category', foreignField: '_id', as: 'category' } },
+      { $unwind: { path: '$category', preserveNullAndEmptyArrays: true } },
+      {
+        $group: {
+          _id: { $ifNull: ['$category.name', 'Khác'] },
+          value: { $sum: { $multiply: ['$items.price', '$items.quantity'] } },
+        },
+      },
+      { $sort: { value: -1 } },
+      { $limit: 5 },
+    ]),
+    Variant.find({ stock: { $lte: 5 }, isActive: { $ne: false } })
+      .sort({ stock: 1 })
+      .limit(5)
+      .populate('product', 'name')
+      .lean(),
+    Review.find({ approved: true })
+      .sort({ createdAt: -1 })
+      .limit(3)
+      .populate('user', 'name')
+      .populate('product', 'name')
+      .lean(),
+    User.aggregate([
+      { $match: { role: 'customer' } },
+      { $sort: { createdAt: -1 } },
+      { $limit: 4 },
+      { $lookup: { from: 'orders', localField: '_id', foreignField: 'user', as: 'orders' } },
+      { $project: { name: 1, createdAt: 1, orderCount: { $size: '$orders' } } },
+    ]),
+    Payment.aggregate([
+      { $group: { _id: '$method', count: { $sum: 1 }, amount: { $sum: '$amount' } } },
+      { $sort: { count: -1 } },
+    ]),
+  ]);
 
-  // 5 don hang moi nhat
-  const recentOrdersRaw: any[] = await Order.find({})
-    .sort({ createdAt: -1 })
-    .limit(5)
-    .populate('user', 'name email')
-    .lean();
-  const recentOrders = recentOrdersRaw.map((o) => ({
+  const recentOrders = recentOrdersRaw.map((o: any) => ({
     id: String(o._id),
     customer: o.user?.name || o.address?.fullName || 'Khach vang lai',
     total: o.total || 0,
@@ -132,6 +249,15 @@ export async function getStats() {
     createdAt: o.createdAt,
     itemCount: (o.items || []).reduce((s: number, it: any) => s + (it.quantity || 0), 0),
   }));
+
+  const revenueByMonth = new Map(revenueTrendAgg.map((row: any) => [row._id, row.revenue]));
+  const revenueTrend = Array.from({ length: 6 }, (_, index) => {
+    const date = new Date(now.getFullYear(), now.getMonth() - 5 + index, 1);
+    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    return { key, label: `T${date.getMonth() + 1}`, revenue: Number(revenueByMonth.get(key) || 0) };
+  });
+
+  const totalPaymentCount = paymentMethodsAgg.reduce((sum: number, row: any) => sum + row.count, 0);
 
   return {
     productCount,
@@ -143,11 +269,187 @@ export async function getStats() {
     adminCount,
     orderCount,
     pendingReviews,
+    newCustomerCount,
     revenue,
+    productsSold: salesSummaryAgg[0]?.quantity || 0,
     lowStockCount,
     ordersByStatus,
     recentOrders,
+    revenueTrend,
+    topProducts: topProductsAgg.map((row: any) => ({
+      name: row._id || 'Sản phẩm',
+      quantity: row.quantity || 0,
+      revenue: row.revenue || 0,
+    })),
+    revenueByBrand: revenueByBrandAgg.map((row: any) => ({ name: row._id, value: row.value || 0 })),
+    revenueByCategory: revenueByCategoryAgg.map((row: any) => ({ name: row._id, value: row.value || 0 })),
+    lowStockItems: lowStockItemsRaw.map((variant: any) => ({
+      id: String(variant._id),
+      name: variant.product?.name || variant.sku,
+      volume: variant.volume || variant.size || '',
+      stock: variant.stock || 0,
+    })),
+    recentReviews: recentReviewsRaw.map((review: any) => ({
+      id: String(review._id),
+      userName: review.user?.name || review.guestName || 'Khách hàng',
+      productName: review.product?.name || '',
+      rating: review.rating,
+      comment: review.comment,
+      createdAt: review.createdAt,
+    })),
+    newCustomers: newCustomersRaw.map((customer: any) => ({
+      id: String(customer._id),
+      name: customer.name,
+      createdAt: customer.createdAt,
+      orderCount: customer.orderCount || 0,
+    })),
+    paymentMethods: paymentMethodsAgg.map((row: any) => ({
+      method: row._id || 'other',
+      count: row.count,
+      amount: row.amount || 0,
+      percentage: totalPaymentCount > 0 ? Math.round((row.count / totalPaymentCount) * 100) : 0,
+    })),
   };
+}
+
+export async function globalSearch(rawQuery: unknown) {
+  const query = String(rawQuery || '').trim().slice(0, 80);
+  if (query.length < 2) return { query, groups: [], total: 0 };
+  const regex = new RegExp(escapeRegExp(query), 'i');
+
+  const [orders, users, products, variants, brands, categories, reviews, articles, supportRequests]: any[] =
+    await Promise.all([
+      Order.aggregate([
+        { $addFields: { searchId: { $toString: '$_id' } } },
+        {
+          $match: {
+            $or: [
+              { searchId: regex },
+              { 'address.fullName': regex },
+              { 'address.email': regex },
+              { 'address.phone': regex },
+              { note: regex },
+            ],
+          },
+        },
+        { $sort: { createdAt: -1 } },
+        { $limit: 5 },
+        { $lookup: { from: 'users', localField: 'user', foreignField: '_id', as: 'userDoc' } },
+        { $unwind: { path: '$userDoc', preserveNullAndEmptyArrays: true } },
+      ]),
+      User.find({ $or: [{ name: regex }, { email: regex }, { phone: regex }] })
+        .sort({ createdAt: -1 }).limit(5).lean(),
+      Product.find({ $or: [{ name: regex }, { slug: regex }, { description: regex }] })
+        .sort({ updatedAt: -1 }).limit(5).populate('brand', 'name').lean(),
+      Variant.find({ $or: [{ sku: regex }, { volume: regex }, { size: regex }] })
+        .sort({ updatedAt: -1 }).limit(5).populate('product', 'name').lean(),
+      Brand.find({ $or: [{ name: regex }, { slug: regex }, { description: regex }] })
+        .sort({ name: 1 }).limit(5).lean(),
+      Category.find({ $or: [{ name: regex }, { slug: regex }] }).sort({ name: 1 }).limit(5).lean(),
+      Review.find({
+        $or: [{ title: regex }, { comment: regex }, { guestName: regex }, { guestEmail: regex }],
+      }).sort({ createdAt: -1 }).limit(5).populate('product', 'name').lean(),
+      BlogArticle.find({
+        $or: [{ title: regex }, { description: regex }, { category: regex }, { author: regex }, { slug: regex }],
+      }).sort({ updatedAt: -1 }).limit(5).lean(),
+      SupportRequest.find({
+        $or: [{ name: regex }, { email: regex }, { subject: regex }, { message: regex }],
+      }).sort({ createdAt: -1 }).limit(5).lean(),
+    ]);
+
+  const groups = [
+    {
+      key: 'orders', label: 'Đơn hàng',
+      items: orders.map((order: any) => ({
+        id: String(order._id), type: 'order',
+        title: `#${String(order._id).slice(-6).toUpperCase()} · ${order.address?.fullName || order.userDoc?.name || 'Khách vãng lai'}`,
+        subtitle: `${order.address?.phone || order.address?.email || ''} · ${Number(order.total || 0).toLocaleString('vi-VN')}đ`,
+        to: `/admin/orders?open=${order._id}`,
+      })),
+    },
+    {
+      key: 'users', label: 'Người dùng',
+      items: users.map((user: any) => ({
+        id: String(user._id), type: 'user', title: user.name,
+        subtitle: [user.email, user.phone].filter(Boolean).join(' · '), to: '/admin/users',
+      })),
+    },
+    {
+      key: 'products', label: 'Sản phẩm',
+      items: products.map((product: any) => ({
+        id: String(product._id), type: 'product', title: product.name,
+        subtitle: product.brand?.name || product.slug, to: '/admin/products',
+      })),
+    },
+    {
+      key: 'variants', label: 'Biến thể',
+      items: variants.map((variant: any) => ({
+        id: String(variant._id), type: 'variant',
+        title: `${variant.product?.name || 'Biến thể'} · ${variant.volume || variant.size || ''}`,
+        subtitle: `${variant.sku} · Tồn ${variant.stock || 0}`, to: '/admin/variants',
+      })),
+    },
+    {
+      key: 'brands', label: 'Thương hiệu',
+      items: brands.map((brand: any) => ({
+        id: String(brand._id), type: 'brand', title: brand.name,
+        subtitle: brand.country || brand.website || brand.slug || '', to: '/admin/brands',
+      })),
+    },
+    {
+      key: 'categories', label: 'Danh mục',
+      items: categories.map((category: any) => ({
+        id: String(category._id), type: 'category', title: category.name,
+        subtitle: category.slug || '', to: '/admin/categories',
+      })),
+    },
+    {
+      key: 'reviews', label: 'Đánh giá',
+      items: reviews.map((review: any) => ({
+        id: String(review._id), type: 'review',
+        title: review.title || review.comment.slice(0, 70),
+        subtitle: `${review.product?.name || 'Sản phẩm'} · ${review.rating}/5 sao`, to: '/admin/reviews',
+      })),
+    },
+    {
+      key: 'articles', label: 'Tin tức',
+      items: articles.map((article: any) => ({
+        id: String(article._id), type: 'article', title: article.title,
+        subtitle: `${article.category} · ${article.status === 'published' ? 'Đã xuất bản' : 'Bản nháp'}`,
+        to: '/admin/blog',
+      })),
+    },
+    {
+      key: 'support', label: 'Yêu cầu hỗ trợ',
+      items: supportRequests.map((request: any) => ({
+        id: String(request._id), type: 'support', title: request.subject,
+        subtitle: `${request.name} · ${request.email}`,
+        to: '/admin/reports/operations',
+      })),
+    },
+  ].filter((group) => group.items.length > 0);
+
+  return { query, groups, total: groups.reduce((sum, group) => sum + group.items.length, 0) };
+}
+
+export async function getNotifications() {
+  const [pendingOrders, lowStock, pendingReviews, draftArticles, unpaidQr, openSupport] = await Promise.all([
+    Order.countDocuments({ status: { $in: ['pending', 'paid'] } }),
+    Variant.countDocuments({ stock: { $lte: 5 }, isActive: { $ne: false } }),
+    Review.countDocuments({ approved: false }),
+    BlogArticle.countDocuments({ status: 'draft' }),
+    Payment.countDocuments({ method: 'bank_qr', status: 'unpaid' }),
+    SupportRequest.countDocuments({ status: { $in: ['open', 'in_progress'] } }),
+  ]);
+  const items = [
+    { id: 'pending-orders', count: pendingOrders, severity: 'warning', title: 'Đơn hàng chờ xử lý', description: `${pendingOrders} đơn cần được kiểm tra`, to: '/admin/orders?status=pending' },
+    { id: 'low-stock', count: lowStock, severity: 'danger', title: 'Sản phẩm sắp hết hàng', description: `${lowStock} biến thể còn tối đa 5 sản phẩm`, to: '/admin/variants?lowStock=true' },
+    { id: 'pending-reviews', count: pendingReviews, severity: 'info', title: 'Đánh giá chờ duyệt', description: `${pendingReviews} đánh giá cần kiểm duyệt`, to: '/admin/reviews?status=pending' },
+    { id: 'draft-articles', count: draftArticles, severity: 'neutral', title: 'Bài viết chưa xuất bản', description: `${draftArticles} bài đang ở trạng thái nháp`, to: '/admin/blog' },
+    { id: 'unpaid-qr', count: unpaidQr, severity: 'warning', title: 'Thanh toán QR chưa hoàn tất', description: `${unpaidQr} giao dịch đang chờ đối soát`, to: '/admin/orders?payment=unpaid&method=bank_qr' },
+    { id: 'open-support', count: openSupport, severity: 'info', title: 'Yêu cầu hỗ trợ', description: `${openSupport} yêu cầu đang chờ xử lý`, to: '/admin/reports/operations' },
+  ].filter((item) => item.count > 0);
+  return { items, total: items.reduce((sum, item) => sum + item.count, 0), updatedAt: new Date() };
 }
 
 // ================================================================ PRODUCTS ===
@@ -311,7 +613,10 @@ export async function deleteProduct(id: string) {
 export async function listVariants(query: Record<string, any> = {}) {
   const filter: Record<string, unknown> = {};
   if (query.product) filter.product = query.product;
-  if (query.lowStock === 'true' || query.lowStock === true) filter.stock = { $lte: 5 };
+  if (query.lowStock === 'true' || query.lowStock === true) {
+    filter.stock = { $lte: 5 };
+    filter.isActive = { $ne: false };
+  }
   if (query.search) filter.sku = { $regex: String(query.search).trim(), $options: 'i' };
 
   const variants: any[] = await Variant.find(filter)
@@ -323,7 +628,8 @@ export async function listVariants(query: Record<string, any> = {}) {
     id: String(v._id),
     sku: v.sku,
     volume: v.volume || v.size || '',
-    price: v.price,
+    price: Number(v.basePrice ?? v.price),
+    costPrice: v.costPrice || 0,
     stock: v.stock || 0,
     images: v.images || [],
     isActive: v.isActive !== false,
@@ -334,7 +640,7 @@ export async function listVariants(query: Record<string, any> = {}) {
   }));
 }
 
-export async function createVariant(input: any) {
+export async function createVariant(input: any, adminId?: string) {
   if (!input?.product) throw httpError('Thieu san pham cho bien the');
   if (!input?.sku?.trim()) throw httpError('SKU la bat buoc');
   if (input.price === undefined || input.price === null) throw httpError('Gia la bat buoc');
@@ -350,14 +656,17 @@ export async function createVariant(input: any) {
     sku: input.sku.trim(),
     volume: input.volume?.trim() || '',
     price: Number(input.price),
+    basePrice: Number(input.price),
+    costPrice: Number(input.costPrice || 0),
     stock: Number(input.stock || 0),
     images: Array.isArray(input.images) ? input.images.filter(Boolean) : [],
     isActive: input.isActive !== false,
   });
+  await ensurePriceHistory(variant, adminId);
   return variant.toObject();
 }
 
-export async function updateVariant(id: string, input: any) {
+export async function updateVariant(id: string, input: any, adminId?: string) {
   const variant: any = await Variant.findById(id);
   if (!variant) throw httpError('Khong tim thay bien the', 404);
 
@@ -368,7 +677,10 @@ export async function updateVariant(id: string, input: any) {
   }
   if (input.product !== undefined) variant.product = input.product;
   if (input.volume !== undefined) variant.volume = input.volume;
-  if (input.price !== undefined) variant.price = Number(input.price);
+  if (input.price !== undefined) {
+    await changeVariantBasePrice(variant, Number(input.price), adminId, input.priceHistoryReason);
+  }
+  if (input.costPrice !== undefined) variant.costPrice = Number(input.costPrice);
   if (input.stock !== undefined) variant.stock = Number(input.stock);
   if (input.images !== undefined) variant.images = Array.isArray(input.images) ? input.images.filter(Boolean) : [];
   if (input.isActive !== undefined) variant.isActive = Boolean(input.isActive);
@@ -394,9 +706,69 @@ export async function listBrands() {
   return brands.map((b) => ({
     id: String(b._id),
     name: b.name,
+    slug: b.slug || '',
+    description: b.description || '',
+    logo: b.logo || '',
+    heroImage: b.heroImage || '',
+    country: b.country || '',
+    website: b.website || '',
+    foundedYear: b.foundedYear || null,
+    isFeatured: Boolean(b.isFeatured),
     productCount: countMap.get(String(b._id)) || 0,
     createdAt: b.createdAt,
   }));
+}
+
+export async function importDefaultBrands(brands: any[]) {
+  let imported = 0;
+  let updated = 0;
+
+  for (const input of brands || []) {
+    const name = String(input.name || '').trim();
+    if (!name) continue;
+
+    const existing: any = await Brand.findOne({
+      $or: [
+        { name: { $regex: `^${escapeRegExp(name)}$`, $options: 'i' } },
+        ...(input.slug ? [{ slug: String(input.slug).trim().toLowerCase() }] : []),
+      ],
+    });
+
+    const data = {
+      name,
+      description: String(input.description || '').trim(),
+      logo: String(input.logo || input.image || '').trim(),
+      heroImage: String(input.heroImage || input.image || '').trim(),
+      country: String(input.country || '').trim(),
+      website: String(input.website || '').trim(),
+      foundedYear: input.foundedYear || undefined,
+      isFeatured: Boolean(input.isFeatured),
+    };
+
+    if (!existing) {
+      await Brand.create({
+        ...data,
+        slug: await uniqueSlugFor(Brand, input.slug || name),
+      });
+      imported += 1;
+      continue;
+    }
+
+    const patch: Record<string, unknown> = {};
+    for (const field of ['description', 'logo', 'heroImage', 'country', 'website'] as const) {
+      if (!existing[field] && data[field]) patch[field] = data[field];
+    }
+    if (!existing.foundedYear && data.foundedYear) patch.foundedYear = data.foundedYear;
+    if (!existing.isFeatured && data.isFeatured) patch.isFeatured = true;
+    if (!existing.slug) patch.slug = await uniqueSlugFor(Brand, input.slug || name, String(existing._id));
+
+    if (Object.keys(patch).length) {
+      await Brand.updateOne({ _id: existing._id }, { $set: patch });
+      updated += 1;
+    }
+  }
+
+  return { imported, updated, total: brands?.length || 0 };
 }
 
 export async function createBrand(input: any) {
@@ -406,6 +778,13 @@ export async function createBrand(input: any) {
   const brand: any = await Brand.create({
     name: input.name.trim(),
     slug: await uniqueSlugFor(Brand, input.name.trim()),
+    description: String(input.description || '').trim(),
+    logo: String(input.logo || '').trim(),
+    heroImage: String(input.heroImage || '').trim(),
+    country: String(input.country || '').trim(),
+    website: String(input.website || '').trim(),
+    foundedYear: input.foundedYear || undefined,
+    isFeatured: Boolean(input.isFeatured),
   });
   return { id: String(brand._id), name: brand.name, productCount: 0 };
 }
@@ -414,7 +793,17 @@ export async function updateBrand(id: string, input: any) {
   if (!input?.name?.trim()) throw httpError('Ten thuong hieu la bat buoc');
   const brand: any = await Brand.findByIdAndUpdate(
     id,
-    { name: input.name.trim(), slug: await uniqueSlugFor(Brand, input.name.trim(), id) },
+    {
+      name: input.name.trim(),
+      slug: await uniqueSlugFor(Brand, input.name.trim(), id),
+      description: String(input.description || '').trim(),
+      logo: String(input.logo || '').trim(),
+      heroImage: String(input.heroImage || '').trim(),
+      country: String(input.country || '').trim(),
+      website: String(input.website || '').trim(),
+      foundedYear: input.foundedYear || null,
+      isFeatured: Boolean(input.isFeatured),
+    },
     { new: true, runValidators: true },
   );
   if (!brand) throw httpError('Khong tim thay thuong hieu', 404);
@@ -481,7 +870,7 @@ function normalizeOrder(order: any, payment?: any) {
     id: String(order._id),
     createdAt: order.createdAt,
     updatedAt: order.updatedAt,
-    status: order.status,
+    status: normalizeOrderStatus(order.status),
     total: order.total || 0,
     note: order.note || '',
     address: order.address || null,
@@ -494,11 +883,23 @@ function normalizeOrder(order: any, payment?: any) {
       name: it.name,
       volume: it.volume,
       price: it.price || 0,
+      basePrice: it.basePrice ?? it.price ?? 0,
+      finalPrice: it.finalPrice ?? it.price ?? 0,
+      productDiscountAmount: it.productDiscountAmount || 0,
+      promotionType: it.promotionType || null,
+      promotionName: it.promotionName || '',
       quantity: it.quantity || 0,
       lineTotal: (it.price || 0) * (it.quantity || 0),
     })),
     payment: payment
-      ? { method: payment.method, status: payment.status, amount: payment.amount }
+      ? {
+          method: payment.method,
+          status: payment.status,
+          amount: payment.amount,
+          receivedAmount: payment.receivedAmount ?? null,
+          bankReference: payment.bankReference || '',
+          providerTransactionId: payment.providerTransactionId || '',
+        }
       : null,
   };
 }
@@ -506,7 +907,20 @@ function normalizeOrder(order: any, payment?: any) {
 export async function listOrders(query: Record<string, any> = {}) {
   const { page, limit, skip } = paginate(query.page, query.limit);
   const filter: Record<string, unknown> = {};
-  if (query.status && ORDER_STATUSES.includes(query.status)) filter.status = query.status;
+  if (query.status === 'pending') filter.status = { $in: ['pending', 'paid'] };
+  else if (query.status && ORDER_STATUSES.includes(query.status)) filter.status = query.status;
+
+  const paymentFilter: Record<string, unknown> = {};
+  if (PAYMENT_STATUSES.includes(query.paymentStatus as PaymentStatus)) {
+    paymentFilter.status = query.paymentStatus;
+  }
+  if (['cod', 'bank_qr'].includes(String(query.paymentMethod))) {
+    paymentFilter.method = query.paymentMethod;
+  }
+  if (Object.keys(paymentFilter).length > 0) {
+    const orderIds = await Payment.distinct('order', paymentFilter);
+    filter._id = { $in: orderIds };
+  }
 
   const [orders, total] = await Promise.all([
     Order.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).populate('user', 'name email').lean(),
@@ -543,24 +957,57 @@ export async function updateOrderStatus(id: string, status: string) {
   const order: any = await Order.findById(id);
   if (!order) throw httpError('Khong tim thay don hang', 404);
 
-  const wasCancelled = order.status === 'cancelled';
+  const previousStatus = normalizeOrderStatus(order.status);
+  const wasCancelled = previousStatus === 'cancelled';
+  const wasReturned = previousStatus === 'returned';
   order.status = status;
-  await order.save();
 
   // Huy don -> hoan lai ton kho (chi 1 lan) va danh dau thanh toan la unpaid
   if (status === 'cancelled' && !wasCancelled) {
+    await releaseOrderPromotionReservations(order);
     const items = (order.items || []).map((it: any) => ({
       variant: String(it.variant),
       quantity: it.quantity,
     }));
     await restoreStock(items);
-    await Payment.updateOne({ order: order._id }, { status: 'unpaid' });
+    await Payment.updateOne(
+      { order: order._id },
+      { $set: { status: 'unpaid' }, $unset: { paidAt: 1 } },
+    );
   }
 
-  // Da thanh toan / hoan tat -> dong bo trang thai thanh toan
-  if (status === 'paid' || status === 'done') {
-    await Payment.updateOne({ order: order._id }, { status: 'paid' });
+  if (status === 'returned' && !wasReturned) {
+    const items = (order.items || []).map((it: any) => ({
+      variant: String(it.variant),
+      quantity: it.quantity,
+    }));
+    await restoreStock(items);
+    await Payment.updateOne(
+      { order: order._id, status: 'paid' },
+      { $set: { status: 'refunded', refundedAt: new Date() } },
+    );
   }
+
+  // COD duoc xem la da thu tien khi don hoan tat.
+  if (status === 'done') {
+    await Payment.updateOne(
+      {
+        order: order._id,
+        method: 'cod',
+        $or: [{ status: { $ne: 'paid' } }, { paidAt: null }],
+      },
+      { $set: { status: 'paid', paidAt: new Date() } },
+    );
+  }
+
+
+  const now = new Date();
+  order.statusHistory.push({ status, at: now });
+  if (status === 'shipping') { order.processedAt ||= now; order.shippedAt ||= now; }
+  if (status === 'done') order.completedAt ||= now;
+  if (status === 'cancelled') order.cancelledAt ||= now;
+  if (status === 'returned') order.returnedAt ||= now;
+  await order.save();
 
   return getOrder(id);
 }
@@ -569,7 +1016,13 @@ export async function updatePaymentStatus(id: string, status: string) {
   if (!PAYMENT_STATUSES.includes(status as PaymentStatus)) throw httpError('Trang thai thanh toan khong hop le');
   const order = await Order.findById(id);
   if (!order) throw httpError('Khong tim thay don hang', 404);
-  const payment = await Payment.findOneAndUpdate({ order: id }, { status }, { new: true });
+  const payment = await Payment.findOneAndUpdate(
+    { order: id },
+    status === 'paid'
+      ? { $set: { status: 'paid', paidAt: new Date() } }
+      : { $set: { status: 'unpaid' }, $unset: { paidAt: 1 } },
+    { new: true },
+  );
   if (!payment) throw httpError('Khong tim thay ban ghi thanh toan', 404);
   return getOrder(id);
 }

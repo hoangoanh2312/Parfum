@@ -1,7 +1,9 @@
 import { Order } from '../models/order.model';
+import { Payment } from '../models/payment.model';
 import { Wishlist } from '../models/wishlist.model';
 import { User } from '../models/user.model';
 import '../models/product.model';
+import { normalizeOrderStatus } from '../utils/orderStatus';
 
 const defaultScentProfile = {
   families: ['woody', 'fresh', 'oriental'],
@@ -11,26 +13,46 @@ const defaultScentProfile = {
 
 export async function getOrders(userId: string) {
   const orders: any[] = await Order.find({ user: userId }).sort({ createdAt: -1 }).lean();
+  const payments: any[] = await Payment.find({
+    order: { $in: orders.map((order) => order._id) },
+  })
+    .select('order method status paidAt')
+    .lean();
+  const paymentByOrder = new Map(
+    payments.map((payment) => [String(payment.order), payment]),
+  );
 
-  return orders.map((order) => ({
-    id: String(order._id),
-    createdAt: order.createdAt,
-    status: order.status,
-    total: order.total || 0,
-    itemCount: (order.items || []).reduce(
-      (sum: number, item: any) => sum + (item.quantity || 0),
-      0,
-    ),
-    firstItemName: order.items?.[0]?.name || 'Đơn hàng',
-    address: order.address || null,
-    items: (order.items || []).map((item: any) => ({
-      variant: item.variant ? String(item.variant) : '',
-      name: item.name || 'Sản phẩm',
-      price: item.price || 0,
-      quantity: item.quantity || 0,
-      lineTotal: (item.price || 0) * (item.quantity || 0),
-    })),
-  }));
+  return orders.map((order) => {
+    const payment = paymentByOrder.get(String(order._id));
+
+    return {
+      id: String(order._id),
+      createdAt: order.createdAt,
+      status: normalizeOrderStatus(order.status),
+      displayStatus: normalizeOrderStatus(order.status),
+      payment: payment
+        ? {
+            method: payment.method,
+            status: payment.status,
+            paidAt: payment.paidAt || null,
+          }
+        : null,
+      total: order.total || 0,
+      itemCount: (order.items || []).reduce(
+        (sum: number, item: any) => sum + (item.quantity || 0),
+        0,
+      ),
+      firstItemName: order.items?.[0]?.name || 'Đơn hàng',
+      address: order.address || null,
+      items: (order.items || []).map((item: any) => ({
+        variant: item.variant ? String(item.variant) : '',
+        name: item.name || 'Sản phẩm',
+        price: item.price || 0,
+        quantity: item.quantity || 0,
+        lineTotal: (item.price || 0) * (item.quantity || 0),
+      })),
+    };
+  });
 }
 
 export async function getWishlist(userId: string) {

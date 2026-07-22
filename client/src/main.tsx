@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import { RouterProvider } from "react-router-dom";
 import { router } from "./router";
 import { useAuth } from "./store/auth.store";
+import LanguageRuntime from "./components/LanguageRuntime";
 import "./index.css";
 
 function App() {
@@ -20,7 +21,12 @@ function App() {
     );
   }
 
-  return <RouterProvider router={router} />;
+  return (
+    <>
+      <LanguageRuntime />
+      <RouterProvider router={router} />
+    </>
+  );
 }
 
 ReactDOM.createRoot(document.getElementById("root")!).render(

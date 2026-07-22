@@ -2,9 +2,12 @@ import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import { JsonWebTokenError, TokenExpiredError } from 'jsonwebtoken';
 import { User } from '../models/user.model';
+import { Order } from '../models/order.model';
 import { signAccess, signRefresh, verifyRefresh } from '../utils/jwt';
-import { sendMail } from '../utils/mailer';
+import { assertMailConfigured, sendMail } from '../utils/mailer';
 import { AddressInput } from '../types/dto';
+import { assertValidContact, normalizeEmail, normalizePhone } from '../utils/contactValidation';
+import { assertSmsConfigured, sendPasswordResetOtp } from '../utils/sms';
 
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
 
@@ -12,11 +15,61 @@ function hashToken(token: string) {
   return crypto.createHash('sha256').update(token).digest('hex');
 }
 
-export async function register(name: string, email: string, password: string) {
-  const exists = await User.findOne({ email });
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+async function claimGuestOrdersForUser(user: any, email: string, phone: string) {
+  const normalizedEmail = normalizeEmail(email);
+  const normalizedPhone = normalizePhone(phone);
+  if (!normalizedEmail || !normalizedPhone) return 0;
+
+  const guestOrderFilter = {
+    $or: [{ user: { $exists: false } }, { user: null }],
+    'address.phone': normalizedPhone,
+    $and: [
+      {
+        $or: [
+          { 'address.email': normalizedEmail },
+          { 'address.email': { $exists: false }, note: { $regex: `Email:\\s*${escapeRegExp(normalizedEmail)}`, $options: 'i' } },
+          { 'address.email': '', note: { $regex: `Email:\\s*${escapeRegExp(normalizedEmail)}`, $options: 'i' } },
+        ],
+      },
+    ],
+  };
+
+  const guestOrders = await Order.find(guestOrderFilter).select('_id pointsEarned status').lean();
+  if (!guestOrders.length) return 0;
+
+  await Order.updateMany(
+    { _id: { $in: guestOrders.map((order) => order._id) } },
+    { $set: { user: user._id } },
+  );
+
+  const claimedPoints = guestOrders.reduce(
+    (sum: number, order: any) => sum + (order.status !== 'cancelled' ? Number(order.pointsEarned) || 0 : 0),
+    0,
+  );
+  if (claimedPoints) {
+    await User.updateOne({ _id: user._id }, { $inc: { loyaltyPoints: claimedPoints } });
+  }
+
+  return guestOrders.length;
+}
+
+export async function register(name: string, email: string, password: string, phone: string) {
+  const normalizedEmail = normalizeEmail(email);
+  const normalizedPhone = normalizePhone(phone);
+  assertValidContact(normalizedEmail, normalizedPhone);
+
+  const exists = await User.findOne({ email: normalizedEmail });
   if (exists) throw Object.assign(new Error('Email da ton tai'), { status: 409 });
+  const phoneExists = await User.findOne({ phone: normalizedPhone });
+  if (phoneExists) throw Object.assign(new Error('So dien thoai da duoc su dung'), { status: 409 });
+
   const hash = await bcrypt.hash(password, 10);
-  const user = await User.create({ name, email, password: hash });
+  const user = await User.create({ name, email: normalizedEmail, phone: normalizedPhone, password: hash });
+  await claimGuestOrdersForUser(user, normalizedEmail, normalizedPhone);
   // Gui email xac thuc (khong chan luong dang ky neu SMTP chua cau hinh)
   void sendEmailVerification(String(user._id)).catch(() => null);
   return issueTokens(user);
@@ -27,6 +80,7 @@ export async function login(email: string, password: string) {
   if (!user) throw Object.assign(new Error('Sai thong tin dang nhap'), { status: 401 });
   const ok = await bcrypt.compare(password, user.password as string);
   if (!ok) throw Object.assign(new Error('Sai thong tin dang nhap'), { status: 401 });
+  if (user.phone) await claimGuestOrdersForUser(user, user.email as string, user.phone as string);
   await User.updateOne({ _id: user._id }, { lastLoginAt: new Date() });
   return issueTokens(user);
 }
@@ -45,7 +99,7 @@ export async function refreshAccessToken(refreshToken: string) {
   if (!match) throw Object.assign(new Error('Invalid refresh token'), { status: 401 });
   return {
     accessToken: signAccess({ id: user._id, role: user.role }),
-    user: { id: user._id, name: user.name, email: user.email, role: user.role },
+    user: { id: user._id, name: user.name, email: user.email, phone: user.phone, role: user.role, isEmailVerified: user.isEmailVerified },
   };
 }
 
@@ -59,17 +113,24 @@ export async function getMe(userId: string) {
   return user;
 }
 
-export async function updateProfile(userId: string, input: { name: string; email: string }) {
+export async function updateProfile(userId: string, input: { name: string; email: string; phone?: string }) {
   const email = input.email.trim().toLowerCase();
   const exists = await User.findOne({ email, _id: { $ne: userId } });
   if (exists) throw Object.assign(new Error('Email da ton tai'), { status: 409 });
+  const phone = normalizePhone(input.phone || '');
+  if (phone) {
+    assertValidContact(email, phone);
+    const phoneExists = await User.findOne({ phone, _id: { $ne: userId } });
+    if (phoneExists) throw Object.assign(new Error('So dien thoai da duoc su dung'), { status: 409 });
+  }
 
   const user = await User.findByIdAndUpdate(
     userId,
-    { name: input.name.trim(), email },
+    { name: input.name.trim(), email, ...(phone ? { phone } : {}) },
     { new: true, runValidators: true },
   );
   if (!user) throw Object.assign(new Error('User not found'), { status: 404 });
+  if (phone) await claimGuestOrdersForUser(user, email, phone);
   return user;
 }
 
@@ -161,26 +222,181 @@ export async function setDefaultAddress(userId: string, addressId: string) {
   return user.addresses;
 }
 
-// ---- Quen / dat lai mat khau qua email ----
+const EMAIL_RESET_OTP_TTL_MS = 5 * 60 * 1000;
+const EMAIL_RESET_TOKEN_TTL_MS = 10 * 60 * 1000;
+const EMAIL_RESET_MAX_ATTEMPTS = 5;
+const EMAIL_RESET_RESEND_MS = 60 * 1000;
+
+function hashEmailOtp(email: string, otp: string) {
+  const secret = process.env.JWT_ACCESS_SECRET || 'development-only-secret';
+  return hashToken(`${email}:${otp}:${secret}`);
+}
+
+// ---- Quen / dat lai mat khau qua email OTP ----
 export async function requestPasswordReset(email: string) {
-  const user = await User.findOne({ email: email.trim().toLowerCase() });
-  // Luon tra ve thong bao giong nhau de tranh do email ton tai
-  if (user) {
-    const raw = crypto.randomBytes(32).toString('hex');
-    user.set({
-      passwordResetToken: hashToken(raw),
-      passwordResetExpires: new Date(Date.now() + 60 * 60 * 1000),
-    });
+  assertMailConfigured();
+  const normalizedEmail = normalizeEmail(email);
+  const genericResult = {
+    message: 'Neu email ton tai, ma xac minh se duoc gui trong it phut.',
+    expiresIn: Math.floor(EMAIL_RESET_OTP_TTL_MS / 1000),
+  };
+  const user = await User.findOne({ email: normalizedEmail }).select(
+    '+passwordResetOtpHash +passwordResetOtpExpires +passwordResetOtpAttempts +passwordResetOtpLastSentAt',
+  );
+  if (!user) return genericResult;
+
+  const lastSentAt = user.passwordResetOtpLastSentAt?.getTime() || 0;
+  if (Date.now() - lastSentAt < EMAIL_RESET_RESEND_MS) return genericResult;
+
+  const otp = crypto.randomInt(100000, 1000000).toString();
+  const sent = await sendMail({
+    to: normalizedEmail,
+    subject: `${otp} - Ma xac minh dat lai mat khau`,
+    html: `
+      <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;padding:32px;color:#27231f">
+        <p style="font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#806b3d">L'Essence Noire</p>
+        <h1 style="font-size:28px;font-weight:500">Khôi phục mật khẩu</h1>
+        <p>Mã xác minh của bạn là:</p>
+        <p style="font-size:34px;letter-spacing:8px;font-weight:700;color:#806b3d">${otp}</p>
+        <p>Mã có hiệu lực trong 5 phút. Không chia sẻ mã này với bất kỳ ai.</p>
+        <p style="color:#777;font-size:12px">Nếu bạn không yêu cầu đặt lại mật khẩu, hãy bỏ qua email này.</p>
+      </div>`,
+    text: `Ma xac minh dat lai mat khau cua ban la ${otp}. Ma co hieu luc trong 5 phut.`,
+  });
+  if (!sent) throw Object.assign(new Error('Khong the gui email xac minh luc nay'), { status: 502 });
+
+  user.set({
+    passwordResetOtpHash: hashEmailOtp(normalizedEmail, otp),
+    passwordResetOtpExpires: new Date(Date.now() + EMAIL_RESET_OTP_TTL_MS),
+    passwordResetOtpAttempts: 0,
+    passwordResetOtpLastSentAt: new Date(),
+  });
+  await user.save();
+  return genericResult;
+}
+
+export async function verifyEmailPasswordResetOtp(email: string, otp: string) {
+  const normalizedEmail = normalizeEmail(email);
+  const user = await User.findOne({ email: normalizedEmail }).select(
+    '+passwordResetOtpHash +passwordResetOtpExpires +passwordResetOtpAttempts',
+  );
+  const invalidOtp = () => Object.assign(new Error('Ma xac minh khong dung hoac da het han'), { status: 400 });
+
+  if (!user?.passwordResetOtpHash || !user.passwordResetOtpExpires) throw invalidOtp();
+  if (user.passwordResetOtpExpires.getTime() <= Date.now()) {
+    user.set({ passwordResetOtpHash: undefined, passwordResetOtpExpires: undefined, passwordResetOtpAttempts: undefined });
     await user.save();
-    const link = `${CLIENT_URL}/reset-password?token=${raw}`;
-    await sendMail({
-      to: user.email as string,
-      subject: 'Dat lai mat khau - LEssence Noire',
-      html: `<p>Nhan vao lien ket sau de dat lai mat khau (het han sau 1 gio):</p><p><a href="${link}">${link}</a></p>`,
-      text: `Dat lai mat khau: ${link}`,
-    });
+    throw invalidOtp();
   }
-  return { message: 'Neu email ton tai, lien ket dat lai mat khau da duoc gui.' };
+
+  const attempts = Number(user.passwordResetOtpAttempts || 0);
+  if (attempts >= EMAIL_RESET_MAX_ATTEMPTS) {
+    user.set({ passwordResetOtpHash: undefined, passwordResetOtpExpires: undefined, passwordResetOtpAttempts: undefined });
+    await user.save();
+    throw invalidOtp();
+  }
+
+  const expected = Buffer.from(user.passwordResetOtpHash, 'hex');
+  const received = Buffer.from(hashEmailOtp(normalizedEmail, otp), 'hex');
+  const matches = expected.length === received.length && crypto.timingSafeEqual(expected, received);
+  if (!matches) {
+    user.passwordResetOtpAttempts = attempts + 1;
+    await user.save();
+    throw invalidOtp();
+  }
+
+  const resetToken = crypto.randomBytes(32).toString('hex');
+  user.set({
+    passwordResetToken: hashToken(resetToken),
+    passwordResetExpires: new Date(Date.now() + EMAIL_RESET_TOKEN_TTL_MS),
+    passwordResetOtpHash: undefined,
+    passwordResetOtpExpires: undefined,
+    passwordResetOtpAttempts: undefined,
+    passwordResetOtpLastSentAt: undefined,
+  });
+  await user.save();
+  return { resetToken, expiresIn: Math.floor(EMAIL_RESET_TOKEN_TTL_MS / 1000) };
+}
+
+const PHONE_RESET_OTP_TTL_MS = 5 * 60 * 1000;
+const PHONE_RESET_TOKEN_TTL_MS = 10 * 60 * 1000;
+const PHONE_RESET_MAX_ATTEMPTS = 5;
+const PHONE_RESET_RESEND_MS = 60 * 1000;
+
+function hashPhoneOtp(phone: string, otp: string) {
+  const secret = process.env.JWT_ACCESS_SECRET || 'development-only-secret';
+  return hashToken(`${phone}:${otp}:${secret}`);
+}
+
+export async function requestPhonePasswordReset(inputPhone: string) {
+  assertSmsConfigured();
+  const phone = normalizePhone(inputPhone);
+  const genericResult = {
+    message: 'Neu so dien thoai ton tai, ma xac minh se duoc gui trong it phut.',
+    expiresIn: Math.floor(PHONE_RESET_OTP_TTL_MS / 1000),
+  };
+
+  const user = await User.findOne({ phone }).select(
+    '+passwordResetOtpHash +passwordResetOtpExpires +passwordResetOtpAttempts +passwordResetOtpLastSentAt',
+  );
+  if (!user) return genericResult;
+
+  const lastSentAt = user.passwordResetOtpLastSentAt?.getTime() || 0;
+  if (Date.now() - lastSentAt < PHONE_RESET_RESEND_MS) return genericResult;
+
+  const otp = crypto.randomInt(100000, 1000000).toString();
+  await sendPasswordResetOtp(phone, otp);
+  user.set({
+    passwordResetOtpHash: hashPhoneOtp(phone, otp),
+    passwordResetOtpExpires: new Date(Date.now() + PHONE_RESET_OTP_TTL_MS),
+    passwordResetOtpAttempts: 0,
+    passwordResetOtpLastSentAt: new Date(),
+  });
+  await user.save();
+  return genericResult;
+}
+
+export async function verifyPhonePasswordResetOtp(inputPhone: string, otp: string) {
+  const phone = normalizePhone(inputPhone);
+  const user = await User.findOne({ phone }).select(
+    '+passwordResetOtpHash +passwordResetOtpExpires +passwordResetOtpAttempts',
+  );
+  const invalidOtp = () => Object.assign(new Error('Ma xac minh khong dung hoac da het han'), { status: 400 });
+
+  if (!user?.passwordResetOtpHash || !user.passwordResetOtpExpires) throw invalidOtp();
+  if (user.passwordResetOtpExpires.getTime() <= Date.now()) {
+    user.set({ passwordResetOtpHash: undefined, passwordResetOtpExpires: undefined, passwordResetOtpAttempts: undefined });
+    await user.save();
+    throw invalidOtp();
+  }
+
+  const attempts = Number(user.passwordResetOtpAttempts || 0);
+  if (attempts >= PHONE_RESET_MAX_ATTEMPTS) {
+    user.set({ passwordResetOtpHash: undefined, passwordResetOtpExpires: undefined, passwordResetOtpAttempts: undefined });
+    await user.save();
+    throw invalidOtp();
+  }
+
+  const expected = Buffer.from(user.passwordResetOtpHash, 'hex');
+  const received = Buffer.from(hashPhoneOtp(phone, otp), 'hex');
+  const matches = expected.length === received.length && crypto.timingSafeEqual(expected, received);
+  if (!matches) {
+    user.passwordResetOtpAttempts = attempts + 1;
+    await user.save();
+    throw invalidOtp();
+  }
+
+  const resetToken = crypto.randomBytes(32).toString('hex');
+  user.set({
+    passwordResetToken: hashToken(resetToken),
+    passwordResetExpires: new Date(Date.now() + PHONE_RESET_TOKEN_TTL_MS),
+    passwordResetOtpHash: undefined,
+    passwordResetOtpExpires: undefined,
+    passwordResetOtpAttempts: undefined,
+    passwordResetOtpLastSentAt: undefined,
+  });
+  await user.save();
+  return { resetToken, expiresIn: Math.floor(PHONE_RESET_TOKEN_TTL_MS / 1000) };
 }
 
 export async function resetPassword(token: string, newPassword: string) {
@@ -191,7 +407,15 @@ export async function resetPassword(token: string, newPassword: string) {
   if (!user) throw Object.assign(new Error('Token khong hop le hoac da het han'), { status: 400 });
 
   user.password = await bcrypt.hash(newPassword, 10);
-  user.set({ passwordResetToken: undefined, passwordResetExpires: undefined, refreshToken: undefined });
+  user.set({
+    passwordResetToken: undefined,
+    passwordResetExpires: undefined,
+    passwordResetOtpHash: undefined,
+    passwordResetOtpExpires: undefined,
+    passwordResetOtpAttempts: undefined,
+    passwordResetOtpLastSentAt: undefined,
+    refreshToken: undefined,
+  });
   await user.save();
   return { message: 'Dat lai mat khau thanh cong' };
 }
@@ -238,6 +462,6 @@ async function issueTokens(user: any) {
   return {
     accessToken: signAccess(payload),
     refreshToken,
-    user: { id: user._id, name: user.name, email: user.email, role: user.role },
+    user: { id: user._id, name: user.name, email: user.email, phone: user.phone, role: user.role, isEmailVerified: user.isEmailVerified },
   };
 }

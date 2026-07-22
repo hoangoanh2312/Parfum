@@ -1,11 +1,14 @@
-export type OrderStatus = 'pending' | 'paid' | 'shipping' | 'done' | 'cancelled';
-export type PaymentStatus = 'unpaid' | 'paid';
+export type OrderStatus = 'pending' | 'shipping' | 'done' | 'cancelled' | 'returned';
+export type PaymentStatus = 'unpaid' | 'paid' | 'refunded';
 export type PaymentMethod = 'cod' | 'bank_qr';
 
 export type AdminOrderPayment = {
   method: PaymentMethod;
   status: PaymentStatus;
   amount: number;
+  receivedAmount?: number | null;
+  bankReference?: string;
+  providerTransactionId?: string;
 } | null;
 
 export type AdminOrderCustomer = {
@@ -53,5 +56,6 @@ export type AdminOrderListQuery = {
   search?: string;
   status?: OrderStatus;
   paymentStatus?: PaymentStatus;
+  paymentMethod?: PaymentMethod;
   sort?: 'newest' | 'oldest';
 };

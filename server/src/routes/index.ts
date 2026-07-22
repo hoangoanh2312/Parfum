@@ -14,6 +14,10 @@ import accountRoutes from './account.routes';
 import uploadRoutes from './upload.routes';
 import adminRoutes from './admin.routes';
 import adminOrderRoutes from './admin-order.routes';
+import blogRoutes from './blog.routes';
+import siteContentRoutes from './siteContent.routes';
+import paymentWebhookRoutes from './payment-webhook.routes';
+import supportRoutes from './support.routes';
 
 const router = Router();
 
@@ -35,7 +39,11 @@ router.use('/variants', variantRoutes);
 router.use('/reviews', reviewRoutes);
 router.use('/cart', cartRoutes);
 router.use('/orders', orderRoutes);
+router.use('/payment-webhooks', paymentWebhookRoutes);
 router.use('/account', accountRoutes);
+router.use('/blog', blogRoutes);
+router.use('/site-content', siteContentRoutes);
+router.use('/support', supportRoutes);
 router.use('/', uploadRoutes);
 
 // Khu vuc quan tri. /admin/orders phai dat TRUOC /admin de khong bi nuot route.

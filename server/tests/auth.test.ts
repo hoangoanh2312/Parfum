@@ -29,6 +29,27 @@ describe('Auth API (PF-43)', () => {
     expect(res.status).toBe(400);
   });
 
+  it('POST /api/auth/forgot-password-phone voi so dien thoai sai -> 400', async () => {
+    const res = await request(app)
+      .post('/api/auth/forgot-password-phone')
+      .send({ phone: '12345' });
+    expect(res.status).toBe(400);
+  });
+
+  it('POST /api/auth/verify-password-reset-otp voi OTP sai dinh dang -> 400', async () => {
+    const res = await request(app)
+      .post('/api/auth/verify-password-reset-otp')
+      .send({ phone: '0901234567', otp: '123' });
+    expect(res.status).toBe(400);
+  });
+
+  it('POST /api/auth/verify-password-reset-email-otp voi email hoac OTP sai -> 400', async () => {
+    const res = await request(app)
+      .post('/api/auth/verify-password-reset-email-otp')
+      .send({ email: 'email-sai', otp: '123' });
+    expect(res.status).toBe(400);
+  });
+
   it('POST /api/auth/logout khi chua dang nhap -> 401', async () => {
     const res = await request(app).post('/api/auth/logout').send({});
     expect(res.status).toBe(401);

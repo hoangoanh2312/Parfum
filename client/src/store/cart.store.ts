@@ -9,6 +9,11 @@ export interface CartItem {
   image?: string | null;
   volume?: string;
   price: number;
+  basePrice?: number;
+  discountAmount?: number;
+  discountPercent?: number;
+  promotionType?: string | null;
+  promotionName?: string;
   stock?: number;
   quantity: number;
   lineTotal?: number;

@@ -5,7 +5,7 @@ import { api } from "../lib/api";
 import Footer from "../components/Footer";
 import BrandJournal from "./BrandJournal";
 import { toast } from "../store/toast.store";
-import { BLOG_ARTICLES, ARCHETYPES } from "./blogData";
+import { BLOG_ARTICLES, ARCHETYPES, type BlogArticle } from "./blogData";
 
 interface Archetype {
   name: string;
@@ -27,6 +27,9 @@ type ProductListItem = {
 
 type ProductListResponse = {
   data: ProductListItem[];
+};
+type BlogListResponse = {
+  data: BlogArticle[];
 };
 
 const fallbackArchetypes: Archetype[] = [
@@ -67,6 +70,7 @@ export default function Blog() {
   const brandParam = searchParams.get("brand");
   const sliderRef = useRef<HTMLDivElement>(null);
   const [products, setProducts] = useState<ProductListItem[]>([]);
+  const [managedArticles, setManagedArticles] = useState<BlogArticle[] | null>(null);
   const [email, setEmail] = useState("");
 
   useEffect(() => {
@@ -80,6 +84,21 @@ export default function Blog() {
       })
       .catch(() => {
         if (mounted) setProducts([]);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    api
+      .get<BlogListResponse>("/blog")
+      .then(({ data }) => {
+        if (mounted) setManagedArticles(Array.isArray(data.data) ? data.data : []);
+      })
+      .catch(() => {
+        if (mounted) setManagedArticles([]);
       });
     return () => {
       mounted = false;
@@ -113,9 +132,10 @@ export default function Blog() {
     }));
 
     // Ưu tiên bài viết tĩnh; ghép thêm product nếu chưa đủ 6
-    const merged = [...BLOG_ARTICLES, ...fromProducts].slice(0, 6);
+    const managed = managedArticles?.length ? managedArticles : BLOG_ARTICLES;
+    const merged = [...managed, ...fromProducts].slice(0, 6);
     return merged;
-  }, [products]);
+  }, [managedArticles, products]);
 
   const scrollArchetypes = (dir: "left" | "right") => {
     sliderRef.current?.scrollBy({ left: dir === "right" ? 320 : -320, behavior: "smooth" });
@@ -176,7 +196,7 @@ export default function Blog() {
           <div className="mx-auto grid max-w-[1180px] gap-8 lg:grid-cols-[1.55fr_0.65fr]">
             {/* Featured left */}
             <article className="group">
-              <Link to={`/blog/${BLOG_ARTICLES[2].slug}`}>
+              <Link to={`/blog/${articles[2]?.slug || BLOG_ARTICLES[2].slug}`}>
                 <div className="overflow-hidden bg-[#272727]">
                   <img
                     src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS__htyuJgvZWWlJPkJTpMlgM6ej2uVAbxXjAnsUoiIEg&s=10"
@@ -228,7 +248,7 @@ export default function Blog() {
                 />
               </div>
               <Link
-                to={`/blog/${BLOG_ARTICLES[3].slug}`}
+                to={`/blog/${articles[3]?.slug || BLOG_ARTICLES[3].slug}`}
                 className="mt-6 inline-flex w-max border-b border-[#AB9851] pb-1 text-[8px] font-semibold uppercase tracking-[0.18em] text-[#675711]"
               >
                 Read the science

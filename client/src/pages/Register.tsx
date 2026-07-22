@@ -1,7 +1,10 @@
 import React, { useState, CSSProperties } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
+import { getPasswordError } from "../lib/password";
+import { PasswordRequirements } from "../components/PasswordRequirements";
 import { useAuth } from "../store/auth.store";
+import { useLanguage } from "../store/language.store";
 
 const color = {
   pageBg: "#FDF9F4",
@@ -125,8 +128,10 @@ const features: FeatureItem[] = [
 ];
 
 export default function Register() {
+  const language = useLanguage((state) => state.language);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
@@ -137,15 +142,29 @@ export default function Register() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    const passwordError = getPasswordError(password, language);
+    if (passwordError) {
+      setError(passwordError);
+      return;
+    }
     if (password !== confirmPassword) {
-      setError("Mật khẩu xác nhận không khớp");
+      setError(
+        language === "vi"
+          ? "Mật khẩu xác nhận không khớp"
+          : "Passwords do not match",
+      );
+      return;
+    }
+    if (!/^0\d{9}$/.test(phone.trim())) {
+      setError("Số điện thoại phải có 10 số và bắt đầu bằng 0");
       return;
     }
     setLoading(true);
     try {
       const { data } = await api.post("/auth/register", {
         name,
-        email,
+        email: email.trim().toLowerCase(),
+        phone: phone.trim(),
         password,
       });
       useAuth.getState().setTokens(data.accessToken, data.refreshToken);
@@ -382,6 +401,23 @@ export default function Register() {
               <label
                 style={{ display: "flex", flexDirection: "column", gap: 8 }}
               >
+                <span style={fieldLabelStyle}>Phone Number</span>
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) =>
+                    setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))
+                  }
+                  placeholder="09xxxxxxxx"
+                  style={fieldInputStyle}
+                  required
+                  pattern="0[0-9]{9}"
+                />
+              </label>
+
+              <label
+                style={{ display: "flex", flexDirection: "column", gap: 8 }}
+              >
                 <span style={fieldLabelStyle}>Password</span>
                 <input
                   type="password"
@@ -390,7 +426,11 @@ export default function Register() {
                   placeholder="••••••••"
                   style={fieldInputStyle}
                   required
-                  minLength={6}
+                  minLength={8}
+                />
+                <PasswordRequirements
+                  password={password}
+                  language={language}
                 />
               </label>
 

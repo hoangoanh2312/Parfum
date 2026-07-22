@@ -1,5 +1,5 @@
 export interface BlogArticle {
-  id: number;
+  id: number | string;
   slug: string;
   category: string;
   title: string;

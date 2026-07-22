@@ -51,7 +51,7 @@ const SIDEBAR_IMAGE_FALLBACK =
 
 export default function ShopSidebar(props: Props) {
   return (
-    <aside className="w-64 shrink-0 self-start lg:sticky lg:top-28">
+    <aside className="w-full shrink-0 self-start lg:sticky lg:top-28 lg:w-64">
       <SearchBox value={props.search} onChange={props.setSearch} />
 
       <BrandFilter

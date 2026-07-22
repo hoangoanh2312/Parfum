@@ -1,6 +1,7 @@
 import { Order } from '../models/order.model';
 import { Payment } from '../models/payment.model';
 import { Variant } from '../models/variant.model';
+import { normalizeOrderStatus } from '../utils/orderStatus';
 
 type DashboardPeriod = '7d' | '30d' | '90d';
 
@@ -22,7 +23,7 @@ const PERIOD_DAYS: Record<DashboardPeriod, number> = {
 
 const VIETNAM_TIMEZONE = '+07:00';
 const VIETNAM_OFFSET_MS = 7 * 60 * 60 * 1000;
-const REVENUE_ORDER_STATUSES = ['paid', 'shipping', 'done'];
+const REVENUE_ORDER_STATUSES = ['pending', 'paid', 'shipping', 'done'];
 
 const formatToVietnamDate = (value: Date) => new Date(value.getTime() + VIETNAM_OFFSET_MS).toISOString().slice(0, 10);
 
@@ -101,7 +102,10 @@ export const getAdminDashboard = async (query: DashboardQuery) => {
 
   const [totalOrders, pendingOrders, orderStatusBreakdown, revenueSummary, revenueSeriesData, lowStockItems, lowStockVariantCount] = await Promise.all([
     Order.countDocuments({ createdAt: { $gte: startDate, $lte: endDate } }),
-    Order.countDocuments({ createdAt: { $gte: startDate, $lte: endDate }, status: 'pending' }),
+    Order.countDocuments({
+      createdAt: { $gte: startDate, $lte: endDate },
+      status: { $in: ['pending', 'paid'] },
+    }),
     Order.aggregate([
       { $match: { createdAt: { $gte: startDate, $lte: endDate } } },
       { $group: { _id: '$status', count: { $sum: 1 } } },
@@ -247,6 +251,20 @@ export const getAdminDashboard = async (query: DashboardQuery) => {
   const totalRevenue = revenueSummary[0]?.totalRevenue ?? 0;
   const lowStockVariants = lowStockVariantCount[0]?.count ?? 0;
 
+  const normalizedStatusBreakdown = Object.values(
+    orderStatusBreakdown.reduce(
+      (result: Record<string, { status: string; count: number }>, item: any) => {
+        const status = normalizeOrderStatus(item.status);
+        result[status] = {
+          status,
+          count: (result[status]?.count || 0) + item.count,
+        };
+        return result;
+      },
+      {},
+    ),
+  );
+
   return {
     period,
     summary: {
@@ -256,7 +274,7 @@ export const getAdminDashboard = async (query: DashboardQuery) => {
       lowStockVariants,
     },
     revenueSeries: revenueSeriesData,
-    orderStatusBreakdown,
+    orderStatusBreakdown: normalizedStatusBreakdown,
     lowStockItems,
     generatedAt: new Date().toISOString(),
   };

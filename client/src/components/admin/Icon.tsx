@@ -12,6 +12,7 @@ export type AdminIconName =
   | "tag"
   | "folder"
   | "image"
+  | "fileText"
   | "star"
   | "users"
   | "logout"
@@ -70,6 +71,13 @@ const ICON_PATHS: Record<AdminIconName, React.ReactNode> = {
       <rect x="3" y="3" width="18" height="18" rx="2" />
       <circle cx="8.5" cy="8.5" r="1.5" />
       <path d="M21 15l-5-5L5 21" />
+    </>
+  ),
+  fileText: (
+    <>
+      <path d="M6 3h8l4 4v14H6z" />
+      <path d="M14 3v5h5" />
+      <path d="M9 12h6M9 16h6" />
     </>
   ),
   star: (

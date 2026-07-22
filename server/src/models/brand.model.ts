@@ -13,6 +13,13 @@ const brandSchema = new Schema(
       unique: true,
       sparse: true,
     },
+    description: { type: String, trim: true, default: '' },
+    logo: { type: String, trim: true, default: '' },
+    heroImage: { type: String, trim: true, default: '' },
+    country: { type: String, trim: true, default: '' },
+    website: { type: String, trim: true, default: '' },
+    foundedYear: { type: Number, min: 1000, max: 3000 },
+    isFeatured: { type: Boolean, default: false },
   },
   {
     timestamps: true,

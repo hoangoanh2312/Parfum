@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { MapPin, Phone, Mail, Clock } from "lucide-react";
+import { api } from "../lib/api";
 
 const SUBJECTS = [
   "Private consultation",
@@ -30,18 +31,32 @@ const EMPTY: FormState = {
 export default function ContactPage() {
   const [form, setForm] = useState<FormState>(EMPTY);
   const [toast, setToast] = useState<{ text: string; type: "success" | "error" } | null>(null);
+  const [sending, setSending] = useState(false);
 
   const set = (field: keyof FormState) => (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => setForm((prev) => ({ ...prev, [field]: e.target.value }));
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!form.firstName || !form.email || !form.message) {
       setToast({ text: "Fill in your name, email, and message to continue.", type: "error" });
       return;
     }
-    setToast({ text: "Message sent — we'll be in touch shortly.", type: "success" });
-    setForm(EMPTY);
+    try {
+      setSending(true);
+      await api.post("/support", {
+        name: `${form.firstName} ${form.lastName}`.trim(),
+        email: form.email.trim(),
+        subject: form.subject || "Other",
+        message: form.message.trim(),
+      });
+      setToast({ text: "Message sent. We'll be in touch shortly.", type: "success" });
+      setForm(EMPTY);
+    } catch (error: any) {
+      setToast({ text: error?.response?.data?.message || "Unable to send your message right now.", type: "error" });
+    } finally {
+      setSending(false);
+    }
   };
 
   const handleClear = () => {
@@ -58,12 +73,12 @@ export default function ContactPage() {
 
         {/* ── Hero strip ── */}
         <div
-          className="grid"
+          className="contact-hero-grid grid"
           style={{ gridTemplateColumns: "1fr 1fr", borderBottom: "0.5px solid rgba(26,26,24,0.14)" }}
         >
           {/* Left */}
           <div
-            className="flex flex-col justify-end"
+            className="contact-hero-copy flex flex-col justify-end"
             style={{ padding: "64px 48px 52px" }}
           >
             <p
@@ -98,7 +113,7 @@ export default function ContactPage() {
 
           {/* Right — dark quote panel */}
           <div
-            className="flex flex-col justify-end"
+            className="contact-quote flex flex-col justify-end"
             style={{ background: "#1a1a18", padding: "32px 36px", minHeight: 260 }}
           >
             <p
@@ -113,6 +128,7 @@ export default function ContactPage() {
               The editorial voice
             </p>
             <blockquote
+              className="break-words"
               style={{
                 fontFamily: "'Spectral', Georgia, serif",
                 fontStyle: "italic",
@@ -130,7 +146,7 @@ export default function ContactPage() {
 
         {/* ── Body: info + form ── */}
         <div
-          className="grid"
+          className="contact-body-grid grid"
           style={{
             gridTemplateColumns: "1fr 1.4fr",
             borderBottom: "0.5px solid rgba(26,26,24,0.14)",
@@ -138,6 +154,7 @@ export default function ContactPage() {
         >
           {/* Info column */}
           <div
+            className="contact-info"
             style={{
               padding: "48px 40px",
               borderRight: "0.5px solid rgba(26,26,24,0.14)",
@@ -178,6 +195,7 @@ export default function ContactPage() {
                 content: (
                   <a
                     href="mailto:atelier@lessencenoire.com"
+                    className="break-all"
                     style={{
                       fontSize: 13,
                       color: "#1a1a18",
@@ -245,7 +263,7 @@ export default function ContactPage() {
           </div>
 
           {/* Form column */}
-          <div style={{ padding: "48px 48px" }}>
+          <div className="contact-form" style={{ padding: "48px 48px" }}>
             <h2
               style={{
                 fontFamily: "'Spectral', Georgia, serif",
@@ -260,7 +278,7 @@ export default function ContactPage() {
               We respond within one business day. For urgent enquiries, reach us by phone.
             </p>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 20px" }}>
+            <div className="contact-name-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 20px" }}>
               <Field label="First name">
                 <input
                   type="text"
@@ -306,9 +324,10 @@ export default function ContactPage() {
               />
             </Field>
 
-            <div style={{ display: "flex", alignItems: "center", gap: 16, marginTop: 28 }}>
+            <div className="contact-actions" style={{ display: "flex", alignItems: "center", gap: 16, marginTop: 28 }}>
               <button
                 onClick={handleSend}
+                disabled={sending}
                 style={{
                   background: "#1a1a18",
                   color: "#fff",
@@ -322,7 +341,7 @@ export default function ContactPage() {
                   cursor: "pointer",
                 }}
               >
-                Send message
+                {sending ? "Sending..." : "Send message"}
               </button>
               <button
                 onClick={handleClear}
@@ -393,6 +412,19 @@ export default function ContactPage() {
             Paris · Ho Chi Minh City · New York
           </span>
         </div>
+        <style>{`
+          @media (max-width: 767px) {
+            .contact-hero-grid,
+            .contact-body-grid { grid-template-columns: minmax(0, 1fr) !important; }
+            .contact-hero-copy { padding: 52px 24px 40px !important; }
+            .contact-quote { min-height: 210px !important; padding: 30px 24px !important; }
+            .contact-info { padding: 32px 24px !important; border-right: 0 !important; border-bottom: 0.5px solid rgba(26,26,24,0.14); }
+            .contact-form { padding: 38px 24px 44px !important; }
+            .contact-name-grid { grid-template-columns: minmax(0, 1fr) !important; gap: 0 !important; }
+            .contact-actions { align-items: stretch !important; flex-direction: column !important; }
+            .contact-actions button { min-height: 46px; width: 100%; }
+          }
+        `}</style>
       </div>
     </main>
   );

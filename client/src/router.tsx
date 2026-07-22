@@ -11,6 +11,7 @@ import AdminLayout from "./components/AdminLayout";
 const Home = lazy(() => import("./pages/Home"));
 const Shop = lazy(() => import("./pages/Shop"));
 const Login = lazy(() => import("./pages/Login"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const Register = lazy(() => import("./pages/Register"));
 const Brand = lazy(() => import("./pages/Brand"));
 const Blog = lazy(() => import("./pages/Blog"));
@@ -22,7 +23,9 @@ const ThankYou = lazy(() => import("./pages/ThankYou"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Orders = lazy(() => import("./pages/Orders"));
 const OrderDetail = lazy(() => import("./pages/OrderDetail"));
+const OrderLookup = lazy(() => import("./pages/OrderLookup"));
 const ProductDetail = lazy(() => import("./pages/ProductDetail"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const AccountLayout = lazy(() => import("./pages/Account"));
 const AccountOverview = lazy(() => import("./pages/account/AccountOverview"));
 const OrderHistory = lazy(() => import("./pages/account/OrderHistory"));
@@ -38,9 +41,12 @@ const AdminVariants = lazy(() => import("./pages/admin/AdminVariants"));
 const AdminBrands = lazy(() => import("./pages/admin/AdminBrands"));
 const AdminCategories = lazy(() => import("./pages/admin/AdminCategories"));
 const AdminMedia = lazy(() => import("./pages/admin/AdminMedia"));
+const AdminBlog = lazy(() => import("./pages/admin/AdminBlog"));
 const AdminOrders = lazy(() => import("./pages/admin/AdminOrders"));
 const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
 const AdminReviewsPage = lazy(() => import("./pages/admin/AdminReviews"));
+const AdminReports = lazy(() => import("./pages/admin/AdminReports"));
+const AdminPromotions = lazy(() => import("./pages/admin/AdminPromotions"));
 
 // Fallback hien thi trong khi chunk cua route dang duoc tai ve.
 function PageFallback() {
@@ -71,9 +77,12 @@ export const router = createBrowserRouter([
       { path: "cart", element: s(<Cart />) },
       { path: "checkout", element: s(<Checkout />) },
       { path: "thank-you/:id", element: s(<ThankYou />) },
+      { path: "order-lookup", element: s(<OrderLookup />) },
+      { path: "privacy-policy", element: s(<PrivacyPolicy />) },
       { path: "products/:idOrSlug", element: s(<ProductDetail />) },
       { path: "product/:idOrSlug", element: s(<ProductDetail />) },
       { path: "login", element: s(<Login />) },
+      { path: "forgot-password", element: s(<ForgotPassword />) },
       { path: "register", element: s(<Register />) },
       {
         element: <ProtectedRoute />,
@@ -112,9 +121,12 @@ export const router = createBrowserRouter([
       { path: "brands", element: s(<AdminBrands />) },
       { path: "categories", element: s(<AdminCategories />) },
       { path: "media", element: s(<AdminMedia />) },
+      { path: "blog", element: s(<AdminBlog />) },
       { path: "orders", element: s(<AdminOrders />) },
       { path: "users", element: s(<AdminUsers />) },
       { path: "reviews", element: s(<AdminReviewsPage />) },
+      { path: "reports/:tab?", element: s(<AdminReports />) },
+      { path: "promotions/:tab?", element: s(<AdminPromotions />) },
     ],
   },
 ]);

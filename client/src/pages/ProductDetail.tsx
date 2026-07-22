@@ -4,19 +4,17 @@ import {
   Sun,
   Moon,
   Quote,
-  Share2,
-  MessageSquare,
-  AtSign,
   ImagePlus,
   X,
 } from "lucide-react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../lib/api";
 import { useCart } from "../store/cart.store";
 import { toast } from "../store/toast.store";
 import { useAuth } from "../store/auth.store";
 import { useWishlist } from "../store/wishlist.store";
+import Footer from "../components/Footer";
 
 const PLACEHOLDER = "https://placehold.co/900x1100?text=No+Image";
 
@@ -26,6 +24,10 @@ type ProductVariant = {
   size: string;
   volume: string;
   price: number;
+  basePrice?: number;
+  discountPercent?: number;
+  promotionType?: string | null;
+  promotionName?: string;
   priceText: string;
   stock: number;
   images?: string[];
@@ -41,6 +43,9 @@ type ProductDetailData = {
   description?: string;
   fragranceFamily?: string;
   concentration?: string;
+  gender?: string;
+  season?: string[];
+  isActive?: boolean;
   gallery: string[];
   notes: {
     top: string[];
@@ -80,6 +85,7 @@ const vnd = (value: number) => `${(value || 0).toLocaleString("vi-VN")}đ`;
 
 export default function ProductDetail() {
   const { idOrSlug } = useParams();
+  const navigate = useNavigate();
   const addItem = useCart((state) => state.addItem);
   const user = useAuth((state) => state.user);
   const [product, setProduct] = useState<ProductDetailData | null>(null);
@@ -208,6 +214,7 @@ export default function ProductDetail() {
   const availableStock = selectedVariant?.stock ?? 0;
   const canAdd =
     Boolean(selectedVariant?.id) &&
+    product?.isActive !== false &&
     selectedVariant?.isActive !== false &&
     availableStock > 0;
 
@@ -250,6 +257,10 @@ export default function ProductDetail() {
           image: currentImage === PLACEHOLDER ? null : currentImage,
           volume: selectedVariant.volume || selectedVariant.size,
           price: selectedVariant.price,
+          basePrice: selectedVariant.basePrice,
+          discountPercent: selectedVariant.discountPercent,
+          promotionType: selectedVariant.promotionType,
+          promotionName: selectedVariant.promotionName,
           stock: selectedVariant.stock,
           quantity: 1,
         },
@@ -279,7 +290,7 @@ export default function ProductDetail() {
       if (reviewImage) {
         const formData = new FormData();
         formData.append("image", reviewImage);
-        const { data } = await api.post<{ url: string }>("/upload", formData, {
+        const { data } = await api.post<{ url: string }>("/upload/review", formData, {
           headers: { "Content-Type": "multipart/form-data" },
         });
         imageUrl = data.url;
@@ -355,8 +366,43 @@ export default function ProductDetail() {
     );
   }
 
+  async function handleBuyNow() {
+    if (!product || !selectedVariant) return;
+
+    if (!canAdd) {
+      toast.error("Sản phẩm đã hết hàng");
+      return;
+    }
+
+    try {
+      await addItem(
+        {
+          variant: selectedVariant.id,
+          product: product.id,
+          name: product.name,
+          slug: product.slug,
+          image: currentImage === PLACEHOLDER ? null : currentImage,
+          volume: selectedVariant.volume || selectedVariant.size,
+          price: selectedVariant.price,
+          basePrice: selectedVariant.basePrice,
+          discountPercent: selectedVariant.discountPercent,
+          promotionType: selectedVariant.promotionType,
+          promotionName: selectedVariant.promotionName,
+          stock: selectedVariant.stock,
+          quantity: 1,
+        },
+        1,
+      );
+      navigate("/checkout");
+    } catch (e: any) {
+      toast.error(
+        e?.response?.data?.message || e?.message || "Không thể mua ngay",
+      );
+    }
+  }
+
   return (
-    <div className="min-h-screen bg-[#fbf8f2] text-[#292824]">
+    <div className="min-h-screen w-full max-w-[100vw] overflow-x-hidden bg-[#fbf8f2] text-[#292824]">
       <main>
         {/* Product Hero */}
         <section className="bg-[#fbf8f2]">
@@ -396,7 +442,7 @@ export default function ProductDetail() {
                 {product.fragranceFamily || "Signature"}
               </p>
 
-              <h1 className="font-serif text-[44px] leading-[1.05] tracking-[-1px] md:text-[58px]">
+              <h1 className="font-serif text-[44px] leading-[1.05] tracking-[0] md:text-[58px]">
                 {product.name}
               </h1>
 
@@ -409,38 +455,53 @@ export default function ProductDetail() {
                   "Mùi hương tinh tế, sang trọng và phù hợp cho nhiều dịp sử dụng."}
               </p>
 
-              <p className="mt-7 font-serif text-[23px] font-semibold text-[#927600]">
-                {selectedVariant
-                  ? selectedVariant.priceText || vnd(selectedVariant.price)
-                  : "Liên hệ"}
-              </p>
+              <div className="mt-7 flex flex-wrap items-center gap-3">
+                <p className="font-serif text-[23px] font-semibold text-[#927600]">
+                  {selectedVariant ? selectedVariant.priceText || vnd(selectedVariant.price) : "Liên hệ"}
+                </p>
+                {!!selectedVariant?.discountPercent && selectedVariant.basePrice != null && (
+                  <>
+                    <span className="text-sm text-[#8D887F] line-through">{vnd(selectedVariant.basePrice)}</span>
+                    <span className="bg-[#8B1E1E] px-2 py-1 text-[10px] font-semibold text-white">-{selectedVariant.discountPercent}%</span>
+                  </>
+                )}
+              </div>
+              {selectedVariant?.promotionName && (
+                <p className="mt-2 text-[11px] uppercase tracking-[1.2px] text-[#8B1E1E]">{selectedVariant.promotionName}</p>
+              )}
 
-              {product.variants.length > 1 && (
-                <div className="mt-5 flex max-w-[410px] flex-wrap gap-2">
-                  {product.variants.map((variant) => {
-                    const active = variant.id === selectedVariant?.id;
-                    const disabled =
-                      variant.stock <= 0 || variant.isActive === false;
+              {product.variants.length > 0 && (
+                <div className="mt-6 max-w-[410px]">
+                  <p className="mb-3 text-[8px] font-semibold uppercase tracking-[1.5px] text-[#8D887F]">
+                    Dung tích
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {product.variants.map((variant) => {
+                      const active = variant.id === selectedVariant?.id;
+                      const disabled =
+                        variant.stock <= 0 || variant.isActive === false;
 
-                    return (
-                      <button
-                        key={variant.id}
-                        disabled={disabled}
-                        onClick={() => {
-                          setSelectedVariantId(variant.id);
-                          if (variant.images?.[0])
-                            setSelectedImage(variant.images[0]);
-                        }}
-                        className={`border px-4 py-2 text-[9px] font-semibold uppercase tracking-[1.4px] transition ${
-                          active
-                            ? "border-[#8b7100] bg-[#8b7100] text-white"
-                            : "border-[#e7dfd1] text-[#615e57] hover:border-[#8b7100]"
-                        } ${disabled ? "cursor-not-allowed opacity-40" : ""}`}
-                      >
-                        {variant.size || variant.volume || "Default"}
-                      </button>
-                    );
-                  })}
+                      return (
+                        <button
+                          key={variant.id}
+                          type="button"
+                          disabled={disabled}
+                          onClick={() => {
+                            setSelectedVariantId(variant.id);
+                            if (variant.images?.[0])
+                              setSelectedImage(variant.images[0]);
+                          }}
+                          className={`min-w-16 border px-4 py-2 text-[9px] font-semibold uppercase tracking-[1.4px] transition ${
+                            active
+                              ? "border-[#8b7100] bg-[#8b7100] text-white"
+                              : "border-[#e7dfd1] text-[#615e57] hover:border-[#8b7100]"
+                          } ${disabled ? "cursor-not-allowed opacity-40" : ""}`}
+                        >
+                          {variant.size || variant.volume || "Chưa rõ"}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
 
@@ -470,29 +531,15 @@ export default function ProductDetail() {
                 {wishlisted ? "Đã lưu vào wishlist" : "Thêm vào wishlist"}
               </button>
 
-              <button className="mt-3 h-[48px] w-full max-w-[410px] border border-[#e7dfd1] bg-transparent text-[9px] font-semibold uppercase tracking-[1.8px] text-[#615e57]">
-                Complimentary sample included
+              <button
+                type="button"
+                onClick={handleBuyNow}
+                disabled={!canAdd}
+                className="mt-3 h-[48px] w-full max-w-[410px] border border-[#8b7100] bg-transparent text-[9px] font-semibold uppercase tracking-[1.8px] text-[#8b7100] transition hover:bg-[#8b7100] hover:text-white disabled:cursor-not-allowed disabled:border-[#d6d3d1] disabled:text-[#aaa59c]"
+              >
+                Mua ngay
               </button>
 
-              <div className="mt-16 grid max-w-[410px] grid-cols-2 gap-8 border-t border-[#ece5d8] pt-8">
-                <div>
-                  <p className="text-[7px] uppercase tracking-[1px] text-[#aaa59c]">
-                    Concentration
-                  </p>
-                  <p className="mt-2 text-[11px]">
-                    {product.concentration || "Signature"}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-[7px] uppercase tracking-[1px] text-[#aaa59c]">
-                    Stock
-                  </p>
-                  <p className="mt-2 text-[11px]">
-                    {canAdd ? `${availableStock} available` : "Sold out"}
-                  </p>
-                </div>
-              </div>
             </div>
           </div>
         </section>
@@ -876,106 +923,7 @@ export default function ProductDetail() {
         </section>
       </main>
 
-      {/* Footer */}
-      <footer className="bg-[#fbf8f2]">
-        <div className="mx-auto grid max-w-[1240px] gap-12 px-6 py-16 md:grid-cols-2 md:px-10 lg:grid-cols-[1.1fr_0.8fr_0.8fr_1.2fr] lg:px-14">
-          <div>
-            <div className="flex h-[62px] w-[62px] items-center justify-center rounded-full bg-black text-[11px] text-white">
-              LOGO
-            </div>
-
-            <h3 className="mt-6 font-serif text-[17px] font-semibold">
-              The Olfactory Editorial
-            </h3>
-
-            <p className="mt-6 max-w-[250px] text-[9px] leading-[1.7] text-[#8c877f]">
-              A curated archive of high-end scents and the stories they tell.
-              Elevating the art of perfumery through editorial precision.
-            </p>
-
-            <div className="mt-5 flex gap-3 text-[#aaa59d]">
-              <Share2 size={15} strokeWidth={1.4} />
-              <MessageSquare size={15} strokeWidth={1.4} />
-              <AtSign size={15} strokeWidth={1.4} />
-            </div>
-          </div>
-
-          <FooterColumn
-            title="NAVIGATION"
-            links={[
-              "Our Story",
-              "Shipping & Returns",
-              "Privacy Policy",
-              "Contact",
-            ]}
-          />
-
-          <FooterColumn
-            title="COLLECTIONS"
-            links={[
-              "The Resin Archive",
-              "Floral Monologues",
-              "Citrus Studies",
-              "Limited Editions",
-            ]}
-          />
-
-          <div>
-            <h4 className="text-[9px] font-semibold tracking-[1px]">
-              NEWSLETTER
-            </h4>
-
-            <p className="mt-6 max-w-[260px] text-[9px] leading-[1.6] text-[#8b867e]">
-              Join our list for exclusive releases and editorial insights.
-            </p>
-
-            <div className="mt-7 flex border-b border-[#d9d4cb] pb-3">
-              <input
-                type="email"
-                placeholder="Email Address"
-                className="w-full bg-transparent text-[9px] outline-none placeholder:text-[#aaa59e]"
-              />
-
-              <button className="text-[14px]">→</button>
-            </div>
-          </div>
-        </div>
-
-        <div className="mx-auto flex max-w-[1240px] flex-col items-center justify-between gap-4 border-t border-[#e4dfd6] px-6 py-7 text-[7px] uppercase tracking-[0.6px] text-[#99948c] md:flex-row md:px-10 lg:px-14">
-          <p>© 2024 The Olfactory Editorial. All Rights Reserved.</p>
-
-          <div className="flex gap-7">
-            <span>Paris</span>
-            <span>Grasse</span>
-            <span>New York</span>
-          </div>
-        </div>
-      </footer>
-    </div>
-  );
-}
-
-interface FooterColumnProps {
-  title: string;
-  links: string[];
-}
-
-function FooterColumn({ title, links }: FooterColumnProps) {
-  return (
-    <div>
-      <h4 className="text-[9px] font-semibold tracking-[1px]">{title}</h4>
-
-      <div className="mt-6 space-y-4">
-        {links.map((link) => (
-          <a
-            key={link}
-            href="#"
-            className="block text-[9px] text-[#8b867e] transition hover:text-[#8b7100]"
-          >
-            {link}
-          </a>
-        ))}
-      </div>
+      <Footer />
     </div>
   );
 }

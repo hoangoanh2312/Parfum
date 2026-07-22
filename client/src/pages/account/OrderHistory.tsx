@@ -8,6 +8,12 @@ type Order = {
   id: string;
   createdAt?: string;
   status: string;
+  displayStatus?: string;
+  payment?: {
+    method: "cod" | "bank_qr";
+    status: "unpaid" | "paid";
+    paidAt?: string | null;
+  } | null;
   total: number;
   itemCount: number;
   firstItemName: string;
@@ -99,7 +105,12 @@ export default function OrderHistory() {
                   <div className="md:text-right">
                     <p className="font-serif text-xl">{vnd(order.total)}</p>
                     <p className="mt-1 text-[9px] uppercase tracking-widest text-[#8B7200]">
-                      {order.status}
+                      {order.displayStatus || order.status}
+                    </p>
+                    <p className="mt-1 text-[10px] text-[#756E67]">
+                      {order.payment?.status === "paid"
+                        ? "Đã thanh toán"
+                        : "Chưa thanh toán"}
                     </p>
                   </div>
                 </div>

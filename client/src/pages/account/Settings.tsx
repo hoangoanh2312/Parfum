@@ -6,14 +6,17 @@ import {
   LockKeyhole,
   Mail,
   Save,
-  ShieldCheck,
   User,
 } from "lucide-react";
+import { PasswordRequirements } from "../../components/PasswordRequirements";
 import { api } from "../../lib/api";
+import { getPasswordError } from "../../lib/password";
 import { useAuth } from "../../store/auth.store";
+import { useLanguage } from "../../store/language.store";
 import { toast } from "../../store/toast.store";
 
 export default function Settings() {
+  const language = useLanguage((state) => state.language);
   const [showPassword, setShowPassword] = useState(false);
   const user = useAuth((state) => state.user);
   const setUser = useAuth((state) => state.setUser);
@@ -38,7 +41,7 @@ export default function Settings() {
       ...previous,
       fullName: user.name || "",
       email: user.email || "",
-      phone: user.addresses?.[0]?.phone || "",
+      phone: user.phone || user.addresses?.[0]?.phone || "",
     }));
   }, [user]);
 
@@ -60,8 +63,17 @@ export default function Settings() {
     event.preventDefault();
 
     if (form.newPassword || form.confirmPassword || form.currentPassword) {
+      const passwordError = getPasswordError(form.newPassword, language);
+      if (passwordError) {
+        toast.error(passwordError);
+        return;
+      }
       if (form.newPassword !== form.confirmPassword) {
-        toast.error("Mật khẩu xác nhận không khớp");
+        toast.error(
+          language === "vi"
+            ? "Mật khẩu xác nhận không khớp"
+            : "Passwords do not match",
+        );
         return;
       }
       if (!form.currentPassword) {
@@ -70,16 +82,10 @@ export default function Settings() {
       }
     }
 
-    const defaultAddress = user?.addresses?.[0];
     const nextPhone = form.phone.trim();
 
     if (nextPhone && !/^0\d{9}$/.test(nextPhone)) {
       toast.error("Số điện thoại phải bắt đầu bằng 0 và đủ 10 số");
-      return;
-    }
-
-    if (nextPhone && !defaultAddress) {
-      toast.error("Bạn cần thêm địa chỉ trước khi cập nhật số điện thoại");
       return;
     }
 
@@ -88,27 +94,17 @@ export default function Settings() {
       const { data } = await api.put("/auth/me", {
         name: form.fullName,
         email: form.email,
+        phone: nextPhone || undefined,
       });
-      let nextAddresses = data.addresses || [];
-
-      if (defaultAddress && nextPhone !== defaultAddress.phone) {
-        const { data: updatedAddresses } = await api.put(
-          `/auth/me/addresses/${defaultAddress._id}`,
-          {
-            label: defaultAddress.label || "Mặc định",
-            phone: nextPhone,
-            detail: defaultAddress.detail,
-          },
-        );
-        nextAddresses = updatedAddresses;
-      }
 
       setUser({
         id: data._id || data.id,
         name: data.name,
         email: data.email,
+        phone: data.phone,
         role: data.role,
-        addresses: nextAddresses,
+        isEmailVerified: data.isEmailVerified,
+        addresses: data.addresses || [],
       });
 
       if (form.currentPassword && form.newPassword) {
@@ -267,6 +263,7 @@ export default function Settings() {
                   name="newPassword"
                   value={form.newPassword}
                   onChange={handleChange}
+                  minLength={8}
                   placeholder="Nhập mật khẩu mới"
                   className="mt-3 w-full border border-[#DCD4CB] bg-[#FCF9F4] px-4 py-3 text-sm outline-none transition focus:border-[#927600]"
                 />
@@ -288,18 +285,10 @@ export default function Settings() {
               </label>
             </div>
 
-            <div className="flex items-start gap-3 bg-[#F1EDE7] p-4">
-              <ShieldCheck
-                size={18}
-                strokeWidth={1.4}
-                className="mt-0.5 shrink-0 text-[#806900]"
-              />
-
-              <p className="text-xs leading-5 text-[#726A62]">
-                Mật khẩu nên có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số
-                và ký tự đặc biệt.
-              </p>
-            </div>
+            <PasswordRequirements
+              password={form.newPassword}
+              language={language}
+            />
           </div>
         </section>
 

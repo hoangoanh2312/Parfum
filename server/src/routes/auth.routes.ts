@@ -4,6 +4,7 @@ import * as ctrl from '../controllers/auth.controller';
 import { validate } from '../middlewares/validate.middleware';
 import { authenticate } from '../middlewares/auth.middleware';
 import { rateLimit } from '../middlewares/rateLimit.middleware';
+import { strongPasswordSchema } from '../validators/password.schema';
 
 const r = Router();
 
@@ -27,9 +28,9 @@ const addressSchema = z
     phone: phoneSchema,
     line: z.string().trim().min(1).optional(),
     detail: z.string().trim().min(1).optional(),
-    ward: z.string().trim().optional(),
+    ward: z.string().trim().min(1, 'Ward is required'),
     district: z.string().trim().optional(),
-    province: z.string().trim().optional(),
+    province: z.string().trim().min(1, 'Province is required'),
     isDefault: z.boolean().optional(),
   })
   .refine((d) => !!(d.line || d.detail), {
@@ -40,7 +41,14 @@ const addressSchema = z
 r.post(
   '/register',
   authLimiter,
-  validate(z.object({ name: z.string(), email: z.string().email(), password: z.string().min(6) })),
+  validate(
+    z.object({
+      name: z.string().trim().min(2),
+      email: z.string().trim().email(),
+      phone: phoneSchema,
+      password: strongPasswordSchema,
+    }),
+  ),
   ctrl.register,
 );
 r.post(
@@ -54,7 +62,20 @@ r.post('/logout', authenticate, ctrl.logout);
 
 // Quen / dat lai mat khau qua email
 r.post('/forgot-password', authLimiter, validate(z.object({ email: z.string().email() })), ctrl.forgotPassword);
-r.post('/reset-password', authLimiter, validate(z.object({ token: z.string().min(10), password: z.string().min(6) })), ctrl.resetPassword);
+r.post(
+  '/verify-password-reset-email-otp',
+  authLimiter,
+  validate(z.object({ email: z.string().email(), otp: z.string().regex(/^\d{6}$/, 'OTP must contain exactly 6 digits') })),
+  ctrl.verifyEmailPasswordResetOtp,
+);
+r.post('/forgot-password-phone', authLimiter, validate(z.object({ phone: phoneSchema })), ctrl.forgotPasswordByPhone);
+r.post(
+  '/verify-password-reset-otp',
+  authLimiter,
+  validate(z.object({ phone: phoneSchema, otp: z.string().regex(/^\d{6}$/, 'OTP must contain exactly 6 digits') })),
+  ctrl.verifyPasswordResetOtp,
+);
+r.post('/reset-password', authLimiter, validate(z.object({ token: z.string().min(10), password: strongPasswordSchema })), ctrl.resetPassword);
 
 // Xac thuc email
 r.post('/verify-email', validate(z.object({ token: z.string().min(10) })), ctrl.verifyEmail);
@@ -64,13 +85,13 @@ r.get('/me', authenticate, ctrl.me);
 r.put(
   '/me',
   authenticate,
-  validate(z.object({ name: z.string().min(1), email: z.string().email() })),
+  validate(z.object({ name: z.string().min(1), email: z.string().email(), phone: phoneSchema.optional() })),
   ctrl.updateProfile,
 );
 r.put(
   '/me/password',
   authenticate,
-  validate(z.object({ currentPassword: z.string().min(1), newPassword: z.string().min(6) })),
+  validate(z.object({ currentPassword: z.string().min(1), newPassword: strongPasswordSchema })),
   ctrl.changePassword,
 );
 r.post('/me/addresses', authenticate, validate(addressSchema), ctrl.addAddress);

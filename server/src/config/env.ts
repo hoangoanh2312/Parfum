@@ -1,4 +1,8 @@
-import 'dotenv/config'; // nap .env vao process.env ngay khi import
+import path from 'path';
+import dotenv from 'dotenv';
+
+// Luon nap server/.env, ke ca khi lenh npm duoc chay tu workspace goc.
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 /**
  * Doc 1 bien moi truong bat buoc. Neu thieu -> bao loi ro ngay luc khoi dong.
@@ -29,11 +33,14 @@ export const env = {
   cloudinarySecret: process.env.CLOUDINARY_API_SECRET || '',
   // Thu muc tren Cloudinary dung lam thu vien anh cho web (doi tuy y qua .env)
   cloudinaryFolder: process.env.CLOUDINARY_FOLDER || 'parfum',
-  // pf54: VietQR (demo) cho thanh toan chuyen khoan QR
+  // VietQR va webhook xac nhan giao dich ngan hang.
   vietqr: {
-    bankBin: process.env.VIETQR_BANK_BIN || '970415',
-    accountNo: process.env.VIETQR_ACCOUNT_NO || '0000000000',
-    accountName: process.env.VIETQR_ACCOUNT_NAME || 'HOC PARFUM DEMO',
+    bankBin: (process.env.VIETQR_BANK_BIN || '').trim(),
+    accountNo: (process.env.VIETQR_ACCOUNT_NO || '').trim(),
+    accountName: (process.env.VIETQR_ACCOUNT_NAME || '').trim(),
+  },
+  sepay: {
+    webhookSecret: (process.env.SEPAY_WEBHOOK_SECRET || '').trim(),
   },
   // pf52: bootstrap doi mat khau admin mac dinh
   defaultAdminEmail: process.env.DEFAULT_ADMIN_EMAIL || '',

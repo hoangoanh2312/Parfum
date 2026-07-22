@@ -22,6 +22,7 @@ export async function list(req: Request, res: Response, next: NextFunction) {
       await mediaService.listImages({
         nextCursor: req.query.cursor ? String(req.query.cursor) : undefined,
         max: req.query.max ? Number(req.query.max) : undefined,
+        folder: req.query.folder ? String(req.query.folder) : undefined,
       }),
     );
   } catch (e) {

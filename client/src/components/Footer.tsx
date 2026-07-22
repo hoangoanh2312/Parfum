@@ -1,170 +1,142 @@
 import { Link } from "react-router-dom";
-import { FaFacebookF, FaInstagram, FaTiktok, FaPinterestP } from "react-icons/fa";
 
-const NAV_COLS = [
+const FOOTER_LINKS = [
   {
-    heading: "Shop",
-    links: ["Trang chủ", "Sản phẩm", "Thương hiệu", "Bộ sưu tập", "Mẫu thử", "Quà tặng", "Nhãn hàng", "Fragrance Notes"],
+    heading: "Mua sắm",
+    links: [
+      { label: "Trang chủ", to: "/" },
+      { label: "Sản phẩm", to: "/shop" },
+      { label: "Thương hiệu", to: "/brand" },
+      { label: "Giỏ hàng", to: "/cart" },
+    ],
   },
   {
-    heading: "L'Essence Noire",
-    links: ["Giới thiệu", "Chương trình thành viên", "Tìm hương phù hợp", "Đánh giá", "Câu chuyện khách hàng", "Tuyển dụng"],
+    heading: "Tài khoản",
+    links: [
+      { label: "Đăng nhập", to: "/login" },
+      { label: "Đăng ký", to: "/register" },
+      { label: "Đơn hàng của tôi", to: "/account/orders" },
+      { label: "Sổ địa chỉ", to: "/account/addresses" },
+      { label: "Wishlist", to: "/account/wishlist" },
+    ],
   },
   {
     heading: "Hỗ trợ",
-    links: ["Trung tâm trợ giúp", "FAQ", "Vận chuyển & Giao hàng", "Theo dõi đơn hàng", "Đổi trả", "Liên hệ"],
-  },
-  {
-    heading: "Hướng dẫn",
-    links: ["Cách chọn nước hoa", "Phân biệt nồng độ", "Bảo quản nước hoa", "Nước hoa & mùa", "Tin tức", "Blog"],
+    links: [
+      { label: "Tra cứu đơn hàng", to: "/order-lookup" },
+      { label: "Liên hệ", to: "/contact" },
+      { label: "Chính sách bảo mật", to: "/privacy-policy" },
+      { label: "Giới thiệu", to: "/about" },
+      { label: "Journal", to: "/blog" },
+    ],
   },
 ];
 
-const SOCIALS = [
-  { label: "Facebook", icon: FaFacebookF },
-  { label: "Instagram", icon: FaInstagram },
-  { label: "TikTok", icon: FaTiktok },
-  { label: "Pinterest", icon: FaPinterestP },
-];
-
-const PAYMENTS = ["VISA", "MC", "G Pay", "Apple Pay", "PayPal"];
-
+const PAYMENTS = ["VISA", "Mastercard", "COD", "VietQR"];
 const PROMO_IMAGE =
   "https://res.cloudinary.com/dwj2trmn0/image/upload/v1784435350/view-all-fragrances-banner-mobile_3884d600-2ada-4144-a0f8-18bd647896a9_nxmh16.webp";
 
 export default function Footer() {
   return (
     <footer
-      className="bg-[#161412] text-[#7A7671]"
+      className="border-t border-white/[0.06] bg-[#161412] text-[#8A8580]"
       style={{ fontFamily: "'Manrope', sans-serif" }}
     >
-      {/* MAIN CONTENT — centered container */}
-      <div className="mx-auto max-w-[1280px] px-8 lg:px-12">
-
-        {/* TOP ROW: promo card LEFT + nav RIGHT */}
-        <div className="grid gap-0 py-10 lg:grid-cols-[300px_1fr] lg:gap-12 lg:py-14">
-
-          {/* LEFT — Promo card */}
-          <div className="relative hidden overflow-hidden rounded-2xl lg:block" style={{ minHeight: 340 }}>
+      <div className="mx-auto max-w-[1280px] px-5 sm:px-8 lg:px-12">
+        <div className="grid gap-9 py-10 lg:grid-cols-[300px_1fr] lg:gap-12 lg:py-14">
+          <Link
+            to="/shop"
+            className="group relative hidden min-h-[340px] overflow-hidden rounded-md lg:block"
+          >
             <img
               src={PROMO_IMAGE}
-              alt="L'Essence Noire"
-              className="absolute inset-0 h-full w-full object-cover opacity-60"
+              alt="L'Essence Noire fragrance collection"
+              className="absolute inset-0 h-full w-full object-cover opacity-65 transition duration-700 group-hover:scale-105 group-hover:opacity-75"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
             <div className="relative flex h-full flex-col justify-end p-7">
-              <h3
-                className="text-[24px] font-bold leading-[1.18] text-white"
-                style={{ fontFamily: "'Spectral', serif" }}
-              >
-                Wear Luxury.<br />Pay Less.
-              </h3>
-              <p className="mt-2.5 text-[12px] leading-[1.7] text-white/65">
-                Chọn một mùi hương mới mỗi tháng. Trả tiền cho trải nghiệm, không phải cái hộp.
+              <p className="text-[9px] font-semibold uppercase tracking-[0.22em] text-[#D8CBB7]">
+                Signature Collection
               </p>
-              <Link
-                to="/shop"
-className="mt-6 block w-full rounded-md border border-[#D9D2C4] bg-[#EDE8DF] py-3 text-center text-[11px] font-semibold uppercase tracking-[0.12em] text-[#735C00] shadow-sm transition-all duration-300 ease-out hover:-translate-y-0.5 hover:border-[#B5A47A] hover:bg-[#E8E2D8] hover:text-[#8A8176] hover:shadow-md active:translate-y-0 active:scale-[0.98] active:shadow-sm"              >
-                Dùng thử ngay
-              </Link>
-            </div>
-          </div>
-
-          {/* RIGHT — Logo + 4-col nav */}
-          <div className="flex flex-col">
-            {/* Logo */}
-            <div className="mb-10">
-              <span
-                className="text-[14px] font-semibold uppercase tracking-[0.24em] text-white"
+              <h3
+                className="mt-3 text-[25px] font-bold leading-[1.12] text-white"
                 style={{ fontFamily: "'Spectral', 'Noto Serif', serif" }}
               >
-                L'Essence Noire
+                Find Your
+                <br />
+                Next Scent
+              </h3>
+              <span className="mt-6 inline-flex w-full justify-center border border-[#D9D2C4] bg-[#EDE8DF] py-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#735C00] transition group-hover:bg-white">
+                Khám phá ngay
               </span>
             </div>
+          </Link>
 
-            {/* 4-col links */}
-            <div className="grid grid-cols-2 gap-x-8 gap-y-10 sm:grid-cols-4">
-              {NAV_COLS.map((col) => (
+          <div className="flex flex-col">
+            <div className="mb-9">
+              <Link
+                to="/"
+                className="inline-flex text-[15px] font-semibold uppercase tracking-[0.22em] text-white"
+                style={{ fontFamily: "'Spectral', 'Noto Serif', serif" }}
+              >
+                L&apos;Essence Noire
+              </Link>
+              <p className="mt-4 max-w-xl text-sm leading-6 text-[#8A8580]">
+                Nước hoa chính hãng, tuyển chọn theo cá tính mùi hương và trải
+                nghiệm mua sắm tinh gọn.
+              </p>
+            </div>
+
+            <nav className="grid grid-cols-2 gap-x-8 gap-y-9 sm:grid-cols-3">
+              {FOOTER_LINKS.map((col) => (
                 <div key={col.heading}>
-                  <p className="mb-5 text-[9px] font-semibold uppercase tracking-[0.2em] text-white/80">
+                  <p className="mb-5 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/80">
                     {col.heading}
                   </p>
-                  <ul className="flex flex-col gap-3">
+                  <ul className="space-y-3">
                     {col.links.map((link) => (
-                      <li key={link}>
-                        <a
-                          href="#"
-                          className="text-[12px] leading-none text-[#6A6661] transition-colors hover:text-white/75"
+                      <li key={link.to}>
+                        <Link
+                          to={link.to}
+                          className="text-sm leading-none text-[#8A8580] transition hover:text-white"
                         >
-                          {link}
-                        </a>
+                          {link.label}
+                        </Link>
                       </li>
                     ))}
                   </ul>
                 </div>
               ))}
+            </nav>
+          </div>
+        </div>
+      </div>
+
+      <div className="border-t border-white/[0.06]" />
+
+      <div className="mx-auto max-w-[1280px] px-5 sm:px-8 lg:px-12">
+        <div className="py-5">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-xs text-[#5C5650]">
+              © 2026 L&apos;Essence Noire. All rights reserved.
+            </p>
+
+            <div className="flex flex-wrap items-center gap-2">
+              {PAYMENTS.map((label) => (
+                <span
+                  key={label}
+                  className="border border-white/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#5C5650]"
+                >
+                  {label}
+                </span>
+              ))}
+              <Link
+                to="/admin"
+                className="ml-0 border border-white/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#75621E] transition hover:border-[#75621E] hover:text-[#D8CBB7] sm:ml-2"
+              >
+                Quản trị
+              </Link>
             </div>
-          </div>
-        </div>
-      </div>
-
-      {/* DIVIDER */}
-      <div className="border-t border-white/[0.06]" />
-
-      {/* BOTTOM BAR — Social + Payment */}
-      <div className="mx-auto max-w-[1280px] px-8 lg:px-12">
-        <div className="flex flex-col gap-4 py-5 sm:flex-row sm:items-center sm:justify-between">
-
-          {/* Social icons */}
-          <div className="flex items-center gap-2.5">
-            <span className="mr-1 text-[9px] uppercase tracking-[0.2em] text-[#48433E]">
-              Follow us
-            </span>
-            {SOCIALS.map(({ label, icon: Icon }) => (
-              <a
-                key={label}
-                href="#"
-                aria-label={label}
-                className="flex h-[30px] w-[30px] items-center justify-center rounded-full bg-white/[0.07] text-[#7A7671] transition hover:bg-white/[0.13] hover:text-white"
-              >
-                <Icon size={12} />
-              </a>
-            ))}
-          </div>
-
-          {/* Payment badges */}
-          <div className="flex items-center gap-1.5">
-            {PAYMENTS.map((label) => (
-              <span
-                key={label}
-                className="rounded border border-[#2e2b28] px-2 py-[3px] text-[9px] font-bold tracking-wide text-[#48433E]"
-              >
-                {label}
-              </span>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* DIVIDER */}
-      <div className="border-t border-white/[0.06]" />
-
-      {/* COPYRIGHT BAR */}
-      <div className="mx-auto max-w-[1280px] px-8 lg:px-12">
-        <div className="flex flex-col gap-2 py-4 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-[11px] text-[#3E3A36]">
-            © 2026 L'Essence Noire. All rights reserved.
-          </p>
-          <div className="flex gap-6">
-            {["Điều khoản sử dụng", "Chính sách bảo mật", "Sitemap"].map((t) => (
-              <a
-                key={t}
-                href="#"
-                className="text-[11px] text-[#3E3A36] transition hover:text-[#6A6661]"
-              >
-                {t}
-              </a>
-            ))}
           </div>
         </div>
       </div>

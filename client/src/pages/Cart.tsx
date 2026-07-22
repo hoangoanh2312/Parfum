@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Plus, Minus, ShoppingBag, Lock, Truck, X } from "lucide-react";
 import { useCart } from "../store/cart.store";
@@ -16,6 +16,7 @@ export default function Cart() {
   const navigate = useNavigate();
   // variantId -> số lượng CÒN LẠI thực tế trong kho (kiểm tra realtime)
   const [available, setAvailable] = useState<Record<string, number>>({});
+  const [pricing, setPricing] = useState<Record<string, { basePrice: number; finalPrice: number; discountPercent: number; promotionName: string; lineTotal: number }>>({});
   // Danh sách sản phẩm tương tự (load từ API)
   const [similar, setSimilar] = useState<ProductCardData[]>([]);
 
@@ -51,8 +52,13 @@ export default function Cart() {
         items: items.map((i) => ({ variant: i.variant, quantity: i.quantity })),
       });
       const map: Record<string, number> = {};
-      for (const d of data.data.items) map[d.variant] = d.available;
+      const priceMap: typeof pricing = {};
+      for (const d of data.data.items) {
+        map[d.variant] = d.available;
+        priceMap[d.variant] = { basePrice: d.basePrice, finalPrice: d.finalPrice, discountPercent: d.discountPercent, promotionName: d.promotionName, lineTotal: d.lineTotal };
+      }
       setAvailable(map);
+      setPricing(priceMap);
     } catch {
       // Nếu kiểm tra lỗi thì không chặn hiển thị giỏ
     }
@@ -67,6 +73,8 @@ export default function Cart() {
     const av = available[it.variant];
     return typeof av === "number" && av < it.quantity;
   });
+  const displayTotal = useMemo(() => items.reduce((sum, item) => sum + (pricing[item.variant]?.lineTotal ?? item.price * item.quantity), 0), [items, pricing]);
+  const originalTotal = useMemo(() => items.reduce((sum, item) => sum + (pricing[item.variant]?.basePrice ?? item.basePrice ?? item.price) * item.quantity, 0), [items, pricing]);
 
   function checkout() {
     if (hasOutOfStock) {
@@ -125,6 +133,7 @@ export default function Cart() {
           <div className="lg:col-span-2 space-y-8">
             {items.map((it) => {
               const av = available[it.variant];
+              const priced = pricing[it.variant];
               const soldOut = typeof av === "number" && av <= 0;
               const notEnough =
                 typeof av === "number" && av > 0 && av < it.quantity;
@@ -156,9 +165,10 @@ export default function Cart() {
                           {it.volume}
                         </p>
                       </div>
-                      <span className="font-['Noto_Serif'] text-xl text-[#1C1C19] whitespace-nowrap">
-                        {vnd(it.price)}
-                      </span>
+                      <div className="text-right whitespace-nowrap">
+                        <span className={"block font-['Noto_Serif'] text-xl " + (priced?.discountPercent ? "text-[#8B1E1E]" : "text-[#1C1C19]")}>{vnd(priced?.finalPrice ?? it.price)}</span>
+                        {!!priced?.discountPercent && <span className="block text-xs text-[#8D887F] line-through">{vnd(priced.basePrice)}</span>}
+                      </div>
                     </div>
 
                     {soldOut && (
@@ -171,6 +181,7 @@ export default function Cart() {
                         Chỉ còn {av} sản phẩm
                       </p>
                     )}
+                    {priced?.promotionName && <p className="mt-2 text-xs uppercase tracking-[1px] text-[#8B1E1E]">{priced.promotionName} · -{priced.discountPercent}%</p>}
 
                     <div className="flex justify-between items-center mt-6">
                       <div className="flex items-center border border-[rgba(208,197,175,0.4)] font-['Manrope'] text-[#1C1C19]">
@@ -225,8 +236,9 @@ export default function Cart() {
                 <span className="text-[#5F5E5E] tracking-[0.35px]">
                   Tạm tính ({count} sản phẩm)
                 </span>
-                <span className="text-[#1C1C19]">{vnd(total)}</span>
+                <span className="text-[#1C1C19]">{vnd(originalTotal)}</span>
               </div>
+              {originalTotal > displayTotal && <div className="flex justify-between text-[#8B1E1E]"><span>Ưu đãi sản phẩm</span><span>-{vnd(originalTotal - displayTotal)}</span></div>}
               <div className="flex justify-between">
                 <span className="text-[#5F5E5E] tracking-[0.35px]">
                   Vận chuyển
@@ -246,7 +258,7 @@ export default function Cart() {
                 Tổng cộng
               </span>
               <span className="font-['Noto_Serif'] text-3xl text-[#1C1C19]">
-                {vnd(total)}
+                {vnd(displayTotal)}
               </span>
             </div>
 

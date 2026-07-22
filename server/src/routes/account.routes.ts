@@ -12,9 +12,9 @@ const productParamsSchema = z.object({
     .regex(/^[0-9a-fA-F]{24}$/),
 });
 const scentProfileSchema = z.object({
-  families: z.array(z.string().trim().min(1)).max(12).default([]),
-  preferredNotes: z.array(z.string().trim().min(1)).max(30).default([]),
-  dislikedNotes: z.array(z.string().trim().min(1)).max(30).default([]),
+  families: z.array(z.string().trim().min(1)).max(50).default([]),
+  preferredNotes: z.array(z.string().trim().min(1)).max(600).default([]),
+  dislikedNotes: z.array(z.string().trim().min(1)).max(600).default([]),
 });
 
 router.use(authenticate);

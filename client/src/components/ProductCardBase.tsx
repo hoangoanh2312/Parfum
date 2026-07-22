@@ -12,6 +12,10 @@ export interface ProductVariantOption {
   size?: string;
   volume?: string;
   price?: number | null;
+  basePrice?: number | null;
+  discountPercent?: number;
+  promotionType?: string | null;
+  promotionName?: string;
   stock?: number;
 }
 
@@ -25,6 +29,10 @@ export interface ProductCardBaseData {
   description?: string;
   fragranceFamily?: string;
   price?: number | null;
+  basePrice?: number | null;
+  discountPercent?: number;
+  promotionType?: string | null;
+  promotionName?: string;
   priceText?: string;
   image?: string | null;
   images?: string[];
@@ -87,6 +95,10 @@ export default function ProductCardBase({
     return sizes.map((size) => ({
       size,
       price: product.price ?? null,
+      basePrice: product.basePrice ?? null,
+      discountPercent: product.discountPercent || 0,
+      promotionType: product.promotionType || null,
+      promotionName: product.promotionName || "",
       variantId: product.variantId ?? null,
       stock: product.stock,
     }));
@@ -102,6 +114,8 @@ export default function ProductCardBase({
     };
 
   const activePrice = current.price ?? product.price ?? null;
+  const activeBasePrice = current.basePrice ?? product.basePrice ?? activePrice;
+  const activeDiscountPercent = current.discountPercent ?? product.discountPercent ?? 0;
   const priceLabel = formatVnd(activePrice) || product.priceText || "Liên hệ";
   const currentVariantId = current.variantId ?? product.variantId ?? null;
   const currentStock = current.stock ?? product.stock;
@@ -129,6 +143,10 @@ export default function ProductCardBase({
           image,
           volume: currentSize,
           price: activePrice || 0,
+          basePrice: activeBasePrice ?? undefined,
+          discountPercent: activeDiscountPercent,
+          promotionType: current.promotionType ?? product.promotionType,
+          promotionName: current.promotionName ?? product.promotionName,
           stock: currentStock,
           quantity: 1,
         },
@@ -169,6 +187,11 @@ export default function ProductCardBase({
         {outOfStock && (
           <span className="absolute top-3 left-3 bg-red-600 text-white text-[10px] px-3 py-1 uppercase tracking-widest">
             Hết hàng
+          </span>
+        )}
+        {!outOfStock && activeDiscountPercent > 0 && (
+          <span className="absolute left-3 top-3 bg-[#8B1E1E] px-2.5 py-1 text-[10px] font-semibold text-white">
+            -{activeDiscountPercent}%
           </span>
         )}
 
@@ -238,14 +261,12 @@ export default function ProductCardBase({
             "flex items-center justify-between gap-3 " + (compact ? "mt-2" : "mt-2.5")
           }
         >
-          <span
-            className={
-              "font-semibold text-[#1C1C19] whitespace-nowrap " +
-              (compact ? "text-[14px]" : "text-[16px]")
-            }
-          >
-            {priceLabel}
-          </span>
+          <div className="min-w-0">
+            <span className={"block whitespace-nowrap font-semibold " + (activeDiscountPercent > 0 ? "text-[#8B1E1E] " : "text-[#1C1C19] ") + (compact ? "text-[14px]" : "text-[16px]")}>{priceLabel}</span>
+            {activeDiscountPercent > 0 && activeBasePrice != null && (
+              <span className="block text-[11px] text-[#817B73] line-through">{formatVnd(activeBasePrice)}</span>
+            )}
+          </div>
 
           {options.length > 1 ? (
             <div className="relative shrink-0">

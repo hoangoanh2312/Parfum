@@ -5,7 +5,9 @@ interface User {
   id: string;
   name: string;
   email: string;
+  phone?: string;
   role: string;
+  isEmailVerified?: boolean;
   addresses?: Address[];
 }
 
@@ -89,7 +91,9 @@ export const useAuth = create<AuthState>((set) => ({
             id: data._id || data.id,
             name: data.name,
             email: data.email,
+            phone: data.phone,
             role: data.role,
+            isEmailVerified: data.isEmailVerified,
             addresses: data.addresses || [],
           },
           isBootstrapped: true,

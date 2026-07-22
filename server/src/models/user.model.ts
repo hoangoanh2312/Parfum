@@ -46,6 +46,10 @@ const userSchema = new Schema(
     refreshToken: { type: String, select: false },
     passwordResetToken: { type: String, select: false },
     passwordResetExpires: { type: Date, select: false },
+    passwordResetOtpHash: { type: String, select: false },
+    passwordResetOtpExpires: { type: Date, select: false },
+    passwordResetOtpAttempts: { type: Number, select: false },
+    passwordResetOtpLastSentAt: { type: Date, select: false },
     emailVerifyToken: { type: String, select: false },
     emailVerifyExpires: { type: Date, select: false },
     lastLoginAt: Date,
@@ -58,6 +62,10 @@ const userSchema = new Schema(
         delete ret.refreshToken;
         delete ret.passwordResetToken;
         delete ret.passwordResetExpires;
+        delete ret.passwordResetOtpHash;
+        delete ret.passwordResetOtpExpires;
+        delete ret.passwordResetOtpAttempts;
+        delete ret.passwordResetOtpLastSentAt;
         delete ret.emailVerifyToken;
         delete ret.emailVerifyExpires;
         delete ret.__v;

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
 
 interface BrandFilterProps {
@@ -24,16 +24,24 @@ export default function BrandFilter({
 }: BrandFilterProps) {
   const [open, setOpen] = useState(true);
   const [query, setQuery] = useState("");
+  const listRef = useRef<HTMLDivElement | null>(null);
   const selectedSet = new Set(selected.map(norm));
 
   const filtered = useMemo(() => {
     const q = norm(query);
     const list = q ? brands.filter((b) => norm(b).includes(q)) : [...brands];
-    // Sap xep theo so luong giam dan (giong anh), roi theo ten
-    return list.sort(
-      (a, b) => (counts[b] ?? 0) - (counts[a] ?? 0) || a.localeCompare(b),
-    );
-  }, [brands, counts, query]);
+    return list.sort((a, b) => {
+      const selectedDiff = Number(selectedSet.has(norm(b))) - Number(selectedSet.has(norm(a)));
+      return selectedDiff || (counts[b] ?? 0) - (counts[a] ?? 0) || a.localeCompare(b);
+    });
+  }, [brands, counts, query, selectedSet]);
+
+  function handleToggle(brand: string) {
+    onToggle(brand);
+    window.requestAnimationFrame(() => {
+      listRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  }
 
   return (
     <div className="mt-8">
@@ -62,7 +70,7 @@ export default function BrandFilter({
           />
 
           <div className="relative mt-3">
-            <div className="brand-scroll max-h-[228px] overflow-y-auto pr-1 space-y-1">
+            <div ref={listRef} className="brand-scroll max-h-[228px] overflow-y-auto pr-1 space-y-1">
               {filtered.map((brand) => {
                 const active = selectedSet.has(norm(brand));
                 return (
@@ -73,7 +81,7 @@ export default function BrandFilter({
                     <input
                       type="checkbox"
                       checked={active}
-                      onChange={() => onToggle(brand)}
+                      onChange={() => handleToggle(brand)}
                       className="h-4 w-4 rounded-sm accent-[#735C00]"
                     />
                     <span

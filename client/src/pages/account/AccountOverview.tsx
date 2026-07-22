@@ -17,6 +17,7 @@ interface OrderItem {
   date: string;
   price: string;
   status: string;
+  paymentStatus: string;
 }
 
 interface RecommendationItem {
@@ -81,7 +82,11 @@ export default function AccountOverview() {
               ? new Date(order.createdAt).toLocaleDateString("vi-VN")
               : "Đang cập nhật",
             price: `${(order.total || 0).toLocaleString("vi-VN")}đ`,
-            status: order.status,
+            status: order.displayStatus || order.status,
+            paymentStatus:
+              order.payment?.status === "paid"
+                ? "Đã thanh toán"
+                : "Chưa thanh toán",
           })),
         );
       })
@@ -261,6 +266,9 @@ export default function AccountOverview() {
 
                     <p className="mt-1 text-[9px] uppercase tracking-widest text-[#9B8415]">
                       {order.status}
+                    </p>
+                    <p className="mt-1 text-[9px] text-[#81786F]">
+                      {order.paymentStatus}
                     </p>
                   </div>
                 </div>

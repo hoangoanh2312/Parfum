@@ -13,8 +13,8 @@ function sendAuth(res: Response, result: any, status = 200) {
 
 export async function register(req: Request, res: Response, next: NextFunction) {
   try {
-    const { name, email, password } = req.body;
-    sendAuth(res, await authService.register(name, email, password), 201);
+    const { name, email, password, phone } = req.body;
+    sendAuth(res, await authService.register(name, email, password, phone), 201);
   } catch (e) {
     next(e);
   }
@@ -109,6 +109,30 @@ export async function setDefaultAddress(req: Request, res: Response, next: NextF
 export async function forgotPassword(req: Request, res: Response, next: NextFunction) {
   try {
     res.json(await authService.requestPasswordReset(req.body.email));
+  } catch (e) {
+    next(e);
+  }
+}
+
+export async function verifyEmailPasswordResetOtp(req: Request, res: Response, next: NextFunction) {
+  try {
+    res.json(await authService.verifyEmailPasswordResetOtp(req.body.email, req.body.otp));
+  } catch (e) {
+    next(e);
+  }
+}
+
+export async function forgotPasswordByPhone(req: Request, res: Response, next: NextFunction) {
+  try {
+    res.json(await authService.requestPhonePasswordReset(req.body.phone));
+  } catch (e) {
+    next(e);
+  }
+}
+
+export async function verifyPasswordResetOtp(req: Request, res: Response, next: NextFunction) {
+  try {
+    res.json(await authService.verifyPhonePasswordResetOtp(req.body.phone, req.body.otp));
   } catch (e) {
     next(e);
   }

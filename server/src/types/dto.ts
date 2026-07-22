@@ -33,7 +33,7 @@ export interface StockItemDTO {
   quantity: number;
 }
 
-export type OrderStatus = 'pending' | 'paid' | 'shipping' | 'done' | 'cancelled';
+export type OrderStatus = 'pending' | 'paid' | 'shipping' | 'done' | 'cancelled' | 'returned';
 
 export interface CreateOrderInput {
   method?: 'cod' | 'bank_qr';

@@ -2,7 +2,12 @@
 //  MEDIA SERVICE — quan ly toan bo anh he thong tren Cloudinary
 //  Cung cap: trang thai cau hinh, liet ke anh (co phan trang), xoa anh.
 // =============================================================================
-import { cloudinary, isCloudinaryConfigured, CLOUDINARY_FOLDER } from '../config/cloudinary';
+import {
+  cloudinary,
+  isAdminMediaFolder,
+  isCloudinaryConfigured,
+  CLOUDINARY_FOLDER,
+} from '../config/cloudinary';
 import { env } from '../config/env';
 
 function httpError(message: string, status = 400) {
@@ -36,15 +41,38 @@ export function getStatus() {
   };
 }
 
-export async function listImages(params: { nextCursor?: string; max?: number }) {
+export async function listImages(params: { nextCursor?: string; max?: number; folder?: string }) {
   ensureConfigured();
   const max = Math.min(Math.max(Number(params.max) || 30, 1), 100);
-  const res: any = await cloudinary.api.resources({
-    type: 'upload',
-    prefix: `${CLOUDINARY_FOLDER}/`,
-    max_results: max,
-    next_cursor: params.nextCursor || undefined,
-  });
+  const requestedFolder = String(params.folder || '').trim();
+  if (requestedFolder && !isAdminMediaFolder(requestedFolder)) {
+    throw httpError('Thu muc anh khong hop le', 400);
+  }
+  const assetFolder = requestedFolder
+    ? `${CLOUDINARY_FOLDER}/${requestedFolder}`
+    : CLOUDINARY_FOLDER;
+  let res: any;
+  try {
+    // Dynamic folder mode: asset_folder doc lap voi public_id, nen prefix se bo sot anh.
+    res = await cloudinary.api.resources_by_asset_folder(assetFolder, {
+      resource_type: 'image',
+      type: 'upload',
+      max_results: max,
+      next_cursor: params.nextCursor || undefined,
+      direction: 'desc',
+    });
+  } catch (error: any) {
+    // Tai khoan Cloudinary legacy fixed-folder khong ho tro asset_folder.
+    if (![400, 404].includes(Number(error?.error?.http_code || error?.http_code))) throw error;
+    res = await cloudinary.api.resources({
+      resource_type: 'image',
+      type: 'upload',
+      prefix: `${assetFolder}/`,
+      max_results: max,
+      next_cursor: params.nextCursor || undefined,
+      direction: 'desc',
+    });
+  }
   const images: MediaImage[] = (res.resources || []).map((r: any) => ({
     publicId: r.public_id,
     url: r.secure_url || r.url,
@@ -59,7 +87,7 @@ export async function listImages(params: { nextCursor?: string; max?: number }) 
   return {
     images,
     nextCursor: (res.next_cursor as string) || null,
-    folder: CLOUDINARY_FOLDER,
+    folder: assetFolder,
   };
 }
 

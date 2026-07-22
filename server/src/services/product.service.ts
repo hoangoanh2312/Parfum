@@ -1,8 +1,11 @@
 import { Product } from '../models/product.model';
 import { escapeRegex } from '../utils/regex';
 import { Variant } from '../models/variant.model';
+import { Order } from '../models/order.model';
+import { Review } from '../models/review.model';
 import '../models/brand.model';
 import '../models/category.model';
+import { resolveVariantPrices } from './pricing-engine.service';
 
 type ProductListQuery = {
   page?: string | number;
@@ -20,6 +23,7 @@ type ProductListQuery = {
   minPrice?: string | number;
   maxPrice?: string | number;
   sort?: string;
+  discountedOnly?: string | boolean | number;
 };
 
 type ProductCard = {
@@ -38,11 +42,19 @@ type ProductCard = {
     variantId: string;
     size: string;
     price: number | null;
+    basePrice?: number | null;
+    discountPercent?: number;
+    promotionType?: string | null;
+    promotionName?: string;
     stock: number;
   }[];
   image: string | null;
   images?: string[];
   price: number | null;
+  basePrice?: number | null;
+  discountPercent?: number;
+  promotionType?: string | null;
+  promotionName?: string;
   priceText: string;
   variantId: string | null;
   volume: string;
@@ -53,6 +65,12 @@ type ProductCard = {
     base: string[];
   };
   createdAt?: Date;
+  soldCount: number;
+  hasDiscount?: boolean;
+  maxDiscountPercent?: number;
+  ratingAverage?: number;
+  ratingCount?: number;
+  voteScore?: number;
 };
 
 const DEFAULT_PAGE = 1;
@@ -110,8 +128,27 @@ function matchesScentProfile(product: ProductCard, filters: string[]) {
 
 function sortProducts(products: ProductCard[], sort?: string) {
   const next = [...products];
+  const newestTime = (product: ProductCard) =>
+    product.createdAt ? new Date(product.createdAt).getTime() : 0;
 
   switch (sort) {
+    case 'best_selling':
+    case 'bestselling':
+    case 'best_sellers':
+      return next.sort(
+        (a, b) => b.soldCount - a.soldCount || newestTime(b) - newestTime(a),
+      );
+    case 'rating':
+    case 'votes':
+    case 'top_rated':
+    case 'featured':
+      return next.sort(
+        (a, b) =>
+          (b.voteScore || 0) - (a.voteScore || 0) ||
+          (b.ratingAverage || 0) - (a.ratingAverage || 0) ||
+          (b.ratingCount || 0) - (a.ratingCount || 0) ||
+          newestTime(b) - newestTime(a),
+      );
     case 'price_asc':
     case 'priceAsc':
       return next.sort(
@@ -120,17 +157,21 @@ function sortProducts(products: ProductCard[], sort?: string) {
     case 'price_desc':
     case 'priceDesc':
       return next.sort((a, b) => (b.price ?? 0) - (a.price ?? 0));
+    case 'discount':
+    case 'discount_desc':
+      return next.sort(
+        (a, b) =>
+          (b.maxDiscountPercent || b.discountPercent || 0) -
+            (a.maxDiscountPercent || a.discountPercent || 0) ||
+          newestTime(b) - newestTime(a),
+      );
     case 'name_asc':
       return next.sort((a, b) => a.name.localeCompare(b.name));
     case 'name_desc':
       return next.sort((a, b) => b.name.localeCompare(a.name));
     case 'newest':
     default:
-      return next.sort((a, b) => {
-        const left = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-        const right = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-        return right - left;
-      });
+      return next.sort((a, b) => newestTime(b) - newestTime(a));
   }
 }
 
@@ -154,16 +195,13 @@ export async function getProducts(query: ProductListQuery = {}) {
   const concentrationFilters = toList(query.concentration);
   const seasonFilters = [...toList(query.season), ...toList(query.occasion)];
   const sizeFilters = toList(query.size);
+  const discountedOnly = ['1', 'true', 'yes'].includes(String(query.discountedOnly || '').toLowerCase());
 
   const productQuery: Record<string, unknown> = { isActive: true };
 
   if (search) {
     const safe = escapeRegex(search);
-    productQuery.$or = [
-      { name: { $regex: safe, $options: 'i' } },
-      { description: { $regex: safe, $options: 'i' } },
-      { slug: { $regex: safe, $options: 'i' } },
-    ];
+    productQuery.name = { $regex: safe, $options: 'i' };
   }
 
   const products: any[] = await Product.find(productQuery)
@@ -173,6 +211,48 @@ export async function getProducts(query: ProductListQuery = {}) {
 
   const ids = products.map((product) => product._id);
   const variants: any[] = await Variant.find({ product: { $in: ids } }).lean();
+  const productById = new Map(products.map((product) => [String(product._id), product]));
+  variants.forEach((variant) => { variant._categoryId = productById.get(String(variant.product))?.category?._id; });
+  const resolvedPrices = await resolveVariantPrices(variants);
+
+  const isBestSellingSort = ['best_selling', 'bestselling', 'best_sellers'].includes(
+    String(query.sort || '').toLowerCase(),
+  );
+  const isRatingSort = ['rating', 'votes', 'top_rated', 'featured'].includes(
+    String(query.sort || '').toLowerCase(),
+  );
+  const salesByVariant = new Map<string, number>();
+  if (isBestSellingSort) {
+    const sales: any[] = await Order.aggregate([
+      { $match: { status: { $in: ['paid', 'shipping', 'done'] } } },
+      { $unwind: '$items' },
+      { $group: { _id: '$items.variant', quantity: { $sum: '$items.quantity' } } },
+    ]);
+    for (const sale of sales) {
+      if (sale._id) salesByVariant.set(String(sale._id), Number(sale.quantity) || 0);
+    }
+  }
+  const reviewByProduct = new Map<string, { ratingAverage: number; ratingCount: number; voteScore: number }>();
+  if (isRatingSort) {
+    const reviews: any[] = await Review.aggregate([
+      { $match: { approved: true, product: { $in: ids } } },
+      {
+        $group: {
+          _id: '$product',
+          ratingAverage: { $avg: '$rating' },
+          ratingCount: { $sum: 1 },
+          voteScore: { $sum: '$rating' },
+        },
+      },
+    ]);
+    for (const review of reviews) {
+      reviewByProduct.set(String(review._id), {
+        ratingAverage: Number(review.ratingAverage) || 0,
+        ratingCount: Number(review.ratingCount) || 0,
+        voteScore: Number(review.voteScore) || 0,
+      });
+    }
+  }
 
   const byProduct: Record<string, any[]> = {};
   for (const variant of variants) {
@@ -183,7 +263,7 @@ export async function getProducts(query: ProductListQuery = {}) {
   const cards: ProductCard[] = products.map((product) => {
     const productVariants = byProduct[String(product._id)] || [];
     const cheapest = productVariants.reduce(
-      (min: any, variant: any) => (min == null || variant.price < min.price ? variant : min),
+      (min: any, variant: any) => (min == null || resolvedPrices.get(String(variant._id))!.finalPrice < resolvedPrices.get(String(min._id))!.finalPrice ? variant : min),
       null as any,
     );
     const stock = productVariants.reduce(
@@ -197,6 +277,18 @@ export async function getProducts(query: ProductListQuery = {}) {
           .filter((size: string | undefined) => Boolean(size)),
       ),
     );
+
+    const variantPrices = productVariants.map((variant: any) => resolvedPrices.get(String(variant._id)));
+    const hasDiscount = variantPrices.some((price) => Number(price?.discountPercent || 0) > 0);
+    const maxDiscountPercent = variantPrices.reduce(
+      (max, price) => Math.max(max, Number(price?.discountPercent || 0)),
+      0,
+    );
+    const reviewStats = reviewByProduct.get(String(product._id)) || {
+      ratingAverage: 0,
+      ratingCount: 0,
+      voteScore: 0,
+    };
 
     return {
       id: String(product._id),
@@ -215,14 +307,22 @@ export async function getProducts(query: ProductListQuery = {}) {
         .map((v: any) => ({
           variantId: String(v._id),
           size: v.size || v.volume || '',
-          price: v.price ?? null,
+          price: resolvedPrices.get(String(v._id))?.finalPrice ?? null,
+          basePrice: resolvedPrices.get(String(v._id))?.basePrice ?? null,
+          discountPercent: resolvedPrices.get(String(v._id))?.discountPercent || 0,
+          promotionType: resolvedPrices.get(String(v._id))?.promotionType || null,
+          promotionName: resolvedPrices.get(String(v._id))?.promotionName || '',
           stock: v.stock ?? 0,
         }))
         .sort((a: any, b: any) => (a.price ?? Infinity) - (b.price ?? Infinity)),
       image: product.images?.[0] || cheapest?.images?.[0] || null,
       images: product.images || [],
-      price: cheapest?.price ?? null,
-      priceText: formatVnd(cheapest?.price),
+      price: cheapest ? resolvedPrices.get(String(cheapest._id))?.finalPrice ?? null : null,
+      basePrice: cheapest ? resolvedPrices.get(String(cheapest._id))?.basePrice ?? null : null,
+      discountPercent: cheapest ? resolvedPrices.get(String(cheapest._id))?.discountPercent || 0 : 0,
+      promotionType: cheapest ? resolvedPrices.get(String(cheapest._id))?.promotionType || null : null,
+      promotionName: cheapest ? resolvedPrices.get(String(cheapest._id))?.promotionName || '' : '',
+      priceText: formatVnd(cheapest ? resolvedPrices.get(String(cheapest._id))?.finalPrice : null),
       variantId: cheapest ? String(cheapest._id) : null,
       volume: cheapest?.size || cheapest?.volume || '',
       stock,
@@ -232,6 +332,15 @@ export async function getProducts(query: ProductListQuery = {}) {
         base: product.notes?.base?.length ? product.notes.base : product.baseNotes || [],
       },
       createdAt: product.createdAt,
+      soldCount: productVariants.reduce(
+        (sum: number, variant: any) => sum + (salesByVariant.get(String(variant._id)) || 0),
+        0,
+      ),
+      hasDiscount,
+      maxDiscountPercent,
+      ratingAverage: reviewStats.ratingAverage,
+      ratingCount: reviewStats.ratingCount,
+      voteScore: reviewStats.voteScore,
     };
   });
 
@@ -246,6 +355,7 @@ export async function getProducts(query: ProductListQuery = {}) {
       includesAny(product.concentration, concentrationFilters) &&
       overlaps(product.season, seasonFilters) &&
       overlaps(product.sizes, sizeFilters) &&
+      (!discountedOnly || Boolean(product.hasDiscount)) &&
       (minPrice === undefined || price >= minPrice) &&
       (maxPrice === undefined || price <= maxPrice)
     );
@@ -283,14 +393,20 @@ export async function getProductDetail(idOrSlug: string) {
   const variants: any[] = await Variant.find({ product: product._id })
     .sort({ price: 1 })
     .lean();
+  variants.forEach((variant) => { variant._categoryId = product.category?._id; });
+  const resolvedPrices = await resolveVariantPrices(variants);
 
   const normalizedVariants = variants.map((variant) => ({
     id: String(variant._id),
     sku: variant.sku,
     size: variant.size || variant.volume || '',
     volume: variant.size || variant.volume || '',
-    price: variant.price,
-    priceText: formatVnd(variant.price),
+    price: resolvedPrices.get(String(variant._id))?.finalPrice ?? variant.price,
+    basePrice: resolvedPrices.get(String(variant._id))?.basePrice ?? variant.basePrice ?? variant.price,
+    discountPercent: resolvedPrices.get(String(variant._id))?.discountPercent || 0,
+    promotionType: resolvedPrices.get(String(variant._id))?.promotionType || null,
+    promotionName: resolvedPrices.get(String(variant._id))?.promotionName || '',
+    priceText: formatVnd(resolvedPrices.get(String(variant._id))?.finalPrice ?? variant.price),
     stock: variant.stock || 0,
     images: variant.images || [],
     isActive: variant.isActive !== false,
@@ -338,6 +454,9 @@ export async function getProductFilters() {
 
   const ids = products.map((product) => product._id);
   const variants: any[] = await Variant.find({ product: { $in: ids } }).lean();
+  const filterProductById = new Map(products.map((product) => [String(product._id), product]));
+  variants.forEach((variant) => { variant._categoryId = filterProductById.get(String(variant.product))?.category?._id; });
+  const filterPrices = await resolveVariantPrices(variants);
 
   const byProduct: Record<string, any[]> = {};
   for (const variant of variants) {
@@ -346,6 +465,7 @@ export async function getProductFilters() {
 
   const brandSet = new Set<string>();
   const familySet = new Set<string>();
+  const noteSet = new Set<string>();
   const concentrationSet = new Set<string>();
   const genderSet = new Set<string>();
   const seasonSet = new Set<string>();
@@ -364,6 +484,14 @@ export async function getProductFilters() {
     }
     if (product.category?.name) categorySet.add(String(product.category.name).trim());
     if (product.fragranceFamily) familySet.add(String(product.fragranceFamily).trim());
+    const productNotes = [
+      ...(product.notes?.top || product.topNotes || []),
+      ...(product.notes?.middle || product.heartNotes || []),
+      ...(product.notes?.base || product.baseNotes || []),
+    ];
+    for (const note of productNotes) {
+      if (note) noteSet.add(String(note).trim());
+    }
     if (product.concentration) concentrationSet.add(String(product.concentration).trim());
     if (product.gender) genderSet.add(String(product.gender).trim());
     for (const season of product.season || []) {
@@ -374,9 +502,10 @@ export async function getProductFilters() {
     for (const variant of byProduct[String(product._id)] || []) {
       const size = variant.size || variant.volume;
       if (size) sizeSet.add(String(size).trim());
-      if (typeof variant.price === 'number') {
-        if (variant.price > maxPrice) maxPrice = variant.price;
-        if (variant.price < cheapest) cheapest = variant.price;
+      const displayPrice = filterPrices.get(String(variant._id))?.finalPrice ?? variant.price;
+      if (typeof displayPrice === 'number') {
+        if (displayPrice > maxPrice) maxPrice = displayPrice;
+        if (displayPrice < cheapest) cheapest = displayPrice;
       }
     }
     if (cheapest !== Number.POSITIVE_INFINITY) {
@@ -405,6 +534,7 @@ export async function getProductFilters() {
   return {
     brands: Array.from(brandSet).sort(alpha),
     fragranceFamilies: Array.from(familySet).sort(alpha),
+    notes: Array.from(noteSet).sort(alpha),
     concentrations: Array.from(concentrationSet).sort(alpha),
     genders: Array.from(genderSet).sort(alpha),
     seasons: Array.from(seasonSet).sort(alpha),

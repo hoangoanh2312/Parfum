@@ -2,6 +2,7 @@
 //  ADMIN REVIEWS — duyet / tu choi / xoa danh gia san pham
 // =============================================================================
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   adminApi,
   apiMessage,
@@ -23,9 +24,14 @@ import {
 type Filter = "all" | "pending" | "approved";
 
 export default function AdminReviews() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [reviews, setReviews] = useState<AdminReview[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<Filter>("all");
+  const requestedFilter = searchParams.get("status");
+  const filter: Filter =
+    requestedFilter === "pending" || requestedFilter === "approved"
+      ? requestedFilter
+      : "all";
   const [busyId, setBusyId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<AdminReview | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -87,6 +93,13 @@ export default function AdminReviews() {
     { key: "approved", label: "Đã duyệt" },
   ];
 
+  function changeFilter(nextFilter: Filter) {
+    const params = new URLSearchParams(searchParams);
+    if (nextFilter === "all") params.delete("status");
+    else params.set("status", nextFilter);
+    setSearchParams(params, { replace: true });
+  }
+
   return (
     <div>
       <PageHeader
@@ -98,7 +111,7 @@ export default function AdminReviews() {
               <Button
                 key={f.key}
                 variant={filter === f.key ? "primary" : "secondary"}
-                onClick={() => setFilter(f.key)}
+                onClick={() => changeFilter(f.key)}
               >
                 {f.label}
               </Button>

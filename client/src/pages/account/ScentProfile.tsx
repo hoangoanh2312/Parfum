@@ -1,6 +1,8 @@
 import {
   ArrowRight,
   Check,
+  ChevronLeft,
+  ChevronRight,
   Flower2,
   Leaf,
   Loader2,
@@ -14,7 +16,7 @@ import { Link } from "react-router-dom";
 import { api } from "../../lib/api";
 import { toast } from "../../store/toast.store";
 
-const scentFamilies = [
+const fallbackScentFamilies = [
   {
     id: "woody",
     name: "Woody",
@@ -41,6 +43,29 @@ const scentFamilies = [
   },
 ];
 
+const familyId = (value: string) => value.trim().toLowerCase();
+
+const familyOptionFromName = (name: string) => {
+  const id = familyId(name);
+  const known = fallbackScentFamilies.find((item) => item.id === id);
+  if (known) return known;
+
+  const icon = /wood|gỗ|leather|da thuộc/.test(id)
+    ? Trees
+    : /floral|flower|hoa/.test(id)
+      ? Flower2
+      : /fresh|citrus|aquatic|green|tươi|cam chanh|biển/.test(id)
+        ? Leaf
+        : Sparkles;
+
+  return {
+    id,
+    name,
+    description: `Khám phá những tầng hương đặc trưng của nhóm ${name}.`,
+    icon,
+  };
+};
+
 const defaultPreferredNotes = [
   "Oud",
   "Amber",
@@ -61,14 +86,30 @@ interface ScentProfileData {
   dislikedNotes: string[];
 }
 
-interface ProductNotesResponse {
-  data: Array<{
-    notes?: {
-      top?: string[];
-      middle?: string[];
-      base?: string[];
-    };
-  }>;
+interface ProductFacetResponse {
+  fragranceFamilies: string[];
+  notes: string[];
+}
+
+interface RecommendedProduct {
+  id: string;
+  slug?: string;
+  name: string;
+  brand?: string;
+  image?: string | null;
+  images?: string[];
+  priceText?: string;
+  stock?: number;
+  notes?: {
+    top?: string[];
+    middle?: string[];
+    base?: string[];
+  };
+}
+
+interface ProductListResponse {
+  data: RecommendedProduct[];
+  totalPages: number;
 }
 
 export default function ScentProfile() {
@@ -87,6 +128,10 @@ export default function ScentProfile() {
   const [preferredOpen, setPreferredOpen] = useState(false);
   const [dislikedOpen, setDislikedOpen] = useState(false);
   const [noteOptions, setNoteOptions] = useState<string[]>([]);
+  const [familyOptions, setFamilyOptions] = useState(fallbackScentFamilies);
+  const [recommendations, setRecommendations] = useState<RecommendedProduct[]>([]);
+  const [activeRecommendation, setActiveRecommendation] = useState(0);
+  const [recommendationsLoading, setRecommendationsLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -111,19 +156,14 @@ export default function ScentProfile() {
       });
 
     api
-      .get<ProductNotesResponse>("/products", { params: { limit: 100 } })
+      .get<ProductFacetResponse>("/products/filters")
       .then(({ data }) => {
-        if (!mounted || !Array.isArray(data.data)) return;
-        const notes = data.data.flatMap((product) => [
-          ...(product.notes?.top || []),
-          ...(product.notes?.middle || []),
-          ...(product.notes?.base || []),
-        ]);
-        setNoteOptions(
-          Array.from(
-            new Set(notes.map((note) => String(note).trim()).filter(Boolean)),
-          ).sort((a, b) => a.localeCompare(b)),
-        );
+        if (!mounted) return;
+        const nextFamilies = Array.from(
+          new Set((data.fragranceFamilies || []).map((item) => item.trim()).filter(Boolean)),
+        ).map(familyOptionFromName);
+        setFamilyOptions(nextFamilies.length ? nextFamilies : fallbackScentFamilies);
+        setNoteOptions(data.notes || []);
       })
       .catch(() => undefined);
 
@@ -132,25 +172,91 @@ export default function ScentProfile() {
     };
   }, []);
 
-  const selectedFamilyNames = useMemo(
+  const selectedFamilyOptions = useMemo(
     () =>
-      scentFamilies
-        .filter((item) => families.includes(item.id))
+      familyOptions.filter((item) =>
+        families.some((selected) => familyId(selected) === item.id),
+      ),
+    [families, familyOptions],
+  );
+  const selectedFamilyNames = selectedFamilyOptions
+    .map((item) => item.name)
+    .join(" · ");
+  const selectedFamilyDescription = selectedFamilyOptions.length
+    ? `Hồ sơ của bạn kết hợp ${selectedFamilyOptions
         .map((item) => item.name)
-        .join(" "),
-    [families],
-  );
+        .join(", ")}. ${selectedFamilyOptions
+        .map((item) => item.description)
+        .join(" ")}`
+    : "Chọn các nhóm hương yêu thích để chúng tôi xây dựng hồ sơ và đề xuất sản phẩm phù hợp hơn.";
   const selectedFamilyFilters = useMemo(
-    () =>
-      scentFamilies
-        .filter((item) => families.includes(item.id))
-        .map((item) => item.name),
-    [families],
+    () => selectedFamilyOptions.map((item) => item.name),
+    [selectedFamilyOptions],
   );
-  const discoverPath =
-    selectedFamilyFilters.length > 0
-      ? `/shop?scent=${encodeURIComponent(selectedFamilyFilters.join(","))}`
-      : "/shop";
+  const recommendationFilters = useMemo(
+    () => Array.from(new Set([...selectedFamilyFilters, ...preferredNotes])),
+    [preferredNotes, selectedFamilyFilters],
+  );
+  const discoverPath = recommendationFilters.length
+    ? `/shop?${new URLSearchParams({ scent: recommendationFilters.join(",") }).toString()}`
+    : "/shop";
+
+  useEffect(() => {
+    let active = true;
+    const scent = recommendationFilters.join(",");
+
+    if (!scent) {
+      setRecommendations([]);
+      setActiveRecommendation(0);
+      return () => {
+        active = false;
+      };
+    }
+
+    setRecommendationsLoading(true);
+    api
+      .get<ProductListResponse>("/products", {
+        params: { page: 1, limit: 100, scent, sort: "best_selling" },
+      })
+      .then(async ({ data: firstPage }) => {
+        const additionalPages = await Promise.all(
+          Array.from({ length: Math.max(0, firstPage.totalPages - 1) }, (_, index) =>
+            api.get<ProductListResponse>("/products", {
+              params: { page: index + 2, limit: 100, scent, sort: "best_selling" },
+            }),
+          ),
+        );
+        if (!active) return;
+
+        const blockedNotes = new Set(dislikedNotes.map((note) => note.trim().toLowerCase()));
+        const allProducts = [
+          ...firstPage.data,
+          ...additionalPages.flatMap((response) => response.data.data),
+        ];
+        const eligible = allProducts.filter((product) => {
+          const productNotes = [
+            ...(product.notes?.top || []),
+            ...(product.notes?.middle || []),
+            ...(product.notes?.base || []),
+          ];
+          return !productNotes.some((note) => blockedNotes.has(note.trim().toLowerCase()));
+        });
+        setRecommendations(
+          Array.from(new Map(eligible.map((product) => [product.id, product])).values()),
+        );
+        setActiveRecommendation(0);
+      })
+      .catch(() => {
+        if (active) setRecommendations([]);
+      })
+      .finally(() => {
+        if (active) setRecommendationsLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [recommendationFilters, dislikedNotes]);
 
   const toggleFamily = (id: string) => {
     setFamilies((prev) =>
@@ -260,13 +366,11 @@ export default function ScentProfile() {
             </h2>
 
             <p className="mt-4 max-w-xl text-sm leading-7 text-[#70685F]">
-              Phong cách mùi hương của bạn thiên về nhóm gỗ phương Đông với các
-              nốt trầm hương, gỗ đàn hương và hổ phách. Bạn phù hợp với những
-              mùi hương ấm áp, sâu lắng và sang trọng.
+              {selectedFamilyDescription}
             </p>
 
             <div className="mt-6 flex flex-wrap gap-2">
-              {preferredNotes.slice(0, 4).map((note) => (
+              {preferredNotes.map((note) => (
                 <span
                   key={note}
                   className="border border-[#D4CCC2] bg-[#FCF9F4] px-4 py-2 text-[9px] uppercase tracking-[0.14em]"
@@ -285,12 +389,116 @@ export default function ScentProfile() {
             </Link>
           </div>
 
-          <div className="flex min-h-[320px] items-center justify-center overflow-hidden bg-[#D9D0C4]">
-            <img
-              src="https://images.unsplash.com/photo-1616949755610-8c9bbc08f138?q=80&w=1000&auto=format&fit=crop"
-              alt="Scent profile"
-              className="h-full w-full object-cover"
-            />
+          <div className="relative flex min-h-[420px] min-w-0 flex-col overflow-hidden bg-[#E9E4DD]">
+            {recommendationsLoading ? (
+              <div className="flex flex-1 items-center justify-center gap-3 text-sm text-[#756D64]">
+                <Loader2 size={18} className="animate-spin" />
+                Đang tìm sản phẩm phù hợp...
+              </div>
+            ) : recommendations.length > 0 ? (
+              <>
+                <Link
+                  to={`/products/${recommendations[activeRecommendation]?.slug || recommendations[activeRecommendation]?.id}`}
+                  className="group relative min-h-0 flex-1 overflow-hidden"
+                  aria-label={`Xem ${recommendations[activeRecommendation]?.name}`}
+                >
+                  {recommendations[activeRecommendation]?.image ||
+                  recommendations[activeRecommendation]?.images?.[0] ? (
+                    <img
+                      src={
+                        recommendations[activeRecommendation]?.image ||
+                        recommendations[activeRecommendation]?.images?.[0]
+                      }
+                      alt={recommendations[activeRecommendation]?.name}
+                      className="h-full w-full object-contain p-8 transition duration-500 group-hover:scale-[1.03]"
+                    />
+                  ) : (
+                    <div className="flex h-full items-center justify-center text-sm text-[#8A8178]">
+                      Sản phẩm chưa có ảnh
+                    </div>
+                  )}
+                  <div className="absolute inset-x-0 bottom-0 bg-[#FCF9F4]/95 px-5 py-4 backdrop-blur-sm">
+                    <p className="text-[9px] uppercase tracking-[0.16em] text-[#8B8177]">
+                      {recommendations[activeRecommendation]?.brand || "L'Essence Noire"}
+                    </p>
+                    <div className="mt-1 flex items-end justify-between gap-4">
+                      <h3 className="font-serif text-lg leading-tight">
+                        {recommendations[activeRecommendation]?.name}
+                      </h3>
+                      <span className="shrink-0 text-xs text-[#816A00]">
+                        {recommendations[activeRecommendation]?.priceText}
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+
+                {recommendations.length > 1 && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setActiveRecommendation((current) =>
+                          (current - 1 + recommendations.length) % recommendations.length,
+                        )
+                      }
+                      className="absolute left-3 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center border border-[#D3CAC0] bg-[#FCF9F4]/90 text-[#554E47] transition hover:bg-white"
+                      aria-label="Sản phẩm trước"
+                      title="Sản phẩm trước"
+                    >
+                      <ChevronLeft size={18} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setActiveRecommendation((current) =>
+                          (current + 1) % recommendations.length,
+                        )
+                      }
+                      className="absolute right-3 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center border border-[#D3CAC0] bg-[#FCF9F4]/90 text-[#554E47] transition hover:bg-white"
+                      aria-label="Sản phẩm tiếp theo"
+                      title="Sản phẩm tiếp theo"
+                    >
+                      <ChevronRight size={18} />
+                    </button>
+                  </>
+                )}
+
+                <div className="flex gap-2 overflow-x-auto border-t border-[#D8D0C7] bg-[#F6F2ED] p-3">
+                  {recommendations.map((product, index) => (
+                    <button
+                      key={product.id}
+                      type="button"
+                      onClick={() => setActiveRecommendation(index)}
+                      className={`h-16 w-16 shrink-0 overflow-hidden border bg-white transition ${
+                        index === activeRecommendation
+                          ? "border-[#8A7000]"
+                          : "border-[#DED7CF] hover:border-[#A69A8E]"
+                      }`}
+                      aria-label={`Chọn ${product.name}`}
+                      title={product.name}
+                    >
+                      {product.image || product.images?.[0] ? (
+                        <img
+                          src={product.image || product.images?.[0]}
+                          alt=""
+                          className="h-full w-full object-contain p-1"
+                        />
+                      ) : (
+                        <Sparkles size={15} className="m-auto text-[#A39A91]" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="flex flex-1 flex-col items-center justify-center px-8 text-center text-[#756D64]">
+                <Sparkles size={24} strokeWidth={1.2} />
+                <p className="mt-4 font-serif text-xl">Chưa có sản phẩm phù hợp</p>
+                <p className="mt-2 max-w-xs text-xs leading-5">
+                  Hãy chọn thêm nhóm hoặc nốt hương để nhận gợi ý từ bộ sưu tập.
+                </p>
+              </div>
+            )}
           </div>
         </section>
 
@@ -304,9 +512,11 @@ export default function ScentProfile() {
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            {scentFamilies.map((item) => {
+            {familyOptions.map((item) => {
               const Icon = item.icon;
-              const selected = families.includes(item.id);
+              const selected = families.some(
+                (family) => familyId(family) === item.id,
+              );
 
               return (
                 <button
@@ -496,8 +706,7 @@ function NotePicker({
     .filter((option) => !selected.includes(option))
     .filter((option) =>
       option.toLowerCase().includes(value.trim().toLowerCase()),
-    )
-    .slice(0, 8);
+    );
 
   useEffect(() => {
     if (!open) return;

@@ -21,3 +21,24 @@ docker compose up --build
 - Swagger: http://localhost:5000/api/docs
 
 Xem `ERD.md` de biet so do du lieu.
+
+## Thanh toan VietQR tu dong
+
+Khai bao trong `server/.env`:
+
+```env
+VIETQR_BANK_BIN=ma_BIN_ngan_hang
+VIETQR_ACCOUNT_NO=so_tai_khoan_nhan
+VIETQR_ACCOUNT_NAME=TEN_CHU_TAI_KHOAN
+SEPAY_WEBHOOK_SECRET=secret_HMAC_tu_SePay
+```
+
+Tren SePay, tao webhook giao dich tien vao voi:
+
+- URL: `https://your-domain/api/payment-webhooks/sepay`
+- Bao mat: `HMAC-SHA256`
+- Secret Key: trung voi `SEPAY_WEBHOOK_SECRET`
+- Content type: `Json`
+
+Server chi xac nhan thanh toan khi dung tai khoan nhan, dung ma don, dung so tien
+va giao dich chua tung duoc xu ly.

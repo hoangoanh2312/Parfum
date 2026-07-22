@@ -13,7 +13,7 @@ router.get('/', ctrl.list);
 router.get('/:id', ctrl.getOne);
 router.patch(
   '/:id/status',
-  validate(z.object({ status: z.enum(['pending', 'paid', 'shipping', 'done', 'cancelled']) })),
+  validate(z.object({ status: z.enum(['pending', 'shipping', 'done', 'cancelled', 'returned']) })),
   ctrl.updateStatus,
 );
 router.post('/:id/confirm-payment', ctrl.confirmPayment);

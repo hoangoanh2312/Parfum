@@ -42,7 +42,14 @@ export function createApp() {
       credentials: true,
     }),
   );
-  app.use(express.json({ limit: '100kb' }));
+  app.use(
+    express.json({
+      limit: '100kb',
+      verify(req, _res, buffer) {
+        (req as any).rawBody = Buffer.from(buffer);
+      },
+    }),
+  );
   app.use(mongoSanitize);
   app.use('/uploads', express.static(path.resolve(process.cwd(), 'uploads')));
   app.get('/', (_, res) => {

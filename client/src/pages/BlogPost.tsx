@@ -1,16 +1,18 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import Footer from "../components/Footer";
-import { BLOG_ARTICLES } from "./blogData";
+import { api } from "../lib/api";
+import { BLOG_ARTICLES, type BlogArticle } from "./blogData";
 
 export default function BlogPost() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
+  const [managedArticle, setManagedArticle] = useState<BlogArticle | null | undefined>(undefined);
 
   const article = useMemo(
-    () => BLOG_ARTICLES.find((a) => a.slug === slug),
-    [slug],
+    () => managedArticle ?? BLOG_ARTICLES.find((a) => a.slug === slug),
+    [managedArticle, slug],
   );
 
   const related = useMemo(
@@ -22,10 +24,19 @@ export default function BlogPost() {
   );
 
   useEffect(() => {
-    if (!article) navigate("/blog", { replace: true });
-    window.scrollTo({ top: 0 });
-  }, [article, navigate]);
+    setManagedArticle(undefined);
+    api
+      .get<{ data: BlogArticle }>(`/blog/${slug}`)
+      .then(({ data }) => setManagedArticle(data.data))
+      .catch(() => setManagedArticle(null));
+  }, [slug]);
 
+  useEffect(() => {
+    if (managedArticle === null && !article) navigate("/blog", { replace: true });
+    window.scrollTo({ top: 0 });
+  }, [article, managedArticle, navigate]);
+
+  if (managedArticle === undefined && !article) return null;
   if (!article) return null;
 
   return (

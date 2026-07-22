@@ -5,15 +5,22 @@ import { Order } from '../models/order.model';
 import { Payment } from '../models/payment.model';
 import { User } from '../models/user.model';
 import { Voucher } from '../models/voucher.model';
-import { computeTotals, Totals, Voucherish } from '../utils/pricing';
+import { computeLoyaltyPoints } from '../utils/pricing';
+import { FlashSale } from '../models/flashSale.model';
+import { FlashSaleUsage } from '../models/flashSaleUsage.model';
+import { VoucherCounter } from '../models/voucherCounter.model';
+import { pricingCustomerKey, PricingQuote, quoteOrder, resolveVariantPrices } from './pricing-engine.service';
 import { logger } from '../utils/logger';
 import { env } from '../config/env';
+import { assertValidContact, normalizeEmail, normalizePhone } from '../utils/contactValidation';
+import { normalizeOrderStatus } from '../utils/orderStatus';
 import '../models/product.model';
 
 export type StockItem = { variant: string; quantity: number };
 
 export interface OrderAddressInput {
   fullName?: string;
+  email?: string;
   phone?: string;
   line?: string;
   detail?: string;
@@ -25,6 +32,7 @@ export interface OrderAddressInput {
 
 export interface CreateOrderOptions {
   method?: 'cod' | 'bank_qr';
+  shippingMethod?: 'standard' | 'express';
   address?: OrderAddressInput;
   note?: string;
   items?: StockItem[];
@@ -40,7 +48,7 @@ export async function checkStock(items: StockItem[]) {
 
   for (const it of items) {
     const qty = Number(it.quantity);
-    const v: any = await Variant.findById(it.variant).populate('product');
+    const v: any = await Variant.findById(it.variant).populate({ path: 'product', populate: { path: 'category' } });
 
     if (!v) {
       problems.push({ variant: it.variant, reason: 'not_found' });
@@ -61,18 +69,39 @@ export async function checkStock(items: StockItem[]) {
     }
 
     detailed.push({
+      _doc: v,
       variant: String(v._id),
       name: v.product?.name,
       volume: v.volume,
-      price: v.price,
+      price: Number(v.basePrice ?? v.price),
+      costPrice: Number(v.costPrice || 0),
       quantity: qty,
-      lineTotal: v.price * qty,
+      lineTotal: Number(v.basePrice ?? v.price) * qty,
       available,
     });
   }
 
-  const total = detailed.reduce((s, x) => s + x.lineTotal, 0);
-  return { ok: problems.length === 0, problems, items: detailed, total };
+  const prices = await resolveVariantPrices(detailed.map((item) => item._doc));
+  const pricedItems = detailed.map(({ _doc, ...item }) => {
+    const resolved = prices.get(item.variant)!;
+    const available = resolved.flashRemaining == null
+      ? item.available
+      : Math.min(item.available, resolved.flashRemaining);
+    if (available < item.quantity && !problems.some((problem) => problem.variant === item.variant)) {
+      problems.push({ variant: item.variant, reason: 'out_of_stock', available, requested: item.quantity });
+    }
+    return {
+      ...item, available,
+      basePrice: resolved.basePrice, price: resolved.finalPrice,
+      finalPrice: resolved.finalPrice, discountAmount: resolved.discountAmount,
+      discountPercent: resolved.discountPercent, promotionType: resolved.promotionType,
+      promotionName: resolved.promotionName,
+      lineTotal: resolved.finalPrice * item.quantity,
+    };
+  });
+  const total = pricedItems.reduce((sum, item) => sum + item.lineTotal, 0);
+  const originalTotal = pricedItems.reduce((sum, item) => sum + item.basePrice * item.quantity, 0);
+  return { ok: problems.length === 0, problems, items: pricedItems, total, originalTotal, productLevelDiscount: originalTotal - total };
 }
 
 /**
@@ -141,14 +170,19 @@ export async function prepareCheckout(userId: string) {
     quantity: i.quantity,
   }));
 
-  return checkStock(items);
+  return quoteOrder(items, { userId });
 }
 
 /** Chuan hoa dia chi giao hang ve 1 shape thong nhat. */
 function normalizeOrderAddress(a: OrderAddressInput = {}) {
+  const email = normalizeEmail(a.email || '');
+  const phone = normalizePhone(a.phone || '');
+  assertValidContact(email, phone);
+
   return {
     fullName: (a.fullName || '').trim() || undefined,
-    phone: (a.phone || '').trim(),
+    email,
+    phone,
     line: (a.line || a.detail || '').trim(),
     ward: (a.ward || '').trim() || undefined,
     district: (a.district || '').trim() || undefined,
@@ -157,27 +191,103 @@ function normalizeOrderAddress(a: OrderAddressInput = {}) {
   };
 }
 
-/** Tra ve thong tin voucher hop le hoac null. Neu ma duoc nhap nhung khong hop le -> nem 400. */
-async function resolveVoucher(code?: string): Promise<Voucherish | null> {
-  if (!code || !code.trim()) return null;
-  const now = new Date();
-  const voucher: any = await Voucher.findOne({
-    code: code.trim().toUpperCase(),
-    isActive: true,
-    $or: [{ expiresAt: null }, { expiresAt: { $gt: now } }],
-  }).lean();
+async function incrementCustomerCounter(Model: any, query: any, field: string, amount: number, limit: number, session?: mongoose.ClientSession) {
+  const options: any = { new: true, session };
+  if (limit <= 0) {
+    return Model.findOneAndUpdate(query, { $inc: { [field]: amount } }, { ...options, upsert: true, setDefaultsOnInsert: true });
+  }
+  let item = await Model.findOneAndUpdate({ ...query, [field]: { $lte: limit - amount } }, { $inc: { [field]: amount } }, options);
+  if (item) return item;
+  try {
+    const docs = await Model.create([{ ...query, [field]: amount }], session ? { session } : undefined);
+    return docs[0];
+  } catch (cause: any) {
+    if (cause?.code !== 11000) throw cause;
+    item = await Model.findOneAndUpdate({ ...query, [field]: { $lte: limit - amount } }, { $inc: { [field]: amount } }, options);
+    if (item) return item;
+    throw Object.assign(new Error('Bạn đã sử dụng hết số lượng ưu đãi cho phép'), { status: 409 });
+  }
+}
 
-  if (!voucher) throw Object.assign(new Error('Ma giam gia khong hop le hoac da het han'), { status: 400 });
-  if (voucher.usageLimit && voucher.usageLimit > 0 && voucher.usedCount >= voucher.usageLimit) {
-    throw Object.assign(new Error('Ma giam gia da het luot su dung'), { status: 400 });
+async function reservePromotions(quote: PricingQuote, customerKey: string, session?: mongoose.ClientSession) {
+  const reservedFlash: Array<{ id: string; quantity: number }> = [];
+  let voucherReserved = false;
+  try {
+  if (quote.voucher) {
+    const voucher: any = await Voucher.findById(quote.voucher.id).session(session || null);
+    if (!voucher || !voucher.isActive) throw Object.assign(new Error('Voucher không còn khả dụng'), { status: 409 });
+    const filter: any = { _id: voucher._id, isActive: true };
+    if (Number(voucher.usageLimit || 0) > 0) filter.usedCount = { $lt: Number(voucher.usageLimit) };
+    const result = await Voucher.updateOne(filter, { $inc: { usedCount: 1 } }, { session });
+    if (result.modifiedCount !== 1) throw Object.assign(new Error('Voucher vừa hết lượt sử dụng'), { status: 409 });
+    voucherReserved = true;
+    await incrementCustomerCounter(
+      VoucherCounter,
+      { voucher: voucher._id, customerKey },
+      'count', 1, Number(voucher.usageLimitPerUser || 0), session,
+    );
   }
 
-  return {
-    type: voucher.type,
-    value: voucher.value,
-    minOrder: voucher.minOrder,
-    maxDiscount: voucher.maxDiscount,
-  };
+  for (const item of quote.items) {
+    if (!item.flashSaleId) continue;
+    const flash: any = await FlashSale.findById(item.flashSaleId).session(session || null);
+    if (!flash) throw Object.assign(new Error('Flash sale không còn khả dụng'), { status: 409 });
+    const now = new Date();
+    const result = await FlashSale.updateOne({
+      _id: flash._id, isActive: true, startTime: { $lte: now }, endTime: { $gt: now },
+      $expr: { $lte: [{ $add: ['$soldCount', item.quantity] }, '$stockAllocated'] },
+    }, { $inc: { soldCount: item.quantity } }, { session });
+    if (result.modifiedCount !== 1) throw Object.assign(new Error('Số lượng flash sale vừa hết'), { status: 409 });
+    reservedFlash.push({ id: String(flash._id), quantity: item.quantity });
+    await incrementCustomerCounter(
+      FlashSaleUsage,
+      { flashSale: flash._id, customerKey },
+      'quantity', item.quantity, Number(flash.maxPerUser || 0), session,
+    );
+  }
+  return { reservedFlash, voucherReserved };
+  } catch (cause) {
+    // Mongo transaction tu rollback. Fallback khong co transaction nen phai tra lai
+    // dung nhung quota da reserve thanh cong truoc khi gap loi.
+    if (!session) {
+      if (voucherReserved && quote.voucher) {
+        await Voucher.updateOne({ _id: quote.voucher.id, usedCount: { $gt: 0 } }, { $inc: { usedCount: -1 } });
+        await VoucherCounter.updateOne({ voucher: quote.voucher.id, customerKey, count: { $gt: 0 } }, { $inc: { count: -1 } });
+      }
+      for (const reserved of reservedFlash) {
+        await FlashSale.updateOne({ _id: reserved.id, soldCount: { $gte: reserved.quantity } }, { $inc: { soldCount: -reserved.quantity } });
+        await FlashSaleUsage.updateOne({ flashSale: reserved.id, customerKey, quantity: { $gte: reserved.quantity } }, { $inc: { quantity: -reserved.quantity } });
+      }
+    }
+    throw cause;
+  }
+}
+
+async function releasePromotions(quote: PricingQuote, customerKey: string) {
+  if (quote.voucher) {
+    await Voucher.updateOne({ _id: quote.voucher.id, usedCount: { $gt: 0 } }, { $inc: { usedCount: -1 } });
+    await VoucherCounter.updateOne({ voucher: quote.voucher.id, customerKey, count: { $gt: 0 } }, { $inc: { count: -1 } });
+  }
+  for (const item of quote.items) if (item.flashSaleId) {
+    await FlashSale.updateOne({ _id: item.flashSaleId, soldCount: { $gte: item.quantity } }, { $inc: { soldCount: -item.quantity } });
+    await FlashSaleUsage.updateOne({ flashSale: item.flashSaleId, customerKey, quantity: { $gte: item.quantity } }, { $inc: { quantity: -item.quantity } });
+  }
+}
+
+export async function releaseOrderPromotionReservations(order: any) {
+  const key = pricingCustomerKey(order.user ? String(order.user) : undefined, order.address?.email);
+  if (order.voucherCode) {
+    const voucher: any = await Voucher.findOne({ code: order.voucherCode });
+    if (voucher) {
+      await Voucher.updateOne({ _id: voucher._id, usedCount: { $gt: 0 } }, { $inc: { usedCount: -1 } });
+      if (key) await VoucherCounter.updateOne({ voucher: voucher._id, customerKey: key, count: { $gt: 0 } }, { $inc: { count: -1 } });
+    }
+  }
+  for (const item of order.items || []) {
+    if (item.promotionType !== 'FLASH_SALE' || !item.promotionId) continue;
+    await FlashSale.updateOne({ _id: item.promotionId, soldCount: { $gte: item.quantity } }, { $inc: { soldCount: -Number(item.quantity) } });
+    if (key) await FlashSaleUsage.updateOne({ flashSale: item.promotionId, customerKey: key, quantity: { $gte: item.quantity } }, { $inc: { quantity: -Number(item.quantity) } });
+  }
 }
 
 /**
@@ -197,25 +307,38 @@ export async function createOrder(userId: string | undefined, opts: CreateOrderO
     throw Object.assign(new Error('Gio hang trong'), { status: 400 });
   }
 
-  // 1) Kiem tra ton kho
-  const check = await checkStock(stockItems);
-  if (!check.ok) {
-    throw Object.assign(new Error('Mot so san pham khong du ton kho'), {
-      status: 409,
-      problems: check.problems,
-    });
-  }
-
-  // 2) Tinh tien (subtotal -> voucher -> ship -> thue -> diem thuong)
-  const voucher = await resolveVoucher(opts.voucherCode);
-  const totals: Totals = computeTotals(check.total, voucher);
-  const method = opts.method === 'bank_qr' ? 'bank_qr' : 'cod';
   const address = normalizeOrderAddress(opts.address);
-  const orderItems = check.items.map((x: any) => ({
+  // Server resolve lai tat ca gia tu DB. Khong doc gia/discount do client gui.
+  const quote = await quoteOrder(stockItems, {
+    voucherCode: opts.voucherCode, shippingMethod: opts.shippingMethod,
+    userId, email: address.email,
+  });
+  const totals = {
+    subtotal: quote.subtotal,
+    discount: quote.voucherDiscount,
+    shippingFee: quote.shippingFee,
+    tax: quote.tax,
+    total: quote.finalTotal,
+    pointsEarned: computeLoyaltyPoints(quote.finalTotal),
+    originalTotal: quote.originalTotal,
+    productLevelDiscount: quote.productLevelDiscount,
+    voucherDiscount: quote.voucherDiscount,
+    shippingDiscount: quote.shippingDiscount,
+  };
+  const method = opts.method === 'bank_qr' ? 'bank_qr' : 'cod';
+  const customerKey = pricingCustomerKey(userId, address.email);
+  const orderItems = quote.items.map((x) => ({
     variant: x.variant,
     name: x.name,
     volume: x.volume,
-    price: x.price,
+    price: x.finalPrice,
+    basePrice: x.basePrice,
+    finalPrice: x.finalPrice,
+    productDiscountAmount: x.discountAmount,
+    promotionType: x.promotionType,
+    promotionId: x.promotionId || undefined,
+    promotionName: x.promotionName,
+    costPrice: x.costPrice,
     quantity: x.quantity,
   }));
 
@@ -223,13 +346,23 @@ export async function createOrder(userId: string | undefined, opts: CreateOrderO
     ...(userId ? { user: userId } : {}),
     items: orderItems,
     subtotal: totals.subtotal,
+    originalTotal: totals.originalTotal,
+    productLevelDiscount: totals.productLevelDiscount,
+    voucherDiscount: totals.voucherDiscount,
+    shippingDiscount: totals.shippingDiscount,
     discount: totals.discount,
     shippingFee: totals.shippingFee,
     tax: totals.tax,
     total: totals.total,
-    voucherCode: voucher && opts.voucherCode ? opts.voucherCode.trim().toUpperCase() : undefined,
+    voucherCode: quote.voucher?.code,
+    voucherSnapshot: quote.voucher ? {
+      code: quote.voucher.code, name: quote.voucher.name, type: quote.voucher.type,
+      value: quote.voucher.value, stackable: quote.voucher.stackable,
+      userSegment: quote.voucher.userSegment,
+    } : undefined,
     pointsEarned: totals.pointsEarned,
     status: 'pending' as const,
+    statusHistory: [{ status: 'pending', at: new Date() }],
     address,
     note: opts.note,
   });
@@ -239,14 +372,12 @@ export async function createOrder(userId: string | undefined, opts: CreateOrderO
   try {
     await session.withTransaction(async () => {
       await decrementStockSession(stockItems, session);
+      await reservePromotions(quote, customerKey, session);
       const docs = await Order.create([buildDoc()], { session });
       created = docs[0];
       await Payment.create([{ order: created._id, method, status: 'unpaid', amount: totals.total }], { session });
       if (userId && totals.pointsEarned) {
         await User.updateOne({ _id: userId }, { $inc: { loyaltyPoints: totals.pointsEarned } }, { session });
-      }
-      if (voucher && opts.voucherCode) {
-        await Voucher.updateOne({ code: opts.voucherCode.trim().toUpperCase() }, { $inc: { usedCount: 1 } }, { session });
       }
       if (cart) {
         cart.items = [];
@@ -261,7 +392,7 @@ export async function createOrder(userId: string | undefined, opts: CreateOrderO
       /Transaction numbers|replica set|not support|Transactions are not/i.test(msg);
     if (!unsupported) throw txnErr;
     logger.warn('[order] Mongo khong ho tro transaction -> dung fallback rollback thu cong');
-    created = await createOrderFallback({ userId, cart, stockItems, doc: buildDoc(), method, totals, voucher, voucherCode: opts.voucherCode });
+    created = await createOrderFallback({ userId, cart, stockItems, doc: buildDoc(), method, totals, quote, customerKey });
   } finally {
     await session.endSession();
   }
@@ -281,19 +412,19 @@ async function createOrderFallback(p: {
   stockItems: StockItem[];
   doc: any;
   method: 'cod' | 'bank_qr';
-  totals: Totals;
-  voucher: Voucherish | null;
-  voucherCode?: string;
+  totals: any;
+  quote: PricingQuote;
+  customerKey: string;
 }) {
   await decrementStock(p.stockItems);
+  let promotionsReserved = false;
   try {
+    await reservePromotions(p.quote, p.customerKey);
+    promotionsReserved = true;
     const order: any = await Order.create(p.doc);
     await Payment.create({ order: order._id, method: p.method, status: 'unpaid', amount: p.totals.total });
     if (p.userId && p.totals.pointsEarned) {
       await User.updateOne({ _id: p.userId }, { $inc: { loyaltyPoints: p.totals.pointsEarned } });
-    }
-    if (p.voucher && p.voucherCode) {
-      await Voucher.updateOne({ code: p.voucherCode.trim().toUpperCase() }, { $inc: { usedCount: 1 } });
     }
     if (p.cart) {
       p.cart.items = [];
@@ -302,6 +433,7 @@ async function createOrderFallback(p: {
     return order;
   } catch (err) {
     await restoreStock(p.stockItems);
+    if (promotionsReserved) await releasePromotions(p.quote, p.customerKey);
     throw err;
   }
 }
@@ -319,6 +451,7 @@ export async function cancelOrder(userId: string, orderId: string) {
     throw Object.assign(new Error('Khong the huy don o trang thai nay'), { status: 400 });
   }
 
+  await releaseOrderPromotionReservations(order);
   await restoreStock((order.items || []).map((it: any) => ({ variant: String(it.variant), quantity: it.quantity })));
   order.status = 'cancelled';
   await order.save();
@@ -326,6 +459,33 @@ export async function cancelOrder(userId: string, orderId: string) {
     await User.updateOne({ _id: userId }, { $inc: { loyaltyPoints: -order.pointsEarned } });
   }
   await Payment.updateOne({ order: order._id }, { status: 'unpaid' });
+
+  return { orderId: String(order._id), status: order.status };
+}
+
+/** Huy don QR chua thanh toan tu popup checkout, ap dung cho guest va user. */
+export async function cancelPendingQrOrder(orderId: string, userId?: string) {
+  let order: any = null;
+  try {
+    order = await Order.findOne(userId ? { _id: orderId, user: userId } : { _id: orderId });
+  } catch {
+    throw Object.assign(new Error('Khong tim thay don hang'), { status: 404 });
+  }
+  if (!order) throw Object.assign(new Error('Khong tim thay don hang'), { status: 404 });
+
+  const payment: any = await Payment.findOne({ order: order._id });
+  if (!payment || payment.method !== 'bank_qr' || payment.status !== 'unpaid' || order.status !== 'pending') {
+    throw Object.assign(new Error('Chi co the huy giao dich QR chua thanh toan'), { status: 400 });
+  }
+
+  await releaseOrderPromotionReservations(order);
+  await restoreStock((order.items || []).map((it: any) => ({ variant: String(it.variant), quantity: it.quantity })));
+  order.status = 'cancelled';
+  await order.save();
+
+  if (order.user && order.pointsEarned) {
+    await User.updateOne({ _id: order.user }, { $inc: { loyaltyPoints: -order.pointsEarned } });
+  }
 
   return { orderId: String(order._id), status: order.status };
 }
@@ -345,10 +505,89 @@ export async function getMyOrders(userId: string) {
       id: String(o._id),
       createdAt: o.createdAt,
       total: o.total,
-      status: o.status,
+      status: normalizeOrderStatus(o.status),
       itemCount,
       firstItemName: o.items?.[0]?.name || '',
       payment: pay ? { method: pay.method, status: pay.status } : { method: 'cod', status: 'unpaid' },
+    };
+  });
+}
+
+/** Tra cuu cong khai theo ma don, so dien thoai hoac email; khong tra du lieu dia chi nhay cam. */
+export async function lookupOrders(rawQuery: string) {
+  const query = String(rawQuery || '').trim();
+  const email = normalizeEmail(query);
+  const phone = normalizePhone(query);
+  const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const isPhone = /^0\d{9}$/.test(phone) && /^[\d\s.+()-]+$/.test(query);
+  const isFullId = /^[a-f\d]{24}$/i.test(query) && mongoose.isValidObjectId(query);
+  const isShortCode = /^[a-f\d]{6}$/i.test(query);
+
+  let orders: any[] = [];
+
+  if (isFullId) {
+    const order = await Order.findById(query).lean();
+    if (order) orders = [order];
+  } else if (isShortCode) {
+    orders = await Order.aggregate([
+      {
+        $match: {
+          $expr: {
+            $eq: [
+              { $toUpper: { $substrBytes: [{ $toString: '$_id' }, 18, 6] } },
+              query.toUpperCase(),
+            ],
+          },
+        },
+      },
+      { $sort: { createdAt: -1 } },
+      { $limit: 10 },
+    ]);
+  } else if (isEmail) {
+    const escapedEmail = email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    orders = await Order.find({
+      $or: [
+        { 'address.email': email },
+        {
+          'address.email': { $in: [null, ''] },
+          note: { $regex: `Email:\\s*${escapedEmail}`, $options: 'i' },
+        },
+      ],
+    })
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .lean();
+  } else if (isPhone) {
+    orders = await Order.find({ 'address.phone': phone }).sort({ createdAt: -1 }).limit(10).lean();
+  } else {
+    throw Object.assign(new Error('Nhap ma don, so dien thoai hoac email hop le'), { status: 400 });
+  }
+
+  if (!orders.length) return [];
+
+  const payments: any[] = await Payment.find({ order: { $in: orders.map((order) => order._id) } }).lean();
+  const paymentMap = new Map(payments.map((payment) => [String(payment.order), payment]));
+
+  return orders.map((order) => {
+    const payment = paymentMap.get(String(order._id));
+    return {
+      id: String(order._id),
+      code: String(order._id).slice(-6).toUpperCase(),
+      createdAt: order.createdAt,
+      status: normalizeOrderStatus(order.status),
+      total: order.total,
+      itemCount: (order.items || []).reduce(
+        (sum: number, item: any) => sum + Number(item.quantity || 0),
+        0,
+      ),
+      items: (order.items || []).map((item: any) => ({
+        name: item.name || '',
+        volume: item.volume || '',
+        quantity: item.quantity || 0,
+      })),
+      payment: payment
+        ? { method: payment.method, status: payment.status }
+        : { method: 'cod', status: 'unpaid' },
     };
   });
 }
@@ -369,8 +608,12 @@ export async function getOrderById(userId: string | undefined, orderId: string) 
     id: String(order._id),
     createdAt: order.createdAt,
     updatedAt: order.updatedAt,
-    status: order.status,
+    status: normalizeOrderStatus(order.status),
     subtotal: order.subtotal ?? order.total,
+    originalTotal: order.originalTotal ?? order.subtotal ?? order.total,
+    productLevelDiscount: order.productLevelDiscount ?? 0,
+    voucherDiscount: order.voucherDiscount ?? order.discount ?? 0,
+    shippingDiscount: order.shippingDiscount ?? 0,
     discount: order.discount ?? 0,
     shippingFee: order.shippingFee ?? 0,
     tax: order.tax ?? 0,
@@ -384,6 +627,10 @@ export async function getOrderById(userId: string | undefined, orderId: string) 
       name: it.name,
       volume: it.volume,
       price: it.price,
+      basePrice: it.basePrice ?? it.price,
+      finalPrice: it.finalPrice ?? it.price,
+      productDiscountAmount: it.productDiscountAmount || 0,
+      promotionName: it.promotionName || '',
       quantity: it.quantity,
       lineTotal: (it.price || 0) * (it.quantity || 0),
     })),
@@ -406,7 +653,7 @@ export async function getPaymentInfo(userId: string | undefined, orderId: string
   const status = payment?.status || 'unpaid';
   const amount = payment?.amount ?? order.total ?? 0;
 
-  const transferContent = 'HOCPARFUM ' + String(order._id).slice(-6).toUpperCase();
+  const transferContent = 'HOC' + String(order._id).toUpperCase();
 
   const result = {
     orderId: String(order._id),
@@ -423,6 +670,9 @@ export async function getPaymentInfo(userId: string | undefined, orderId: string
   };
 
   if (method === 'bank_qr') {
+    if (!env.vietqr.bankBin || !env.vietqr.accountNo || !env.vietqr.accountName) {
+      throw Object.assign(new Error('Chua cau hinh tai khoan VietQR that'), { status: 503 });
+    }
     result.qrUrl =
       'https://img.vietqr.io/image/' +
       env.vietqr.bankBin +
@@ -430,7 +680,7 @@ export async function getPaymentInfo(userId: string | undefined, orderId: string
       env.vietqr.accountNo +
       '-compact2.png' +
       '?amount=' +
-      encodeURIComponent(String(amount)) +
+      encodeURIComponent(String(Math.round(amount))) +
       '&addInfo=' +
       encodeURIComponent(transferContent) +
       '&accountName=' +

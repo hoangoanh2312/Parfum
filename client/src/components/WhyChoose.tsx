@@ -145,6 +145,7 @@ export default function WhyChooseUs() {
 
   return (
     <section
+      className="why-choose-section"
       style={{
         background: "#FCF9F4",
         padding: "88px 32px 96px",
@@ -205,6 +206,7 @@ export default function WhyChooseUs() {
 
         {/* ── Body: asymmetric layout ── */}
         <div
+          className="why-choose-grid"
           style={{
             display: "grid",
             gridTemplateColumns: "1fr 420px",
@@ -319,6 +321,13 @@ export default function WhyChooseUs() {
         @keyframes fadeUp {
           from { opacity: 0; transform: translateY(14px); }
           to   { opacity: 1; transform: translateY(0); }
+        }
+        @media (max-width: 900px) {
+          .why-choose-section { padding: 64px 24px 72px !important; }
+          .why-choose-grid { grid-template-columns: minmax(0, 1fr) !important; gap: 56px 0 !important; }
+        }
+        @media (max-width: 480px) {
+          .why-choose-section { padding: 52px 20px 60px !important; }
         }
       `}</style>
     </section>

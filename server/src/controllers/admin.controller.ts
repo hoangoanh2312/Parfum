@@ -18,6 +18,22 @@ export async function getStats(_req: Request, res: Response, next: NextFunction)
   }
 }
 
+export async function search(req: Request, res: Response, next: NextFunction) {
+  try {
+    ok(res, await adminService.globalSearch(req.query.q));
+  } catch (e) {
+    next(e);
+  }
+}
+
+export async function notifications(_req: Request, res: Response, next: NextFunction) {
+  try {
+    ok(res, await adminService.getNotifications());
+  } catch (e) {
+    next(e);
+  }
+}
+
 // --------------------------------------------------------------- products ----
 export async function listProducts(req: Request, res: Response, next: NextFunction) {
   try {
@@ -65,14 +81,14 @@ export async function listVariants(req: Request, res: Response, next: NextFuncti
 }
 export async function createVariant(req: Request, res: Response, next: NextFunction) {
   try {
-    ok(res, await adminService.createVariant(req.body), 201);
+    ok(res, await adminService.createVariant(req.body, uid(req)), 201);
   } catch (e) {
     next(e);
   }
 }
 export async function updateVariant(req: Request, res: Response, next: NextFunction) {
   try {
-    ok(res, await adminService.updateVariant(req.params.id, req.body));
+    ok(res, await adminService.updateVariant(req.params.id, req.body, uid(req)));
   } catch (e) {
     next(e);
   }
@@ -96,6 +112,13 @@ export async function listBrands(_req: Request, res: Response, next: NextFunctio
 export async function createBrand(req: Request, res: Response, next: NextFunction) {
   try {
     ok(res, await adminService.createBrand(req.body), 201);
+  } catch (e) {
+    next(e);
+  }
+}
+export async function importDefaultBrands(req: Request, res: Response, next: NextFunction) {
+  try {
+    ok(res, await adminService.importDefaultBrands(req.body.brands));
   } catch (e) {
     next(e);
   }

@@ -1,12 +1,21 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ProductCard, { ProductCardData } from "./ProductCard";
 import { api } from "../lib/api";
-import { useWishlist } from "../store/wishlist.store";
+import { getSlidingPages } from "../lib/pagination";
 
 type ProductTab = "favorites" | "featured" | "new-arrivals" | "bundle-deals";
 
 type ProductListResponse = {
   data: ProductCardData[];
+  total: number;
+  totalPages: number;
+};
+
+const tabParams: Record<ProductTab, Record<string, string | number | boolean>> = {
+  favorites: { sort: "best_selling" },
+  featured: { sort: "featured" },
+  "new-arrivals": { sort: "newest" },
+  "bundle-deals": { sort: "discount_desc", discountedOnly: true },
 };
 
 const tabs: { label: string; value: ProductTab }[] = [
@@ -23,21 +32,33 @@ export default function FeaturedProducts() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
 
-  // Wishlist đồng bộ backend (dùng cho tab "The Favorites")
-  const wishlistIds = useWishlist((state) => state.ids);
-  const ensureWishlist = useWishlist((state) => state.ensureLoaded);
-
-  useEffect(() => {
-    ensureWishlist();
-  }, [ensureWishlist]);
+  const loadProducts = useCallback(async (tab: ProductTab) => {
+    const params = tabParams[tab];
+    const first = await api.get<ProductListResponse>("/products", {
+      params: { page: 1, limit: 100, ...params },
+    });
+    const remainingPages = Array.from(
+      { length: Math.max(0, first.data.totalPages - 1) },
+      (_, index) => index + 2,
+    );
+    const remaining = await Promise.all(
+      remainingPages.map((nextPage) =>
+        api.get<ProductListResponse>("/products", {
+          params: { page: nextPage, limit: 100, ...params },
+        }),
+      ),
+    );
+    return [first.data, ...remaining.map(({ data }) => data)].flatMap((result) =>
+      Array.isArray(result.data) ? result.data : [],
+    );
+  }, []);
 
   useEffect(() => {
     let mounted = true;
-
-    api
-      .get<ProductListResponse>("/products", { params: { page: 1, limit: 32, sort: "newest" } })
-      .then(({ data }) => {
-        if (mounted) setProducts(Array.isArray(data.data) ? data.data : []);
+    setLoading(true);
+    loadProducts(activeTab)
+      .then((allProducts) => {
+        if (mounted) setProducts(allProducts);
       })
       .catch(() => {
         if (mounted) setProducts([]);
@@ -49,46 +70,18 @@ export default function FeaturedProducts() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [activeTab, loadProducts]);
 
-  const filteredProducts = useMemo(() => {
-    const sorted = [...products];
-
-    if (activeTab === "new-arrivals") {
-      return sorted;
-    }
-
-    if (activeTab === "bundle-deals") {
-      const pricedProducts = sorted.filter((product) => (product.price ?? 0) > 0);
-      const averagePrice =
-        pricedProducts.reduce((sum, product) => sum + (product.price || 0), 0) /
-        Math.max(pricedProducts.length, 1);
-
-      return pricedProducts.filter(
-        (product) => (product.stock ?? 0) > 0 && (product.price || 0) <= averagePrice,
-      );
-    }
-
-    if (activeTab === "favorites") {
-      const likedProducts = sorted.filter((product) =>
-        wishlistIds.includes(product.id || product._id || ""),
-      );
-
-      return likedProducts.length
-        ? likedProducts
-        : sorted.filter((product) => product.fragranceFamily || product.brand);
-    }
-
-    return sorted.filter((product) => (product.stock ?? 0) > 0).length
-      ? sorted.filter((product) => (product.stock ?? 0) > 0)
-      : sorted;
-  }, [activeTab, products, wishlistIds]);
-
-  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / 8));
+  const totalPages = Math.max(1, Math.ceil(products.length / 8));
+  const visiblePages = getSlidingPages(page, totalPages, 3);
   const displayedProducts = useMemo(
-    () => filteredProducts.slice((page - 1) * 8, page * 8),
-    [filteredProducts, page],
+    () => products.slice((page - 1) * 8, page * 8),
+    [products, page],
   );
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
 
   const changeTab = (nextTab: ProductTab) => {
     setActiveTab(nextTab);
@@ -168,9 +161,7 @@ export default function FeaturedProducts() {
             Previous
           </button>
 
-          {Array.from({ length: totalPages }, (_, index) => index + 1)
-            .slice(0, 3)
-            .map((item) => (
+          {visiblePages.map((item) => (
               <button
                 key={item}
                 type="button"

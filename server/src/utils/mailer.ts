@@ -7,6 +7,12 @@ export interface MailInput {
   text?: string;
 }
 
+export function assertMailConfigured() {
+  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    throw Object.assign(new Error('Dich vu email chua duoc cau hinh'), { status: 503 });
+  }
+}
+
 /**
  * Gui email qua SMTP neu da cau hinh (SMTP_HOST/SMTP_USER/SMTP_PASS).
  * - Neu chua cau hinh: khong nem loi, chi log ra de luong nghiep vu (dang ky, quen mat khau) khong bi chan.
@@ -15,7 +21,7 @@ export interface MailInput {
 export async function sendMail(input: MailInput): Promise<boolean> {
   const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, MAIL_FROM } = process.env;
 
-  if (!SMTP_HOST || !SMTP_USER || !SMTP_PASS) {
+  if (!SMTP_USER || !SMTP_PASS) {
     logger.warn(
       `SMTP chua cau hinh - bo qua gui email toi ${input.to} (subject: ${input.subject})`,
     );
@@ -27,7 +33,7 @@ export async function sendMail(input: MailInput): Promise<boolean> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const nodemailer: any = await import(moduleName);
     const transport = nodemailer.createTransport({
-      host: SMTP_HOST,
+      host: SMTP_HOST || 'smtp.gmail.com',
       port: Number(SMTP_PORT || 587),
       secure: Number(SMTP_PORT) === 465,
       auth: { user: SMTP_USER, pass: SMTP_PASS },

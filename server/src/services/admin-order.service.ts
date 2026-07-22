@@ -1,16 +1,18 @@
 import { Order } from '../models/order.model';
 import { Payment } from '../models/payment.model';
 import { User } from '../models/user.model';
-import { restoreStock } from './order.service';
+import { releaseOrderPromotionReservations, restoreStock } from './order.service';
 import { OrderStatus } from '../types/dto';
+import { normalizeOrderStatus } from '../utils/orderStatus';
 
 // So do chuyen trang thai hop le
 const FLOW: Record<OrderStatus, OrderStatus[]> = {
-  pending: ['paid', 'shipping', 'cancelled'],
+  pending: ['shipping', 'cancelled'],
   paid: ['shipping', 'cancelled'],
   shipping: ['done', 'cancelled'],
-  done: [],
+  done: ['returned'],
   cancelled: [],
+  returned: [],
 };
 
 export interface AdminOrderQuery {
@@ -19,6 +21,8 @@ export interface AdminOrderQuery {
   status?: string;
   sort?: string;
   order?: string;
+  paymentStatus?: string;
+  paymentMethod?: string;
 }
 
 /** Danh sach don co phan trang / loc / sap xep chuan cho admin. */
@@ -26,7 +30,21 @@ export async function listOrders(query: AdminOrderQuery = {}) {
   const page = Math.max(1, parseInt(String(query.page), 10) || 1);
   const limit = Math.min(100, Math.max(1, parseInt(String(query.limit), 10) || 20));
   const filter: Record<string, unknown> = {};
-  if (query.status) filter.status = query.status;
+  if (query.status === 'pending') filter.status = { $in: ['pending', 'paid'] };
+  else if (['shipping', 'done', 'cancelled', 'returned'].includes(String(query.status))) {
+    filter.status = query.status;
+  }
+
+  const paymentFilter: Record<string, unknown> = {};
+  if (['paid', 'unpaid'].includes(String(query.paymentStatus))) {
+    paymentFilter.status = query.paymentStatus;
+  }
+  if (['cod', 'bank_qr'].includes(String(query.paymentMethod))) {
+    paymentFilter.method = query.paymentMethod;
+  }
+  if (Object.keys(paymentFilter).length > 0) {
+    filter._id = { $in: await Payment.distinct('order', paymentFilter) };
+  }
 
   const sortField = ['createdAt', 'total', 'status'].includes(String(query.sort))
     ? String(query.sort)
@@ -55,11 +73,19 @@ export async function listOrders(query: AdminOrderQuery = {}) {
       return {
         id: String(o._id),
         createdAt: o.createdAt,
-        status: o.status,
+        status: normalizeOrderStatus(o.status),
         total: o.total,
         customer: o.user ? { name: o.user.name, email: o.user.email } : null,
         itemCount: (o.items || []).reduce((s: number, it: any) => s + (it.quantity || 0), 0),
-        payment: pay ? { method: pay.method, status: pay.status } : null,
+        payment: pay
+          ? {
+              method: pay.method,
+              status: pay.status,
+              receivedAmount: pay.receivedAmount ?? null,
+              bankReference: pay.bankReference || '',
+              providerTransactionId: pay.providerTransactionId || '',
+            }
+          : null,
       };
     }),
     page,
@@ -83,10 +109,14 @@ export async function getOrder(id: string) {
     id: String(order._id),
     createdAt: order.createdAt,
     updatedAt: order.updatedAt,
-    status: order.status,
+    status: normalizeOrderStatus(order.status),
     customer: order.user ? { name: order.user.name, email: order.user.email } : null,
     subtotal: order.subtotal ?? order.total,
     discount: order.discount ?? 0,
+    originalTotal: order.originalTotal ?? order.subtotal ?? order.total,
+    productLevelDiscount: order.productLevelDiscount ?? 0,
+    voucherDiscount: order.voucherDiscount ?? order.discount ?? 0,
+    shippingDiscount: order.shippingDiscount ?? 0,
     shippingFee: order.shippingFee ?? 0,
     tax: order.tax ?? 0,
     total: order.total,
@@ -99,14 +129,28 @@ export async function getOrder(id: string) {
       name: it.name,
       volume: it.volume,
       price: it.price,
+      basePrice: it.basePrice ?? it.price,
+      finalPrice: it.finalPrice ?? it.price,
+      productDiscountAmount: it.productDiscountAmount || 0,
+      promotionType: it.promotionType || null,
+      promotionName: it.promotionName || '',
       quantity: it.quantity,
       lineTotal: (it.price || 0) * (it.quantity || 0),
     })),
-    payment: payment ? { method: payment.method, status: payment.status, amount: payment.amount } : null,
+    payment: payment
+      ? {
+          method: payment.method,
+          status: payment.status,
+          amount: payment.amount,
+          receivedAmount: payment.receivedAmount ?? null,
+          bankReference: payment.bankReference || '',
+          providerTransactionId: payment.providerTransactionId || '',
+        }
+      : null,
   };
 }
 
-/** Admin cap nhat trang thai don theo so do FLOW. Huy -> hoan kho + tru diem. Paid/done -> danh dau da thanh toan. */
+/** Admin cap nhat trang thai don. Don COD hoan tat thi tu dong ghi nhan da thanh toan. */
 export async function updateStatus(id: string, next: OrderStatus) {
   const order: any = await Order.findById(id);
   if (!order) throw Object.assign(new Error('Khong tim thay don hang'), { status: 404 });
@@ -117,39 +161,67 @@ export async function updateStatus(id: string, next: OrderStatus) {
   }
 
   if (next === 'cancelled') {
+    await releaseOrderPromotionReservations(order);
     await restoreStock((order.items || []).map((it: any) => ({ variant: String(it.variant), quantity: it.quantity })));
     if (order.user && order.pointsEarned) {
       await User.updateOne({ _id: order.user }, { $inc: { loyaltyPoints: -order.pointsEarned } });
     }
-    await Payment.updateOne({ order: order._id }, { status: 'unpaid' });
+    await Payment.updateOne(
+      { order: order._id },
+      { $set: { status: 'unpaid' }, $unset: { paidAt: 1 } },
+    );
   }
-  if (next === 'paid' || next === 'done') {
-    await Payment.updateOne({ order: order._id }, { status: 'paid' });
+  if (next === 'returned') {
+    await restoreStock((order.items || []).map((it: any) => ({ variant: String(it.variant), quantity: it.quantity })));
+    await Payment.updateOne(
+      { order: order._id, status: 'paid' },
+      { $set: { status: 'refunded', refundedAt: new Date() } },
+    );
+  }
+  if (next === 'done') {
+    await Payment.updateOne(
+      {
+        order: order._id,
+        method: 'cod',
+        $or: [{ status: { $ne: 'paid' } }, { paidAt: null }],
+      },
+      { $set: { status: 'paid', paidAt: new Date() } },
+    );
   }
 
   order.status = next;
+  const now = new Date();
+  order.statusHistory.push({ status: next, at: now });
+  if (next === 'shipping') { order.processedAt ||= now; order.shippedAt ||= now; }
+  if (next === 'done') order.completedAt ||= now;
+  if (next === 'cancelled') order.cancelledAt ||= now;
+  if (next === 'returned') order.returnedAt ||= now;
   await order.save();
   // FIX: tra ve DAY DU don hang (getOrder) thay vi chi { id, status }.
   // Truoc day client setDetail(updated) -> detail.items = undefined -> modal crash "reading 'map'".
   return getOrder(String(order._id));
 }
 
-/** Xac nhan da nhan tien chuyen khoan (bank_qr) -> Payment = paid, don pending -> paid. */
+/** Admin xac nhan da nhan tien. Trang thai giao nhan cua don duoc giu nguyen. */
 export async function confirmPayment(id: string) {
-  const payment: any = await Payment.findOneAndUpdate({ order: id }, { status: 'paid' }, { new: true });
+  const payment: any = await Payment.findOneAndUpdate(
+    { order: id },
+    { $set: { status: 'paid', paidAt: new Date() } },
+    { new: true },
+  );
   if (!payment) throw Object.assign(new Error('Khong tim thay thanh toan cho don nay'), { status: 404 });
-  await Order.updateOne({ _id: id, status: 'pending' }, { status: 'paid' });
   return getOrder(id);
 }
 
-/** Admin dat trang thai thanh toan (paid/unpaid). Neu paid va don dang pending -> chuyen don sang paid. */
+/** Admin dat trang thai thanh toan doc lap voi trang thai giao nhan. */
 export async function setPaymentStatus(id: string, status: 'paid' | 'unpaid') {
   const order: any = await Order.findById(id);
   if (!order) throw Object.assign(new Error('Khong tim thay don hang'), { status: 404 });
-  await Payment.updateOne({ order: order._id }, { status });
-  if (status === 'paid' && order.status === 'pending') {
-    order.status = 'paid';
-    await order.save();
-  }
+  await Payment.updateOne(
+    { order: order._id },
+    status === 'paid'
+      ? { $set: { status: 'paid', paidAt: new Date() } }
+      : { $set: { status: 'unpaid' }, $unset: { paidAt: 1 } },
+  );
   return getOrder(String(order._id));
 }

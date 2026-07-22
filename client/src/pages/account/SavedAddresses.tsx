@@ -3,6 +3,7 @@ import { Home, MapPin, Pencil, Plus, Trash2 } from "lucide-react";
 import { api } from "../../lib/api";
 import { Address, useAuth } from "../../store/auth.store";
 import { toast } from "../../store/toast.store";
+import VietnamAddressFields from "../../components/VietnamAddressFields";
 
 type AddressForm = {
   label: string;
@@ -10,7 +11,6 @@ type AddressForm = {
   phone: string;
   line: string;
   ward: string;
-  district: string;
   province: string;
 };
 
@@ -20,7 +20,6 @@ const emptyForm: AddressForm = {
   phone: "",
   line: "",
   ward: "",
-  district: "",
   province: "",
 };
 
@@ -62,7 +61,6 @@ export default function SavedAddresses() {
       phone: address.phone || "",
       line: address.line || address.detail || "",
       ward: address.ward || "",
-      district: address.district || "",
       province: address.province || "",
     });
     setShowForm(true);
@@ -191,23 +189,19 @@ export default function SavedAddresses() {
                 className="border border-[#DCD4CB] bg-[#FCF9F4] px-4 py-3 text-sm outline-none"
                 required
               />
-              <input
-                value={form.ward}
-                onChange={(event) => setForm((prev) => ({ ...prev, ward: event.target.value }))}
-                placeholder="Phuong / Xa"
-                className="border border-[#DCD4CB] bg-[#FCF9F4] px-4 py-3 text-sm outline-none"
-              />
-              <input
-                value={form.district}
-                onChange={(event) => setForm((prev) => ({ ...prev, district: event.target.value }))}
-                placeholder="Quan / Huyen"
-                className="border border-[#DCD4CB] bg-[#FCF9F4] px-4 py-3 text-sm outline-none"
-              />
-              <input
-                value={form.province}
-                onChange={(event) => setForm((prev) => ({ ...prev, province: event.target.value }))}
-                placeholder="Tinh / Thanh pho"
-                className="border border-[#DCD4CB] bg-[#FCF9F4] px-4 py-3 text-sm outline-none"
+              <VietnamAddressFields
+                province={form.province}
+                ward={form.ward}
+                onProvinceChange={(province) =>
+                  setForm((prev) => ({ ...prev, province }))
+                }
+                onWardChange={(ward) =>
+                  setForm((prev) => ({ ...prev, ward }))
+                }
+                inputClassName="w-full border border-[#DCD4CB] bg-[#FCF9F4] px-4 py-3 text-sm outline-none focus:border-[#806900]"
+                labelClassName="mb-2 block text-[10px] uppercase tracking-[1.3px] text-[#736B63]"
+                wrapperClassName="grid gap-4 md:col-span-2 md:grid-cols-2"
+                required
               />
             </div>
 

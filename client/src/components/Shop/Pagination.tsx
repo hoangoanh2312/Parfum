@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { getSlidingPages } from "../../lib/pagination";
 
 interface PaginationProps {
   currentPage: number;
@@ -13,58 +13,42 @@ export default function Pagination({
 }: PaginationProps) {
   if (totalPages <= 1) return null;
 
-  const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
+  const pages = getSlidingPages(currentPage, totalPages, 5);
 
   return (
-    <div className="mt-16 flex items-center justify-center gap-6">
-
-      {/* Previous */}
+    <div className="mt-14 flex items-center justify-center gap-5 text-[9px] uppercase tracking-[0.15em] text-[#77736C]">
       <button
+        type="button"
         disabled={currentPage === 1}
         onClick={() => onPageChange(currentPage - 1)}
-        className="flex items-center gap-2 text-[11px] uppercase tracking-[2px] text-[#B5A47A] hover:text-[#1E1D1A] disabled:opacity-30 disabled:cursor-not-allowed transition-colors duration-200"
+        className="transition-colors hover:text-[#817000] disabled:cursor-not-allowed disabled:opacity-40"
       >
-        <ChevronLeft size={14} strokeWidth={1.5} />
-        Prev
+        Previous
       </button>
 
-      {/* Divider */}
-      <div className="h-px w-4 bg-[#D0C5AF]" />
+      {pages.map((page) => (
+        <button
+          key={page}
+          type="button"
+          onClick={() => onPageChange(page)}
+          className={
+            currentPage === page
+              ? "border-b border-[#817000] pb-1 text-[#817000]"
+              : "transition-colors hover:text-[#817000]"
+          }
+        >
+          {String(page).padStart(2, "0")}
+        </button>
+      ))}
 
-      {/* Page numbers */}
-      <div className="flex items-center gap-1">
-        {pages.map((page) => (
-          <button
-            key={page}
-            onClick={() => onPageChange(page)}
-            className={`relative w-9 h-9 text-[12px] tracking-[1px] transition-all duration-200 font-medium
-              ${
-                currentPage === page
-                  ? "text-[#1E1D1A]"
-                  : "text-[#B5A47A] hover:text-[#1E1D1A]"
-              }`}
-          >
-            {page}
-            {currentPage === page && (
-              <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-4 h-px bg-[#B5A47A]" />
-            )}
-          </button>
-        ))}
-      </div>
-
-      {/* Divider */}
-      <div className="h-px w-4 bg-[#D0C5AF]" />
-
-      {/* Next */}
       <button
+        type="button"
         disabled={currentPage === totalPages}
         onClick={() => onPageChange(currentPage + 1)}
-        className="flex items-center gap-2 text-[11px] uppercase tracking-[2px] text-[#B5A47A] hover:text-[#1E1D1A] disabled:opacity-30 disabled:cursor-not-allowed transition-colors duration-200"
+        className="transition-colors hover:text-[#817000] disabled:cursor-not-allowed disabled:opacity-40"
       >
         Next
-        <ChevronRight size={14} strokeWidth={1.5} />
       </button>
-
     </div>
   );
 }

@@ -367,8 +367,8 @@ export default function Login() {
                   }}
                 >
                   <span style={fieldLabelStyle}>Password</span>
-                  <a
-                    href="#"
+                  <Link
+                    to="/forgot-password"
                     style={{
                       ...fieldLabelStyle,
                       textDecoration: "none",
@@ -376,7 +376,7 @@ export default function Login() {
                     }}
                   >
                     Forgot?
-                  </a>
+                  </Link>
                 </div>
                 <input
                   type="password"

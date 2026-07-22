@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import Footer from "../components/Footer";
 import { api } from "../lib/api";
+import { SlidersHorizontal, X } from "lucide-react";
 
 type Product = {
   id: string;
@@ -43,6 +44,7 @@ type ProductListResponse = {
 type ProductFilters = {
   brands: string[];
   fragranceFamilies: string[];
+  notes?: string[];
   concentrations: string[];
   genders: string[];
   seasons: string[];
@@ -74,6 +76,8 @@ const PAGE_SIZE = 12;
 export default function Shop() {
   const [searchParams] = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
+  const [productTotal, setProductTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   const [filters, setFilters] = useState<ProductFilters | null>(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -88,6 +92,7 @@ export default function Shop() {
   const [priceMax, setPriceMax] = useState(Number.MAX_SAFE_INTEGER);
   const [sort, setSort] = useState("newest");
   const [page, setPage] = useState(1);
+  const [filterOpen, setFilterOpen] = useState(false);
 
   const toggleSize = (value: string) => {
     setSelectedSizes((prev) =>
@@ -115,6 +120,7 @@ export default function Shop() {
     const nextBrand = searchParams.get("brand") || "";
     const nextScent = searchParams.get("scent") || "";
     const nextSeason = searchParams.get("season") || "";
+    const nextGender = searchParams.get("gender") || "";
     const nextSort = searchParams.get("sort") || "";
 
     setSearch(nextSearch);
@@ -127,6 +133,11 @@ export default function Shop() {
     setSelectedSeasons(
       nextSeason
         ? nextSeason.split(",").map((item) => item.trim()).filter(Boolean)
+        : [],
+    );
+    setSelectedGenders(
+      nextGender
+        ? nextGender.split(",").map((item) => item.trim()).filter(Boolean)
         : [],
     );
     if (nextSort) setSort(nextSort);
@@ -156,8 +167,8 @@ export default function Shop() {
         setLoading(true);
         const { data } = await api.get<ProductListResponse>("/products", {
           params: {
-            page: 1,
-            limit: 100,
+            page,
+            limit: PAGE_SIZE,
             search: search || undefined,
             brand: selectedBrands.join(",") || undefined,
             gender: selectedGenders.join(",") || undefined,
@@ -177,9 +188,19 @@ export default function Shop() {
             sort,
           },
         });
-        if (active) setProducts(data.data);
+        if (active) {
+          setProducts(data.data);
+          setProductTotal(data.total);
+          setTotalPages(Math.max(1, data.totalPages));
+          if (page > data.totalPages) setPage(Math.max(1, data.totalPages));
+        }
       } catch (error) {
         console.error("Failed to load products", error);
+        if (active) {
+          setProducts([]);
+          setProductTotal(0);
+          setTotalPages(1);
+        }
       } finally {
         if (active) setLoading(false);
       }
@@ -200,11 +221,21 @@ export default function Shop() {
     priceMin,
     priceMax,
     sort,
+    page,
   ]);
 
   // Cac lua chon filter deu lay tu facet MongoDB de dong bo ten & so luong
   const brands = useMemo(() => filters?.brands ?? [], [filters]);
-  const scents = useMemo(() => filters?.fragranceFamilies ?? [], [filters]);
+  const scents = useMemo(
+    () =>
+      Array.from(
+        new Set([
+          ...(filters?.fragranceFamilies ?? []),
+          ...(filters?.notes ?? []),
+        ]),
+      ).sort((left, right) => left.localeCompare(right)),
+    [filters],
+  );
   const concentrations = useMemo(() => filters?.concentrations ?? [], [filters]);
   const sizes = useMemo(
     () =>
@@ -226,89 +257,6 @@ export default function Shop() {
     }
   }, [maxPrice, minPrice, priceMax]);
 
-  const filteredProducts = useMemo(
-    () =>
-      products.filter((product) => {
-        const matchesSearch = product.name
-          .toLowerCase()
-          .includes(search.toLowerCase());
-        const matchesBrand =
-          selectedBrands.length === 0 ||
-          (product.brand
-            ? selectedBrands.some(
-                (brand) => normBrand(brand) === normBrand(product.brand!),
-              )
-            : false);
-        const matchesGender =
-          selectedGenders.length === 0 ||
-          (product.gender ? selectedGenders.includes(product.gender) : false);
-        const matchesScent =
-          selectedScents.length === 0 ||
-          selectedScents.some(
-            (scent) =>
-              product.fragranceFamily === scent ||
-              product.notes?.top?.includes(scent) ||
-              product.notes?.middle?.includes(scent) ||
-              product.notes?.base?.includes(scent),
-          );
-        const matchesSize =
-          selectedSizes.length === 0 ||
-          selectedSizes.some((size) => product.sizes?.includes(size));
-        const matchesOccasion =
-          selectedOccasions.length === 0 ||
-          selectedOccasions.some((occasion) =>
-            product.season?.includes(occasion),
-          );
-        const matchesSeason =
-          selectedSeasons.length === 0 ||
-          selectedSeasons.some((season) => product.season?.includes(season));
-        const matchesConcentration =
-          selectedConcentrations.length === 0 ||
-          (product.concentration
-            ? selectedConcentrations.includes(product.concentration)
-            : false);
-        const dataMin = filters?.minPrice ?? 0;
-        const dataMax = filters?.maxPrice ?? Number.MAX_SAFE_INTEGER;
-        const floor = priceMin > dataMin ? priceMin : null;
-        const ceil =
-          priceMax !== Number.MAX_SAFE_INTEGER && priceMax < dataMax
-            ? priceMax
-            : null;
-        const productPrice =
-          typeof product.price === "number" ? product.price : null;
-        const matchesPrice =
-          productPrice === null
-            ? floor === null
-            : (floor === null || productPrice >= floor) &&
-              (ceil === null || productPrice <= ceil);
-
-        return (
-          matchesSearch &&
-          matchesBrand &&
-          matchesGender &&
-          matchesScent &&
-          matchesSize &&
-          matchesOccasion &&
-          matchesSeason &&
-          matchesConcentration &&
-          matchesPrice
-        );
-      }),
-    [
-      products,
-      search,
-      selectedBrands,
-      selectedGenders,
-      selectedScents,
-      selectedSizes,
-      selectedOccasions,
-      selectedSeasons,
-      selectedConcentrations,
-      priceMin,
-      priceMax,
-    ],
-  );
-
   // Reset ve trang 1 khi doi bo loc / tim kiem / sap xep
   useEffect(() => {
     setPage(1);
@@ -326,16 +274,7 @@ export default function Shop() {
     sort,
   ]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
-  const paginatedProducts = useMemo(
-    () =>
-      filteredProducts.slice(
-        (currentPage - 1) * PAGE_SIZE,
-        (currentPage - 1) * PAGE_SIZE + PAGE_SIZE,
-      ),
-    [filteredProducts, currentPage],
-  );
 
   const changePage = (next: number) => {
     if (next < 1 || next > totalPages) return;
@@ -351,30 +290,30 @@ export default function Shop() {
     );
   };
   const toggleGender = (gender: string) => {
-    setSelectedGenders([gender]);
+    setSelectedGenders((prev) => (prev.includes(gender) ? [] : [gender]));
   };
 
   return (
     <>
       <main className="bg-[#FDF9F4]">
         {/* Hero */}
-        <section className="max-w-[1536px] mx-auto px-10 pt-32 pb-16">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
+        <section className="mx-auto max-w-[1536px] px-5 pb-12 pt-28 sm:px-8 sm:pb-16 sm:pt-32 lg:px-10">
+          <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
             <div>
-              <h1 className="font-heading text-[88px] leading-[88px] text-[#1C1C19]">
+              <h1 className="font-heading text-[48px] leading-none text-[#1C1C19] sm:text-[64px] lg:text-[76px] xl:text-[88px]">
                 The Seasonal
                 <br />
                 <span className="italic text-[#8A6D0E]">Archives</span>
               </h1>
 
-              <p className="mt-8 max-w-md text-[#5F5E5E] leading-8">
+              <p className="mt-6 max-w-md text-sm leading-7 text-[#5F5E5E] sm:mt-8 sm:leading-8">
                 A curated selection of olfactory experiences, from the smoky
                 resins of the Orient to the dew-kissed petals of a Grasse
                 morning.
               </p>
             </div>
 
-              <div className="relative bg-[#0E0D0C] h-[330px] rounded-sm overflow-hidden">
+              <div className="relative aspect-[16/10] min-h-[230px] overflow-hidden rounded-sm bg-[#0E0D0C] sm:h-[330px] sm:aspect-auto">
                 <video
                   src="https://res.cloudinary.com/dwj2trmn0/video/upload/v1784437561/t%E1%BA%A1o_cho_t_video_gi%E1%BB%9Bi_thi%E1%BB%87u_m_fk3taq.mp4"
                   autoPlay
@@ -393,8 +332,8 @@ export default function Shop() {
                 </p>
               </div>
 
-              <div className="absolute right-6 bottom-3">
-                <p className="text-[10px] tracking-[0.2em] uppercase text-[#B9B4A8]">
+              <div className="absolute bottom-3 left-4 right-4 text-right sm:left-auto sm:right-6">
+                <p className="text-[8px] uppercase leading-4 tracking-[0.12em] text-[#B9B4A8] sm:text-[10px] sm:tracking-[0.2em]">
                   Issue No. 04 — Autumn/Winter
                 </p>
               </div>
@@ -402,8 +341,9 @@ export default function Shop() {
           </div>
         </section>
 
-        <section className="max-w-[1536px] mx-auto px-10 flex gap-16 pb-24">
-          <ShopSidebar
+        <section className="mx-auto flex max-w-[1536px] min-w-0 gap-10 px-5 pb-20 sm:px-8 lg:gap-12 lg:px-10 xl:gap-16">
+          <div className="hidden lg:block">
+            <ShopSidebar
             search={search}
             setSearch={setSearch}
             brands={brands}
@@ -435,17 +375,65 @@ export default function Shop() {
             selectedConcentrations={selectedConcentrations}
             concentrations={concentrations}
             toggleConcentration={toggleConcentration}
-          />
+            />
+          </div>
+
+          {filterOpen && (
+            <div className="fixed inset-0 z-[70] lg:hidden">
+              <button type="button" className="absolute inset-0 bg-black/35" onClick={() => setFilterOpen(false)} aria-label="Đóng bộ lọc" />
+              <div className="absolute inset-y-0 left-0 w-[min(340px,90vw)] overflow-y-auto bg-[#FDF9F4] px-5 pb-10 pt-5 shadow-2xl">
+                <div className="mb-5 flex items-center justify-between border-b border-[#E4DACE] pb-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#554C42]">Bộ lọc sản phẩm</p>
+                  <button type="button" onClick={() => setFilterOpen(false)} className="flex h-10 w-10 items-center justify-center text-[#665D52]" aria-label="Đóng bộ lọc"><X size={19} /></button>
+                </div>
+                <ShopSidebar
+                  search={search}
+                  setSearch={setSearch}
+                  brands={brands}
+                  selectedBrands={selectedBrands}
+                  toggleBrand={toggleBrand}
+                  genders={["female", "male", "unisex"]}
+                  selectedGenders={selectedGenders}
+                  toggleGender={toggleGender}
+                  clearGender={() => setSelectedGenders([])}
+                  priceMin={priceMin}
+                  priceMax={priceMax}
+                  minPrice={minPrice}
+                  maxPrice={maxPrice}
+                  setPriceRange={(lo, hi) => { setPriceMin(lo); setPriceMax(hi); }}
+                  brandCounts={brandCounts}
+                  priceBuckets={priceBuckets}
+                  selectedScents={selectedScents}
+                  scents={scents}
+                  toggleScent={toggleScent}
+                  selectedSizes={selectedSizes}
+                  sizes={sizes}
+                  toggleSize={toggleSize}
+                  selectedOccasions={selectedOccasions}
+                  occasions={filters?.seasons ?? []}
+                  toggleOccasion={toggleOccasion}
+                  selectedConcentrations={selectedConcentrations}
+                  concentrations={concentrations}
+                  toggleConcentration={toggleConcentration}
+                />
+              </div>
+            </div>
+          )}
 
           {/* Content */}
-          <section className="flex-1">
+          <section className="min-w-0 flex-1">
             {/* Toolbar */}
-            <div className="flex justify-between border-b pb-5 border-[#e8deca]">
-              <p className="uppercase text-xs tracking-widest text-[#5F5E5E]">
-                Showing {paginatedProducts.length} of {filteredProducts.length} products
-              </p>
+            <div className="flex flex-col gap-4 border-b border-[#e8deca] pb-5 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                <p className="text-[10px] uppercase tracking-widest text-[#5F5E5E] sm:text-xs">
+                Showing {products.length} of {productTotal} products
+                </p>
+                <button type="button" onClick={() => setFilterOpen(true)} className="flex h-10 w-full shrink-0 items-center justify-center gap-2 border border-[#D8CDBE] px-3 text-[10px] uppercase tracking-[0.12em] text-[#655B50] sm:w-auto lg:hidden">
+                  <SlidersHorizontal size={15} /> Bộ lọc
+                </button>
+              </div>
 
-              <label className="flex items-center gap-3">
+              <label className="flex min-w-0 items-center justify-between gap-3 sm:justify-end">
                 <span className="text-[10px] uppercase tracking-[0.18em] text-[#8A8176]">
                   Sắp xếp
                 </span>
@@ -453,9 +441,10 @@ export default function Shop() {
                 <select
                   value={sort}
                   onChange={(event) => setSort(event.target.value)}
-                  className="min-w-[190px] border border-[#e8deca] bg-[#FDF9F4] px-4 py-2 text-[10px] uppercase tracking-[0.16em] text-[#4F4942] outline-none transition hover:border-[#735C00] focus:border-[#735C00]"
+                  className="min-w-0 flex-1 border border-[#e8deca] bg-[#FDF9F4] px-3 py-2 text-[10px] uppercase tracking-[0.12em] text-[#4F4942] outline-none transition hover:border-[#735C00] focus:border-[#735C00] sm:w-[190px] sm:flex-none sm:px-4 sm:tracking-[0.16em]"
                 >
                   <option value="newest">Mới nhất</option>
+                  <option value="best_selling">Bán chạy nhất</option>
                   <option value="price_asc">Giá tăng dần</option>
                   <option value="price_desc">Giá giảm dần</option>
                 </select>
@@ -463,7 +452,7 @@ export default function Shop() {
             </div>
 
             {/* Grid 4 x 3 */}
-            <ProductGrid products={paginatedProducts} loading={loading} />
+            <ProductGrid products={products} loading={loading} />
 
             {/* Pagination */}
             <Pagination

@@ -24,4 +24,17 @@ export const CLOUDINARY_FOLDER = (env.cloudinaryFolder || 'parfumeshop')
   .trim()
   .replace(/^\/+|\/+$/g, '');
 
+export const ADMIN_MEDIA_FOLDERS = [
+  'products',
+  'news',
+  'brand',
+  'home',
+  'about',
+  'feed back',
+] as const;
+
+export function isAdminMediaFolder(value: string) {
+  return ADMIN_MEDIA_FOLDERS.includes(value as (typeof ADMIN_MEDIA_FOLDERS)[number]);
+}
+
 export { cloudinary };

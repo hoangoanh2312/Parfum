@@ -142,7 +142,7 @@ CLOUDINARY_API_SECRET=xxx
 (Lấy tại dashboard.cloudinary.com → Account Details.)
 
 **Tính năng ảnh cho admin:**
-- Menu **Thư viện ảnh** (`/admin/media`): xem toàn bộ ảnh trong thư mục `parfum/`, tải nhiều ảnh cùng lúc, copy URL, xoá ảnh khỏi Cloudinary, tải thêm (phân trang).
+- Menu **Thư viện ảnh** (`/admin/media`): xem toàn bộ ảnh trong asset folder `perfumeshop/`, tải nhiều ảnh cùng lúc, copy URL, xoá ảnh khỏi Cloudinary, tải thêm (phân trang).
 - Nếu chưa cấu hình Cloudinary, trang hiển thị hướng dẫn cụ thể.
 - **Nút “Tải ảnh lên”** ngay trong form Sản phẩm và Biến thể — upload xong tự chèn URL vào danh sách ảnh.
 
