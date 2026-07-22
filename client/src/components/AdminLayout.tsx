@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   Bell,
   BarChart3,
@@ -103,6 +103,24 @@ const SEARCH_ICONS: Record<string, NavIcon> = {
   support: MessageSquareText,
 };
 
+const NOTIFICATION_NAV_TARGETS: Record<string, string> = {
+  "pending-orders": "/admin/orders",
+  "unpaid-qr": "/admin/orders",
+  "low-stock": "/admin/variants",
+  "pending-reviews": "/admin/reviews",
+  "draft-articles": "/admin/blog",
+  "open-support": "/admin/reports/operations",
+};
+
+const NEW_NOTIFICATION_DESCRIPTIONS: Record<string, (count: number) => string> = {
+  "pending-orders": (count) => `${count} đơn mới cần kiểm tra`,
+  "unpaid-qr": (count) => `${count} giao dịch QR mới chờ đối soát`,
+  "low-stock": (count) => `${count} biến thể mới sắp hết hàng`,
+  "pending-reviews": (count) => `${count} đánh giá mới chờ duyệt`,
+  "draft-articles": (count) => `${count} bài viết mới đang là bản nháp`,
+  "open-support": (count) => `${count} yêu cầu hỗ trợ mới cần xử lý`,
+};
+
 export default function AdminLayout() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(() => localStorage.getItem("adminSidebarCollapsed") === "1");
@@ -112,13 +130,42 @@ export default function AdminLayout() {
   const [searchResult, setSearchResult] = useState<SearchResponse | null>(null);
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [notifications, setNotifications] = useState<NotificationsResponse | null>(null);
+  const [seenNotificationCounts, setSeenNotificationCounts] = useState<Record<string, number>>({});
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const notificationsRef = useRef<NotificationsResponse | null>(null);
+  const notificationButtonRef = useRef<HTMLButtonElement>(null);
+  const notificationPanelRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const user = useAuth((state) => state.user);
   const logout = useAuth((state) => state.logout);
   const navigate = useNavigate();
+  const location = useLocation();
   const notificationStorageKey = `adminNotificationSeenCounts:${user?.id || user?.email || "admin"}`;
+  const newNotificationItems = useMemo(() => {
+    return (notifications?.items || [])
+      .map((item) => {
+        const count = Math.max(0, item.count - Number(seenNotificationCounts[item.id] || 0));
+        const describe = NEW_NOTIFICATION_DESCRIPTIONS[item.id];
+        return {
+          ...item,
+          count,
+          description: describe ? describe(count) : `${count} thông báo mới`,
+        };
+      })
+      .filter((item) => item.count > 0);
+  }, [notifications, seenNotificationCounts]);
+  const newNotificationsTotal = useMemo(
+    () => newNotificationItems.reduce((total, item) => total + item.count, 0),
+    [newNotificationItems],
+  );
+  const notificationCountsByPath = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const item of notifications?.items || []) {
+      const path = NOTIFICATION_NAV_TARGETS[item.id] || item.to.split("?")[0];
+      map[path] = (map[path] || 0) + item.count;
+    }
+    return map;
+  }, [notifications]);
 
   function readSeenCounts(): Record<string, number> {
     try {
@@ -130,13 +177,44 @@ export default function AdminLayout() {
 
   function markNotificationsSeen(items = notificationsRef.current?.items || []) {
     const seen = readSeenCounts();
-    for (const item of items) seen[item.id] = item.count;
+    for (const item of items) {
+      const current = notificationsRef.current?.items.find((currentItem) => currentItem.id === item.id);
+      seen[item.id] = current?.count ?? item.count;
+    }
     localStorage.setItem(notificationStorageKey, JSON.stringify(seen));
+    setSeenNotificationCounts(seen);
     const remaining = (notificationsRef.current?.items || []).reduce(
       (total, item) => total + Math.max(0, item.count - Number(seen[item.id] || 0)),
       0,
     );
     setUnreadNotifications(remaining);
+  }
+
+  function closeNotificationPanel() {
+    setNotificationOpen(false);
+  }
+
+  function notificationPath(item: NotificationItem) {
+    return item.to.split("?")[0];
+  }
+
+  function notificationMatchesLocation(item: NotificationItem, pathname: string, search = "") {
+    const [targetPath, targetQuery = ""] = item.to.split("?");
+    if ((NOTIFICATION_NAV_TARGETS[item.id] || targetPath) !== pathname) return false;
+    const targetParams = new URLSearchParams(targetQuery);
+    if (!targetParams.toString()) return true;
+    const currentParams = new URLSearchParams(search);
+    for (const [key, value] of targetParams.entries()) {
+      if (currentParams.get(key) !== value) return false;
+    }
+    return true;
+  }
+
+  function markNotificationsSeenForLocation(pathname: string, search = "") {
+    const items = (notificationsRef.current?.items || []).filter((item) => {
+      return notificationMatchesLocation(item, pathname, search);
+    });
+    if (items.length) markNotificationsSeen(items);
   }
 
   useEffect(() => {
@@ -152,12 +230,12 @@ export default function AdminLayout() {
       }
       if (event.key === "Escape") {
         setSearchOpen(false);
-        setNotificationOpen(false);
+        if (notificationOpen) closeNotificationPanel();
       }
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, []);
+  }, [notificationOpen, newNotificationItems]);
 
   useEffect(() => {
     if (query.trim().length < 2) {
@@ -184,18 +262,34 @@ export default function AdminLayout() {
   }, [query]);
 
   useEffect(() => {
+    if (!notificationOpen) return;
+
+    function onPointerDown(event: PointerEvent) {
+      const target = event.target as Node | null;
+      if (!target) return;
+      if (notificationButtonRef.current?.contains(target)) return;
+      if (notificationPanelRef.current?.contains(target)) return;
+      closeNotificationPanel();
+    }
+
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
+  }, [notificationOpen, newNotificationItems]);
+
+  useEffect(() => {
     let active = true;
     async function loadNotifications() {
       try {
         const result = await adminApi.get<NotificationsResponse>("/notifications");
         if (!active) return;
 
-        const seen = readSeenCounts();
+        const hasSeenSnapshot = localStorage.getItem(notificationStorageKey) != null;
+        const seen = hasSeenSnapshot ? readSeenCounts() : {};
         const activeIds = new Set(result.items.map((item) => item.id));
         let unread = 0;
 
         for (const item of result.items) {
-          const seenCount = Math.min(Number(seen[item.id] || 0), item.count);
+          const seenCount = hasSeenSnapshot ? Math.min(Number(seen[item.id] || 0), item.count) : item.count;
           seen[item.id] = seenCount;
           unread += Math.max(0, item.count - seenCount);
         }
@@ -206,6 +300,7 @@ export default function AdminLayout() {
         localStorage.setItem(notificationStorageKey, JSON.stringify(seen));
         notificationsRef.current = result;
         setNotifications(result);
+        setSeenNotificationCounts(seen);
         setUnreadNotifications(unread);
       } catch {
         if (active) {
@@ -231,18 +326,36 @@ export default function AdminLayout() {
     navigate("/login");
   }
 
+  useEffect(() => {
+    markNotificationsSeenForLocation(location.pathname, location.search);
+  }, [location.pathname, location.search]);
+
   function goToResult(to: string) {
     setSearchOpen(false);
     setQuery("");
     navigate(to);
   }
 
+  async function goToNotification(item: NotificationItem) {
+    markNotificationsSeen([item]);
+    setNotificationOpen(false);
+    try {
+      const result = await adminApi.patch<NotificationsResponse>(`/notifications/${item.id}/seen`);
+      notificationsRef.current = result;
+      setNotifications(result);
+    } catch {
+      // The local seen state still keeps the bell calm if this is a transient network issue.
+    }
+    navigate(item.to);
+  }
+
   const initial = (user?.name || user?.email || "A").charAt(0).toUpperCase();
+  const SidebarCollapseIcon = collapsed ? PanelLeftOpen : PanelLeftClose;
 
   function renderSidebar(compact = false) {
     return (
       <div className="flex h-full flex-col bg-[#F7F4EF] text-[#242321]">
-        <div className={`flex h-[78px] items-center border-b border-[#D8D6D1] ${compact ? "justify-center px-2" : "justify-between px-7"}`}>
+        <div className={`flex h-[78px] items-center border-b border-[#D8D6D1] ${compact ? "justify-center gap-1 px-2" : "justify-between px-5"}`}>
           <NavLink
             to="/admin"
             onClick={() => setMenuOpen(false)}
@@ -251,6 +364,15 @@ export default function AdminLayout() {
           >
             {compact ? "LN" : "L'Essence Noire"}
           </NavLink>
+          <button
+            type="button"
+            onClick={() => setCollapsed((value) => !value)}
+            className={`hidden h-9 w-9 items-center justify-center bg-transparent text-[#5E5A54] transition hover:bg-[#EFEAE3] hover:text-black lg:flex ${compact ? "ml-0" : "ml-3"}`}
+            aria-label={collapsed ? "Mở rộng menu" : "Thu gọn menu"}
+            title={collapsed ? "Mở rộng menu" : "Thu gọn menu"}
+          >
+            <SidebarCollapseIcon className="h-4 w-4" strokeWidth={1.7} />
+          </button>
           {!compact && (
             <button
               type="button"
@@ -277,25 +399,43 @@ export default function AdminLayout() {
                 <div className="space-y-0.5">
                   {section.items.map((item) => {
                     const ItemIcon = item.icon;
+                    const badgeCount = notificationCountsByPath[item.to.split("?")[0]] || 0;
+                    const hasNotification = badgeCount > 0;
                     return (
                       <NavLink
                         key={item.to}
                         to={item.to}
                         end={item.end}
-                        onClick={() => setMenuOpen(false)}
+                        onClick={() => {
+                          setMenuOpen(false);
+                          const [pathname, query = ""] = item.to.split("?");
+                          markNotificationsSeenForLocation(pathname, query ? `?${query}` : "");
+                        }}
                         title={compact ? item.label : undefined}
-                        className={({ isActive }) =>
-                          `flex min-h-9 items-center font-['Montserrat'] text-[11px] font-medium tracking-[0.04em] transition-colors ${
-                            compact ? "justify-center px-2" : "gap-3 px-3"
-                          } ${
-                            isActive
+                        className={({ isActive }) => {
+                          const stateClass = hasNotification
+                            ? isActive
+                              ? "bg-[#F6D7E1] text-[#8F244D]"
+                              : "bg-[#FCE7EF] text-[#B73C6B] hover:bg-[#F9D6E3] hover:text-[#8F244D]"
+                            : isActive
                               ? "bg-[#E9E6E1] text-black"
-                              : "text-[#55534F] hover:bg-[#EFEBE5] hover:text-black"
-                          }`
-                        }
+                              : "text-[#55534F] hover:bg-[#EFEBE5] hover:text-black";
+
+                          return `relative flex min-h-9 items-center font-['Montserrat'] text-[11px] font-medium tracking-[0.04em] transition-colors ${
+                            compact ? "justify-center px-2" : "gap-3 px-3"
+                          } ${stateClass}`;
+                        }}
                       >
                         <ItemIcon className="h-[16px] w-[16px] shrink-0" strokeWidth={1.7} />
-                        {!compact && <span className="truncate">{item.label}</span>}
+                        {!compact && <span className="min-w-0 flex-1 truncate">{item.label}</span>}
+                        {badgeCount > 0 && (
+                          <span
+                            className={`flex shrink-0 items-center justify-center rounded-full bg-[#B73C36] font-mono font-semibold tabular-nums leading-none text-white ${compact ? "absolute right-2 top-1.5 h-4 min-w-4 px-1 text-[8px]" : "ml-auto h-5 min-w-5 px-1.5 text-[9px]"}`}
+                            aria-label={`${badgeCount} thông báo chưa xử lý`}
+                          >
+                            {badgeCount > 99 ? "99+" : badgeCount}
+                          </span>
+                        )}
                       </NavLink>
                     );
                   })}
@@ -332,15 +472,6 @@ export default function AdminLayout() {
     <div className="min-h-screen bg-[#FCF9F5] text-[#171715]">
       <aside className={`fixed inset-y-0 left-0 z-40 hidden border-r border-[#D8D6D1] transition-[width] duration-300 lg:block ${collapsed ? "w-[84px]" : "w-72"}`}>
         {renderSidebar(collapsed)}
-        <button
-          type="button"
-          onClick={() => setCollapsed((value) => !value)}
-          className="absolute -right-4 top-[94px] flex h-8 w-8 items-center justify-center rounded-full border border-[#CCC8C1] bg-[#FCF9F5] text-[#5E5A54] shadow-sm transition hover:border-[#9A948B] hover:text-black"
-          aria-label={collapsed ? "Mở rộng menu" : "Thu gọn menu"}
-          title={collapsed ? "Mở rộng menu" : "Thu gọn menu"}
-        >
-          {collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
-        </button>
       </aside>
 
       {menuOpen && (
@@ -420,17 +551,15 @@ export default function AdminLayout() {
             )}
           </div>
 
-          {(searchOpen || notificationOpen) && <button type="button" className="fixed inset-0 top-[78px] z-20 cursor-default" aria-label="Đóng bảng nổi" onClick={() => { setSearchOpen(false); setNotificationOpen(false); }} />}
+          {(searchOpen || notificationOpen) && <button type="button" className="fixed inset-0 top-[78px] z-20 cursor-default" aria-label="Đóng bảng nổi" onClick={() => { setSearchOpen(false); if (notificationOpen) closeNotificationPanel(); }} />}
 
           <div className="relative z-30 ml-auto flex shrink-0 items-center gap-2 sm:gap-4">
             <button
+              ref={notificationButtonRef}
               type="button"
               onClick={() => {
-                setNotificationOpen((value) => {
-                  const next = !value;
-                  if (next) markNotificationsSeen();
-                  return next;
-                });
+                if (notificationOpen) closeNotificationPanel();
+                else setNotificationOpen(true);
                 setSearchOpen(false);
               }}
               className="relative flex h-9 w-9 items-center justify-center text-[#55534F] transition hover:text-black"
@@ -442,18 +571,21 @@ export default function AdminLayout() {
             </button>
 
             {notificationOpen && (
-              <div className="fixed left-4 right-4 top-[70px] z-50 border border-[#D5D1CA] bg-[#FFFDF9] shadow-[0_20px_55px_rgba(45,39,32,0.16)] sm:absolute sm:left-auto sm:right-12 sm:top-[48px] sm:w-[370px]">
+              <div ref={notificationPanelRef} className="fixed left-4 right-4 top-[70px] z-50 border border-[#D5D1CA] bg-[#FFFDF9] shadow-[0_20px_55px_rgba(45,39,32,0.16)] sm:absolute sm:left-auto sm:right-12 sm:top-[48px] sm:w-[370px]">
                 <div className="flex items-center justify-between border-b border-[#E2DED8] px-5 py-4">
                   <div><p className="text-[11px] font-semibold text-[#292723]">Thông báo vận hành</p><p className="mt-1 text-[8px] text-[#8A867F]">Tự động làm mới mỗi 15 giây</p></div>
-                  <span className="text-[9px] font-medium text-[#B73C36]">{notifications?.total || 0} việc</span>
+                  <span className="text-[9px] font-medium text-[#B73C36]">{newNotificationsTotal} mới</span>
                 </div>
                 <div className="max-h-[430px] overflow-y-auto py-2">
-                  {notifications?.items.length ? notifications.items.map((item) => (
-                    <button key={item.id} type="button" onClick={() => { markNotificationsSeen([item]); setNotificationOpen(false); navigate(item.to); }} className="flex w-full gap-3 px-5 py-4 text-left transition hover:bg-[#F3EEE8]">
+                  {newNotificationItems.length ? newNotificationItems.map((item) => (
+                    <button key={item.id} type="button" onClick={() => void goToNotification(item)} className="flex w-full gap-3 px-5 py-4 text-left transition hover:bg-[#F3EEE8]">
                       <span className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center ${item.severity === "danger" ? "bg-[#F7E5E2] text-[#B73C36]" : item.severity === "warning" ? "bg-[#F1ECD9] text-[#75642A]" : "bg-[#E8ECE9] text-[#52675A]"}`}><CircleAlert className="h-4 w-4" strokeWidth={1.6} /></span>
-                      <span className="min-w-0"><span className="block text-[10px] font-medium text-[#292723]">{item.title}</span><span className="mt-1 block text-[8px] leading-4 text-[#827D75]">{item.description}</span></span>
+                      <span className="min-w-0 flex-1"><span className="block text-[10px] font-medium text-[#292723]">{item.title}</span><span className="mt-1 block text-[8px] leading-4 text-[#827D75]">{item.description}</span></span>
+                      <span className="mt-0.5 flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-[#B73C36] px-1.5 font-mono text-[9px] font-semibold leading-none text-white tabular-nums">
+                        {item.count > 99 ? "99+" : item.count}
+                      </span>
                     </button>
-                  )) : <p className="px-5 py-10 text-center text-[10px] text-[#88837B]">Không có công việc cần chú ý.</p>}
+                  )) : <p className="px-5 py-10 text-center text-[10px] text-[#88837B]">Không có thông báo mới.</p>}
                 </div>
               </div>
             )}

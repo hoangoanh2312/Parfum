@@ -2,32 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../lib/api";
 
-export const brandsTop = [
-  "CHANEL",
-  "DIOR",
-  "YSL",
-  "GUCCI",
-  "TOM FORD",
-  "CREED",
-  "LE LABO",
-  "BYREDO",
-];
-
-export const brandsBottom = [
-  "DIPTYQUE",
-  "JO MALONE",
-  "AMOUAGE",
-  "XERJOFF",
-  "INITIO",
-  "KILIAN",
-  "BVLGARI",
-  "HERMES",
-];
-
 type MongoBrand = {
   _id?: string;
   id?: string;
   name: string;
+  isFeatured?: boolean;
 };
 
 export default function BrandSection() {
@@ -37,11 +16,14 @@ export default function BrandSection() {
     let mounted = true;
 
     api
-      .get<{ data?: MongoBrand[] } | MongoBrand[]>("/brands")
+      .get<{ data?: MongoBrand[] } | MongoBrand[]>("/brands", {
+        params: { featured: true },
+      })
       .then(({ data }) => {
         if (!mounted) return;
         const rows = Array.isArray(data) ? data : data.data || [];
         const names = rows
+          .filter((brand) => brand.isFeatured)
           .map((brand) => brand.name?.trim())
           .filter((name): name is string => Boolean(name));
 
@@ -56,17 +38,18 @@ export default function BrandSection() {
     };
   }, []);
 
-  const displayBrands = brands.length ? brands : [...brandsTop, ...brandsBottom];
-  const splitIndex = Math.ceil(displayBrands.length / 2);
+  const splitIndex = Math.ceil(brands.length / 2);
   const marqueeRows = useMemo(
     () => [
-      displayBrands.slice(0, splitIndex),
-      displayBrands.slice(splitIndex),
+      brands.slice(0, splitIndex),
+      brands.slice(splitIndex),
     ],
-    [displayBrands, splitIndex],
+    [brands, splitIndex],
   );
 
   const brandLink = (brand: string) => `/shop?brand=${encodeURIComponent(brand)}`;
+
+  if (!brands.length) return null;
 
   return (
     <section className="bg-[#faf7f2] py-16 overflow-hidden">

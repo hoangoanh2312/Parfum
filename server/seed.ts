@@ -791,7 +791,7 @@ async function seed() {
       const total = subtotal + shippingFee;
       const createdAt = new Date(Date.now() - orderConfig.daysAgo * 24 * 60 * 60 * 1000);
 
-      const order = await Order.create({
+      const order = (await Order.create({
         orderCode: generateOrderCode(),
         user: userId,
         items,
@@ -813,7 +813,7 @@ async function seed() {
         trackingCode: orderConfig.status === 'delivered' ? 'GHN' + Math.random().toString(36).slice(2, 10).toUpperCase() : undefined,
         deliveredAt: orderConfig.status === 'delivered' ? new Date(createdAt.getTime() + 5 * 24 * 60 * 60 * 1000) : undefined,
         createdAt,
-      });
+      })) as any;
 
       // Tạo payment tương ứng
       await Payment.create({

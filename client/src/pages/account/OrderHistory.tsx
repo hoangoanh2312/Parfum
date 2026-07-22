@@ -57,10 +57,6 @@ export default function OrderHistory() {
         </p>
 
         <h1 className="mt-2 font-serif text-4xl lg:text-5xl">Order History</h1>
-
-        <p className="mt-3 max-w-2xl text-sm leading-6 text-[#7C746C]">
-          Lịch sử đơn hàng và trạng thái mua sắm được lấy trực tiếp từ MongoDB.
-        </p>
       </section>
 
       <main className="px-6 py-10 lg:px-12">

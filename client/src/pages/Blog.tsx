@@ -72,6 +72,7 @@ export default function Blog() {
   const [products, setProducts] = useState<ProductListItem[]>([]);
   const [managedArticles, setManagedArticles] = useState<BlogArticle[] | null>(null);
   const [email, setEmail] = useState("");
+  const [subscribing, setSubscribing] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -141,14 +142,23 @@ export default function Blog() {
     sliderRef.current?.scrollBy({ left: dir === "right" ? 320 : -320, behavior: "smooth" });
   };
 
-  const handleSubscribe = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubscribe = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
       toast.error("Email không hợp lệ");
       return;
     }
-    toast.success("Đã đăng ký nhận journal");
-    setEmail("");
+    try {
+      setSubscribing(true);
+      await api.post("/blog/subscribe", { email: normalizedEmail });
+      toast.success("Đã đăng ký nhận journal");
+      setEmail("");
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || "Không thể đăng ký nhận journal lúc này");
+    } finally {
+      setSubscribing(false);
+    }
   };
 
   // Nếu có ?brand=... -> hiển thị trang tin riêng của brand đó
@@ -389,9 +399,10 @@ export default function Blog() {
                 />
                 <button
                   type="submit"
+                  disabled={subscribing}
                   className="mt-5 w-full bg-[#8B7200] px-5 py-3 text-[8px] font-semibold uppercase tracking-[0.18em] text-white transition hover:bg-[#6F5C00]"
                 >
-                  Subscribe
+                  {subscribing ? "Subscribing..." : "Subscribe"}
                 </button>
               </form>
             </aside>

@@ -13,6 +13,32 @@ export function assertMailConfigured() {
   }
 }
 
+function escapeDisplayName(value: string) {
+  return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+}
+
+function normalizeMailFrom(mailFrom: string | undefined, smtpUser: string) {
+  const fallbackName = "L'Essence Noire";
+  const raw = String(mailFrom || '').trim();
+  if (!raw) return `"${escapeDisplayName(fallbackName)}" <${smtpUser}>`;
+  if (raw.includes('<') && raw.includes('>')) return raw;
+  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(raw)) {
+    return `"${escapeDisplayName(fallbackName)}" <${raw}>`;
+  }
+
+  const email = raw.match(/[^\s<>"']+@[^\s<>"']+\.[^\s<>"']+/)?.[0];
+  if (email) {
+    const displayName = raw
+      .replace(email, '')
+      .replace(/[<>]/g, '')
+      .trim()
+      .replace(/^['"]|['"]$/g, '');
+    return `"${escapeDisplayName(displayName || fallbackName)}" <${email}>`;
+  }
+
+  return `"${escapeDisplayName(raw)}" <${smtpUser}>`;
+}
+
 /**
  * Gui email qua SMTP neu da cau hinh (SMTP_HOST/SMTP_USER/SMTP_PASS).
  * - Neu chua cau hinh: khong nem loi, chi log ra de luong nghiep vu (dang ky, quen mat khau) khong bi chan.
@@ -39,14 +65,25 @@ export async function sendMail(input: MailInput): Promise<boolean> {
       auth: { user: SMTP_USER, pass: SMTP_PASS },
     });
 
-    await transport.sendMail({
-      from: MAIL_FROM || SMTP_USER,
+    const info = await transport.sendMail({
+      from: normalizeMailFrom(MAIL_FROM, SMTP_USER),
+      sender: SMTP_USER,
+      replyTo: SMTP_USER,
+      envelope: { from: SMTP_USER, to: input.to },
       to: input.to,
       subject: input.subject,
       html: input.html,
       text: input.text,
     });
-    return true;
+
+    const accepted = Array.isArray(info.accepted) ? info.accepted.length : 0;
+    const rejected = Array.isArray(info.rejected) ? info.rejected.length : 0;
+    if (rejected > 0 && accepted === 0) {
+      logger.warn(`SMTP tu choi email toi ${input.to} (subject: ${input.subject})`);
+      return false;
+    }
+    logger.info(`Da gui email toi ${input.to} (messageId: ${info.messageId || 'unknown'})`);
+    return accepted > 0 || rejected === 0;
   } catch (error) {
     logger.error('Gui email that bai', error);
     return false;

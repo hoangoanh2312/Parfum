@@ -4,12 +4,33 @@ import { Link } from "react-router-dom";
 import { api } from "../lib/api";
 import Footer from "../components/Footer";
 import { toast } from "../store/toast.store";
-import { DEFAULT_BRANDS, type BrandItem } from "./brandData";
 
 type MongoBrand = {
   _id?: string;
   id?: string;
   name: string;
+  slug?: string;
+  description?: string;
+  logo?: string;
+  heroImage?: string;
+  viewCollectionUrl?: string;
+  journalUrl?: string;
+  isFeatured?: boolean;
+  isPublished?: boolean;
+  productCount?: number;
+};
+
+type BrandResponse = { success?: boolean; data?: MongoBrand[] } | MongoBrand[];
+
+type BrandItem = {
+  id: string;
+  name: string;
+  slug: string;
+  image: string;
+  description: string;
+  viewCollectionUrl: string;
+  journalUrl?: string;
+  productCount: number;
 };
 
 const ITEMS_PER_PAGE = 6;
@@ -28,44 +49,45 @@ const slugify = (value: string) =>
 
 function hydrateBrand(brand: MongoBrand, index: number): BrandItem {
   const name = brand.name.trim();
-  const slug = slugify(name);
-  const fallback = DEFAULT_BRANDS.find(
-    (item) =>
-      item.slug === slug || item.name.toLowerCase() === name.toLowerCase(),
-  );
+  const slug = brand.slug?.trim() || slugify(name);
 
   return {
     id: brand._id || brand.id || `${slug}-${index}`,
     name,
-    slug: name,
-    image: fallback?.image || defaultBrandImage,
-    description: fallback?.description || defaultBrandDescription,
+    slug,
+    image: brand.heroImage || brand.logo || defaultBrandImage,
+    description: brand.description?.trim() || defaultBrandDescription,
+    viewCollectionUrl: brand.viewCollectionUrl?.trim() || `/shop?brand=${encodeURIComponent(name)}`,
+    journalUrl: brand.journalUrl?.trim() || `/brand/${slug}`,
+    productCount: brand.productCount || 0,
   };
 }
 
 export default function Brand() {
   const [currentPage, setCurrentPage] = useState(1);
-  const [brands, setBrands] = useState<BrandItem[]>(DEFAULT_BRANDS);
+  const [brands, setBrands] = useState<BrandItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState("");
+  const [subscribing, setSubscribing] = useState(false);
 
   useEffect(() => {
     let mounted = true;
 
     api
-      .get<MongoBrand[]>("/brands")
+      .get<BrandResponse>("/brands")
       .then(({ data }) => {
         if (!mounted) return;
+        const rows = Array.isArray(data) ? data : data.data || [];
 
-        const mongoBrands = data
+        const mongoBrands = rows
           .map((brand, index) => hydrateBrand(brand, index))
           .filter((brand) => brand.name);
 
-        setBrands(mongoBrands.length ? mongoBrands : DEFAULT_BRANDS);
+        setBrands(mongoBrands);
         setCurrentPage(1);
       })
       .catch(() => {
-        if (mounted) setBrands(DEFAULT_BRANDS);
+        if (mounted) setBrands([]);
       })
       .finally(() => {
         if (mounted) setLoading(false);
@@ -76,7 +98,15 @@ export default function Brand() {
     };
   }, []);
 
-  const totalPages = Math.ceil(brands.length / ITEMS_PER_PAGE);
+  const totalPages = Math.max(1, Math.ceil(brands.length / ITEMS_PER_PAGE));
+
+  const paginationPages = useMemo(() => {
+    const windowSize = 3;
+    const visibleCount = Math.min(windowSize, totalPages);
+    const startPage = Math.min(currentPage, totalPages - visibleCount + 1);
+
+    return Array.from({ length: visibleCount }, (_, index) => startPage + index);
+  }, [currentPage, totalPages]);
 
   const displayedBrands = useMemo(() => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -94,16 +124,25 @@ export default function Brand() {
     });
   };
 
-  const handleSubscribe = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubscribe = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const normalizedEmail = email.trim().toLowerCase();
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
       toast.error("Email không hợp lệ");
       return;
     }
 
-    toast.success("Đã đăng ký nhận tin");
-    setEmail("");
+    try {
+      setSubscribing(true);
+      await api.post("/blog/subscribe", { email: normalizedEmail });
+      toast.success("Đã đăng ký nhận journal");
+      setEmail("");
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || "Không thể đăng ký nhận journal lúc này");
+    } finally {
+      setSubscribing(false);
+    }
   };
 
   return (
@@ -139,50 +178,59 @@ export default function Brand() {
 
         {/* BRAND GRID */}
         <section className="px-6 pb-16 sm:px-10 lg:px-16 lg:pb-24">
-          <div className="mx-auto grid max-w-[1420px] gap-x-10 gap-y-16 md:grid-cols-2 xl:grid-cols-3 xl:gap-x-12 xl:gap-y-20">
-            {displayedBrands.map((brand) => (
-              <div key={brand.id} className="group block">
-                <div className="overflow-hidden bg-[#EFECE7]">
-                  <img
-                    src={brand.image}
-                    alt={brand.name}
-                    className="aspect-[1.28/1] w-full object-cover transition duration-700 ease-out group-hover:scale-[1.045]"
-                  />
-                </div>
+          {displayedBrands.length ? (
+            <div className="mx-auto grid max-w-[1420px] gap-x-10 gap-y-16 md:grid-cols-2 xl:grid-cols-3 xl:gap-x-12 xl:gap-y-20">
+              {displayedBrands.map((brand) => (
+                <div key={brand.id} className="group block">
+                  <div className="overflow-hidden bg-[#EFECE7]">
+                    <img
+                      src={brand.image}
+                      alt={brand.name}
+                      className="aspect-[1.28/1] w-full object-cover transition duration-700 ease-out group-hover:scale-[1.045]"
+                    />
+                  </div>
 
-                <div className="pt-6">
-                  <h2
-                    className="text-[28px] leading-none tracking-[-0.02em]"
-                    style={{ fontFamily: "'Spectral', serif" }}
-                  >
-                    {brand.name}
-                  </h2>
-
-                  <p className="mt-4 min-h-[72px] max-w-[400px] text-xs leading-5 text-[#6E6A63]">
-                    {brand.description}
-                  </p>
-
-                  <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-2">
-                    <Link
-                      to={`/shop?brand=${encodeURIComponent(brand.name)}`}
-                      className="inline-flex items-center border-b border-[#A8944B] pb-1 text-[8px] font-semibold uppercase tracking-[0.2em] text-[#675711] transition hover:text-[#9A7C00]"
+                  <div className="pt-6">
+                    <h2
+                      className="text-[28px] leading-none tracking-[-0.02em]"
+                      style={{ fontFamily: "'Spectral', serif" }}
                     >
-                      View collection
-                    </Link>
-                    <Link
-                      to={`/blog?brand=${encodeURIComponent(brand.name)}`}
-                      className="inline-flex items-center border-b border-transparent pb-1 text-[8px] font-semibold uppercase tracking-[0.2em] text-[#9A8A63] transition hover:border-[#A8944B] hover:text-[#675711]"
-                    >
-                      Read journal
-                    </Link>
+                      {brand.name}
+                    </h2>
+
+                    <p className="mt-4 min-h-[72px] max-w-[400px] text-xs leading-5 text-[#6E6A63]">
+                      {brand.description}
+                    </p>
+
+                    <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-2">
+                      <Link
+                        to={brand.viewCollectionUrl}
+                        className="inline-flex items-center border-b border-[#A8944B] pb-1 text-[8px] font-semibold uppercase tracking-[0.2em] text-[#675711] transition hover:text-[#9A7C00]"
+                      >
+                        View collection
+                      </Link>
+                      <Link
+                        to={brand.journalUrl || `/brand/${brand.slug}`}
+                        className="inline-flex items-center border-b border-transparent pb-1 text-[8px] font-semibold uppercase tracking-[0.2em] text-[#9A8A63] transition hover:border-[#A8944B] hover:text-[#675711]"
+                      >
+                        Đọc bài chi tiết
+                      </Link>
+                    </div>
                   </div>
                 </div>
+              ))}
+            </div>
+          ) : (
+            !loading && (
+              <div className="mx-auto max-w-[1420px] border-y border-[#E1DDD5] py-12 text-center text-xs uppercase tracking-[0.18em] text-[#8F887A]">
+                Chưa có thương hiệu được xuất bản. Hãy bật Published trong trang quản trị.
               </div>
-            ))}
-          </div>
+            )
+          )}
         </section>
 
         {/* PAGINATION */}
+        {totalPages > 1 && (
         <section className="px-6 pb-16 sm:px-10 lg:px-16 lg:pb-20">
           <div className="mx-auto flex max-w-[800px] items-center justify-center border-t border-[#E1DDD5] pt-7">
             <button
@@ -195,8 +243,7 @@ export default function Brand() {
             </button>
 
             <div className="flex items-center gap-5">
-              {Array.from({ length: totalPages }, (_, index) => {
-                const page = index + 1;
+              {paginationPages.map((page) => {
                 const active = currentPage === page;
 
                 return (
@@ -226,6 +273,7 @@ export default function Brand() {
             </button>
           </div>
         </section>
+        )}
 
         {/* CTA */}
         <section className="relative min-h-[470px] overflow-hidden">
@@ -283,8 +331,9 @@ export default function Brand() {
 
             <button
               type="submit"
+              disabled={subscribing}
               aria-label="Subscribe"
-              className="px-2 text-[#8B7419]"
+              className="px-2 text-[#8B7419] transition hover:translate-x-1 disabled:cursor-wait disabled:opacity-50"
             >
               <ArrowRight size={17} strokeWidth={1.4} />
             </button>

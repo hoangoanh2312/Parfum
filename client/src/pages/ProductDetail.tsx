@@ -17,6 +17,7 @@ import { useWishlist } from "../store/wishlist.store";
 import Footer from "../components/Footer";
 
 const PLACEHOLDER = "https://placehold.co/900x1100?text=No+Image";
+const BUY_NOW_KEY = "buy_now_checkout_item";
 
 type ProductVariant = {
   id: string;
@@ -374,31 +375,25 @@ export default function ProductDetail() {
       return;
     }
 
-    try {
-      await addItem(
-        {
-          variant: selectedVariant.id,
-          product: product.id,
-          name: product.name,
-          slug: product.slug,
-          image: currentImage === PLACEHOLDER ? null : currentImage,
-          volume: selectedVariant.volume || selectedVariant.size,
-          price: selectedVariant.price,
-          basePrice: selectedVariant.basePrice,
-          discountPercent: selectedVariant.discountPercent,
-          promotionType: selectedVariant.promotionType,
-          promotionName: selectedVariant.promotionName,
-          stock: selectedVariant.stock,
-          quantity: 1,
-        },
-        1,
-      );
-      navigate("/checkout");
-    } catch (e: any) {
-      toast.error(
-        e?.response?.data?.message || e?.message || "Không thể mua ngay",
-      );
-    }
+    sessionStorage.setItem(
+      BUY_NOW_KEY,
+      JSON.stringify({
+        variant: selectedVariant.id,
+        product: product.id,
+        name: product.name,
+        slug: product.slug,
+        image: currentImage === PLACEHOLDER ? null : currentImage,
+        volume: selectedVariant.volume || selectedVariant.size,
+        price: selectedVariant.price,
+        basePrice: selectedVariant.basePrice,
+        discountPercent: selectedVariant.discountPercent,
+        promotionType: selectedVariant.promotionType,
+        promotionName: selectedVariant.promotionName,
+        stock: selectedVariant.stock,
+        quantity: 1,
+      }),
+    );
+    navigate("/checkout?mode=buy-now");
   }
 
   return (

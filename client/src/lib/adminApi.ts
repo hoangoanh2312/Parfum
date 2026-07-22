@@ -150,6 +150,9 @@ export type AdminBrand = {
   description: string;
   logo: string;
   heroImage: string;
+  viewCollectionUrl: string;
+  journalUrl: string;
+  isPublished: boolean;
   country: string;
   website: string;
   foundedYear: number | null;

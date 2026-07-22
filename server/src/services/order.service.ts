@@ -298,10 +298,11 @@ export async function releaseOrderPromotionReservations(order: any) {
  */
 export async function createOrder(userId: string | undefined, opts: CreateOrderOptions = {}) {
   const cart: any = userId ? await Cart.findOne({ user: userId }) : null;
+  const explicitItems = Array.isArray(opts.items) && opts.items.length > 0;
 
-  const stockItems: StockItem[] = cart?.items?.length
-    ? cart.items.map((i: any) => ({ variant: String(i.variant), quantity: i.quantity }))
-    : (opts.items || []).map((item) => ({ variant: String(item.variant), quantity: Number(item.quantity) }));
+  const stockItems: StockItem[] = explicitItems
+    ? (opts.items || []).map((item) => ({ variant: String(item.variant), quantity: Number(item.quantity) }))
+    : (cart?.items || []).map((i: any) => ({ variant: String(i.variant), quantity: i.quantity }));
 
   if (!stockItems.length) {
     throw Object.assign(new Error('Gio hang trong'), { status: 400 });
@@ -379,7 +380,7 @@ export async function createOrder(userId: string | undefined, opts: CreateOrderO
       if (userId && totals.pointsEarned) {
         await User.updateOne({ _id: userId }, { $inc: { loyaltyPoints: totals.pointsEarned } }, { session });
       }
-      if (cart) {
+      if (cart && !explicitItems) {
         cart.items = [];
         await cart.save({ session });
       }
@@ -392,7 +393,7 @@ export async function createOrder(userId: string | undefined, opts: CreateOrderO
       /Transaction numbers|replica set|not support|Transactions are not/i.test(msg);
     if (!unsupported) throw txnErr;
     logger.warn('[order] Mongo khong ho tro transaction -> dung fallback rollback thu cong');
-    created = await createOrderFallback({ userId, cart, stockItems, doc: buildDoc(), method, totals, quote, customerKey });
+    created = await createOrderFallback({ userId, cart, stockItems, doc: buildDoc(), method, totals, quote, customerKey, explicitItems });
   } finally {
     await session.endSession();
   }
@@ -415,6 +416,7 @@ async function createOrderFallback(p: {
   totals: any;
   quote: PricingQuote;
   customerKey: string;
+  explicitItems?: boolean;
 }) {
   await decrementStock(p.stockItems);
   let promotionsReserved = false;
@@ -426,7 +428,7 @@ async function createOrderFallback(p: {
     if (p.userId && p.totals.pointsEarned) {
       await User.updateOne({ _id: p.userId }, { $inc: { loyaltyPoints: p.totals.pointsEarned } });
     }
-    if (p.cart) {
+    if (p.cart && !p.explicitItems) {
       p.cart.items = [];
       await p.cart.save();
     }

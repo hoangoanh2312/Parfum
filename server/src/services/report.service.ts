@@ -58,7 +58,7 @@ export async function getReports(query: Record<string, unknown>) {
 
   const [orders, payments, variants, users, expenses, supportRequests]: any[] = await Promise.all([
     Order.find({ createdAt: { $lte: to } }).lean(),
-    Payment.find({}).lean(),
+    Payment.find({ method: { $in: ['cod', 'bank_qr'] } }).lean(),
     Variant.find({}).populate({ path: 'product', populate: { path: 'category', select: 'name' } }).lean(),
     User.find({ role: 'customer' }).select('name email createdAt').lean(),
     Expense.find({ date: { $lte: to } }).sort({ date: -1 }).lean(),

@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import {
-  Contact as ContactIcon,
   Heart,
   LayoutDashboard,
   Menu,
@@ -108,9 +107,6 @@ export default function Header() {
         </nav>
 
         <div className="col-start-3 flex min-w-0 items-center justify-end gap-1 sm:gap-2 2xl:absolute 2xl:right-8 2xl:top-5">
-          <Link to="/contact" className="header-icon-button hidden sm:flex" title={label("Liên hệ", "Contact")} aria-label={label("Liên hệ", "Contact")}>
-            <ContactIcon size={17} />
-          </Link>
           <button
             type="button"
             onClick={toggleLanguage}

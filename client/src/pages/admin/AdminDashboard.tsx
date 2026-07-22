@@ -6,7 +6,6 @@ import {
   Clock3,
   CreditCard,
   RefreshCw,
-  Smartphone,
   Star,
   TrendingDown,
   TrendingUp,
@@ -528,13 +527,12 @@ export default function AdminDashboard() {
             <div className="space-y-5">
               {stats.paymentMethods.map((payment) => {
                 const isBank = payment.method === "bank_qr";
-                const isMomo = payment.method === "momo";
-                const PaymentIcon = isBank ? Banknote : isMomo ? Smartphone : CreditCard;
+                const PaymentIcon = isBank ? Banknote : CreditCard;
                 return (
                   <div key={payment.method}>
                     <div className="mb-2 flex items-center gap-2 text-[9px] text-[#363430]">
                       <PaymentIcon className="h-3.5 w-3.5" strokeWidth={1.5} />
-                      <span>{isBank ? "Chuyển khoản QR" : isMomo ? "Ví MoMo" : "Thanh toán khi nhận hàng"}</span>
+                      <span>{isBank ? "Chuyển khoản QR" : "Thanh toán khi nhận hàng"}</span>
                       <span className="ml-auto text-[#77736B]">{payment.percentage}%</span>
                     </div>
                     <div className="h-[3px] bg-[#E1DED8]">

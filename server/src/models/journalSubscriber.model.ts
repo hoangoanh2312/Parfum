@@ -6,6 +6,7 @@ const journalSubscriberSchema = new mongoose.Schema(
     isActive: { type: Boolean, default: true, index: true },
     subscribedAt: { type: Date, default: Date.now },
     lastNotifiedAt: Date,
+    adminSeenAt: Date,
   },
   { timestamps: true },
 );
