@@ -92,7 +92,11 @@ export default function Settings() {
         profileCompletionVoucherCode: data.profileCompletionVoucherCode,
       });
 
-      toast.success("Đã lưu thông tin cá nhân");
+      toast.success(
+        data.profileJustCompleted
+          ? "Cập nhật hồ sơ thành công. Voucher hoàn tất hồ sơ đã sẵn sàng."
+          : "Đã lưu thông tin cá nhân",
+      );
     } catch (error: any) {
       toast.error(error?.response?.data?.message || "Không thể lưu thay đổi");
     } finally {

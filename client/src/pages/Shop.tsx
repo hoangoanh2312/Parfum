@@ -70,6 +70,8 @@ const normBrand = (value: string) =>
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9]+/g, "");
 
+const normFilter = (value: string) => value.trim().toLowerCase();
+
 // 4 cot x 3 hang = 12 san pham / trang; so trang tang theo so luong san pham
 const PAGE_SIZE = 12;
 
@@ -111,7 +113,9 @@ export default function Shop() {
   };
   const toggleScent = (value: string) => {
     setSelectedScents((prev) =>
-      prev.includes(value) ? prev.filter((item) => item !== value) : [...prev, value],
+      prev.some((item) => normFilter(item) === normFilter(value))
+        ? prev.filter((item) => normFilter(item) !== normFilter(value))
+        : [...prev, value],
     );
   };
 

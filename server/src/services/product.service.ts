@@ -103,6 +103,31 @@ function normalize(value: unknown) {
     .toLowerCase();
 }
 
+function asStringArray(value: unknown) {
+  if (Array.isArray(value)) return value.map((item) => String(item).trim()).filter(Boolean);
+  if (value == null) return [];
+  return String(value)
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function firstText(value: unknown) {
+  return asStringArray(value)[0] || '';
+}
+
+function scentFamiliesOf(product: any) {
+  return asStringArray(product.fragranceFamily || product.fragranceFamilies || product.scentFamily);
+}
+
+function notesOf(product: any) {
+  return {
+    top: asStringArray(product.notes?.top?.length ? product.notes.top : product.topNotes),
+    middle: asStringArray(product.notes?.middle?.length ? product.notes.middle : product.heartNotes || product.middleNotes),
+    base: asStringArray(product.notes?.base?.length ? product.notes.base : product.baseNotes),
+  };
+}
+
 function includesAny(value: string | undefined, filters: string[]) {
   if (filters.length === 0) return true;
   const normalizedValue = normalize(value);
@@ -121,7 +146,7 @@ function matchesScentProfile(product: ProductCard, filters: string[]) {
   // Bộ lọc Scent Profile lọc theo NHÓM HƯƠNG (fragranceFamily) của sản phẩm.
   // Trước đây còn khớp cả các nốt hương lẻ khiến kết quả không đúng với nhóm
   // hương người dùng chọn -> chỉ khớp theo fragranceFamily cho nhất quán.
-  return includesAny(product.fragranceFamily, filters);
+  return overlaps(asStringArray(product.fragranceFamily), filters);
 }
 
 function sortProducts(products: ProductCard[], sort?: string) {
@@ -296,9 +321,9 @@ export async function getProducts(query: ProductListQuery = {}) {
       category: product.category?.name || '',
       description: product.description,
       gender: product.gender || '',
-      fragranceFamily: product.fragranceFamily || '',
-      concentration: product.concentration || '',
-      season: product.season || [],
+      fragranceFamily: scentFamiliesOf(product).join(', '),
+      concentration: firstText(product.concentration),
+      season: asStringArray(product.season),
       sizes,
       variants: productVariants
         .filter((v: any) => v.size || v.volume)
@@ -325,9 +350,9 @@ export async function getProducts(query: ProductListQuery = {}) {
       volume: cheapest?.size || cheapest?.volume || '',
       stock,
       notes: {
-        top: product.notes?.top?.length ? product.notes.top : product.topNotes || [],
-        middle: product.notes?.middle?.length ? product.notes.middle : product.heartNotes || [],
-        base: product.notes?.base?.length ? product.notes.base : product.baseNotes || [],
+        top: notesOf(product).top,
+        middle: notesOf(product).middle,
+        base: notesOf(product).base,
       },
       createdAt: product.createdAt,
       soldCount: productVariants.reduce(
@@ -432,15 +457,15 @@ export async function getProductDetail(idOrSlug: string) {
     category: product.category?.name || '',
     description: product.description || '',
     gender: product.gender || '',
-    fragranceFamily: product.fragranceFamily || '',
-    concentration: product.concentration || '',
-    season: product.season || [],
+    fragranceFamily: scentFamiliesOf(product).join(', '),
+    concentration: firstText(product.concentration),
+    season: asStringArray(product.season),
     gallery,
     images: gallery,
     notes: {
-      top: product.notes?.top?.length ? product.notes.top : product.topNotes || [],
-      middle: product.notes?.middle?.length ? product.notes.middle : product.heartNotes || [],
-      base: product.notes?.base?.length ? product.notes.base : product.baseNotes || [],
+      top: notesOf(product).top,
+      middle: notesOf(product).middle,
+      base: notesOf(product).base,
     },
     variants: normalizedVariants,
     stock,
@@ -492,18 +517,18 @@ export async function getProductFilters() {
       brandCounts[brandName] = (brandCounts[brandName] || 0) + 1;
     }
     if (product.category?.name) categorySet.add(String(product.category.name).trim());
-    if (product.fragranceFamily) familySet.add(String(product.fragranceFamily).trim());
+    for (const family of scentFamiliesOf(product)) familySet.add(family);
     const productNotes = [
-      ...(product.notes?.top || product.topNotes || []),
-      ...(product.notes?.middle || product.heartNotes || []),
-      ...(product.notes?.base || product.baseNotes || []),
+      ...notesOf(product).top,
+      ...notesOf(product).middle,
+      ...notesOf(product).base,
     ];
     for (const note of productNotes) {
       if (note) noteSet.add(String(note).trim());
     }
-    if (product.concentration) concentrationSet.add(String(product.concentration).trim());
+    for (const concentration of asStringArray(product.concentration)) concentrationSet.add(concentration);
     if (product.gender) genderSet.add(String(product.gender).trim());
-    for (const season of product.season || []) {
+    for (const season of asStringArray(product.season)) {
       if (season) seasonSet.add(String(season).trim());
     }
 

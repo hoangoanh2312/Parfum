@@ -212,8 +212,11 @@ export default function ScentProfile() {
   }, [selectedFamilyFilters]);
 
   const toggleFamily = (id: string) => {
+    const normalizedId = familyId(id);
     setFamilies((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
+      prev.some((item) => familyId(item) === normalizedId)
+        ? prev.filter((item) => familyId(item) !== normalizedId)
+        : [...prev, normalizedId],
     );
   };
 

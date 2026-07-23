@@ -49,6 +49,7 @@ export default function SavedAddresses() {
 
   async function refreshUser(nextAddresses: Address[]) {
     try {
+      const wasComplete = Boolean(user?.profileCompletionVoucherCode);
       const { data } = await api.get("/auth/me");
       setUser({
         ...(user || {}),
@@ -63,8 +64,10 @@ export default function SavedAddresses() {
         profileCompletionVoucherCode: data.profileCompletionVoucherCode,
       });
       setAddresses(data.addresses || nextAddresses);
+      return !wasComplete && Boolean(data.profileCompletionVoucherCode);
     } catch {
       syncAddresses(nextAddresses);
+      return false;
     }
   }
 
@@ -101,11 +104,15 @@ export default function SavedAddresses() {
         ? api.put(`/auth/me/addresses/${editingId}`, form)
         : api.post("/auth/me/addresses", form);
       const { data } = await request;
-      await refreshUser(data);
+      const profileJustCompleted = await refreshUser(data);
       setShowForm(false);
       setEditingId(null);
       setForm(emptyForm);
-      toast.success(editingId ? "Da cap nhat dia chi" : "Da them dia chi");
+      toast.success(
+        profileJustCompleted
+          ? "Cap nhat ho so thanh cong. Voucher hoan tat ho so da san sang."
+          : editingId ? "Da cap nhat dia chi" : "Da them dia chi",
+      );
     } catch (error: any) {
       toast.error(error?.response?.data?.message || "Khong the luu dia chi");
     } finally {
@@ -126,8 +133,12 @@ export default function SavedAddresses() {
   async function setDefault(address: Address) {
     try {
       const { data } = await api.patch(`/auth/me/addresses/${address._id}/default`);
-      await refreshUser(data);
-      toast.success("Da dat lam dia chi mac dinh");
+      const profileJustCompleted = await refreshUser(data);
+      toast.success(
+        profileJustCompleted
+          ? "Cap nhat ho so thanh cong. Voucher hoan tat ho so da san sang."
+          : "Da dat lam dia chi mac dinh",
+      );
     } catch (error: any) {
       toast.error(error?.response?.data?.message || "Khong the dat mac dinh");
     }

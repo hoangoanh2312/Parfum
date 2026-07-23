@@ -20,6 +20,18 @@ const orderItemSchema = new Schema(
   { _id: false },
 );
 
+const voucherSnapshotSchema = new Schema(
+  {
+    code: { type: String, trim: true, uppercase: true },
+    name: { type: String, default: '' },
+    type: String,
+    value: { type: Number, default: 0 },
+    stackable: Boolean,
+    userSegment: String,
+  },
+  { _id: false },
+);
+
 const orderSchema = new Schema(
   {
     user: { type: Types.ObjectId, ref: 'User' },
@@ -34,14 +46,7 @@ const orderSchema = new Schema(
     tax: { type: Number, default: 0, min: 0 },
     total: { type: Number, required: true, min: 0 },
     voucherCode: { type: String, trim: true, uppercase: true },
-    voucherSnapshot: {
-      code: String,
-      name: String,
-      type: String,
-      value: Number,
-      stackable: Boolean,
-      userSegment: String,
-    },
+    voucherSnapshot: { type: voucherSnapshotSchema, default: undefined },
     pointsEarned: { type: Number, default: 0, min: 0 },
     status: {
       type: String,

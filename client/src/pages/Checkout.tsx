@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
@@ -107,7 +107,6 @@ export default function Checkout() {
   const [selectedAddressId, setSelectedAddressId] = useState(NEW_ADDRESS_ID);
   const [saveCustomerInfo, setSaveCustomerInfo] = useState(false);
   const [buyNowItems, setBuyNowItems] = useState<CartItem[]>([]);
-  const didPrefill = useRef(false);
   const isBuyNow = new URLSearchParams(location.search).get("mode") === "buy-now";
   const buyNowSummary = useMemo(
     () => ({
@@ -139,22 +138,21 @@ export default function Checkout() {
   }, [isBuyNow, loadCart, navigate]);
 
   useEffect(() => {
-    if (!user || didPrefill.current) return;
+    if (!user) return;
 
     const defaultAddress =
       user.addresses?.find((item) => item.isDefault) || user.addresses?.[0];
     const fallbackName = splitName(defaultAddress?.fullName || user.name || "");
 
-    setEmail((value) => value || user.email || "");
-    setPhone((value) => value || defaultAddress?.phone || user.phone || "");
-    setFirstName((value) => value || fallbackName.firstName);
-    setLastName((value) => value || fallbackName.lastName);
-    setAddress((value) => value || defaultAddress?.line || defaultAddress?.detail || "");
-    setCity((value) => value || defaultAddress?.province || "");
-    setWard((value) => value || defaultAddress?.ward || "");
+    setEmail(user.email || "");
+    setPhone(defaultAddress?.phone || user.phone || "");
+    setFirstName(fallbackName.firstName);
+    setLastName(fallbackName.lastName);
+    setAddress(defaultAddress?.line || defaultAddress?.detail || "");
+    setCity(defaultAddress?.province || "");
+    setWard(defaultAddress?.ward || "");
     setSelectedAddressId(defaultAddress?._id || NEW_ADDRESS_ID);
     setSaveCustomerInfo(!(user.phone && user.addresses?.length));
-    didPrefill.current = true;
   }, [user]);
 
   const shippingFee = quote?.shippingFee ?? shippingFees[shipping];

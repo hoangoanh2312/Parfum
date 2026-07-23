@@ -251,6 +251,12 @@ export default function ProductDetail() {
       items: product?.notes.base || [],
     },
   ];
+  const scentFacts = [
+    { label: "Nhóm hương", value: product?.fragranceFamily },
+    { label: "Nồng độ", value: product?.concentration },
+    { label: "Giới tính", value: product?.gender },
+    { label: "Mùa / dịp", value: product?.season?.join(", ") },
+  ].filter((item) => item.value && String(item.value).trim());
 
   async function handleAddToCart() {
     if (!product || !selectedVariant) return;
@@ -701,6 +707,24 @@ export default function ProductDetail() {
                   {storytelling}
                 </p>
               </div>
+
+              {scentFacts.length > 0 && (
+                <div className="mt-6 grid max-w-[475px] gap-2 sm:grid-cols-2">
+                  {scentFacts.map((item) => (
+                    <div
+                      key={item.label}
+                      className="border border-[#e7dfd1] bg-[#f7f2ea] px-4 py-3"
+                    >
+                      <p className="text-[8px] uppercase tracking-[1.6px] text-[#9b958c]">
+                        {item.label}
+                      </p>
+                      <p className="mt-1 text-[12px] font-semibold text-[#292824]">
+                        {item.value}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               <div className="mt-7 flex flex-wrap items-center gap-3">
                 <p className="font-serif text-[23px] font-semibold text-[#927600]">

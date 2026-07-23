@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import { JsonWebTokenError, TokenExpiredError } from 'jsonwebtoken';
 import { User } from '../models/user.model';
 import { Order } from '../models/order.model';
+import { Voucher } from '../models/voucher.model';
 import { signAccess, signRefresh, verifyRefresh } from '../utils/jwt';
 import { assertMailConfigured, sendMail } from '../utils/mailer';
 import { AddressInput } from '../types/dto';
@@ -90,6 +91,15 @@ async function maybeIssueProfileCompletionVoucher(userId: string) {
   await user.save();
   void sendProfileCompletionVoucherEmail(user, voucher.code).catch(() => null);
   return user;
+}
+
+async function refreshProfileCompletion(userId: string) {
+  const before: any = await User.findById(userId).select('profileCompletionVoucherCode').lean();
+  const user = await maybeIssueProfileCompletionVoucher(userId);
+  return {
+    user,
+    profileJustCompleted: !before?.profileCompletionVoucherCode && Boolean((user as any)?.profileCompletionVoucherCode),
+  };
 }
 
 async function claimGuestOrdersForUser(user: any, email: string, phone: string) {
@@ -213,7 +223,7 @@ export async function refreshAccessToken(refreshToken: string) {
   if (!match) throw Object.assign(new Error('Invalid refresh token'), { status: 401 });
   return {
     accessToken: signAccess({ id: user._id, role: user.role }),
-    user: { id: user._id, name: user.name, email: user.email, phone: user.phone, role: user.role, isEmailVerified: user.isEmailVerified },
+    user: serializeUser(user),
   };
 }
 
@@ -246,7 +256,8 @@ export async function updateProfile(userId: string, input: { name: string; email
   if (!user) throw Object.assign(new Error('User not found'), { status: 404 });
   if (phone) await claimGuestOrdersForUser(user, email, phone);
   await maybeIssueWelcomeVoucher(String(user._id));
-  return user;
+  const completed = await refreshProfileCompletion(String(user._id));
+  return { ...completed.user.toJSON(), profileJustCompleted: completed.profileJustCompleted };
 }
 
 export async function changePassword(
@@ -292,6 +303,7 @@ export async function addAddress(userId: string, input: AddressInput) {
   user.addresses.push(addr);
   await user.save();
   await maybeIssueWelcomeVoucher(userId);
+  await refreshProfileCompletion(userId);
   return user.addresses;
 }
 
@@ -309,6 +321,7 @@ export async function updateAddress(userId: string, addressId: string, input: Ad
   address.set(addr);
   await user.save();
   await maybeIssueWelcomeVoucher(userId);
+  await refreshProfileCompletion(userId);
   return user.addresses;
 }
 
@@ -321,6 +334,7 @@ export async function deleteAddress(userId: string, addressId: string) {
 
   address.deleteOne();
   await user.save();
+  await refreshProfileCompletion(userId);
   return user.addresses;
 }
 
@@ -580,6 +594,20 @@ async function issueTokens(user: any) {
   return {
     accessToken: signAccess(payload),
     refreshToken,
-    user: { id: user._id, name: user.name, email: user.email, phone: user.phone, role: user.role, isEmailVerified: user.isEmailVerified },
+    user: serializeUser(user),
+  };
+}
+
+function serializeUser(user: any) {
+  return {
+    id: String(user._id),
+    name: user.name,
+    email: user.email,
+    phone: user.phone,
+    role: user.role,
+    isEmailVerified: user.isEmailVerified,
+    addresses: user.addresses || [],
+    profileCompletedAt: user.profileCompletedAt,
+    profileCompletionVoucherCode: user.profileCompletionVoucherCode,
   };
 }

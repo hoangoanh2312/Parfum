@@ -7,6 +7,7 @@ import { Variant } from '../models/variant.model';
 import { Voucher } from '../models/voucher.model';
 import { VoucherCounter } from '../models/voucherCounter.model';
 import { mayStackVoucher, productPromotionPrice, voucherDiscountAmount } from '../utils/promotionPricing';
+import { ensureWelcomeVoucher, WELCOME_VOUCHER_CODE } from './promotion.service';
 
 export type PromotionType = 'FLASH_SALE' | 'PRODUCT_DISCOUNT' | 'CATEGORY_DISCOUNT' | null;
 
@@ -148,7 +149,7 @@ export async function resolveVariantPrices(variants: any[], now = new Date()) {
 }
 
 async function customerSegment(userId?: string) {
-  if (!userId || !Types.ObjectId.isValid(userId)) return 'NEW';
+  if (!userId || !Types.ObjectId.isValid(userId)) return 'GUEST';
   const orderIds = await Order.distinct('_id', { user: userId });
   if (!orderIds.length) return 'NEW';
   const paid: any[] = await Payment.find({ order: { $in: orderIds }, status: 'paid' }).select('amount').lean();
@@ -173,7 +174,11 @@ function customerKey(userId?: string, email?: string) {
 async function resolveVoucher(code: string | undefined, subtotal: number, hasProductPromotion: boolean, userId?: string, email?: string) {
   if (!code?.trim()) return null;
   const now = new Date();
-  const voucher: any = await Voucher.findOne({ code: code.trim().toUpperCase(), isActive: true }).lean();
+  const normalizedCode = code.trim().toUpperCase();
+  if (normalizedCode === WELCOME_VOUCHER_CODE) {
+    await ensureWelcomeVoucher();
+  }
+  const voucher: any = await Voucher.findOne({ code: normalizedCode, isActive: true }).lean();
   if (!voucher) throw Object.assign(new Error('Mã ưu đãi không tồn tại hoặc đã tắt'), { status: 400 });
   const start = voucher.startDate ? new Date(voucher.startDate) : null;
   const end = voucher.endDate || voucher.expiresAt ? new Date(voucher.endDate || voucher.expiresAt) : null;
@@ -188,6 +193,9 @@ async function resolveVoucher(code: string | undefined, subtotal: number, hasPro
     throw Object.assign(new Error('Mã này không thể dùng chung với ưu đãi sản phẩm hiện có'), { status: 400 });
   }
   const actualSegment = await customerSegment(userId);
+  if (actualSegment === 'GUEST' && voucher.userSegment && voucher.userSegment !== 'ALL') {
+    throw Object.assign(new Error('Vui lòng đăng ký hoặc đăng nhập để dùng mã ưu đãi thành viên mới'), { status: 400 });
+  }
   if (!segmentMatches(voucher.userSegment, actualSegment)) {
     throw Object.assign(new Error('Mã ưu đãi không áp dụng cho nhóm khách hàng của bạn'), { status: 400 });
   }

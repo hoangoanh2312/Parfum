@@ -101,25 +101,6 @@ export default function AdminPromotions() {
   const categoryOptions = categories.map((item) => ({ id: item.id, name: item.name }));
   const variantName = (item: AdminVariant) => `${item.product?.name || "Sản phẩm"} · ${item.volume || item.sku} · ${formatVnd(item.price)}`;
   const selectedFlashVariant = variants.find((item) => item.id === flashForm.variant);
-  const historyGroups = useMemo(() => {
-    const groups = new Map<string, { key: string; productName: string; variantLabel: string; rows: History[] }>();
-    for (const item of history) {
-      const key = String(item.variant?._id || item.variant || item._id);
-      const group = groups.get(key) || {
-        key,
-        productName: item.variant?.product?.name || "Sản phẩm chưa rõ",
-        variantLabel: item.variant?.volume || item.variant?.sku || "Biến thể",
-        rows: [] as History[],
-      };
-      group.rows.push(item);
-      groups.set(key, group);
-    }
-    return Array.from(groups.values()).map((group) => ({
-      ...group,
-      rows: group.rows.sort((a, b) => new Date(b.validFrom).getTime() - new Date(a.validFrom).getTime()),
-    }));
-  }, [history]);
-
   // Gom lịch sử giá theo từng biến thể để hiển thị dạng thẻ + timeline thân thiện.
   const historyGroups = useMemo(() => {
     const map = new Map<string, { key: string; product: string; detail: string; rows: History[] }>();
