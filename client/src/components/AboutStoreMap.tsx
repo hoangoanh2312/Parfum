@@ -1,5 +1,5 @@
-import { PointerEvent, WheelEvent, useMemo, useRef, useState } from "react";
-import { Clock, MapPin, Minus, Navigation, Phone, Plus, RotateCcw, Store, X } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Clock, MapPin, Navigation, Phone, Store, X } from "lucide-react";
 
 type StoreLocation = {
   id: string;
@@ -15,7 +15,7 @@ type StoreLocation = {
 type City = { name: string; lat: number; lng: number };
 
 const STORES: StoreLocation[] = [
-  { id: "tv", name: "L'Essence Noire Trà Vinh", city: "Phường Trà Vinh, Vĩnh Long", address: "Phường Trà Vinh", phone: "0270 3822 999", hours: "09:00 – 21:30", lat: 9.9347, lng: 106.3453 },
+  { id: "vl", name: "L'Essence Noire Vĩnh Long", city: "Vĩnh Long", address: "Phường 1, TP. Vĩnh Long", phone: "0270 3822 999", hours: "09:00 – 21:30", lat: 10.2537, lng: 105.9722 },
 ];
 
 const CITIES: City[] = [
@@ -67,8 +67,6 @@ const LAT_BOTTOM = 8.1;
 const LNG_LEFT = 101.9;
 const LNG_RIGHT = 110.1;
 const MAP_ASPECT = (LNG_RIGHT - LNG_LEFT) / (LAT_TOP - LAT_BOTTOM);
-const MIN_MAP_ZOOM = 1;
-const MAX_MAP_ZOOM = 2.2;
 
 function pct(lat: number, lng: number) {
   const x = ((lng - LNG_LEFT) / (LNG_RIGHT - LNG_LEFT)) * 100;
@@ -92,19 +90,12 @@ function directionsUrl(store: StoreLocation) {
 }
 
 export default function AboutStoreMap() {
-  const mapFrameRef = useRef<HTMLDivElement | null>(null);
-  const dragRef = useRef<{ pointerId: number; startX: number; startY: number; panX: number; panY: number } | null>(null);
-  const panRef = useRef({ x: 0, y: 0 });
-  const panFrameRef = useRef<number | null>(null);
   const [origin, setOrigin] = useState<{ lat: number; lng: number; label: string } | null>(null);
   const [selectedCity, setSelectedCity] = useState("");
   const [locating, setLocating] = useState(false);
   const [mapReady, setMapReady] = useState(false);
   const [mapError, setMapError] = useState(false);
   const [activeStore, setActiveStore] = useState<StoreLocation | null>(STORES[0]);
-  const [mapZoom, setMapZoom] = useState(1);
-  const [mapPan, setMapPan] = useState({ x: 0, y: 0 });
-  const [isDragging, setIsDragging] = useState(false);
 
   const nearest = useMemo(() => {
     if (!origin) return null;
@@ -132,80 +123,6 @@ export default function AboutStoreMap() {
 
   const originPoint = origin ? pct(origin.lat, origin.lng) : null;
   const nearestPoint = nearest ? pct(nearest.store.lat, nearest.store.lng) : null;
-  const mapScale = Math.min(MAX_MAP_ZOOM * focus.scale, Math.max(MIN_MAP_ZOOM, focus.scale * mapZoom));
-
-  function clampPan(next: { x: number; y: number }, scale = mapScale) {
-    const frame = mapFrameRef.current;
-    if (!frame) return next;
-    const maxX = Math.max(0, ((scale - 1) * frame.clientWidth) / 2);
-    const maxY = Math.max(0, ((scale - 1) * frame.clientHeight) / 2);
-    return {
-      x: Math.min(maxX, Math.max(-maxX, next.x)),
-      y: Math.min(maxY, Math.max(-maxY, next.y)),
-    };
-  }
-
-  function commitPan(next: { x: number; y: number }) {
-    const clamped = clampPan(next);
-    panRef.current = clamped;
-    if (panFrameRef.current !== null) cancelAnimationFrame(panFrameRef.current);
-    panFrameRef.current = requestAnimationFrame(() => {
-      setMapPan(panRef.current);
-      panFrameRef.current = null;
-    });
-  }
-
-  function changeZoom(delta: number) {
-    setMapZoom((current) => {
-      const nextZoom = Math.min(MAX_MAP_ZOOM, Math.max(MIN_MAP_ZOOM, Number((current + delta).toFixed(2))));
-      const nextScale = Math.min(MAX_MAP_ZOOM * focus.scale, Math.max(MIN_MAP_ZOOM, focus.scale * nextZoom));
-      const nextPan = clampPan(panRef.current, nextScale);
-      panRef.current = nextPan;
-      setMapPan(nextPan);
-      return nextZoom;
-    });
-  }
-
-  function resetMapView() {
-    setMapZoom(1);
-    panRef.current = { x: 0, y: 0 };
-    setMapPan(panRef.current);
-  }
-
-  function handleMapWheel(event: WheelEvent<HTMLDivElement>) {
-    event.preventDefault();
-    changeZoom(event.deltaY < 0 ? 0.16 : -0.16);
-  }
-
-  function handleMapPointerDown(event: PointerEvent<HTMLDivElement>) {
-    if (event.button !== 0) return;
-    dragRef.current = {
-      pointerId: event.pointerId,
-      startX: event.clientX,
-      startY: event.clientY,
-      panX: panRef.current.x,
-      panY: panRef.current.y,
-    };
-    setIsDragging(true);
-    event.currentTarget.setPointerCapture(event.pointerId);
-  }
-
-  function handleMapPointerMove(event: PointerEvent<HTMLDivElement>) {
-    const drag = dragRef.current;
-    if (!drag || drag.pointerId !== event.pointerId) return;
-    commitPan({
-      x: drag.panX + event.clientX - drag.startX,
-      y: drag.panY + event.clientY - drag.startY,
-    });
-  }
-
-  function handleMapPointerUp(event: PointerEvent<HTMLDivElement>) {
-    const drag = dragRef.current;
-    if (!drag || drag.pointerId !== event.pointerId) return;
-    dragRef.current = null;
-    setIsDragging(false);
-    event.currentTarget.releasePointerCapture(event.pointerId);
-  }
 
   function handleCity(name: string) {
     setSelectedCity(name);
@@ -251,23 +168,13 @@ export default function AboutStoreMap() {
               <Navigation size={18} />
             </div>
 
-            <div
-              ref={mapFrameRef}
-              className={"relative h-[540px] max-w-full touch-none overflow-hidden " + (isDragging ? "cursor-grabbing" : "cursor-grab")}
-              style={{ aspectRatio: String(MAP_ASPECT) }}
-              onWheel={handleMapWheel}
-              onPointerDown={handleMapPointerDown}
-              onPointerMove={handleMapPointerMove}
-              onPointerUp={handleMapPointerUp}
-              onPointerCancel={handleMapPointerUp}
-            >
+            <div className="relative h-[540px] max-w-full" style={{ aspectRatio: String(MAP_ASPECT) }}>
               <div
                 className="absolute inset-0"
                 style={{
-                  transform: "translate(" + mapPan.x + "px, " + mapPan.y + "px) scale(" + mapScale + ")",
+                  transform: "scale(" + focus.scale + ")",
                   transformOrigin: focus.x + "% " + focus.y + "%",
-                  transition: isDragging ? "none" : "transform 260ms cubic-bezier(0.22, 1, 0.36, 1)",
-                  willChange: "transform",
+                  transition: "transform 1.3s cubic-bezier(0.65, 0, 0.35, 1)",
                 }}
               >
                 {!mapError && (
@@ -363,45 +270,13 @@ export default function AboutStoreMap() {
               {STORES.length} boutique · Vĩnh Long
             </div>
 
-            <div className="absolute right-4 top-4 z-30 flex overflow-hidden rounded-md border border-[#d8d1c0] bg-white/90 shadow backdrop-blur">
-              <button
-                type="button"
-                onClick={() => changeZoom(0.2)}
-                disabled={mapZoom >= MAX_MAP_ZOOM}
-                className="flex h-9 w-9 items-center justify-center text-[#927A20] transition hover:bg-[#fbf7ec] disabled:cursor-not-allowed disabled:text-[#c7bfae]"
-                aria-label="Phóng to bản đồ"
-                title="Phóng to"
-              >
-                <Plus size={16} />
-              </button>
-              <button
-                type="button"
-                onClick={() => changeZoom(-0.2)}
-                disabled={mapZoom <= MIN_MAP_ZOOM}
-                className="flex h-9 w-9 items-center justify-center border-x border-[#e6e0d3] text-[#927A20] transition hover:bg-[#fbf7ec] disabled:cursor-not-allowed disabled:text-[#c7bfae]"
-                aria-label="Thu nhỏ bản đồ"
-                title="Thu nhỏ"
-              >
-                <Minus size={16} />
-              </button>
-              <button
-                type="button"
-                onClick={resetMapView}
-                className="flex h-9 w-9 items-center justify-center text-[#927A20] transition hover:bg-[#fbf7ec]"
-                aria-label="Đặt lại zoom bản đồ"
-                title="Đặt lại"
-              >
-                <RotateCcw size={15} />
-              </button>
-            </div>
-
             <div className="pointer-events-none absolute bottom-4 left-4 z-20 flex flex-col gap-1 rounded-md bg-white/80 px-3 py-2 text-[10px] text-[#5c564b] shadow backdrop-blur">
               <span className="flex items-center gap-2"><span className="inline-block h-2.5 w-2.5 rounded-full bg-[#927A20]" /> Boutique Vĩnh Long</span>
               <span className="flex items-center gap-2"><span className="inline-block h-2.5 w-2.5 rounded-full bg-[#242018]" /> Vị trí của bạn</span>
             </div>
 
             {activeStore && (
-              <div className="absolute inset-x-4 top-20 z-30 rounded-[8px] border border-[#927A20]/40 bg-white/95 p-4 shadow-xl backdrop-blur sm:left-auto sm:right-4 sm:w-[280px]">
+              <div className="absolute inset-x-4 top-14 z-30 rounded-[8px] border border-[#927A20]/40 bg-white/95 p-4 shadow-xl backdrop-blur sm:left-auto sm:right-4 sm:w-[280px]">
                 <button
                   type="button"
                   onClick={() => setActiveStore(null)}
@@ -419,7 +294,7 @@ export default function AboutStoreMap() {
                   href={directionsUrl(activeStore)}
                   target="_blank"
                   rel="noreferrer"
-                  className="mt-3 flex items-center justify-center gap-2 bg-[#927A20] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-white transition hover:bg-[#7c6717]"
+                  className="mt-3 flex items-center justify-center gap-2 bg-[#927A20] px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-white transition hover:bg-[#7c6717]"
                 >
                   <Navigation size={13} /> Chỉ đường
                 </a>
