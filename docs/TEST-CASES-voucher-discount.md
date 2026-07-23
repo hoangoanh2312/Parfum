@@ -162,3 +162,12 @@ Ràng buộc chính (`order.service.ts`):
 ---
 
 *Tài liệu tạo tự động cho mục đích kiểm thử nội bộ — L'Essence Noire.*
+lúc tạo tài khoảng mới thì thông báo cho khách hàng khuyến khích họ cập nhật đầy đủ thông tin, thông báo này hiện trong account dashboard, cập nhật xong thì hệ thống sẽ gủi 1 mã giảm giám voucher 10% qua email của khách( voucher cho người mới đã cập nhật thông tin).  note lại mã này cho t biết là gì( hoặc để tạo sẵn trong tab discount của admin)
+
+discount nhiều sản phẩm trong 1 mã không được, priority trong form discount là gì 
+
+flash sale không hoạt động
+lịch sử giá trong admin dashboard , lịch sử giá chưa được trực quan lắm , làm 1 dashboard thân thiện hơn đi , hãy gom lại, them 1 biến thể ( có thể khác dung tích) , gắn kèm lịch sử giá theo tứng thời điểm điều chỉnh + lý do điều chỉnh
+
+trong admin/ báo cáo, phân  tích mỗi thành phần trong đó là gì, vì sao có , cách tính
+

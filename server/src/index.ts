@@ -11,12 +11,30 @@ import {
 } from './services/security.service';
 
 async function start() {
-  await connectDB();
-  await ensureDefaultAdmin();
-  await rotateDefaultAdminPassword();
-  await fixLegacySlugIndexes();
   const app = createApp();
-  app.listen(env.port, () => console.log(`🚀 Server: http://localhost:${env.port}`));
+  const server = app.listen(env.port, () =>
+    console.log(`🚀 Server: http://localhost:${env.port}`),
+  );
+
+  server.on('error', (error: NodeJS.ErrnoException) => {
+    if (error.code === 'EADDRINUSE') {
+      console.error(
+        `Port ${env.port} dang duoc su dung. Hay tat server cu hoac doi PORT trong server/.env.`,
+      );
+      process.exit(1);
+    }
+    throw error;
+  });
+
+  try {
+    await connectDB();
+    await ensureDefaultAdmin();
+    await rotateDefaultAdminPassword();
+    await fixLegacySlugIndexes();
+  } catch (error) {
+    console.error('Khong khoi tao duoc database/bootstrap:', error);
+    process.exit(1);
+  }
 }
 
 start();
