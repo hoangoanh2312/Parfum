@@ -9,6 +9,7 @@ import {
   ensureDefaultAdmin,
   fixLegacySlugIndexes,
 } from './services/security.service';
+import { ensureProfileCompletionVoucher } from './services/auth.service';
 
 async function start() {
   const app = createApp();
@@ -29,6 +30,7 @@ async function start() {
   try {
     await connectDB();
     await ensureDefaultAdmin();
+    await ensureProfileCompletionVoucher();
     await rotateDefaultAdminPassword();
     await fixLegacySlugIndexes();
   } catch (error) {

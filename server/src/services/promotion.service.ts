@@ -69,15 +69,23 @@ async function assertReferenceEvidence(variants: any[], startDate: Date, confirm
   const missing: string[] = [];
   for (const variant of variants) {
     const basePrice = basePriceOf(variant);
-    const sold = await Order.exists({
-      createdAt: { $lt: startDate },
-      status: { $in: ['paid', 'shipping', 'done'] },
-      items: { $elemMatch: { variant: variant._id, $or: [{ basePrice }, { basePrice: { $exists: false }, price: basePrice }] } },
-    });
-    if (!sold) missing.push(`${variant.product?.name || variant.sku} (${variant.volume || variant.size || variant.sku})`);
+    const [sold, listedPriceHistory] = await Promise.all([
+      Order.exists({
+        createdAt: { $lt: startDate },
+        status: { $in: ['paid', 'shipping', 'done'] },
+        items: { $elemMatch: { variant: variant._id, $or: [{ basePrice }, { basePrice: { $exists: false }, price: basePrice }] } },
+      }),
+      PriceHistory.exists({
+        variant: variant._id,
+        basePrice,
+        validFrom: { $lt: startDate },
+        $or: [{ validTo: null }, { validTo: { $gte: startDate } }],
+      }),
+    ]);
+    if (!sold && !listedPriceHistory) missing.push(`${variant.product?.name || variant.sku} (${variant.volume || variant.size || variant.sku})`);
   }
   if (missing.length && (!confirmed || String(note || '').trim().length < 10)) {
-    throw error(`Chưa có chứng cứ giá bán thực tế trước khuyến mại cho: ${missing.slice(0, 4).join(', ')}. Hãy bổ sung ghi chú chứng từ bán ngoài hệ thống.`);
+    throw error(`Chưa có lịch sử giá niêm yết hoặc chứng cứ giá bán trước khuyến mại cho: ${missing.slice(0, 4).join(', ')}. Hãy bổ sung ghi chú chứng từ bán ngoài hệ thống.`);
   }
 }
 
@@ -166,9 +174,16 @@ function flashStatus(item: any, now = new Date()) {
   if (new Date(item.startTime) > now) return 'UPCOMING';
   return 'ACTIVE';
 }
+function flashStatusReason(item: any, now = new Date()) {
+  if (!item.isActive) return 'Đã tắt';
+  if (new Date(item.startTime) > now) return 'Chưa đến thời gian bắt đầu';
+  if (new Date(item.endTime) <= now) return 'Đã hết thời gian';
+  if (Number(item.soldCount || 0) >= Number(item.stockAllocated || 0)) return 'Đã bán hết số lượng phân bổ';
+  return 'Đang áp dụng trên shop/cart/checkout';
+}
 export async function listFlashSales() {
-  const rows: any[] = await FlashSale.find({}).populate({ path: 'variant', populate: { path: 'product', select: 'name' } }).sort({ startTime: -1 }).lean();
-  return rows.map((item) => ({ ...item, status: flashStatus(item), remaining: Math.max(0, Number(item.stockAllocated) - Number(item.soldCount || 0)) }));
+  const rows: any[] = await FlashSale.find({}).populate({ path: 'variant', select: 'sku volume size stock product', populate: { path: 'product', select: 'name' } }).sort({ startTime: -1 }).lean();
+  return rows.map((item) => ({ ...item, status: flashStatus(item), statusReason: flashStatusReason(item), remaining: Math.max(0, Number(item.stockAllocated) - Number(item.soldCount || 0)) }));
 }
 async function normalizeAndValidateFlash(input: any, existingId?: string) {
   const { startDate: startTime, endDate: endTime } = dateRange(input.startTime, input.endTime);

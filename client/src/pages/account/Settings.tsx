@@ -104,6 +104,8 @@ export default function Settings() {
         role: data.role,
         isEmailVerified: data.isEmailVerified,
         addresses: data.addresses || [],
+        profileCompletedAt: data.profileCompletedAt,
+        profileCompletionVoucherCode: data.profileCompletionVoucherCode,
       });
 
       if (form.currentPassword && form.newPassword) {

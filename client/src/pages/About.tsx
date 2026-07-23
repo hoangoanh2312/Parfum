@@ -71,7 +71,7 @@ const policySections = [
     id: "contact",
     title: "Liên hệ",
     label: "Contact",
-    text: "Cần tư vấn mùi hương, hỗ trợ đơn hàng hoặc chính sách sau mua? Liên hệ qua hotline 0328 779 845 hoặc email contact4w@perfume.vn.",
+    text: "Cần tư vấn mùi hương, hỗ trợ đơn hàng hoặc chính sách sau mua? Liên hệ qua hotline 0328 779 845 hoặc email tranvungochuynh136@gmail.com.",
   },
 ];
 

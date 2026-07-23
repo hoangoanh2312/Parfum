@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Clock, MapPin, Navigation, Phone, Store, X } from "lucide-react";
+import { PointerEvent, WheelEvent, useMemo, useRef, useState } from "react";
+import { Clock, MapPin, Minus, Navigation, Phone, Plus, RotateCcw, Store, X } from "lucide-react";
 
 type StoreLocation = {
   id: string;
@@ -15,32 +15,43 @@ type StoreLocation = {
 type City = { name: string; lat: number; lng: number };
 
 const STORES: StoreLocation[] = [
-  { id: "hn", name: "L'Essence Noire Hà Nội", city: "Hà Nội", address: "Tràng Tiền Plaza, Hoàn Kiếm", phone: "024 3826 1000", hours: "09:00 – 22:00", lat: 21.0245, lng: 105.8412 },
-  { id: "hp", name: "L'Essence Noire Hải Phòng", city: "Hải Phòng", address: "Lạch Tray, Ngô Quyền", phone: "0225 3736 555", hours: "09:00 – 21:30", lat: 20.8449, lng: 106.6881 },
-  { id: "dn", name: "L'Essence Noire Đà Nẵng", city: "Đà Nẵng", address: "Bạch Đằng, Hải Châu", phone: "0236 3888 246", hours: "09:00 – 22:00", lat: 16.0678, lng: 108.2208 },
-  { id: "hue", name: "L'Essence Noire Huế", city: "Huế", address: "Lê Lợi, Phú Hội", phone: "0234 3777 168", hours: "09:00 – 21:30", lat: 16.4637, lng: 107.5909 },
-  { id: "nt", name: "L'Essence Noire Nha Trang", city: "Nha Trang", address: "Trần Phú, Lộc Thọ", phone: "0258 3524 888", hours: "09:00 – 22:00", lat: 12.2388, lng: 109.1967 },
-  { id: "bmt", name: "L'Essence Noire Buôn Ma Thuột", city: "Buôn Ma Thuột", address: "Lê Duẩn, Tân Lập", phone: "0262 3555 279", hours: "08:30 – 21:30", lat: 12.6667, lng: 108.0500 },
-  { id: "hcm", name: "L'Essence Noire Sài Gòn", city: "TP. Hồ Chí Minh", address: "Đồng Khởi, Quận 1", phone: "028 3822 9999", hours: "09:00 – 22:30", lat: 10.7769, lng: 106.7009 },
-  { id: "ct", name: "L'Essence Noire Cần Thơ", city: "Cần Thơ", address: "Ninh Kiều, bến Ninh Kiều", phone: "0292 3765 432", hours: "09:00 – 21:30", lat: 10.0452, lng: 105.7469 },
+  { id: "tv", name: "L'Essence Noire Trà Vinh", city: "Phường Trà Vinh, Vĩnh Long", address: "Phường Trà Vinh", phone: "0270 3822 999", hours: "09:00 – 21:30", lat: 9.9347, lng: 106.3453 },
 ];
 
 const CITIES: City[] = [
-  { name: "Hà Nội", lat: 21.0278, lng: 105.8342 },
-  { name: "Hải Phòng", lat: 20.8449, lng: 106.6881 },
-  { name: "Quảng Ninh", lat: 21.0064, lng: 107.2925 },
-  { name: "Thanh Hóa", lat: 19.8067, lng: 105.7852 },
-  { name: "Vinh", lat: 18.6733, lng: 105.6922 },
-  { name: "Huế", lat: 16.4637, lng: 107.5909 },
-  { name: "Đà Nẵng", lat: 16.0544, lng: 108.2022 },
-  { name: "Quy Nhơn", lat: 13.7829, lng: 109.2196 },
-  { name: "Nha Trang", lat: 12.2388, lng: 109.1967 },
-  { name: "Đà Lạt", lat: 11.9404, lng: 108.4583 },
-  { name: "Buôn Ma Thuột", lat: 12.6667, lng: 108.0500 },
+  { name: "TP. Hà Nội", lat: 21.0278, lng: 105.8342 },
+  { name: "TP. Huế", lat: 16.4637, lng: 107.5909 },
+  { name: "TP. Hải Phòng", lat: 20.8449, lng: 106.6881 },
+  { name: "TP. Đà Nẵng", lat: 16.0544, lng: 108.2022 },
   { name: "TP. Hồ Chí Minh", lat: 10.7769, lng: 106.7009 },
-  { name: "Biên Hòa", lat: 10.9574, lng: 106.8426 },
-  { name: "Vũng Tàu", lat: 10.4114, lng: 107.1362 },
-  { name: "Cần Thơ", lat: 10.0452, lng: 105.7469 },
+  { name: "TP. Cần Thơ", lat: 10.0452, lng: 105.7469 },
+  { name: "Lai Châu", lat: 22.3862, lng: 103.4707 },
+  { name: "Điện Biên", lat: 21.386, lng: 103.023 },
+  { name: "Sơn La", lat: 21.327, lng: 103.9141 },
+  { name: "Lạng Sơn", lat: 21.8537, lng: 106.7615 },
+  { name: "Quảng Ninh", lat: 20.9712, lng: 107.0448 },
+  { name: "Thanh Hóa", lat: 19.8067, lng: 105.7852 },
+  { name: "Nghệ An", lat: 18.6733, lng: 105.6922 },
+  { name: "Hà Tĩnh", lat: 18.3428, lng: 105.9057 },
+  { name: "Cao Bằng", lat: 22.6657, lng: 106.257 },
+  { name: "Tuyên Quang", lat: 21.8236, lng: 105.2142 },
+  { name: "Lào Cai", lat: 22.4856, lng: 103.9707 },
+  { name: "Thái Nguyên", lat: 21.5942, lng: 105.8482 },
+  { name: "Phú Thọ", lat: 21.3227, lng: 105.4019 },
+  { name: "Bắc Ninh", lat: 21.1861, lng: 106.0763 },
+  { name: "Hưng Yên", lat: 20.8526, lng: 106.016 },
+  { name: "Ninh Bình", lat: 20.2506, lng: 105.9745 },
+  { name: "Quảng Trị", lat: 16.7943, lng: 106.9634 },
+  { name: "Quảng Ngãi", lat: 15.1205, lng: 108.7923 },
+  { name: "Gia Lai", lat: 13.9833, lng: 108.0 },
+  { name: "Khánh Hòa", lat: 12.2388, lng: 109.1967 },
+  { name: "Lâm Đồng", lat: 11.9404, lng: 108.4583 },
+  { name: "Đắk Lắk", lat: 12.6667, lng: 108.05 },
+  { name: "Đồng Nai", lat: 10.9574, lng: 106.8426 },
+  { name: "Tây Ninh", lat: 11.3101, lng: 106.0983 },
+  { name: "Vĩnh Long", lat: 10.2537, lng: 105.9722 },
+  { name: "Đồng Tháp", lat: 10.4938, lng: 105.6882 },
+  { name: "An Giang", lat: 10.3864, lng: 105.4352 },
   { name: "Cà Mau", lat: 9.1769, lng: 105.1524 },
 ];
 
@@ -56,6 +67,8 @@ const LAT_BOTTOM = 8.1;
 const LNG_LEFT = 101.9;
 const LNG_RIGHT = 110.1;
 const MAP_ASPECT = (LNG_RIGHT - LNG_LEFT) / (LAT_TOP - LAT_BOTTOM);
+const MIN_MAP_ZOOM = 1;
+const MAX_MAP_ZOOM = 2.2;
 
 function pct(lat: number, lng: number) {
   const x = ((lng - LNG_LEFT) / (LNG_RIGHT - LNG_LEFT)) * 100;
@@ -79,12 +92,19 @@ function directionsUrl(store: StoreLocation) {
 }
 
 export default function AboutStoreMap() {
+  const mapFrameRef = useRef<HTMLDivElement | null>(null);
+  const dragRef = useRef<{ pointerId: number; startX: number; startY: number; panX: number; panY: number } | null>(null);
+  const panRef = useRef({ x: 0, y: 0 });
+  const panFrameRef = useRef<number | null>(null);
   const [origin, setOrigin] = useState<{ lat: number; lng: number; label: string } | null>(null);
   const [selectedCity, setSelectedCity] = useState("");
   const [locating, setLocating] = useState(false);
   const [mapReady, setMapReady] = useState(false);
   const [mapError, setMapError] = useState(false);
-  const [activeStore, setActiveStore] = useState<StoreLocation | null>(null);
+  const [activeStore, setActiveStore] = useState<StoreLocation | null>(STORES[0]);
+  const [mapZoom, setMapZoom] = useState(1);
+  const [mapPan, setMapPan] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
 
   const nearest = useMemo(() => {
     if (!origin) return null;
@@ -112,6 +132,80 @@ export default function AboutStoreMap() {
 
   const originPoint = origin ? pct(origin.lat, origin.lng) : null;
   const nearestPoint = nearest ? pct(nearest.store.lat, nearest.store.lng) : null;
+  const mapScale = Math.min(MAX_MAP_ZOOM * focus.scale, Math.max(MIN_MAP_ZOOM, focus.scale * mapZoom));
+
+  function clampPan(next: { x: number; y: number }, scale = mapScale) {
+    const frame = mapFrameRef.current;
+    if (!frame) return next;
+    const maxX = Math.max(0, ((scale - 1) * frame.clientWidth) / 2);
+    const maxY = Math.max(0, ((scale - 1) * frame.clientHeight) / 2);
+    return {
+      x: Math.min(maxX, Math.max(-maxX, next.x)),
+      y: Math.min(maxY, Math.max(-maxY, next.y)),
+    };
+  }
+
+  function commitPan(next: { x: number; y: number }) {
+    const clamped = clampPan(next);
+    panRef.current = clamped;
+    if (panFrameRef.current !== null) cancelAnimationFrame(panFrameRef.current);
+    panFrameRef.current = requestAnimationFrame(() => {
+      setMapPan(panRef.current);
+      panFrameRef.current = null;
+    });
+  }
+
+  function changeZoom(delta: number) {
+    setMapZoom((current) => {
+      const nextZoom = Math.min(MAX_MAP_ZOOM, Math.max(MIN_MAP_ZOOM, Number((current + delta).toFixed(2))));
+      const nextScale = Math.min(MAX_MAP_ZOOM * focus.scale, Math.max(MIN_MAP_ZOOM, focus.scale * nextZoom));
+      const nextPan = clampPan(panRef.current, nextScale);
+      panRef.current = nextPan;
+      setMapPan(nextPan);
+      return nextZoom;
+    });
+  }
+
+  function resetMapView() {
+    setMapZoom(1);
+    panRef.current = { x: 0, y: 0 };
+    setMapPan(panRef.current);
+  }
+
+  function handleMapWheel(event: WheelEvent<HTMLDivElement>) {
+    event.preventDefault();
+    changeZoom(event.deltaY < 0 ? 0.16 : -0.16);
+  }
+
+  function handleMapPointerDown(event: PointerEvent<HTMLDivElement>) {
+    if (event.button !== 0) return;
+    dragRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      panX: panRef.current.x,
+      panY: panRef.current.y,
+    };
+    setIsDragging(true);
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+
+  function handleMapPointerMove(event: PointerEvent<HTMLDivElement>) {
+    const drag = dragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    commitPan({
+      x: drag.panX + event.clientX - drag.startX,
+      y: drag.panY + event.clientY - drag.startY,
+    });
+  }
+
+  function handleMapPointerUp(event: PointerEvent<HTMLDivElement>) {
+    const drag = dragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    dragRef.current = null;
+    setIsDragging(false);
+    event.currentTarget.releasePointerCapture(event.pointerId);
+  }
 
   function handleCity(name: string) {
     setSelectedCity(name);
@@ -144,9 +238,9 @@ export default function AboutStoreMap() {
 
       <div className="mx-auto max-w-[1180px]">
         <p className="text-[11px] uppercase tracking-[0.32em] text-[#927A20]">Hệ thống cửa hàng</p>
-        <h2 className="mt-4 text-[34px] leading-tight text-[#242018] sm:text-[44px]">Cửa hàng trên toàn quốc</h2>
+        <h2 className="mt-4 text-[34px] leading-tight text-[#242018] sm:text-[44px]">Cửa hàng tại Vĩnh Long</h2>
         <p className="mt-4 max-w-xl text-[15px] leading-[1.9] text-[#5c564b]">
-          Nhập thành phố của bạn hoặc chia sẻ vị trí để chúng tôi điều hướng bạn đến boutique gần nhất. Nhấp vào từng điểm trên bản đồ để xem chi tiết.
+          Ghé boutique chính thức của L'Essence Noire tại Vĩnh Long hoặc chia sẻ vị trí để xem khoảng cách và chỉ đường nhanh nhất.
         </p>
 
         <div className="mt-10 grid gap-10 lg:grid-cols-[minmax(0,1fr)_360px]">
@@ -157,13 +251,23 @@ export default function AboutStoreMap() {
               <Navigation size={18} />
             </div>
 
-            <div className="relative h-[540px] max-w-full" style={{ aspectRatio: String(MAP_ASPECT) }}>
+            <div
+              ref={mapFrameRef}
+              className={"relative h-[540px] max-w-full touch-none overflow-hidden " + (isDragging ? "cursor-grabbing" : "cursor-grab")}
+              style={{ aspectRatio: String(MAP_ASPECT) }}
+              onWheel={handleMapWheel}
+              onPointerDown={handleMapPointerDown}
+              onPointerMove={handleMapPointerMove}
+              onPointerUp={handleMapPointerUp}
+              onPointerCancel={handleMapPointerUp}
+            >
               <div
                 className="absolute inset-0"
                 style={{
-                  transform: "scale(" + focus.scale + ")",
+                  transform: "translate(" + mapPan.x + "px, " + mapPan.y + "px) scale(" + mapScale + ")",
                   transformOrigin: focus.x + "% " + focus.y + "%",
-                  transition: "transform 1.3s cubic-bezier(0.65, 0, 0.35, 1)",
+                  transition: isDragging ? "none" : "transform 260ms cubic-bezier(0.22, 1, 0.36, 1)",
+                  willChange: "transform",
                 }}
               >
                 {!mapError && (
@@ -256,17 +360,48 @@ export default function AboutStoreMap() {
             </div>
 
             <div className="pointer-events-none absolute left-4 top-4 z-20 rounded-full bg-white/85 px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-[#927A20] shadow backdrop-blur">
-              {STORES.length} boutique · toàn quốc
+              {STORES.length} boutique · Vĩnh Long
+            </div>
+
+            <div className="absolute right-4 top-4 z-30 flex overflow-hidden rounded-md border border-[#d8d1c0] bg-white/90 shadow backdrop-blur">
+              <button
+                type="button"
+                onClick={() => changeZoom(0.2)}
+                disabled={mapZoom >= MAX_MAP_ZOOM}
+                className="flex h-9 w-9 items-center justify-center text-[#927A20] transition hover:bg-[#fbf7ec] disabled:cursor-not-allowed disabled:text-[#c7bfae]"
+                aria-label="Phóng to bản đồ"
+                title="Phóng to"
+              >
+                <Plus size={16} />
+              </button>
+              <button
+                type="button"
+                onClick={() => changeZoom(-0.2)}
+                disabled={mapZoom <= MIN_MAP_ZOOM}
+                className="flex h-9 w-9 items-center justify-center border-x border-[#e6e0d3] text-[#927A20] transition hover:bg-[#fbf7ec] disabled:cursor-not-allowed disabled:text-[#c7bfae]"
+                aria-label="Thu nhỏ bản đồ"
+                title="Thu nhỏ"
+              >
+                <Minus size={16} />
+              </button>
+              <button
+                type="button"
+                onClick={resetMapView}
+                className="flex h-9 w-9 items-center justify-center text-[#927A20] transition hover:bg-[#fbf7ec]"
+                aria-label="Đặt lại zoom bản đồ"
+                title="Đặt lại"
+              >
+                <RotateCcw size={15} />
+              </button>
             </div>
 
             <div className="pointer-events-none absolute bottom-4 left-4 z-20 flex flex-col gap-1 rounded-md bg-white/80 px-3 py-2 text-[10px] text-[#5c564b] shadow backdrop-blur">
-              <span className="flex items-center gap-2"><span className="inline-block h-2.5 w-2.5 rounded-full bg-[#927A20]" /> Cửa hàng nổi bật</span>
-              <span className="flex items-center gap-2"><span className="inline-block h-2 w-2 rounded-full bg-[#7c6f4d]" /> Boutique khác</span>
+              <span className="flex items-center gap-2"><span className="inline-block h-2.5 w-2.5 rounded-full bg-[#927A20]" /> Boutique Vĩnh Long</span>
               <span className="flex items-center gap-2"><span className="inline-block h-2.5 w-2.5 rounded-full bg-[#242018]" /> Vị trí của bạn</span>
             </div>
 
             {activeStore && (
-              <div className="absolute inset-x-4 top-14 z-30 rounded-[8px] border border-[#927A20]/40 bg-white/95 p-4 shadow-xl backdrop-blur sm:left-auto sm:right-4 sm:w-[280px]">
+              <div className="absolute inset-x-4 top-20 z-30 rounded-[8px] border border-[#927A20]/40 bg-white/95 p-4 shadow-xl backdrop-blur sm:left-auto sm:right-4 sm:w-[280px]">
                 <button
                   type="button"
                   onClick={() => setActiveStore(null)}
@@ -300,13 +435,13 @@ export default function AboutStoreMap() {
 
           <div className="flex flex-col gap-5">
             <div className="rounded-[6px] border border-[#e2dccf] bg-white/70 p-6">
-              <label className="text-[11px] uppercase tracking-[0.2em] text-[#927A20]">Chọn thành phố</label>
+              <label className="text-[11px] uppercase tracking-[0.2em] text-[#927A20]">Chọn tỉnh/thành</label>
               <select
                 value={selectedCity}
                 onChange={(e) => handleCity(e.target.value)}
                 className="mt-3 w-full border border-[#d9d2c3] bg-[#faf8f2] px-4 py-3 text-[14px] text-[#3a352b] outline-none focus:border-[#927A20]"
               >
-                <option value="">— Thành phố của bạn —</option>
+                <option value="">— Tỉnh/thành của bạn —</option>
                 {CITIES.map((c) => (
                   <option key={c.name} value={c.name}>{c.name}</option>
                 ))}

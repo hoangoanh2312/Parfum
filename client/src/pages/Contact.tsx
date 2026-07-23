@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { MapPin, Phone, Mail, Clock } from "lucide-react";
 import { api } from "../lib/api";
+import Footer from "../components/Footer";
 
 const SUBJECTS = [
   "Private consultation",
@@ -65,10 +66,11 @@ export default function ContactPage() {
   };
 
   return (
-    <main
-      className="min-h-screen"
-      style={{ background: "#FDF9F4", color: "#1a1a18", fontFamily: "'Manrope', 'Helvetica Neue', sans-serif" }}
-    >
+    <>
+      <main
+        className="min-h-screen"
+        style={{ background: "#FDF9F4", color: "#1a1a18", fontFamily: "'Manrope', 'Helvetica Neue', sans-serif" }}
+      >
       <div className="max-w-6xl mx-auto">
 
         {/* ── Hero strip ── */}
@@ -166,9 +168,9 @@ export default function ContactPage() {
                 label: "Atelier",
                 content: (
                   <p style={{ fontSize: 13, lineHeight: 1.7 }}>
-                    12 Rue du Faubourg<br />
-                    Saint-Honoré, Paris<br />
-                    75008, France
+                    126 Nguyễn Thiện Thành<br />
+                    Phường Trà Vinh<br />
+                    Vĩnh Long, Việt Nam
                   </p>
                 ),
               },
@@ -185,7 +187,7 @@ export default function ContactPage() {
                       borderBottom: "0.5px solid rgba(26,26,24,0.2)",
                     }}
                   >
-                    (+84) 123 456 789
+                    (+84) 328 779 845
                   </a>
                 ),
               },
@@ -194,7 +196,7 @@ export default function ContactPage() {
                 label: "Correspondence",
                 content: (
                   <a
-                    href="mailto:atelier@lessencenoire.com"
+                    href="mailto:tranvungochuynh136@gmail.com"
                     className="break-all"
                     style={{
                       fontSize: 13,
@@ -203,7 +205,7 @@ export default function ContactPage() {
                       borderBottom: "0.5px solid rgba(26,26,24,0.2)",
                     }}
                   >
-                    atelier@lessencenoire.com
+                    tranvungochuynh136@gmail.com
                   </a>
                 ),
               },
@@ -377,56 +379,12 @@ export default function ContactPage() {
               </p>
             )}
           </div>
-        </div>
+        </div>        </div>
 
-        {/* ── Location strip ── */}
-        <div
-          style={{
-            background: "#2a2520",
-            height: 100,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexDirection: "column",
-            gap: 6,
-          }}
-        >
-          <p
-            style={{
-              fontSize: 9,
-              letterSpacing: "0.16em",
-              textTransform: "uppercase",
-              color: "rgba(255,255,255,0.3)",
-            }}
-          >
-            Location
-          </p>
-          <span
-            style={{
-              fontFamily: "'Spectral', Georgia, serif",
-              fontStyle: "italic",
-              fontSize: 14,
-              color: "rgba(255,255,255,0.55)",
-            }}
-          >
-            Paris · Ho Chi Minh City · New York
-          </span>
-        </div>
-        <style>{`
-          @media (max-width: 767px) {
-            .contact-hero-grid,
-            .contact-body-grid { grid-template-columns: minmax(0, 1fr) !important; }
-            .contact-hero-copy { padding: 52px 24px 40px !important; }
-            .contact-quote { min-height: 210px !important; padding: 30px 24px !important; }
-            .contact-info { padding: 32px 24px !important; border-right: 0 !important; border-bottom: 0.5px solid rgba(26,26,24,0.14); }
-            .contact-form { padding: 38px 24px 44px !important; }
-            .contact-name-grid { grid-template-columns: minmax(0, 1fr) !important; gap: 0 !important; }
-            .contact-actions { align-items: stretch !important; flex-direction: column !important; }
-            .contact-actions button { min-height: 46px; width: 100%; }
-          }
-        `}</style>
-      </div>
-    </main>
+       
+      </main>
+      <Footer />
+    </>
   );
 }
 

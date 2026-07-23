@@ -8,8 +8,10 @@ import { assertMailConfigured, sendMail } from '../utils/mailer';
 import { AddressInput } from '../types/dto';
 import { assertValidContact, normalizeEmail, normalizePhone } from '../utils/contactValidation';
 import { assertSmsConfigured, sendPasswordResetOtp } from '../utils/sms';
+import { Voucher } from '../models/voucher.model';
 
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
+export const PROFILE_COMPLETION_VOUCHER_CODE = 'NEWPROFILE10';
 
 function hashToken(token: string) {
   return crypto.createHash('sha256').update(token).digest('hex');
@@ -17,6 +19,77 @@ function hashToken(token: string) {
 
 function escapeRegExp(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function profileIsComplete(user: any) {
+  const hasName = String(user?.name || '').trim().length >= 2;
+  const hasEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(user?.email || '').trim());
+  const hasPhone = /^0\d{9}$/.test(String(user?.phone || '').trim());
+  const hasAddress = (user?.addresses || []).some((address: any) =>
+    String(address?.phone || '').trim() &&
+    String(address?.line || address?.detail || '').trim() &&
+    String(address?.ward || '').trim() &&
+    String(address?.province || '').trim(),
+  );
+  return hasName && hasEmail && hasPhone && hasAddress;
+}
+
+export async function ensureProfileCompletionVoucher() {
+  const now = new Date();
+  const endDate = new Date(now);
+  endDate.setFullYear(endDate.getFullYear() + 5);
+
+  return Voucher.findOneAndUpdate(
+    { code: PROFILE_COMPLETION_VOUCHER_CODE },
+    {
+      $setOnInsert: {
+        code: PROFILE_COMPLETION_VOUCHER_CODE,
+        name: 'Voucher người mới hoàn tất hồ sơ',
+        type: 'percentage',
+        value: 10,
+        minOrder: 0,
+        maxDiscount: 0,
+        startDate: now,
+        endDate,
+        expiresAt: endDate,
+        usageLimit: 0,
+        usageLimitPerUser: 1,
+        stackable: true,
+        userSegment: 'NEW',
+        isPrivate: false,
+        isActive: true,
+      },
+    },
+    { upsert: true, new: true, setDefaultsOnInsert: true },
+  );
+}
+
+async function sendProfileCompletionVoucherEmail(user: any, code: string) {
+  await sendMail({
+    to: String(user.email),
+    subject: `${code} - Voucher 10% cho tài khoản mới`,
+    html: `
+      <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;padding:32px;color:#27231f">
+        <p style="font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#806b3d">L'Essence Noire</p>
+        <h1 style="font-size:28px;font-weight:500">Cảm ơn bạn đã hoàn tất hồ sơ</h1>
+        <p>Bạn vừa nhận voucher dành cho khách hàng mới đã cập nhật đầy đủ thông tin.</p>
+        <p style="display:inline-block;padding:14px 22px;border:1px solid #806b3d;font-size:22px;letter-spacing:3px;font-weight:700;color:#806b3d">${code}</p>
+        <p>Ưu đãi giảm 10%, dùng 1 lần cho tài khoản mới.</p>
+      </div>`,
+    text: `Cam on ban da hoan tat ho so. Ma voucher 10% cua ban la ${code}.`,
+  });
+}
+
+async function maybeIssueProfileCompletionVoucher(userId: string) {
+  const user: any = await User.findById(userId);
+  if (!user || user.profileCompletionVoucherCode || !profileIsComplete(user)) return user;
+
+  const voucher = await ensureProfileCompletionVoucher();
+  user.profileCompletedAt = new Date();
+  user.profileCompletionVoucherCode = PROFILE_COMPLETION_VOUCHER_CODE;
+  await user.save();
+  void sendProfileCompletionVoucherEmail(user, voucher.code).catch(() => null);
+  return user;
 }
 
 async function claimGuestOrdersForUser(user: any, email: string, phone: string) {
@@ -131,7 +204,7 @@ export async function updateProfile(userId: string, input: { name: string; email
   );
   if (!user) throw Object.assign(new Error('User not found'), { status: 404 });
   if (phone) await claimGuestOrdersForUser(user, email, phone);
-  return user;
+  return maybeIssueProfileCompletionVoucher(String(user._id));
 }
 
 export async function changePassword(
@@ -176,6 +249,7 @@ export async function addAddress(userId: string, input: AddressInput) {
   }
   user.addresses.push(addr);
   await user.save();
+  await maybeIssueProfileCompletionVoucher(userId);
   return user.addresses;
 }
 
@@ -192,6 +266,7 @@ export async function updateAddress(userId: string, addressId: string, input: Ad
   }
   address.set(addr);
   await user.save();
+  await maybeIssueProfileCompletionVoucher(userId);
   return user.addresses;
 }
 
@@ -219,6 +294,7 @@ export async function setDefaultAddress(userId: string, addressId: string) {
   });
   if (!found) throw Object.assign(new Error('Address not found'), { status: 404 });
   await user.save();
+  await maybeIssueProfileCompletionVoucher(userId);
   return user.addresses;
 }
 

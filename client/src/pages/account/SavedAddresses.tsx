@@ -47,6 +47,27 @@ export default function SavedAddresses() {
     if (user) setUser({ ...user, addresses: next });
   }
 
+  async function refreshUser(nextAddresses: Address[]) {
+    try {
+      const { data } = await api.get("/auth/me");
+      setUser({
+        ...(user || {}),
+        id: data._id || data.id,
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        role: data.role,
+        isEmailVerified: data.isEmailVerified,
+        addresses: data.addresses || nextAddresses,
+        profileCompletedAt: data.profileCompletedAt,
+        profileCompletionVoucherCode: data.profileCompletionVoucherCode,
+      });
+      setAddresses(data.addresses || nextAddresses);
+    } catch {
+      syncAddresses(nextAddresses);
+    }
+  }
+
   function openCreate() {
     setEditingId(null);
     setForm(emptyForm);
@@ -80,7 +101,7 @@ export default function SavedAddresses() {
         ? api.put(`/auth/me/addresses/${editingId}`, form)
         : api.post("/auth/me/addresses", form);
       const { data } = await request;
-      syncAddresses(data);
+      await refreshUser(data);
       setShowForm(false);
       setEditingId(null);
       setForm(emptyForm);
@@ -105,7 +126,7 @@ export default function SavedAddresses() {
   async function setDefault(address: Address) {
     try {
       const { data } = await api.patch(`/auth/me/addresses/${address._id}/default`);
-      syncAddresses(data);
+      await refreshUser(data);
       toast.success("Da dat lam dia chi mac dinh");
     } catch (error: any) {
       toast.error(error?.response?.data?.message || "Khong the dat mac dinh");

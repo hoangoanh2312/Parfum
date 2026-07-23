@@ -53,6 +53,56 @@ const STATUS_COLORS: Record<string, string> = {
 const SUPPORT_STATUS_LABELS: Record<string, string> = { open: "Mới", in_progress: "Đang xử lý", resolved: "Đã giải quyết", closed: "Đã đóng" };
 const SUPPORT_STATUS_KEYS = ["open", "in_progress", "resolved", "closed"] as const;
 const SUPPORT_STATUS_COLORS: Record<string, string> = { open: "#B66355", in_progress: "#A39153", resolved: "#5C8A5E", closed: "#8F9A8C" };
+const REPORT_EXPLAINS: Record<string, { title: string; items: string[] }> = {
+  revenue: {
+    title: "Doanh thu được tính thế nào?",
+    items: [
+      "Doanh thu thực nhận lấy từ các đơn đã thanh toán/hoàn tất, không tính đơn hủy hoặc hoàn trả.",
+      "So kỳ trước và cùng kỳ năm trước dùng cùng độ dài khoảng ngày đang lọc để so sánh.",
+      "Doanh thu theo danh mục/sản phẩm cộng tổng tiền bán của item sau khi áp dụng giá khuyến mãi.",
+    ],
+  },
+  orders: {
+    title: "Các chỉ số đơn hàng",
+    items: [
+      "Tổng đơn là toàn bộ đơn phát sinh trong kỳ lọc.",
+      "AOV = doanh thu thực nhận chia cho số đơn đã thanh toán.",
+      "Tỷ lệ hủy/hoàn = số đơn hủy hoặc hoàn trả chia cho tổng số đơn.",
+    ],
+  },
+  inventory: {
+    title: "Tồn kho và giá vốn",
+    items: [
+      "Giá trị tồn kho = số lượng tồn của từng biến thể nhân với giá vốn.",
+      "Vòng quay tồn kho = giá vốn hàng bán chia cho giá trị tồn kho hiện tại.",
+      "Độ phủ giá vốn cho biết bao nhiêu sản phẩm bán ra đã có costPrice để tính lợi nhuận chính xác.",
+    ],
+  },
+  customers: {
+    title: "Khách hàng và phân khúc",
+    items: [
+      "Khách mới là khách có đơn đầu tiên nằm trong kỳ lọc.",
+      "Khách quay lại là khách đã mua trước đó và tiếp tục mua trong kỳ.",
+      "CLV = tổng chi tiêu của nhóm khách từng mua chia cho số khách có đơn.",
+    ],
+  },
+  finance: {
+    title: "Tài chính",
+    items: [
+      "Lợi nhuận gộp = doanh thu trừ giá vốn hàng bán.",
+      "Chi phí vận hành lấy từ các khoản nhập trong phần ghi nhận chi phí.",
+      "Lợi nhuận ròng = lợi nhuận gộp trừ chi phí vận hành.",
+    ],
+  },
+  operations: {
+    title: "Vận hành",
+    items: [
+      "Thời gian xử lý đơn đo từ lúc tạo đơn đến lúc chuyển sang trạng thái giao hàng/hoàn tất.",
+      "Thời gian giao hàng đo từ lúc bắt đầu giao đến khi hoàn tất, chỉ tính đơn có đủ mốc.",
+      "Yêu cầu hỗ trợ được nhóm theo trạng thái để theo dõi backlog chăm sóc khách hàng.",
+    ],
+  },
+};
 
 function inputDate(date: Date) {
   const y = date.getFullYear();
@@ -353,6 +403,17 @@ export default function AdminReports() {
       <div className="mb-5 flex gap-1 overflow-x-auto border-b border-gray-200">
         {TABS.map((item) => { const Icon = item.icon; return <Link key={item.id} to={`/admin/reports/${item.id}`} className={`flex shrink-0 items-center gap-2 border-b-2 px-3 py-3 text-xs font-medium ${tab === item.id ? "border-black text-black" : "border-transparent text-gray-500 hover:text-black"}`}><Icon className="h-4 w-4" />{item.label}</Link>; })}
       </div>
+
+      <Card className="mb-5 rounded-md border-l-4 border-l-[#927A20] shadow-none">
+        <div className="p-4">
+          <h2 className="text-sm font-semibold text-gray-950">{REPORT_EXPLAINS[tab].title}</h2>
+          <div className="mt-3 grid gap-2 text-xs leading-5 text-gray-600 md:grid-cols-3">
+            {REPORT_EXPLAINS[tab].items.map((item) => (
+              <p key={item}>{item}</p>
+            ))}
+          </div>
+        </div>
+      </Card>
 
       <div className="mb-6 grid gap-3 border-b border-gray-200 pb-5 sm:grid-cols-3 lg:max-w-3xl">
         <Field label="Từ ngày"><Input type="date" value={from} max={to} onChange={(event) => setFrom(event.target.value)} /></Field>

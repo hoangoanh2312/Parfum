@@ -131,6 +131,19 @@ export default function AccountOverview() {
   }, []);
 
   const defaultAddress = user?.addresses?.[0];
+  const hasCompleteAddress = Boolean(
+    user?.addresses?.some(
+      (address) =>
+        address.phone &&
+        (address.line || address.detail) &&
+        address.ward &&
+        address.province,
+    ),
+  );
+  const profileComplete = Boolean(
+    user?.name && user.email && /^0\d{9}$/.test(user.phone || "") && hasCompleteAddress,
+  );
+  const profileVoucherCode = user?.profileCompletionVoucherCode || "NEWPROFILE10";
   const refillProductPath = refillProduct
     ? `/products/${refillProduct.slug || refillProduct.id}`
     : "/shop";
@@ -160,6 +173,40 @@ export default function AccountOverview() {
       </section>
 
       <main className="space-y-14 px-6 py-10 lg:px-12">
+        <section
+          className={`border px-6 py-5 ${
+            profileComplete
+              ? "border-[#D8C990] bg-[#FFF8D8]"
+              : "border-[#E2DBD2] bg-[#FFFDF9]"
+          }`}
+        >
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-[9px] uppercase tracking-[0.22em] text-[#8C7200]">
+                Ưu đãi tài khoản mới
+              </p>
+              <h2 className="mt-2 font-serif text-2xl">
+                {profileComplete
+                  ? "Hồ sơ đã hoàn tất"
+                  : "Hoàn tất hồ sơ để nhận voucher 10%"}
+              </h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-[#746C63]">
+                {profileComplete
+                  ? `Voucher dành cho người mới của bạn là ${profileVoucherCode}. Mã cũng đã được gửi qua email khi hệ thống ghi nhận hồ sơ đầy đủ.`
+                  : "Cập nhật họ tên, số điện thoại và địa chỉ giao hàng đầy đủ để hệ thống gửi voucher 10% qua email cho tài khoản mới."}
+              </p>
+            </div>
+
+            <Link
+              to={profileComplete ? "/shop" : "/account/settings"}
+              className="flex shrink-0 items-center justify-center gap-3 bg-[#887000] px-6 py-3 text-[10px] uppercase tracking-[0.14em] text-white transition hover:bg-[#6D5900]"
+            >
+              {profileComplete ? profileVoucherCode : "Cập nhật hồ sơ"}
+              <ArrowRight size={13} />
+            </Link>
+          </div>
+        </section>
+
         <section className="grid gap-5 xl:grid-cols-[2fr_1fr]">
           <div className="grid gap-6 bg-[#F3EFEA] p-6 sm:grid-cols-[1fr_220px] lg:p-8">
             <div className="flex flex-col justify-center">

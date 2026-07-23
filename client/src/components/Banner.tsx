@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 type Collection = {
   id: string;
   tab: string;
-  label: string;
+  label?: string;
   title: string;
   subtitle: string;
   description: string;
@@ -218,7 +218,7 @@ export default function BannerSection() {
             aria-label={item.tab}
             onClick={() => changeCollection(index)}
             className={`h-1.5 rounded-full transition-all duration-500 ${
-              index === active ? "w-8 bg-[#d8c990]" : "w-1.5 bg-white/40"
+              index === activeIndex ? "w-8 bg-[#d8c990]" : "w-1.5 bg-white/40"
             }`}
           />
         ))}

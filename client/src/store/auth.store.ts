@@ -9,6 +9,8 @@ interface User {
   role: string;
   isEmailVerified?: boolean;
   addresses?: Address[];
+  profileCompletedAt?: string;
+  profileCompletionVoucherCode?: string;
 }
 
 // Shape dia chi thong nhat voi backend (fullName, phone, line, ward, district, province).
@@ -95,6 +97,8 @@ export const useAuth = create<AuthState>((set) => ({
             role: data.role,
             isEmailVerified: data.isEmailVerified,
             addresses: data.addresses || [],
+            profileCompletedAt: data.profileCompletedAt,
+            profileCompletionVoucherCode: data.profileCompletionVoucherCode,
           },
           isBootstrapped: true,
         });
