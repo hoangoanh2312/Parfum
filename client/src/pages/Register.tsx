@@ -4,7 +4,6 @@ import { api } from "../lib/api";
 import { getPasswordError } from "../lib/password";
 import { PasswordRequirements } from "../components/PasswordRequirements";
 import { useAuth } from "../store/auth.store";
-import { useLanguage } from "../store/language.store";
 
 const color = {
   pageBg: "#FDF9F4",
@@ -128,7 +127,7 @@ const features: FeatureItem[] = [
 ];
 
 export default function Register() {
-  const language = useLanguage((state) => state.language);
+  const language = "vi" as const;
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");

@@ -7,7 +7,7 @@ export const getAllBrands = async (
   next: NextFunction
 ) => {
   try {
-    const brands = await getBrands();
+    const brands = await getBrands({ featuredOnly: req.query.featured === 'true' });
 
     res.status(200).json({
       success: true,

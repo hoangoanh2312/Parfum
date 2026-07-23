@@ -42,6 +42,16 @@ type MediaStatus = { configured: boolean; cloudName: string | null; folder: stri
 type ImageAction = "cover" | "append" | "replace";
 type MediaFolder = "" | "products" | "news" | "brand" | "home" | "about" | "feed back";
 
+// Moi thu muc chi phuc vu dung khu vuc cua no.
+const FOLDER_USAGE: Record<string, string> = {
+  products: "trang Cửa hàng / sản phẩm",
+  news: "trang Tin tức / blog",
+  brand: "trang Thương hiệu",
+  home: "trang chủ",
+  about: "trang Giới thiệu",
+  "feed back": "đánh giá khách hàng",
+};
+
 function formatBytes(n: number): string {
   if (!n) return "—";
   if (n < 1024) return n + " B";
@@ -168,6 +178,10 @@ export default function AdminMedia() {
   }
 
   async function updateProductImage() {
+    if (folder !== "products") {
+      toast.error('Chỉ ảnh trong thư mục "products" mới được gán cho sản phẩm');
+      return;
+    }
     if (!assignImage || !selectedProduct) {
       toast.error("Vui lòng chọn sản phẩm cần cập nhật");
       return;
@@ -263,6 +277,25 @@ CLOUDINARY_FOLDER=perfumeshop`}
         </p>
       )}
 
+      {/* Pham vi thu muc: moi thu muc chi phuc vu dung khu vuc cua no. */}
+      {status?.configured && (
+        <Card className="mb-6 border-[#E4DACE] bg-[#FBF7F0] p-4">
+          <p className="text-sm text-gray-700">
+            <span className="font-semibold">
+              Phạm vi thư mục “{folder || "gốc"}”:
+            </span>{" "}
+            ảnh trong thư mục này phục vụ {FOLDER_USAGE[folder] || "khu vực tương ứng"}.
+          </p>
+          <p className="mt-1 text-xs text-gray-500">
+            {folder === "products"
+              ? "Ảnh ở đây có thể gán trực tiếp cho sản phẩm. "
+              : "Ảnh ở đây chỉ dùng trong khu vực này (copy URL để sử dụng). "}
+            Admin được thêm/sửa/xoá (CRUD) ảnh trong thư mục này, nhưng ảnh KHÔNG được
+            dùng để gán hoặc CRUD cho thư mục khác — mỗi thư mục quản lý độc lập.
+          </p>
+        </Card>
+      )}
+
       {loading ? (
         <LoadingState />
       ) : images.length === 0 ? (
@@ -288,13 +321,22 @@ CLOUDINARY_FOLDER=perfumeshop`}
                     {img.width}×{img.height} · {formatBytes(img.bytes)}
                   </p>
                   <div className="mt-2 flex gap-1">
-                    <Button
-                      className="flex-1 px-2 py-1 text-xs"
-                      onClick={() => openAssignImage(img)}
-                    >
-                      <ImagePlus className="h-3.5 w-3.5" />
-                      Gán sản phẩm
-                    </Button>
+                    {folder === "products" ? (
+                      <Button
+                        className="flex-1 px-2 py-1 text-xs"
+                        onClick={() => openAssignImage(img)}
+                      >
+                        <ImagePlus className="h-3.5 w-3.5" />
+                        Gán sản phẩm
+                      </Button>
+                    ) : (
+                      <span
+                        className="flex-1 truncate rounded-md bg-gray-100 px-2 py-1 text-center text-[10px] text-gray-400"
+                        title={`Ảnh thư mục "${folder || "gốc"}" chỉ dùng cho ${FOLDER_USAGE[folder] || "khu vực tương ứng"}, không gán cho sản phẩm`}
+                      >
+                        {FOLDER_USAGE[folder] || "Không dùng cho sản phẩm"}
+                      </span>
+                    )}
                     <Button
                       variant="secondary"
                       className="px-2 py-1 text-xs"

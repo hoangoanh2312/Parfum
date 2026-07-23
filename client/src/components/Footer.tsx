@@ -32,7 +32,6 @@ const FOOTER_LINKS = [
   },
 ];
 
-const PAYMENTS = ["VISA", "Mastercard", "COD", "VietQR"];
 const PROMO_IMAGE =
   "https://res.cloudinary.com/dwj2trmn0/image/upload/v1784435350/view-all-fragrances-banner-mobile_3884d600-2ada-4144-a0f8-18bd647896a9_nxmh16.webp";
 
@@ -42,8 +41,8 @@ export default function Footer() {
       className="border-t border-white/[0.06] bg-[#161412] text-[#8A8580]"
       style={{ fontFamily: "'Manrope', sans-serif" }}
     >
-      <div className="mx-auto max-w-[1280px] px-5 sm:px-8 lg:px-12">
-        <div className="grid gap-9 py-10 lg:grid-cols-[300px_1fr] lg:gap-12 lg:py-14">
+      <div className="mx-auto max-w-[1440px] px-6 sm:px-8 lg:px-12">
+        <div className="grid gap-9 py-10 lg:grid-cols-[320px_1fr] lg:gap-16 lg:py-14">
           <Link
             to="/shop"
             className="group relative hidden min-h-[340px] overflow-hidden rounded-md lg:block"
@@ -114,30 +113,11 @@ export default function Footer() {
 
       <div className="border-t border-white/[0.06]" />
 
-      <div className="mx-auto max-w-[1280px] px-5 sm:px-8 lg:px-12">
-        <div className="py-5">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-xs text-[#5C5650]">
-              © 2026 L&apos;Essence Noire. All rights reserved.
-            </p>
-
-            <div className="flex flex-wrap items-center gap-2">
-              {PAYMENTS.map((label) => (
-                <span
-                  key={label}
-                  className="border border-white/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#5C5650]"
-                >
-                  {label}
-                </span>
-              ))}
-              <Link
-                to="/admin"
-                className="ml-0 border border-white/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#75621E] transition hover:border-[#75621E] hover:text-[#D8CBB7] sm:ml-2"
-              >
-                Quản trị
-              </Link>
-            </div>
-          </div>
+      <div className="mx-auto max-w-[1440px] px-6 sm:px-8 lg:px-12">
+        <div className="py-6">
+          <p className="text-center text-xs tracking-wide text-[#5C5650]">
+            © 2026 L&apos;Essence Noire. All rights reserved.
+          </p>
         </div>
       </div>
     </footer>

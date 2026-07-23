@@ -6,12 +6,10 @@ import {
   Flower2,
   Leaf,
   Loader2,
-  Plus,
-  Search,
   Sparkles,
   Trees,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../../lib/api";
 import { toast } from "../../store/toast.store";
@@ -66,24 +64,10 @@ const familyOptionFromName = (name: string) => {
   };
 };
 
-const defaultPreferredNotes = [
-  "Oud",
-  "Amber",
-  "Bergamot",
-  "Sandalwood",
-  "Vanilla",
-  "Musk",
-];
-
-const defaultDislikedNotes = ["Tobacco", "Leather"];
-
-const hasNote = (notes: string[], note: string) =>
-  notes.some((item) => item.trim().toLowerCase() === note.trim().toLowerCase());
-
 interface ScentProfileData {
   families: string[];
-  preferredNotes: string[];
-  dislikedNotes: string[];
+  preferredNotes?: string[];
+  dislikedNotes?: string[];
 }
 
 interface ProductFacetResponse {
@@ -100,11 +84,6 @@ interface RecommendedProduct {
   images?: string[];
   priceText?: string;
   stock?: number;
-  notes?: {
-    top?: string[];
-    middle?: string[];
-    base?: string[];
-  };
 }
 
 interface ProductListResponse {
@@ -118,16 +97,6 @@ export default function ScentProfile() {
     "fresh",
     "oriental",
   ]);
-  const [preferredNotes, setPreferredNotes] = useState<string[]>(
-    defaultPreferredNotes,
-  );
-  const [dislikedNotes, setDislikedNotes] =
-    useState<string[]>(defaultDislikedNotes);
-  const [preferredDraft, setPreferredDraft] = useState("");
-  const [dislikedDraft, setDislikedDraft] = useState("");
-  const [preferredOpen, setPreferredOpen] = useState(false);
-  const [dislikedOpen, setDislikedOpen] = useState(false);
-  const [noteOptions, setNoteOptions] = useState<string[]>([]);
   const [familyOptions, setFamilyOptions] = useState(fallbackScentFamilies);
   const [recommendations, setRecommendations] = useState<RecommendedProduct[]>([]);
   const [activeRecommendation, setActiveRecommendation] = useState(0);
@@ -143,8 +112,6 @@ export default function ScentProfile() {
       .then(({ data }) => {
         if (!mounted) return;
         setFamilies(data.families || []);
-        setPreferredNotes(data.preferredNotes || []);
-        setDislikedNotes(data.dislikedNotes || []);
       })
       .catch((error) => {
         toast.error(
@@ -163,7 +130,6 @@ export default function ScentProfile() {
           new Set((data.fragranceFamilies || []).map((item) => item.trim()).filter(Boolean)),
         ).map(familyOptionFromName);
         setFamilyOptions(nextFamilies.length ? nextFamilies : fallbackScentFamilies);
-        setNoteOptions(data.notes || []);
       })
       .catch(() => undefined);
 
@@ -193,17 +159,13 @@ export default function ScentProfile() {
     () => selectedFamilyOptions.map((item) => item.name),
     [selectedFamilyOptions],
   );
-  const recommendationFilters = useMemo(
-    () => Array.from(new Set([...selectedFamilyFilters, ...preferredNotes])),
-    [preferredNotes, selectedFamilyFilters],
-  );
-  const discoverPath = recommendationFilters.length
-    ? `/shop?${new URLSearchParams({ scent: recommendationFilters.join(",") }).toString()}`
+  const discoverPath = selectedFamilyFilters.length
+    ? `/shop?${new URLSearchParams({ scent: selectedFamilyFilters.join(",") }).toString()}`
     : "/shop";
 
   useEffect(() => {
     let active = true;
-    const scent = recommendationFilters.join(",");
+    const scent = selectedFamilyFilters.join(",");
 
     if (!scent) {
       setRecommendations([]);
@@ -228,21 +190,12 @@ export default function ScentProfile() {
         );
         if (!active) return;
 
-        const blockedNotes = new Set(dislikedNotes.map((note) => note.trim().toLowerCase()));
         const allProducts = [
           ...firstPage.data,
           ...additionalPages.flatMap((response) => response.data.data),
         ];
-        const eligible = allProducts.filter((product) => {
-          const productNotes = [
-            ...(product.notes?.top || []),
-            ...(product.notes?.middle || []),
-            ...(product.notes?.base || []),
-          ];
-          return !productNotes.some((note) => blockedNotes.has(note.trim().toLowerCase()));
-        });
         setRecommendations(
-          Array.from(new Map(eligible.map((product) => [product.id, product])).values()),
+          Array.from(new Map(allProducts.map((product) => [product.id, product])).values()),
         );
         setActiveRecommendation(0);
       })
@@ -256,56 +209,12 @@ export default function ScentProfile() {
     return () => {
       active = false;
     };
-  }, [recommendationFilters, dislikedNotes]);
+  }, [selectedFamilyFilters]);
 
   const toggleFamily = (id: string) => {
     setFamilies((prev) =>
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
     );
-  };
-
-  const addNote = (type: "preferred" | "disliked") => {
-    const normalized = (
-      type === "preferred" ? preferredDraft : dislikedDraft
-    ).trim();
-    if (!normalized) return;
-    const matchedOption = noteOptions.find(
-      (item) => item.toLowerCase() === normalized.toLowerCase(),
-    );
-
-    if (!matchedOption) {
-      toast.error("Vui lòng chọn nốt hương trong danh sách");
-      return;
-    }
-
-    if (type === "preferred") {
-      if (hasNote(preferredNotes, matchedOption)) {
-        toast.error("Nốt hương này đã có trong danh sách");
-        return;
-      }
-
-      if (hasNote(dislikedNotes, matchedOption)) {
-        toast.error("Nốt hương này đang nằm trong danh sách không yêu thích");
-        return;
-      }
-
-      setPreferredNotes((prev) => [...prev, matchedOption]);
-      setPreferredDraft("");
-      return;
-    }
-
-    if (hasNote(dislikedNotes, matchedOption)) {
-      toast.error("Nốt hương này đã có trong danh sách");
-      return;
-    }
-
-    if (hasNote(preferredNotes, matchedOption)) {
-      toast.error("Nốt hương này đang nằm trong danh sách yêu thích");
-      return;
-    }
-
-    setDislikedNotes((prev) => [...prev, matchedOption]);
-    setDislikedDraft("");
   };
 
   const saveProfile = async () => {
@@ -315,13 +224,11 @@ export default function ScentProfile() {
         "/account/scent-profile",
         {
           families,
-          preferredNotes,
-          dislikedNotes,
+          preferredNotes: [],
+          dislikedNotes: [],
         },
       );
       setFamilies(data.families || []);
-      setPreferredNotes(data.preferredNotes || []);
-      setDislikedNotes(data.dislikedNotes || []);
       toast.success("Đã lưu hồ sơ mùi hương");
     } catch (error: any) {
       toast.error(
@@ -339,11 +246,11 @@ export default function ScentProfile() {
           Personal Portal
         </p>
 
-        <h1 className="mt-2 font-serif text-4xl lg:text-5xl">Scent Profile</h1>
+        <h1 className="mt-2 font-serif text-4xl lg:text-5xl">Hồ sơ mùi hương</h1>
 
         <p className="mt-3 max-w-2xl text-sm leading-6 text-[#7C746C]">
-          Hồ sơ mùi hương giúp chúng tôi đề xuất các sản phẩm phù hợp với sở
-          thích và phong cách của bạn.
+          Hồ sơ mùi hương dựa trên các nhóm hương bạn yêu thích, giúp chúng tôi đề xuất
+          những sản phẩm phù hợp với sở thích và phong cách của bạn.
         </p>
       </section>
 
@@ -370,14 +277,18 @@ export default function ScentProfile() {
             </p>
 
             <div className="mt-6 flex flex-wrap gap-2">
-              {preferredNotes.map((note) => (
-                <span
-                  key={note}
-                  className="border border-[#D4CCC2] bg-[#FCF9F4] px-4 py-2 text-[9px] uppercase tracking-[0.14em]"
-                >
-                  {note}
-                </span>
-              ))}
+              {selectedFamilyOptions.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <span
+                    key={item.id}
+                    className="flex items-center gap-2 border border-[#D4CCC2] bg-[#FCF9F4] px-4 py-2 text-[9px] uppercase tracking-[0.14em]"
+                  >
+                    <Icon size={13} strokeWidth={1.4} />
+                    {item.name}
+                  </span>
+                );
+              })}
             </div>
 
             <Link
@@ -495,7 +406,7 @@ export default function ScentProfile() {
                 <Sparkles size={24} strokeWidth={1.2} />
                 <p className="mt-4 font-serif text-xl">Chưa có sản phẩm phù hợp</p>
                 <p className="mt-2 max-w-xs text-xs leading-5">
-                  Hãy chọn thêm nhóm hoặc nốt hương để nhận gợi ý từ bộ sưu tập.
+                  Hãy chọn thêm nhóm hương để nhận gợi ý từ bộ sưu tập.
                 </p>
               </div>
             )}
@@ -507,7 +418,8 @@ export default function ScentProfile() {
             <h2 className="font-serif text-2xl">Nhóm hương yêu thích</h2>
 
             <p className="mt-2 text-sm text-[#81786F]">
-              Chọn những nhóm mùi hương phù hợp với sở thích của bạn.
+              Chọn những nhóm mùi hương phù hợp với sở thích của bạn. Đề xuất sản phẩm
+              sẽ dựa trên các nhóm hương này.
             </p>
           </div>
 
@@ -548,110 +460,6 @@ export default function ScentProfile() {
           </div>
         </section>
 
-        <section className="grid gap-6 lg:grid-cols-2">
-          <div className="border border-[#E2DBD2] bg-[#FFFDF9] p-7">
-            <h2 className="font-serif text-2xl">Nốt hương yêu thích</h2>
-
-            <p className="mt-2 text-sm text-[#81786F]">
-              Các nốt hương thường xuyên xuất hiện trong lựa chọn của bạn.
-            </p>
-
-            <div className="mt-6 space-y-5">
-              <div className="flex flex-wrap gap-3">
-                {preferredNotes.map((note) => (
-                  <button
-                    key={note}
-                    type="button"
-                    onClick={() =>
-                      setPreferredNotes((prev) =>
-                        prev.filter((item) => item !== note),
-                      )
-                    }
-                    className="border border-[#B69A27] bg-[#F3EEDC] px-4 py-2 text-[10px] uppercase tracking-[0.13em] text-[#765F00]"
-                  >
-                    {note} ×
-                  </button>
-                ))}
-              </div>
-
-              <NotePicker
-                value={preferredDraft}
-                options={noteOptions}
-                selected={[...preferredNotes, ...dislikedNotes]}
-                placeholder="Chọn nốt hương yêu thích"
-                accentClassName="bg-[#8A7000] hover:bg-[#6D5900]"
-                open={preferredOpen}
-                onOpenChange={setPreferredOpen}
-                onChange={setPreferredDraft}
-                onAdd={() => addNote("preferred")}
-                onSelect={(note) => {
-                  setPreferredDraft(note);
-                  if (hasNote(dislikedNotes, note)) {
-                    toast.error(
-                      "Nốt hương này đang nằm trong danh sách không yêu thích",
-                    );
-                  } else if (!hasNote(preferredNotes, note)) {
-                    setPreferredNotes((prev) => [...prev, note]);
-                  }
-                  setPreferredDraft("");
-                  setPreferredOpen(false);
-                }}
-              />
-            </div>
-          </div>
-
-          <div className="border border-[#E2DBD2] bg-[#FFFDF9] p-7">
-            <h2 className="font-serif text-2xl">Nốt hương không yêu thích</h2>
-
-            <p className="mt-2 text-sm text-[#81786F]">
-              Chúng tôi sẽ hạn chế đề xuất sản phẩm chứa các nốt hương này.
-            </p>
-
-            <div className="mt-6 space-y-5">
-              <div className="flex flex-wrap gap-3">
-                {dislikedNotes.map((note) => (
-                  <button
-                    key={note}
-                    type="button"
-                    onClick={() =>
-                      setDislikedNotes((prev) =>
-                        prev.filter((item) => item !== note),
-                      )
-                    }
-                    className="border border-[#D6CFC6] bg-[#F4F1ED] px-4 py-2 text-[10px] uppercase tracking-[0.13em] text-[#6F6861]"
-                  >
-                    {note} ×
-                  </button>
-                ))}
-              </div>
-
-              <NotePicker
-                value={dislikedDraft}
-                options={noteOptions}
-                selected={[...dislikedNotes, ...preferredNotes]}
-                placeholder="Chọn nốt hương không thích"
-                accentClassName="bg-[#6F6861] hover:bg-[#514B45]"
-                open={dislikedOpen}
-                onOpenChange={setDislikedOpen}
-                onChange={setDislikedDraft}
-                onAdd={() => addNote("disliked")}
-                onSelect={(note) => {
-                  setDislikedDraft(note);
-                  if (hasNote(preferredNotes, note)) {
-                    toast.error(
-                      "Nốt hương này đang nằm trong danh sách yêu thích",
-                    );
-                  } else if (!hasNote(dislikedNotes, note)) {
-                    setDislikedNotes((prev) => [...prev, note]);
-                  }
-                  setDislikedDraft("");
-                  setDislikedOpen(false);
-                }}
-              />
-            </div>
-          </div>
-        </section>
-
         <section className="flex flex-col justify-between gap-5 bg-[#EDE8E1] p-7 md:flex-row md:items-center">
           <div>
             <h2 className="font-serif text-2xl">Cập nhật hồ sơ mùi hương</h2>
@@ -672,109 +480,6 @@ export default function ScentProfile() {
           </button>
         </section>
       </main>
-    </div>
-  );
-}
-
-interface NotePickerProps {
-  value: string;
-  options: string[];
-  selected: string[];
-  placeholder: string;
-  accentClassName: string;
-  open: boolean;
-  onOpenChange: (value: boolean) => void;
-  onChange: (value: string) => void;
-  onAdd: () => void;
-  onSelect: (value: string) => void;
-}
-
-function NotePicker({
-  value,
-  options,
-  selected,
-  placeholder,
-  accentClassName,
-  open,
-  onOpenChange,
-  onChange,
-  onAdd,
-  onSelect,
-}: NotePickerProps) {
-  const rootRef = useRef<HTMLDivElement | null>(null);
-  const filteredOptions = options
-    .filter((option) => !selected.includes(option))
-    .filter((option) =>
-      option.toLowerCase().includes(value.trim().toLowerCase()),
-    );
-
-  useEffect(() => {
-    if (!open) return;
-
-    const handlePointerDown = (event: MouseEvent) => {
-      if (!rootRef.current?.contains(event.target as Node)) onOpenChange(false);
-    };
-
-    document.addEventListener("mousedown", handlePointerDown);
-    return () => document.removeEventListener("mousedown", handlePointerDown);
-  }, [onOpenChange, open]);
-
-  return (
-    <div ref={rootRef} className="relative">
-      <form
-        className="flex overflow-hidden border border-[#D7CEC4] bg-[#FCF9F4]"
-        onSubmit={(event) => {
-          event.preventDefault();
-          onAdd();
-        }}
-      >
-        <div className="relative min-w-0 flex-1">
-          <Search
-            size={15}
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9C9389]"
-          />
-
-          <input
-            value={value}
-            onFocus={() => onOpenChange(true)}
-            onChange={(event) => {
-              onChange(event.target.value);
-              onOpenChange(true);
-            }}
-            placeholder={placeholder}
-            className="w-full bg-transparent py-3 pl-11 pr-4 text-sm outline-none placeholder:text-[#A59C92]"
-          />
-        </div>
-
-        <button
-          type="submit"
-          className={`flex w-12 items-center justify-center text-white transition ${accentClassName}`}
-          aria-label={placeholder}
-        >
-          <Plus size={16} />
-        </button>
-      </form>
-
-      {open && (
-        <div className="absolute left-0 right-0 top-full z-20 max-h-56 overflow-auto border border-t-0 border-[#D7CEC4] bg-[#FFFDF9] shadow-[0_18px_40px_rgba(55,45,35,0.08)]">
-          {filteredOptions.length > 0 ? (
-            filteredOptions.map((option) => (
-              <button
-                key={option}
-                type="button"
-                onClick={() => onSelect(option)}
-                className="block w-full px-4 py-3 text-left text-sm text-[#4F4943] transition hover:bg-[#F1EDE7]"
-              >
-                {option}
-              </button>
-            ))
-          ) : (
-            <p className="px-4 py-3 text-sm text-[#92887D]">
-              Không có nốt hương phù hợp trong MongoDB
-            </p>
-          )}
-        </div>
-      )}
     </div>
   );
 }

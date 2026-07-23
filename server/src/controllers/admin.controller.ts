@@ -34,6 +34,14 @@ export async function notifications(_req: Request, res: Response, next: NextFunc
   }
 }
 
+export async function markNotificationSeen(req: Request, res: Response, next: NextFunction) {
+  try {
+    ok(res, await adminService.markNotificationSeen(req.params.id));
+  } catch (e) {
+    next(e);
+  }
+}
+
 // --------------------------------------------------------------- products ----
 export async function listProducts(req: Request, res: Response, next: NextFunction) {
   try {
@@ -105,6 +113,13 @@ export async function deleteVariant(req: Request, res: Response, next: NextFunct
 export async function listBrands(_req: Request, res: Response, next: NextFunction) {
   try {
     ok(res, await adminService.listBrands());
+  } catch (e) {
+    next(e);
+  }
+}
+export async function getBrand(req: Request, res: Response, next: NextFunction) {
+  try {
+    ok(res, await adminService.getBrand(req.params.id));
   } catch (e) {
     next(e);
   }

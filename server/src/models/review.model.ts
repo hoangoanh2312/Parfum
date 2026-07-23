@@ -15,4 +15,5 @@ const s = new Schema({
 s.index({ product: 1, approved: 1, createdAt: -1 });
 s.index({ user: 1 });
 
+s.index({ product: 1, approved: 1 });
 export const Review = model('Review', s);

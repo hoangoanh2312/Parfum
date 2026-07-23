@@ -18,4 +18,5 @@ const variantSchema = new Schema(
   { timestamps: true },
 );
 
+variantSchema.index({ product: 1 });
 export const Variant = model('Variant', variantSchema);

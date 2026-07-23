@@ -5,6 +5,17 @@ import Footer from "../components/Footer";
 import { api } from "../lib/api";
 import { BLOG_ARTICLES, type BlogArticle } from "./blogData";
 
+function displayDate(value: string) {
+  if (!/^\d{4}-\d{2}-\d{2}/.test(value)) return value;
+  const date = new Date(`${value.slice(0, 10)}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString("vi-VN", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  });
+}
+
 export default function BlogPost() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
@@ -68,7 +79,7 @@ export default function BlogPost() {
                 </span>
                 <span className="h-px w-8 bg-[#C9A84C]/40" />
                 <span className="text-[9px] uppercase tracking-[0.18em] text-[#F4EFE6]/50">
-                  {article.date}
+                  {displayDate(article.date)}
                 </span>
                 <span className="h-px w-8 bg-[#C9A84C]/40" />
                 <span className="text-[9px] uppercase tracking-[0.18em] text-[#F4EFE6]/50">

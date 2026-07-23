@@ -118,12 +118,10 @@ function overlaps(values: string[] | undefined, filters: string[]) {
 function matchesScentProfile(product: ProductCard, filters: string[]) {
   if (filters.length === 0) return true;
 
-  return (
-    includesAny(product.fragranceFamily, filters) ||
-    overlaps(product.notes?.top, filters) ||
-    overlaps(product.notes?.middle, filters) ||
-    overlaps(product.notes?.base, filters)
-  );
+  // Bộ lọc Scent Profile lọc theo NHÓM HƯƠNG (fragranceFamily) của sản phẩm.
+  // Trước đây còn khớp cả các nốt hương lẻ khiến kết quả không đúng với nhóm
+  // hương người dùng chọn -> chỉ khớp theo fragranceFamily cho nhất quán.
+  return includesAny(product.fragranceFamily, filters);
 }
 
 function sortProducts(products: ProductCard[], sort?: string) {
@@ -416,6 +414,16 @@ export async function getProductDetail(idOrSlug: string) {
   const gallery = Array.from(new Set([...(product.images || []), ...variantImages]));
   const stock = normalizedVariants.reduce((sum, variant) => sum + (variant.stock || 0), 0);
 
+  // Tong so luong da ban (dem tu cac don da thanh toan/giao/hoan tat) -> hien thi "Da ban" tren trang chi tiet.
+  const variantIds = variants.map((variant) => variant._id);
+  const soldAgg: any[] = await Order.aggregate([
+    { $match: { status: { $in: ['paid', 'shipping', 'done'] } } },
+    { $unwind: '$items' },
+    { $match: { 'items.variant': { $in: variantIds } } },
+    { $group: { _id: null, quantity: { $sum: '$items.quantity' } } },
+  ]);
+  const soldCount = Number(soldAgg[0]?.quantity) || 0;
+
   return {
     id: String(product._id),
     slug: product.slug || String(product._id),
@@ -436,6 +444,7 @@ export async function getProductDetail(idOrSlug: string) {
     },
     variants: normalizedVariants,
     stock,
+    soldCount,
     isActive: product.isActive !== false,
   };
 }

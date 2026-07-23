@@ -6,7 +6,6 @@ import {
   Clock3,
   CreditCard,
   RefreshCw,
-  Smartphone,
   Star,
   TrendingDown,
   TrendingUp,
@@ -74,7 +73,7 @@ function Metric({
       >
         {label}
       </p>
-      <p className="mt-3 break-words font-title text-[30px] font-medium leading-none text-black">
+      <p className="mt-3 break-words font-numeric text-[30px] font-medium leading-none text-black">
         {value}
       </p>
       <div
@@ -329,7 +328,7 @@ export default function AdminDashboard() {
               aria-label={`Phân bổ ${totalStatus} đơn hàng`}
             >
               <div className="absolute inset-[15px] flex flex-col items-center justify-center rounded-full bg-[#FCF9F5]">
-                <span className="font-title text-2xl text-black">{totalStatus}</span>
+                <span className="font-numeric text-2xl text-black">{totalStatus}</span>
                 <span className="text-[9px] uppercase text-[#77736B]">Tổng đơn</span>
               </div>
             </div>
@@ -375,7 +374,7 @@ export default function AdminDashboard() {
           <div className="flex flex-col items-center">
             <div className="relative mt-2 h-32 w-32 rounded-full" style={{ background: brandGradient }}>
               <div className="absolute inset-[13px] flex flex-col items-center justify-center rounded-full bg-[#FCF9F5] text-center">
-                <span className="font-title text-xl text-black">
+                <span className="font-numeric text-xl text-black">
                   {brandTotal && topBrand ? Math.round((topBrand.value / brandTotal) * 100) : 0}%
                 </span>
                 <span className="max-w-20 truncate text-[8px] text-[#716D66]">{topBrand?.name || "Chưa có"}</span>
@@ -528,13 +527,12 @@ export default function AdminDashboard() {
             <div className="space-y-5">
               {stats.paymentMethods.map((payment) => {
                 const isBank = payment.method === "bank_qr";
-                const isMomo = payment.method === "momo";
-                const PaymentIcon = isBank ? Banknote : isMomo ? Smartphone : CreditCard;
+                const PaymentIcon = isBank ? Banknote : CreditCard;
                 return (
                   <div key={payment.method}>
                     <div className="mb-2 flex items-center gap-2 text-[9px] text-[#363430]">
                       <PaymentIcon className="h-3.5 w-3.5" strokeWidth={1.5} />
-                      <span>{isBank ? "Chuyển khoản QR" : isMomo ? "Ví MoMo" : "Thanh toán khi nhận hàng"}</span>
+                      <span>{isBank ? "Chuyển khoản QR" : "Thanh toán khi nhận hàng"}</span>
                       <span className="ml-auto text-[#77736B]">{payment.percentage}%</span>
                     </div>
                     <div className="h-[3px] bg-[#E1DED8]">

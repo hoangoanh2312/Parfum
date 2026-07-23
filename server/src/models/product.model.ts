@@ -18,4 +18,6 @@ const productSchema = new Schema(
   { timestamps: true },
 );
 
+productSchema.index({ isActive: 1, createdAt: -1 });
+productSchema.index({ slug: 1 });
 export const Product = model('Product', productSchema);

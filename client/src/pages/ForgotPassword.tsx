@@ -4,7 +4,6 @@ import { Link, useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
 import { getPasswordError } from "../lib/password";
 import { PasswordRequirements } from "../components/PasswordRequirements";
-import { useLanguage } from "../store/language.store";
 
 type Step = "email" | "otp" | "password" | "done";
 
@@ -16,7 +15,7 @@ function getApiError(error: any, fallback: string) {
 }
 
 export default function ForgotPassword() {
-  const language = useLanguage((state) => state.language);
+  const language = "vi" as const;
   const navigate = useNavigate();
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");

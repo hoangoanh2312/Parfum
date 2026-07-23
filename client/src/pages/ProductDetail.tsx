@@ -6,17 +6,23 @@ import {
   Quote,
   ImagePlus,
   X,
+  ChevronRight,
+  Sparkles,
 } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../lib/api";
 import { useCart } from "../store/cart.store";
 import { toast } from "../store/toast.store";
 import { useAuth } from "../store/auth.store";
 import { useWishlist } from "../store/wishlist.store";
+import { useSeo } from "../hooks/useSeo";
+import { optimizeCloudinaryImage } from "../lib/image";
+import { Skeleton } from "../components/Skeleton";
 import Footer from "../components/Footer";
 
 const PLACEHOLDER = "https://placehold.co/900x1100?text=No+Image";
+const BUY_NOW_KEY = "buy_now_checkout_item";
 
 type ProductVariant = {
   id: string;
@@ -54,6 +60,7 @@ type ProductDetailData = {
   };
   variants: ProductVariant[];
   stock: number;
+  soldCount?: number;
 };
 
 type ProductListItem = {
@@ -111,6 +118,11 @@ export default function ProductDetail() {
   const [reviewImagePreview, setReviewImagePreview] = useState("");
   const [reviewMessage, setReviewMessage] = useState("");
   const [submittingReview, setSubmittingReview] = useState(false);
+
+  // Trang thai zoom anh chinh khi hover + thanh "Add to cart" dinh khi cuon.
+  const [zoom, setZoom] = useState({ active: false, x: 50, y: 50 });
+  const [showStickyBar, setShowStickyBar] = useState(false);
+  const addToCartRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     ensureWishlist();
@@ -212,6 +224,7 @@ export default function ProductDetail() {
   const insetImage =
     gallery.find((image) => image !== currentImage) || currentImage;
   const availableStock = selectedVariant?.stock ?? 0;
+  const soldCount = product?.soldCount ?? 0;
   const canAdd =
     Boolean(selectedVariant?.id) &&
     product?.isActive !== false &&
@@ -222,19 +235,19 @@ export default function ProductDetail() {
     {
       icon: <Sun size={18} strokeWidth={1.4} />,
       title: "TOP NOTES",
-      description: "The immediate impression. Effervescent and ethereal.",
+      description: "Ấn tượng đầu tiên — tươi mát, bay bổng và đầy cuốn hút.",
       items: product?.notes.top || [],
     },
     {
       icon: <Heart size={17} strokeWidth={1.4} />,
       title: "HEART NOTES",
-      description: "The soul of the fragrance. Full-bodied and radiant.",
+      description: "Trái tim của mùi hương — nồng nàn, tròn đầy và rạng rỡ.",
       items: product?.notes.middle || [],
     },
     {
       icon: <Moon size={17} strokeWidth={1.4} />,
       title: "BASE NOTES",
-      description: "The lasting memory. Rich, grounded, and sensual.",
+      description: "Dư hương lưu lại — sâu lắng, ấm áp và quyến rũ.",
       items: product?.notes.base || [],
     },
   ];
@@ -343,10 +356,154 @@ export default function ProductDetail() {
   const featuredReview = reviews[0];
   const sideReviews = reviews.slice(1, 3);
 
+  // Doan mo ta mang tinh "storytelling" - cam hung sang tao ra mui huong.
+  // Uu tien mo ta that; neu qua ngan thi dung not huong de ke cau chuyen.
+  const storytelling = useMemo(() => {
+    if (!product) return "";
+    if (product.description && product.description.trim().length > 200) {
+      return product.description.trim();
+    }
+    const top = product.notes?.top?.[0];
+    const heart = product.notes?.middle?.[0];
+    const base = product.notes?.base?.[0];
+    const family = (product.fragranceFamily || "").toLowerCase();
+    const house = product.brand ? `nhà ${product.brand}` : "người nghệ nhân";
+    const opening = top
+      ? `Mở đầu bằng ${top.toLowerCase()} tươi sáng như tia nắng đầu ngày`
+      : "Mở đầu bằng những nốt hương tươi sáng như tia nắng đầu ngày";
+    const middle = heart
+      ? `, ${product.name} dần hé lộ trái tim ${heart.toLowerCase()} nồng nàn`
+      : `, ${product.name} dần hé lộ một trái tim nồng nàn`;
+    const end = base
+      ? ` rồi lắng lại trên tầng hương ${base.toLowerCase()} ấm áp, lưu dấu suốt hành trình.`
+      : ` rồi lắng lại trên tầng hương trầm ấm, lưu dấu suốt hành trình.`;
+    const closing = ` Được ${house} chăm chút từng nốt hương${family ? ` theo phong cách ${family}` : ""}, đây là bản giao hưởng kể câu chuyện của riêng người đeo.`;
+    return `${opening}${middle}${end}${closing}`;
+  }, [product]);
+
+  const metaDescription = useMemo(() => {
+    if (!product) return "";
+    const brand = product.brand ? `${product.brand} — ` : "";
+    const base = product.description?.trim() || storytelling;
+    return `${brand}${product.name}. ${base}`
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, 160);
+  }, [product, storytelling]);
+
+  // SEO: title + meta description + Open Graph theo tung san pham.
+  useSeo({
+    title: product?.name,
+    description: metaDescription || undefined,
+    image: gallery[0] ? optimizeCloudinaryImage(gallery[0], 1200) : undefined,
+    type: "product",
+  });
+
+  // SEO nang cao: structured data schema.org/Product (JSON-LD) cho Google.
+  useEffect(() => {
+    if (!product) return;
+
+    const jsonLd: Record<string, unknown> = {
+      "@context": "https://schema.org/",
+      "@type": "Product",
+      name: product.name,
+      image: gallery.length ? gallery : undefined,
+      description: metaDescription,
+      sku: selectedVariant?.sku || selectedVariant?.id,
+      brand: product.brand
+        ? { "@type": "Brand", name: product.brand }
+        : undefined,
+      category: product.category || undefined,
+      offers: selectedVariant
+        ? {
+            "@type": "Offer",
+            priceCurrency: "VND",
+            price: selectedVariant.price,
+            availability:
+              availableStock > 0
+                ? "https://schema.org/InStock"
+                : "https://schema.org/OutOfStock",
+            url: window.location.href,
+          }
+        : undefined,
+      aggregateRating:
+        reviews.length > 0
+          ? {
+              "@type": "AggregateRating",
+              ratingValue: averageRating.toFixed(1),
+              reviewCount: reviews.length,
+            }
+          : undefined,
+    };
+
+    let script = document.getElementById(
+      "product-jsonld",
+    ) as HTMLScriptElement | null;
+    if (!script) {
+      script = document.createElement("script");
+      script.type = "application/ld+json";
+      script.id = "product-jsonld";
+      document.head.appendChild(script);
+    }
+    script.textContent = JSON.stringify(jsonLd);
+
+    return () => {
+      document.getElementById("product-jsonld")?.remove();
+    };
+  }, [product, gallery, selectedVariant, availableStock, reviews, averageRating, metaDescription]);
+
+  // Thanh "Add to cart" dinh: hien khi nut chinh da cuon qua khoi man hinh (nhat la mobile).
+  useEffect(() => {
+    const el = addToCartRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setShowStickyBar(
+          !entry.isIntersecting && entry.boundingClientRect.top < 0,
+        );
+      },
+      { threshold: 0 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [product]);
+
+  function handleZoomMove(event: React.MouseEvent<HTMLDivElement>) {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const x = ((event.clientX - rect.left) / rect.width) * 100;
+    const y = ((event.clientY - rect.top) / rect.height) * 100;
+    setZoom({ active: true, x, y });
+  }
+
+  // Skeleton loading trong khi fetch du lieu tu API -> tranh cam giac trang & layout shift.
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#fbf8f2] px-6 py-24 text-[#615e57]">
-        <div className="mx-auto max-w-[1240px]">Đang tải sản phẩm...</div>
+      <div className="min-h-screen w-full bg-[#fbf8f2] text-[#292824]">
+        <div className="mx-auto max-w-[1240px] px-6 pt-8 md:px-10 lg:px-14">
+          <Skeleton className="h-3 w-64" />
+        </div>
+        <section className="bg-[#fbf8f2]">
+          <div className="mx-auto grid max-w-[1240px] gap-14 px-6 py-12 md:px-10 lg:grid-cols-[1.1fr_0.9fr] lg:px-14 lg:py-16">
+            <Skeleton className="min-h-[570px] w-full" />
+            <div className="flex flex-col justify-center py-6">
+              <Skeleton className="h-3 w-40" />
+              <Skeleton className="mt-6 h-12 w-3/4" />
+              <Skeleton className="mt-4 h-4 w-1/3" />
+              <Skeleton className="mt-8 h-3 w-full" />
+              <Skeleton className="mt-2 h-3 w-full" />
+              <Skeleton className="mt-2 h-3 w-2/3" />
+              <Skeleton className="mt-8 h-8 w-1/3" />
+              <div className="mt-6 flex gap-2">
+                <Skeleton className="h-9 w-16" />
+                <Skeleton className="h-9 w-16" />
+                <Skeleton className="h-9 w-16" />
+              </div>
+              <Skeleton className="mt-6 h-[50px] w-full max-w-[410px]" />
+              <Skeleton className="mt-3 h-[48px] w-full max-w-[410px]" />
+            </div>
+          </div>
+        </section>
       </div>
     );
   }
@@ -374,49 +531,90 @@ export default function ProductDetail() {
       return;
     }
 
-    try {
-      await addItem(
-        {
-          variant: selectedVariant.id,
-          product: product.id,
-          name: product.name,
-          slug: product.slug,
-          image: currentImage === PLACEHOLDER ? null : currentImage,
-          volume: selectedVariant.volume || selectedVariant.size,
-          price: selectedVariant.price,
-          basePrice: selectedVariant.basePrice,
-          discountPercent: selectedVariant.discountPercent,
-          promotionType: selectedVariant.promotionType,
-          promotionName: selectedVariant.promotionName,
-          stock: selectedVariant.stock,
-          quantity: 1,
-        },
-        1,
-      );
-      navigate("/checkout");
-    } catch (e: any) {
-      toast.error(
-        e?.response?.data?.message || e?.message || "Không thể mua ngay",
-      );
-    }
+    sessionStorage.setItem(
+      BUY_NOW_KEY,
+      JSON.stringify({
+        variant: selectedVariant.id,
+        product: product.id,
+        name: product.name,
+        slug: product.slug,
+        image: currentImage === PLACEHOLDER ? null : currentImage,
+        volume: selectedVariant.volume || selectedVariant.size,
+        price: selectedVariant.price,
+        basePrice: selectedVariant.basePrice,
+        discountPercent: selectedVariant.discountPercent,
+        promotionType: selectedVariant.promotionType,
+        promotionName: selectedVariant.promotionName,
+        stock: selectedVariant.stock,
+        quantity: 1,
+      }),
+    );
+    navigate("/checkout?mode=buy-now");
   }
 
   return (
     <div className="min-h-screen w-full max-w-[100vw] overflow-x-hidden bg-[#fbf8f2] text-[#292824]">
       <main>
+        {/* Breadcrumb: Home > Shop > <ten san pham> */}
+        <nav
+          aria-label="Breadcrumb"
+          className="mx-auto max-w-[1240px] px-6 pt-8 md:px-10 lg:px-14"
+        >
+          <ol className="flex flex-wrap items-center gap-1.5 text-[10px] uppercase tracking-[1.5px] text-[#aaa69e]">
+            <li>
+              <Link to="/" className="transition hover:text-[#8b7100]">
+                Home
+              </Link>
+            </li>
+            <li aria-hidden="true" className="flex items-center">
+              <ChevronRight size={12} />
+            </li>
+            <li>
+              <Link to="/shop" className="transition hover:text-[#8b7100]">
+                Shop
+              </Link>
+            </li>
+            <li aria-hidden="true" className="flex items-center">
+              <ChevronRight size={12} />
+            </li>
+            <li
+              aria-current="page"
+              className="max-w-[220px] truncate text-[#615e57]"
+            >
+              {product.name}
+            </li>
+          </ol>
+        </nav>
+
         {/* Product Hero */}
         <section className="bg-[#fbf8f2]">
           <div className="mx-auto grid max-w-[1240px] gap-14 px-6 py-12 md:px-10 lg:grid-cols-[1.1fr_0.9fr] lg:px-14 lg:py-16">
-            {/* Image */}
-            <div className="relative min-h-[570px] bg-[#f5f1eb]">
+            {/* Image - chat luong cao + zoom khi hover */}
+            <div
+              className="group relative min-h-[570px] cursor-zoom-in overflow-hidden bg-[#f5f1eb]"
+              onMouseEnter={() => setZoom((z) => ({ ...z, active: true }))}
+              onMouseLeave={() => setZoom({ active: false, x: 50, y: 50 })}
+              onMouseMove={handleZoomMove}
+            >
               <img
-                src={currentImage}
+                src={optimizeCloudinaryImage(currentImage, 900)}
                 alt={product.name}
-                className="h-full min-h-[570px] w-full object-contain p-12"
+                width={900}
+                height={1100}
+                decoding="async"
+                className="h-full min-h-[570px] w-full object-contain p-12 transition-transform duration-200 ease-out will-change-transform"
+                style={{
+                  transform: zoom.active ? "scale(2)" : "scale(1)",
+                  transformOrigin: `${zoom.x}% ${zoom.y}%`,
+                }}
                 onError={(e) => {
                   e.currentTarget.src = PLACEHOLDER;
                 }}
               />
+
+              <span className="pointer-events-none absolute left-4 top-4 flex items-center gap-1 bg-white/80 px-2.5 py-1 text-[8px] font-semibold uppercase tracking-[1.5px] text-[#615e57] opacity-0 backdrop-blur transition group-hover:opacity-100">
+                <Sparkles size={11} /> Di chuột để phóng to
+              </span>
 
               {gallery.length > 1 && (
                 <button
@@ -424,8 +622,10 @@ export default function ProductDetail() {
                   className="absolute -bottom-10 right-[-20px] hidden h-[205px] w-[205px] border-[3px] border-white bg-white shadow-sm md:block"
                 >
                   <img
-                    src={insetImage}
+                    src={optimizeCloudinaryImage(insetImage, 400)}
                     alt={`${product.name} detail`}
+                    loading="lazy"
+                    decoding="async"
                     className="h-full w-full object-cover"
                     onError={(e) => {
                       e.currentTarget.src = PLACEHOLDER;
@@ -450,10 +650,57 @@ export default function ProductDetail() {
                 {product.concentration || product.brand || "Eau de Parfum"}
               </p>
 
+              {/* Thuong hieu + Trang thai ton kho (con hang / da ban) */}
+              <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 text-[11px] text-[#615e57]">
+                {product.brand && (
+                  <span className="flex items-center gap-1.5">
+                    <span className="uppercase tracking-[1.5px] text-[#aaa69e]">
+                      Thương hiệu:
+                    </span>
+                    <span className="font-semibold text-[#292824]">
+                      {product.brand}
+                    </span>
+                  </span>
+                )}
+
+                <span className="flex items-center gap-1.5">
+                  <span
+                    className={`inline-block h-2 w-2 rounded-full ${
+                      availableStock > 0 ? "bg-green-600" : "bg-red-500"
+                    }`}
+                  />
+                  {availableStock > 0 ? (
+                    <span className="font-semibold text-green-700">
+                      Còn hàng · {availableStock.toLocaleString("vi-VN")} sản phẩm
+                    </span>
+                  ) : (
+                    <span className="font-semibold text-red-600">
+                      Tạm hết hàng
+                    </span>
+                  )}
+                </span>
+
+                {soldCount > 0 && (
+                  <span className="text-[#8e8980]">
+                    Đã bán {soldCount.toLocaleString("vi-VN")}
+                  </span>
+                )}
+              </div>
+
               <p className="mt-7 max-w-[475px] text-[13px] leading-[1.85] text-[#615e57]">
                 {product.description ||
                   "Mùi hương tinh tế, sang trọng và phù hợp cho nhiều dịp sử dụng."}
               </p>
+
+              {/* Storytelling - cam hung sang tao ra mui huong */}
+              <div className="mt-7 max-w-[475px] border-l-2 border-[#8b7100]/40 bg-[#f5f1eb]/60 px-5 py-4">
+                <p className="flex items-center gap-2 text-[8px] font-semibold uppercase tracking-[2px] text-[#8b7100]">
+                  <Sparkles size={12} /> Cảm hứng sáng tạo
+                </p>
+                <p className="mt-3 text-[12.5px] italic leading-[1.9] text-[#5b574f]">
+                  {storytelling}
+                </p>
+              </div>
 
               <div className="mt-7 flex flex-wrap items-center gap-3">
                 <p className="font-serif text-[23px] font-semibold text-[#927600]">
@@ -505,14 +752,16 @@ export default function ProductDetail() {
                 </div>
               )}
 
-              <button
-                onClick={handleAddToCart}
-                disabled={!canAdd}
-                className="mt-6 flex h-[50px] w-full max-w-[410px] items-center justify-center gap-2 bg-[#8b7100] text-[10px] font-semibold uppercase tracking-[2px] text-white transition hover:bg-[#715c00] disabled:cursor-not-allowed disabled:bg-[#d6d3d1]"
-              >
-                <ShoppingBag size={14} />
-                {canAdd ? "Add to bag" : "Sold out"}
-              </button>
+              <div ref={addToCartRef} className="w-full max-w-[410px]">
+                <button
+                  onClick={handleAddToCart}
+                  disabled={!canAdd}
+                  className="mt-6 flex h-[50px] w-full items-center justify-center gap-2 bg-[#8b7100] text-[10px] font-semibold uppercase tracking-[2px] text-white transition hover:bg-[#715c00] disabled:cursor-not-allowed disabled:bg-[#d6d3d1]"
+                >
+                  <ShoppingBag size={14} />
+                  {canAdd ? "Thêm vào giỏ" : "Hết hàng"}
+                </button>
+              </div>
 
               <button
                 type="button"
@@ -618,8 +867,13 @@ export default function ProductDetail() {
                 >
                   <div className="aspect-square overflow-hidden bg-[#f2eee7]">
                     <img
-                      src={item.images?.[0] || item.image || PLACEHOLDER}
+                      src={optimizeCloudinaryImage(
+                        item.images?.[0] || item.image || PLACEHOLDER,
+                        500,
+                      )}
                       alt={item.name}
+                      loading="lazy"
+                      decoding="async"
                       className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                       onError={(e) => {
                         e.currentTarget.src = PLACEHOLDER;
@@ -694,6 +948,8 @@ export default function ProductDetail() {
                             <img
                               src={image}
                               alt="Review"
+                              loading="lazy"
+                              decoding="async"
                               className="h-full w-full object-cover transition duration-500 hover:scale-105"
                             />
                           </a>
@@ -746,6 +1002,8 @@ export default function ProductDetail() {
                               <img
                                 src={image}
                                 alt="Review"
+                                loading="lazy"
+                                decoding="async"
                                 className="h-full w-full object-cover transition duration-500 hover:scale-105"
                               />
                             </a>
@@ -922,6 +1180,67 @@ export default function ProductDetail() {
           </div>
         </section>
       </main>
+
+      {/* Sticky "Add to cart" khi cuon xuong (dac biet tren mobile) */}
+      <div
+        className={`fixed inset-x-0 bottom-0 z-40 border-t border-[#e7dfd1] bg-[#fbf8f2]/95 px-4 py-3 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] backdrop-blur transition-transform duration-300 ${
+          showStickyBar ? "translate-y-0" : "translate-y-full"
+        }`}
+      >
+        <div className="mx-auto flex max-w-[1240px] items-center gap-3">
+          <img
+            src={optimizeCloudinaryImage(currentImage, 120)}
+            alt={product.name}
+            className="hidden h-12 w-12 shrink-0 bg-[#f5f1eb] object-contain sm:block"
+            onError={(e) => {
+              e.currentTarget.src = PLACEHOLDER;
+            }}
+          />
+          <div className="min-w-0 flex-1">
+            <p className="truncate font-serif text-[14px] text-[#292824]">
+              {product.name}
+            </p>
+            <p className="text-[13px] font-semibold text-[#927600]">
+              {selectedVariant
+                ? selectedVariant.priceText || vnd(selectedVariant.price)
+                : "Liên hệ"}
+              {selectedVariant?.volume ? ` · ${selectedVariant.volume}` : ""}
+            </p>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <button
+              type="button"
+              onClick={() => product && toggleWishlist(product.id)}
+              aria-label={wishlisted ? "Đã lưu vào wishlist" : "Thêm vào wishlist"}
+              title={wishlisted ? "Đã lưu vào wishlist" : "Thêm vào wishlist"}
+              className={`flex h-11 w-11 shrink-0 items-center justify-center border transition ${
+                wishlisted
+                  ? "border-[#8b7100] bg-[#8b7100]/5 text-[#8b7100]"
+                  : "border-[#e7dfd1] text-[#615e57] hover:border-[#8b7100] hover:text-[#8b7100]"
+              }`}
+            >
+              <Heart size={16} strokeWidth={1.6} fill={wishlisted ? "currentColor" : "none"} />
+            </button>
+            <button
+              type="button"
+              onClick={handleBuyNow}
+              disabled={!canAdd}
+              className="flex h-11 shrink-0 items-center justify-center border border-[#8b7100] px-4 text-[10px] font-semibold uppercase tracking-[1.2px] text-[#8b7100] transition hover:bg-[#8b7100] hover:text-white disabled:cursor-not-allowed disabled:border-[#d6d3d1] disabled:text-[#aaa59c]"
+            >
+              Mua ngay
+            </button>
+            <button
+              onClick={handleAddToCart}
+              disabled={!canAdd}
+              className="flex h-11 shrink-0 items-center justify-center gap-2 bg-[#8b7100] px-4 text-[10px] font-semibold uppercase tracking-[1.2px] text-white transition hover:bg-[#715c00] disabled:cursor-not-allowed disabled:bg-[#d6d3d1] sm:px-6"
+            >
+              <ShoppingBag size={14} />
+              <span className="hidden sm:inline">{canAdd ? "Thêm vào giỏ" : "Hết hàng"}</span>
+              <span className="sm:hidden">{canAdd ? "Giỏ" : "Hết"}</span>
+            </button>
+          </div>
+        </div>
+      </div>
 
       <Footer />
     </div>

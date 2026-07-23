@@ -12,11 +12,10 @@ import { PasswordRequirements } from "../../components/PasswordRequirements";
 import { api } from "../../lib/api";
 import { getPasswordError } from "../../lib/password";
 import { useAuth } from "../../store/auth.store";
-import { useLanguage } from "../../store/language.store";
 import { toast } from "../../store/toast.store";
 
 export default function Settings() {
-  const language = useLanguage((state) => state.language);
+  const language = "vi" as const;
   const [showPassword, setShowPassword] = useState(false);
   const user = useAuth((state) => state.user);
   const setUser = useAuth((state) => state.setUser);

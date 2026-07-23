@@ -14,6 +14,7 @@ const Login = lazy(() => import("./pages/Login"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const Register = lazy(() => import("./pages/Register"));
 const Brand = lazy(() => import("./pages/Brand"));
+const BrandJournal = lazy(() => import("./pages/BrandJournal"));
 const Blog = lazy(() => import("./pages/Blog"));
 const BlogPost = lazy(() => import("./pages/BlogPost"));
 const About = lazy(() => import("./pages/About"));
@@ -70,6 +71,7 @@ export const router = createBrowserRouter([
       { index: true, element: s(<Home />) },
       { path: "shop", element: s(<Shop />) },
       { path: "brand", element: s(<Brand />) },
+      { path: "brand/:slug", element: s(<BrandJournal />) },
       { path: "blog", element: s(<Blog />) },
       { path: "blog/:slug", element: s(<BlogPost />) },
       { path: "contact", element: s(<Contact />) },

@@ -19,6 +19,7 @@ type Order = {
   firstItemName: string;
   items: Array<{
     name: string;
+    image?: string | null;
     price: number;
     quantity: number;
     lineTotal: number;
@@ -57,10 +58,6 @@ export default function OrderHistory() {
         </p>
 
         <h1 className="mt-2 font-serif text-4xl lg:text-5xl">Order History</h1>
-
-        <p className="mt-3 max-w-2xl text-sm leading-6 text-[#7C746C]">
-          Lịch sử đơn hàng và trạng thái mua sắm được lấy trực tiếp từ MongoDB.
-        </p>
       </section>
 
       <main className="px-6 py-10 lg:px-12">
@@ -119,12 +116,28 @@ export default function OrderHistory() {
                   {order.items.map((item, index) => (
                     <div
                       key={`${order.id}-${index}`}
-                      className="flex justify-between gap-4 text-sm"
+                      className="flex items-center justify-between gap-4 text-sm"
                     >
-                      <span className="text-[#3A342E]">
-                        {item.name} × {item.quantity}
-                      </span>
-                      <span className="text-[#756E67]">
+                      <div className="flex min-w-0 items-center gap-3">
+                        <div className="h-14 w-14 shrink-0 overflow-hidden border border-[#EAE4DC] bg-[#F0ECE7]">
+                          {item.image ? (
+                            <img
+                              src={item.image}
+                              alt={item.name}
+                              loading="lazy"
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center text-[#B7AE9F]">
+                              <Package size={16} strokeWidth={1.4} />
+                            </div>
+                          )}
+                        </div>
+                        <span className="truncate text-[#3A342E]">
+                          {item.name} × {item.quantity}
+                        </span>
+                      </div>
+                      <span className="shrink-0 text-[#756E67]">
                         {vnd(item.lineTotal)}
                       </span>
                     </div>

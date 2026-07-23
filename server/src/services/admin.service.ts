@@ -236,6 +236,7 @@ export async function getStats() {
       { $project: { name: 1, createdAt: 1, orderCount: { $size: '$orders' } } },
     ]),
     Payment.aggregate([
+      { $match: { method: { $in: ['cod', 'bank_qr'] } } },
       { $group: { _id: '$method', count: { $sum: 1 }, amount: { $sum: '$amount' } } },
       { $sort: { count: -1 } },
     ]),
@@ -450,6 +451,10 @@ export async function getNotifications() {
     { id: 'open-support', count: openSupport, severity: 'info', title: 'Yêu cầu hỗ trợ', description: `${openSupport} yêu cầu đang chờ xử lý`, to: '/admin/reports/operations' },
   ].filter((item) => item.count > 0);
   return { items, total: items.reduce((sum, item) => sum + item.count, 0), updatedAt: new Date() };
+}
+
+export async function markNotificationSeen(id: string) {
+  return getNotifications();
 }
 
 // ================================================================ PRODUCTS ===
@@ -710,6 +715,9 @@ export async function listBrands() {
     description: b.description || '',
     logo: b.logo || '',
     heroImage: b.heroImage || '',
+    viewCollectionUrl: b.viewCollectionUrl || '',
+    journalUrl: b.journalUrl || '',
+    isPublished: b.isPublished !== false,
     country: b.country || '',
     website: b.website || '',
     foundedYear: b.foundedYear || null,
@@ -739,6 +747,9 @@ export async function importDefaultBrands(brands: any[]) {
       description: String(input.description || '').trim(),
       logo: String(input.logo || input.image || '').trim(),
       heroImage: String(input.heroImage || input.image || '').trim(),
+      viewCollectionUrl: String(input.viewCollectionUrl || '').trim(),
+      journalUrl: String(input.journalUrl || '').trim(),
+      isPublished: input.isPublished !== false,
       country: String(input.country || '').trim(),
       website: String(input.website || '').trim(),
       foundedYear: input.foundedYear || undefined,
@@ -755,11 +766,12 @@ export async function importDefaultBrands(brands: any[]) {
     }
 
     const patch: Record<string, unknown> = {};
-    for (const field of ['description', 'logo', 'heroImage', 'country', 'website'] as const) {
+    for (const field of ['description', 'logo', 'heroImage', 'viewCollectionUrl', 'journalUrl', 'country', 'website'] as const) {
       if (!existing[field] && data[field]) patch[field] = data[field];
     }
     if (!existing.foundedYear && data.foundedYear) patch.foundedYear = data.foundedYear;
     if (!existing.isFeatured && data.isFeatured) patch.isFeatured = true;
+    if (existing.isPublished === undefined) patch.isPublished = data.isPublished;
     if (!existing.slug) patch.slug = await uniqueSlugFor(Brand, input.slug || name, String(existing._id));
 
     if (Object.keys(patch).length) {
@@ -773,14 +785,27 @@ export async function importDefaultBrands(brands: any[]) {
 
 export async function createBrand(input: any) {
   if (!input?.name?.trim()) throw httpError('Ten thuong hieu la bat buoc');
-  const existed = await Brand.findOne({ name: input.name.trim() });
+  if (!String(input.heroImage || '').trim()) throw httpError('Anh hero la bat buoc');
+  if (!String(input.description || '').trim()) throw httpError('Mo ta thuong hieu la bat buoc');
+  const name = input.name.trim();
+  const requestedSlug = String(input.slug || name).trim();
+  const slug = await uniqueSlugFor(Brand, requestedSlug || name);
+  const existed = await Brand.findOne({
+    $or: [
+      { name: { $regex: `^${escapeRegExp(name)}$`, $options: 'i' } },
+      { slug },
+    ],
+  });
   if (existed) throw httpError('Thuong hieu da ton tai', 409);
   const brand: any = await Brand.create({
-    name: input.name.trim(),
-    slug: await uniqueSlugFor(Brand, input.name.trim()),
+    name,
+    slug,
     description: String(input.description || '').trim(),
     logo: String(input.logo || '').trim(),
     heroImage: String(input.heroImage || '').trim(),
+    viewCollectionUrl: String(input.viewCollectionUrl || `/shop?brand=${encodeURIComponent(name)}`).trim(),
+    journalUrl: String(input.journalUrl || '').trim(),
+    isPublished: input.isPublished !== false,
     country: String(input.country || '').trim(),
     website: String(input.website || '').trim(),
     foundedYear: input.foundedYear || undefined,
@@ -791,14 +816,21 @@ export async function createBrand(input: any) {
 
 export async function updateBrand(id: string, input: any) {
   if (!input?.name?.trim()) throw httpError('Ten thuong hieu la bat buoc');
+  if (!String(input.heroImage || '').trim()) throw httpError('Anh hero la bat buoc');
+  if (!String(input.description || '').trim()) throw httpError('Mo ta thuong hieu la bat buoc');
+  const name = input.name.trim();
+  const slug = await uniqueSlugFor(Brand, String(input.slug || name).trim() || name, id);
   const brand: any = await Brand.findByIdAndUpdate(
     id,
     {
-      name: input.name.trim(),
-      slug: await uniqueSlugFor(Brand, input.name.trim(), id),
+      name,
+      slug,
       description: String(input.description || '').trim(),
       logo: String(input.logo || '').trim(),
       heroImage: String(input.heroImage || '').trim(),
+      viewCollectionUrl: String(input.viewCollectionUrl || `/shop?brand=${encodeURIComponent(name)}`).trim(),
+      journalUrl: String(input.journalUrl || '').trim(),
+      isPublished: input.isPublished !== false,
       country: String(input.country || '').trim(),
       website: String(input.website || '').trim(),
       foundedYear: input.foundedYear || null,
@@ -808,6 +840,15 @@ export async function updateBrand(id: string, input: any) {
   );
   if (!brand) throw httpError('Khong tim thay thuong hieu', 404);
   return { id: String(brand._id), name: brand.name };
+}
+
+export async function getBrand(id: string) {
+  const brand: any = await Brand.findById(id).lean();
+  if (!brand) throw httpError('Khong tim thay thuong hieu', 404);
+  return (await listBrands()).find((item) => item.id === String(brand._id)) || {
+    id: String(brand._id),
+    name: brand.name,
+  };
 }
 
 export async function deleteBrand(id: string) {

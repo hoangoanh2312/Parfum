@@ -148,7 +148,7 @@ export default function WhyChooseUs() {
       className="why-choose-section"
       style={{
         background: "#FCF9F4",
-        padding: "88px 32px 96px",
+        padding: "64px 32px 96px",
         fontFamily: "'Manrope', 'Helvetica Neue', sans-serif",
       }}
     >
@@ -323,11 +323,11 @@ export default function WhyChooseUs() {
           to   { opacity: 1; transform: translateY(0); }
         }
         @media (max-width: 900px) {
-          .why-choose-section { padding: 64px 24px 72px !important; }
+          .why-choose-section { padding: 48px 24px 72px !important; }
           .why-choose-grid { grid-template-columns: minmax(0, 1fr) !important; gap: 56px 0 !important; }
         }
         @media (max-width: 480px) {
-          .why-choose-section { padding: 52px 20px 60px !important; }
+          .why-choose-section { padding: 42px 20px 60px !important; }
         }
       `}</style>
     </section>

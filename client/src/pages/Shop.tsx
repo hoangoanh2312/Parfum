@@ -226,14 +226,13 @@ export default function Shop() {
 
   // Cac lua chon filter deu lay tu facet MongoDB de dong bo ten & so luong
   const brands = useMemo(() => filters?.brands ?? [], [filters]);
+  // Scent Profile CHỈ hiển thị nhóm hương (fragrance families) của sản phẩm,
+  // không trộn lẫn các nốt hương lẻ để tránh nhầm với bộ lọc nhóm hương.
   const scents = useMemo(
     () =>
-      Array.from(
-        new Set([
-          ...(filters?.fragranceFamilies ?? []),
-          ...(filters?.notes ?? []),
-        ]),
-      ).sort((left, right) => left.localeCompare(right)),
+      Array.from(new Set(filters?.fragranceFamilies ?? [])).sort((left, right) =>
+        left.localeCompare(right),
+      ),
     [filters],
   );
   const concentrations = useMemo(() => filters?.concentrations ?? [], [filters]);

@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../lib/api";
 import Footer from "../components/Footer";
+import AboutStoreMap from "../components/AboutStoreMap";
 import { toast } from "../store/toast.store";
 
 type ProductDetailItem = {
@@ -77,6 +78,7 @@ const policySections = [
 export default function About() {
   const [products, setProducts] = useState<ProductDetailItem[]>([]);
   const [email, setEmail] = useState("");
+  const [subscribing, setSubscribing] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -117,16 +119,25 @@ export default function About() {
         }));
   }, [products]);
 
-  const handleSubscribe = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubscribe = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const normalizedEmail = email.trim().toLowerCase();
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
       toast.error("Email không hợp lệ");
       return;
     }
 
-    toast.success("Đã đăng ký nhận tin");
-    setEmail("");
+    try {
+      setSubscribing(true);
+      await api.post("/blog/subscribe", { email: normalizedEmail });
+      toast.success("Đã đăng ký nhận journal");
+      setEmail("");
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || "Không thể đăng ký nhận journal lúc này");
+    } finally {
+      setSubscribing(false);
+    }
   };
 
   return (
@@ -392,6 +403,9 @@ export default function About() {
           </div>
         </section>
 
+        {/* STORE LOCATOR MAP */}
+        <AboutStoreMap />
+
         {/* POLICIES */}
         <section className="bg-[#F2EFEA] px-6 py-20 sm:px-10 lg:px-16 lg:py-24">
           <div className="mx-auto max-w-[1180px]">
@@ -467,8 +481,9 @@ export default function About() {
 
             <button
               type="submit"
+              disabled={subscribing}
               aria-label="Subscribe"
-              className="px-2 text-[#927A20] transition hover:translate-x-1"
+              className="px-2 text-[#927A20] transition hover:translate-x-1 disabled:cursor-wait disabled:opacity-50"
             >
               <ArrowRight size={18} strokeWidth={1.3} />
             </button>

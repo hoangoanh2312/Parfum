@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&family=Cormorant+Garamond:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -20,7 +20,7 @@ body {
 }
 
 body {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Be Vietnam Pro', 'Montserrat', 'Inter', sans-serif;
   background: #F8F5F0;
 }
 
@@ -99,6 +99,13 @@ textarea {
 
 .font-title {
   font-family: 'Cormorant Garamond', serif;
+}
+
+.font-numeric {
+  font-family: 'Space Grotesk', 'Be Vietnam Pro', sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+  letter-spacing: -0.01em;
 }
 
 @keyframes marqueeLeft {

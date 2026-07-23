@@ -3,6 +3,7 @@ import { Payment } from '../models/payment.model';
 import { Wishlist } from '../models/wishlist.model';
 import { User } from '../models/user.model';
 import '../models/product.model';
+import { Variant } from '../models/variant.model';
 import { normalizeOrderStatus } from '../utils/orderStatus';
 
 const defaultScentProfile = {
@@ -21,6 +22,27 @@ export async function getOrders(userId: string) {
   const paymentByOrder = new Map(
     payments.map((payment) => [String(payment.order), payment]),
   );
+
+  const variantIds = Array.from(
+    new Set(
+      orders.flatMap((order) =>
+        (order.items || [])
+          .map((item: any) => (item.variant ? String(item.variant) : ''))
+          .filter(Boolean),
+      ),
+    ),
+  );
+  const variantDocs: any[] = variantIds.length
+    ? await Variant.find({ _id: { $in: variantIds } })
+        .select('images product')
+        .populate('product', 'images')
+        .lean()
+    : [];
+  const imageByVariant = new Map<string, string>();
+  for (const variant of variantDocs) {
+    const image = variant.images?.[0] || variant.product?.images?.[0] || '';
+    if (image) imageByVariant.set(String(variant._id), image);
+  }
 
   return orders.map((order) => {
     const payment = paymentByOrder.get(String(order._id));
@@ -47,6 +69,8 @@ export async function getOrders(userId: string) {
       items: (order.items || []).map((item: any) => ({
         variant: item.variant ? String(item.variant) : '',
         name: item.name || 'Sản phẩm',
+        image:
+          (item.variant && imageByVariant.get(String(item.variant))) || null,
         price: item.price || 0,
         quantity: item.quantity || 0,
         lineTotal: (item.price || 0) * (item.quantity || 0),

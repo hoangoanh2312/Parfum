@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import {
-  Contact as ContactIcon,
   Heart,
   LayoutDashboard,
   Menu,
@@ -12,7 +11,6 @@ import {
 } from "lucide-react";
 import { useCart } from "../store/cart.store";
 import { useAuth } from "../store/auth.store";
-import { pickLanguage, useLanguage } from "../store/language.store";
 
 const menuItems = [
   { vi: "Trang chủ", en: "Home", link: "/" },
@@ -27,8 +25,6 @@ export default function Header() {
   const count = useCart((state) => state.count);
   const loadCart = useCart((state) => state.loadCart);
   const user = useAuth((state) => state.user);
-  const language = useLanguage((state) => state.language);
-  const toggleLanguage = useLanguage((state) => state.toggleLanguage);
   const [isVisible, setIsVisible] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
   const lastScrollY = useRef(0);
@@ -53,7 +49,7 @@ export default function Header() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const label = (vi: string, en: string) => pickLanguage(language, vi, en);
+  const label = (vi: string, _en?: string) => vi;
   const navClass = ({ isActive }: { isActive: boolean }) =>
     `flex h-20 w-full items-center justify-center whitespace-nowrap text-[10px] uppercase tracking-[2px] transition-colors duration-300 ${
       isActive ? "text-[#746A5F]" : "text-[#A18D5D] hover:text-[#746A5F]"
@@ -66,7 +62,7 @@ export default function Header() {
         isVisible ? "translate-y-0" : "-translate-y-full"
       }`}
     >
-      <div className="relative mx-auto grid h-20 max-w-[1500px] grid-cols-[44px_1fr_auto] items-center gap-2 px-4 sm:px-6 2xl:grid-cols-[1fr_190px_1fr] 2xl:gap-0 2xl:px-8">
+      <div className="relative mx-auto grid h-20 max-w-[1440px] grid-cols-[44px_1fr_auto] items-center gap-2 px-6 sm:px-8 lg:px-12 2xl:grid-cols-[1fr_190px_1fr] 2xl:gap-0">
         <button
           type="button"
           onClick={() => setMenuOpen((open) => !open)}
@@ -107,19 +103,7 @@ export default function Header() {
           ))}
         </nav>
 
-        <div className="col-start-3 flex min-w-0 items-center justify-end gap-1 sm:gap-2 2xl:absolute 2xl:right-8 2xl:top-5">
-          <Link to="/contact" className="header-icon-button hidden sm:flex" title={label("Liên hệ", "Contact")} aria-label={label("Liên hệ", "Contact")}>
-            <ContactIcon size={17} />
-          </Link>
-          <button
-            type="button"
-            onClick={toggleLanguage}
-            className="header-icon-button"
-            title={label("Chuyển sang tiếng Anh", "Switch to Vietnamese")}
-            aria-label={label("Chuyển sang tiếng Anh", "Switch to Vietnamese")}
-          >
-            <span className="text-[10px] font-semibold tracking-[1px]">{language.toUpperCase()}</span>
-          </button>
+        <div className="col-start-3 flex min-w-0 items-center justify-end gap-2 sm:gap-3 2xl:absolute 2xl:right-12 2xl:top-5">
           <Link to="/order-lookup" className="header-icon-button hidden sm:flex" title={label("Tra cứu đơn hàng", "Order lookup")}>
             <Search size={17} />
           </Link>

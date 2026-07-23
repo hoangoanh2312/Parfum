@@ -68,6 +68,9 @@ const brandSchema = z.object({
   image: z.string().trim().optional(),
   logo: z.string().trim().optional(),
   heroImage: z.string().trim().optional(),
+  viewCollectionUrl: z.string().trim().optional(),
+  journalUrl: z.string().trim().optional(),
+  isPublished: z.boolean().optional(),
   country: z.string().trim().optional(),
   website: z.union([z.string().trim().url(), z.literal('')]).optional(),
   foundedYear: z.number().int().min(1000).max(3000).nullable().optional(),
@@ -131,6 +134,7 @@ const flashSaleSchema = z.object({
 r.get('/stats', ctrl.getStats);
 r.get('/search', ctrl.search);
 r.get('/notifications', ctrl.notifications);
+r.patch('/notifications/:id/seen', ctrl.markNotificationSeen);
 r.get('/reports', reports.reports);
 r.post('/expenses', validate(expenseSchema), reports.createExpense);
 r.delete('/expenses/:id', reports.deleteExpense);
@@ -166,6 +170,7 @@ r.delete('/variants/:id', ctrl.deleteVariant);
 
 // Brands
 r.get('/brands', ctrl.listBrands);
+r.get('/brands/:id', ctrl.getBrand);
 r.post(
   '/brands/import-defaults',
   validate(z.object({ brands: z.array(brandSchema).max(200) })),

@@ -72,4 +72,6 @@ const orderSchema = new Schema(
   { timestamps: true },
 );
 
+orderSchema.index({ user: 1, createdAt: -1 });
+orderSchema.index({ status: 1, 'items.variant': 1 });
 export const Order = model('Order', orderSchema);

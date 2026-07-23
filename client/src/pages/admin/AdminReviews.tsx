@@ -3,6 +3,7 @@
 // =============================================================================
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { Eye } from "lucide-react";
 import {
   adminApi,
   apiMessage,
@@ -148,6 +149,18 @@ export default function AdminReviews() {
                   </p>
                 </div>
                 <div className="flex shrink-0 gap-2">
+                  {r.product?.id && (
+                    <Button
+                      variant="secondary"
+                      onClick={() =>
+                        window.open(`/product/${r.product?.id}`, "_blank", "noopener")
+                      }
+                      title={`Xem sản phẩm: ${r.product?.name ?? ""}`}
+                    >
+                      <Eye className="h-4 w-4" />
+                      Xem
+                    </Button>
+                  )}
                   {!r.approved && (
                     <Button
                       variant="secondary"

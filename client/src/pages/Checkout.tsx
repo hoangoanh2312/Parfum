@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Banknote,
   CheckCircle2,
@@ -51,6 +51,7 @@ const shippingFees: Record<ShippingMethod, number> = {
 };
 
 const NEW_ADDRESS_ID = "__new_address__";
+const BUY_NOW_KEY = "buy_now_checkout_item";
 
 function splitName(name: string) {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -72,7 +73,16 @@ function formatSavedAddress(item: Address) {
 
 export default function Checkout() {
   const navigate = useNavigate();
-  const { items, total, count, loadCart, clear, addItem } = useCart();
+  const location = useLocation();
+  const {
+    items: cartItems,
+    total: cartTotal,
+    count: cartCount,
+    loadCart,
+    clear,
+    addItem,
+    updateItem,
+  } = useCart();
   const user = useAuth((state) => state.user);
   const setUser = useAuth((state) => state.setUser);
   const [step, setStep] = useState(1);
@@ -96,11 +106,37 @@ export default function Checkout() {
   const [quoteLoading, setQuoteLoading] = useState(false);
   const [selectedAddressId, setSelectedAddressId] = useState(NEW_ADDRESS_ID);
   const [saveCustomerInfo, setSaveCustomerInfo] = useState(false);
+  const [buyNowItems, setBuyNowItems] = useState<CartItem[]>([]);
   const didPrefill = useRef(false);
+  const isBuyNow = new URLSearchParams(location.search).get("mode") === "buy-now";
+  const buyNowSummary = useMemo(
+    () => ({
+      total: buyNowItems.reduce((sum, item) => sum + item.price * item.quantity, 0),
+      count: buyNowItems.reduce((sum, item) => sum + item.quantity, 0),
+    }),
+    [buyNowItems],
+  );
+  const items = isBuyNow ? buyNowItems : cartItems;
+  const total = isBuyNow ? buyNowSummary.total : cartTotal;
+  const count = isBuyNow ? buyNowSummary.count : cartCount;
 
   useEffect(() => {
-    loadCart();
-  }, [loadCart]);
+    if (!isBuyNow) {
+      loadCart();
+      return;
+    }
+
+    try {
+      const raw = sessionStorage.getItem(BUY_NOW_KEY);
+      const parsed = raw ? (JSON.parse(raw) as CartItem) : null;
+      if (!parsed?.variant || !parsed.quantity) throw new Error("missing-buy-now-item");
+      setBuyNowItems([{ ...parsed, quantity: Math.max(1, Number(parsed.quantity) || 1) }]);
+    } catch {
+      sessionStorage.removeItem(BUY_NOW_KEY);
+      toast.error("Không tìm thấy sản phẩm mua ngay.");
+      navigate("/shop", { replace: true });
+    }
+  }, [isBuyNow, loadCart, navigate]);
 
   useEffect(() => {
     if (!user || didPrefill.current) return;
@@ -186,6 +222,24 @@ export default function Checkout() {
     setVoucherCode(""); setVoucherInput("");
   }
 
+  async function updateCheckoutQuantity(item: CartItem, nextQuantity: number) {
+    const quantity = Math.max(0, Math.min(nextQuantity, item.stock ?? Number.MAX_SAFE_INTEGER));
+    try {
+      if (isBuyNow) {
+        const nextItems = quantity <= 0
+          ? buyNowItems.filter((line) => line.variant !== item.variant)
+          : buyNowItems.map((line) => line.variant === item.variant ? { ...line, quantity } : line);
+        setBuyNowItems(nextItems);
+        if (nextItems[0]) sessionStorage.setItem(BUY_NOW_KEY, JSON.stringify(nextItems[0]));
+        else sessionStorage.removeItem(BUY_NOW_KEY);
+        return;
+      }
+      await updateItem(item.variant, quantity);
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || error?.message || "Không cập nhật được số lượng");
+    }
+  }
+
   function applySavedAddress(item: Address) {
     const name = splitName(item.fullName || user?.name || "");
     setSelectedAddressId(item._id);
@@ -251,10 +305,12 @@ export default function Checkout() {
       },
       note: fullNote,
       voucherCode: voucherCode || undefined,
-      items: items.map((item) => ({
-        variant: item.variant,
-        quantity: item.quantity,
-      })),
+      items: isBuyNow || !localStorage.getItem("accessToken")
+        ? items.map((item) => ({
+            variant: item.variant,
+            quantity: item.quantity,
+          }))
+        : undefined,
     };
   }
 
@@ -330,7 +386,8 @@ export default function Checkout() {
         return;
       }
 
-      await clear();
+      if (isBuyNow) sessionStorage.removeItem(BUY_NOW_KEY);
+      else await clear();
       toast.success("Đặt hàng thành công!");
       navigate("/thank-you/" + data.data.orderId);
     } catch (e: any) {
@@ -344,7 +401,8 @@ export default function Checkout() {
 
   async function confirmQrPaid() {
     if (!pendingQr) return;
-    await clear();
+    if (isBuyNow) sessionStorage.removeItem(BUY_NOW_KEY);
+    else await clear();
     toast.success("Cảm ơn bạn. Đơn hàng đang chờ hệ thống xác nhận giao dịch.");
     navigate("/thank-you/" + pendingQr.orderId);
   }
@@ -355,7 +413,7 @@ export default function Checkout() {
     try {
       setCancellingQr(true);
       await api.post("/orders/" + pendingQr.orderId + "/cancel-pending-qr");
-      if (localStorage.getItem("accessToken")) {
+      if (!isBuyNow && localStorage.getItem("accessToken")) {
         for (const item of qrCartSnapshot) {
           await addItem(item, item.quantity);
         }
@@ -584,7 +642,7 @@ export default function Checkout() {
                       className="mt-1"
                     />
                     <span>
-                      Lưu thông tin giao hàng này vào dashboard để lần sau chọn nhanh hơn.
+                      Lưu thông tin giao hàng.
                     </span>
                   </label>
                 )}
@@ -732,8 +790,30 @@ export default function Checkout() {
                         {it.name}
                       </h3>
                       <p className="font-['Manrope'] uppercase tracking-[1px] text-[11px] text-[#5F5E5E] mt-0.5">
-                        {it.volume} · SL {it.quantity}
+                        {it.volume}
                       </p>
+                      <div className="mt-2 inline-flex h-8 items-center border border-[#D8CBB7] bg-white">
+                        <button
+                          type="button"
+                          onClick={() => void updateCheckoutQuantity(it, it.quantity - 1)}
+                          className="flex h-full w-8 items-center justify-center text-[#735C00] transition hover:bg-[#F7F3EE]"
+                          aria-label="Giảm số lượng"
+                        >
+                          -
+                        </button>
+                        <span className="flex h-full min-w-9 items-center justify-center border-x border-[#E6DCCF] px-2 font-['Manrope'] text-xs text-[#1C1C19]">
+                          {it.quantity}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => void updateCheckoutQuantity(it, it.quantity + 1)}
+                          disabled={typeof it.stock === "number" && it.quantity >= it.stock}
+                          className="flex h-full w-8 items-center justify-center text-[#735C00] transition hover:bg-[#F7F3EE] disabled:cursor-not-allowed disabled:text-[#C7BCA9]"
+                          aria-label="Tăng số lượng"
+                        >
+                          +
+                        </button>
+                      </div>
                       {priced?.promotionName && <p className="mt-1 text-[10px] text-[#8B1E1E]">{priced.promotionName}</p>}
                     </div>
                     <div className="text-right font-['Manrope'] text-sm whitespace-nowrap">

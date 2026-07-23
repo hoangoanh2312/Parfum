@@ -9,6 +9,13 @@ function httpError(message: string, status = 400) {
 
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
 
+type JournalNotificationResult = {
+  subscriberCount: number;
+  sentCount: number;
+  failedCount: number;
+  skippedReason?: 'not_published' | 'already_notified' | 'no_subscribers';
+};
+
 function slugify(value: string) {
   return String(value || '')
     .trim()
@@ -36,6 +43,9 @@ function normalizeInput(input: any) {
         }))
         .filter((s: any) => s.body)
     : [];
+  const contentText = [input.description, ...sections.flatMap((section: any) => [section.heading, section.body])]
+    .filter(Boolean)
+    .join(' ');
 
   return {
     slug,
@@ -45,7 +55,7 @@ function normalizeInput(input: any) {
     image: String(input.image || '').trim(),
     heroImage: String(input.heroImage || input.image || '').trim(),
     date: String(input.date || '').trim(),
-    readTime: String(input.readTime || '').trim(),
+    readTime: String(input.readTime || '').trim() || estimateReadTime(contentText),
     author: String(input.author || '').trim(),
     sections,
     relatedSlugs: Array.isArray(input.relatedSlugs)
@@ -54,6 +64,15 @@ function normalizeInput(input: any) {
     status: input.status === 'published' ? 'published' : 'draft',
     publishedAt: input.status === 'published' ? input.publishedAt || new Date() : undefined,
   };
+}
+
+function estimateReadTime(value: string) {
+  const wordCount = String(value || '')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean).length;
+  const minutes = Math.max(1, Math.ceil(wordCount / 220));
+  return `${minutes} phút đọc`;
 }
 
 function serialize(doc: any) {
@@ -91,13 +110,17 @@ function absoluteUrl(path: string) {
   return `${CLIENT_URL.replace(/\/+$/, '')}${path.startsWith('/') ? path : `/${path}`}`;
 }
 
-async function notifyJournalSubscribers(article: any) {
-  if (article.status !== 'published' || article.journalNotifiedAt) return;
+async function notifyJournalSubscribers(article: any): Promise<JournalNotificationResult> {
+  if (article.status !== 'published') {
+    return { subscriberCount: 0, sentCount: 0, failedCount: 0, skippedReason: 'not_published' };
+  }
+  if (article.journalNotifiedAt) {
+    return { subscriberCount: 0, sentCount: 0, failedCount: 0, skippedReason: 'already_notified' };
+  }
 
   const subscribers = await JournalSubscriber.find({ isActive: true }).select('email').lean();
   if (!subscribers.length) {
-    await BlogArticle.updateOne({ _id: article._id, journalNotifiedAt: { $exists: false } }, { $set: { journalNotifiedAt: new Date() } });
-    return;
+    return { subscriberCount: 0, sentCount: 0, failedCount: 0, skippedReason: 'no_subscribers' };
   }
 
   const url = absoluteUrl(`/blog/${article.slug}`);
@@ -124,15 +147,21 @@ async function notifyJournalSubscribers(article: any) {
 
   if (sentEmails.length) {
     await JournalSubscriber.updateMany({ email: { $in: sentEmails } }, { $set: { lastNotifiedAt: new Date() } });
+    await BlogArticle.updateOne({ _id: article._id }, { $set: { journalNotifiedAt: new Date() } });
+  } else {
+    logger.warn(`[journal] Khong gui duoc thong bao bai viet "${article.slug}" toi subscriber nao`);
+    return {
+      subscriberCount: subscribers.length,
+      sentCount: 0,
+      failedCount: subscribers.length,
+    };
   }
-  await BlogArticle.updateOne({ _id: article._id }, { $set: { journalNotifiedAt: new Date() } });
   logger.info(`[journal] Da gui thong bao bai viet "${article.slug}" toi ${sentEmails.length}/${subscribers.length} subscriber`);
-}
-
-function queueJournalNotification(article: any) {
-  void notifyJournalSubscribers(article).catch((error) => {
-    logger.error('[journal] Gui thong bao bai viet that bai', error);
-  });
+  return {
+    subscriberCount: subscribers.length,
+    sentCount: sentEmails.length,
+    failedCount: subscribers.length - sentEmails.length,
+  };
 }
 
 export async function listPublic() {
@@ -173,8 +202,10 @@ export async function createArticle(input: any) {
   const exists = await BlogArticle.findOne({ slug: data.slug });
   if (exists) throw httpError('Slug bai viet da ton tai', 409);
   const doc = await BlogArticle.create(data);
-  queueJournalNotification(doc);
-  return serialize(doc);
+  const journalNotification = doc.status === 'published'
+    ? await notifyJournalSubscribers(doc)
+    : undefined;
+  return { ...serialize(doc), journalNotification };
 }
 
 export async function subscribeJournal(emailInput: string) {
@@ -183,11 +214,16 @@ export async function subscribeJournal(emailInput: string) {
     throw httpError('Email khong hop le', 400);
   }
 
-  const doc = await JournalSubscriber.findOneAndUpdate(
-    { email },
-    { $set: { email, isActive: true }, $setOnInsert: { subscribedAt: new Date() } },
-    { upsert: true, new: true, runValidators: true },
-  );
+  const existing = await JournalSubscriber.findOne({ email });
+  if (existing) {
+    const wasInactive = !existing.isActive;
+    existing.isActive = true;
+    if (wasInactive) existing.adminSeenAt = undefined;
+    await existing.save();
+    return { email: existing.email, message: 'Da dang ky nhan journal' };
+  }
+
+  const doc = await JournalSubscriber.create({ email, isActive: true, subscribedAt: new Date() });
 
   return { email: doc.email, message: 'Da dang ky nhan journal' };
 }
@@ -214,10 +250,11 @@ export async function updateArticle(id: string, input: any) {
   if (exists) throw httpError('Slug bai viet da ton tai', 409);
   const doc = await BlogArticle.findByIdAndUpdate(id, data, { new: true, runValidators: true });
   if (!doc) throw httpError('Khong tim thay bai viet', 404);
-  if (previous.status !== 'published' && doc.status === 'published') {
-    queueJournalNotification(doc);
+  let journalNotification: JournalNotificationResult | undefined;
+  if (doc.status === 'published' && (previous.status !== 'published' || !previous.journalNotifiedAt)) {
+    journalNotification = await notifyJournalSubscribers(doc);
   }
-  return serialize(doc);
+  return { ...serialize(doc), journalNotification };
 }
 
 export async function deleteArticle(id: string) {

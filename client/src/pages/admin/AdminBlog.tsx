@@ -34,10 +34,9 @@ type BlogForm = {
   image: string;
   heroImage: string;
   author: string;
-  readTime: string;
   date: string;
   status: BlogStatus;
-  relatedSlugs: string;
+  relatedSlugs: string[];
   sections: BlogSectionForm[];
 };
 
@@ -56,10 +55,9 @@ const emptyForm: BlogForm = {
   image: "",
   heroImage: "",
   author: "",
-  readTime: "",
   date: "",
   status: "draft",
-  relatedSlugs: "",
+  relatedSlugs: [],
   sections: [{ ...emptySection }],
 };
 
@@ -74,6 +72,17 @@ function slugify(value: string) {
     .replace(/^-+|-+$/g, "");
 }
 
+function toDateInput(value: string) {
+  const text = String(value || "").trim();
+  if (/^\d{4}-\d{2}-\d{2}/.test(text)) return text.slice(0, 10);
+  const match = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (match) {
+    const [, d, m, y] = match;
+    return `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
+  }
+  return "";
+}
+
 function articleToForm(article: BlogArticle): BlogForm {
   return {
     title: article.title,
@@ -83,10 +92,9 @@ function articleToForm(article: BlogArticle): BlogForm {
     image: article.image,
     heroImage: article.heroImage || article.image,
     author: article.author || "",
-    readTime: article.readTime || "",
-    date: article.date || "",
+    date: toDateInput(article.date || ""),
     status: ((article as any).status || "draft") as BlogStatus,
-    relatedSlugs: (article.relatedSlugs || []).join(", "),
+    relatedSlugs: article.relatedSlugs || [],
     sections: article.sections?.length
       ? article.sections.map((section) => ({
           heading: section.heading || "",
@@ -107,13 +115,9 @@ function formToPayload(form: BlogForm) {
     image: form.image.trim(),
     heroImage: form.heroImage.trim() || form.image.trim(),
     author: form.author.trim(),
-    readTime: form.readTime.trim(),
     date: form.date.trim(),
     status: form.status,
-    relatedSlugs: form.relatedSlugs
-      .split(",")
-      .map((slug) => slug.trim())
-      .filter(Boolean),
+    relatedSlugs: form.relatedSlugs,
     sections: form.sections
       .map((section) => ({
         heading: section.heading.trim(),
@@ -132,6 +136,48 @@ export default function AdminBlog() {
   const [editing, setEditing] = useState<BlogArticle | null | undefined>();
   const [deleting, setDeleting] = useState<BlogArticle | null>(null);
   const [form, setForm] = useState<BlogForm>(emptyForm);
+  const publishedOptions = rows.filter((article) => {
+    const status = ((article as any).status || "draft") as BlogStatus;
+    const currentSlug = form.slug.trim() || slugify(form.title);
+    return status === "published" && article.slug !== currentSlug;
+  });
+
+  function showJournalToast(
+    status: BlogStatus,
+    fallback: string,
+    article?: BlogArticle & {
+      journalNotification?: {
+        subscriberCount: number;
+        sentCount: number;
+        failedCount?: number;
+        skippedReason?: string;
+      };
+    },
+  ) {
+    if (status !== "published") {
+      toast.success(fallback);
+      return;
+    }
+
+    const journal = article?.journalNotification;
+    if (!journal) {
+      toast.success(fallback);
+      return;
+    }
+    if (journal.skippedReason === "already_notified") {
+      toast.success("Đã cập nhật bài viết đã xuất bản");
+      return;
+    }
+    if (journal.skippedReason === "no_subscribers") {
+      toast.success("Đã xuất bản bài viết. Hiện chưa có email đăng ký nhận journal.");
+      return;
+    }
+    if (journal.sentCount > 0) {
+      toast.success(`Đã xuất bản và gửi email cho ${journal.sentCount}/${journal.subscriberCount} khách đăng ký journal`);
+      return;
+    }
+    toast.error("Đã xuất bản bài viết nhưng chưa gửi được email. Kiểm tra SMTP hoặc email subscriber.");
+  }
 
   async function load() {
     try {
@@ -177,7 +223,7 @@ export default function AdminBlog() {
     }));
   }
 
-  async function save() {
+  async function saveWithStatus(status: BlogStatus = form.status) {
     if (!form.title.trim()) return toast.error("Vui lòng nhập tiêu đề bài viết");
     if (!form.description.trim()) return toast.error("Vui lòng nhập mô tả ngắn");
     if (!form.image.trim()) return toast.error("Vui lòng chọn ảnh thumbnail");
@@ -186,10 +232,15 @@ export default function AdminBlog() {
     }
     try {
       setSaving(true);
-      const payload = formToPayload(form);
-      if (editing) await adminApi.put(`/blog/${editing.id}`, payload);
-      else await adminApi.post("/blog", payload);
-      toast.success(editing ? "Đã cập nhật bài viết" : "Đã tạo bài viết");
+      const payload = formToPayload({ ...form, status });
+      const saved = editing
+        ? await adminApi.put<BlogArticle>(`/blog/${editing.id}`, payload)
+        : await adminApi.post<BlogArticle>("/blog", payload);
+      showJournalToast(
+        status,
+        status === "published" ? "Đã xuất bản bài viết" : editing ? "Đã cập nhật bài viết" : "Đã lưu bản nháp",
+        saved,
+      );
       setEditing(undefined);
       await load();
     } catch (e) {
@@ -197,6 +248,39 @@ export default function AdminBlog() {
     } finally {
       setSaving(false);
     }
+  }
+
+  async function changeStatus(article: BlogArticle, status: BlogStatus) {
+    try {
+      setSaving(true);
+      const saved = await adminApi.put<BlogArticle>(`/blog/${article.id}`, {
+        ...formToPayload(articleToForm(article)),
+        status,
+      });
+      showJournalToast(status, status === "published" ? "Đã xuất bản bài viết" : "Đã chuyển về bản nháp", saved);
+      await load();
+    } catch (e) {
+      toast.error(apiMessage(e, "Không cập nhật trạng thái bài viết"));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function addRelatedSlug(slug: string) {
+    if (!slug) return;
+    setForm((current) => ({
+      ...current,
+      relatedSlugs: current.relatedSlugs.includes(slug)
+        ? current.relatedSlugs
+        : [...current.relatedSlugs, slug],
+    }));
+  }
+
+  function removeRelatedSlug(slug: string) {
+    setForm((current) => ({
+      ...current,
+      relatedSlugs: current.relatedSlugs.filter((item) => item !== slug),
+    }));
   }
 
   async function remove() {
@@ -264,6 +348,15 @@ export default function AdminBlog() {
                     <td className="px-4 py-3 text-gray-500">{formatDate((article as any).updatedAt)}</td>
                     <td className="px-4 py-3">
                       <div className="flex justify-end gap-2">
+                        {((article as any).status || "draft") === "published" ? (
+                          <Button variant="secondary" disabled={saving} onClick={() => changeStatus(article, "draft")}>
+                            Gỡ xuất bản
+                          </Button>
+                        ) : (
+                          <Button disabled={saving} onClick={() => changeStatus(article, "published")}>
+                            Xuất bản
+                          </Button>
+                        )}
                         <Button variant="secondary" onClick={() => openForm(article)}>
                           Sửa
                         </Button>
@@ -287,11 +380,19 @@ export default function AdminBlog() {
         wide
         footer={
           <>
+            <div className="mr-auto flex items-center gap-2">
+              <Badge color={form.status === "published" ? "green" : "gray"}>
+                {form.status === "published" ? "Đã xuất bản" : "Bản nháp"}
+              </Badge>
+            </div>
             <Button variant="secondary" onClick={() => setEditing(undefined)}>
               Hủy
             </Button>
-            <Button onClick={save} disabled={saving}>
-              {saving ? "Đang lưu..." : "Lưu"}
+            <Button variant="secondary" onClick={() => saveWithStatus("draft")} disabled={saving}>
+              {saving ? "Đang lưu..." : "Lưu nháp"}
+            </Button>
+            <Button onClick={() => saveWithStatus("published")} disabled={saving}>
+              {saving ? "Đang xuất bản..." : form.status === "published" ? "Cập nhật xuất bản" : "Xuất bản"}
             </Button>
           </>
         }
@@ -310,23 +411,43 @@ export default function AdminBlog() {
           <Field label="Danh mục">
             <Input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} />
           </Field>
-          <Field label="Trạng thái">
-            <Select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as BlogStatus })}>
-              <option value="draft">Bản nháp</option>
-              <option value="published">Xuất bản</option>
-            </Select>
-          </Field>
           <Field label="Tác giả">
             <Input value={form.author} onChange={(e) => setForm({ ...form, author: e.target.value })} />
           </Field>
-          <Field label="Thời gian đọc">
-            <Input value={form.readTime} onChange={(e) => setForm({ ...form, readTime: e.target.value })} placeholder="5 phút đọc" />
-          </Field>
           <Field label="Ngày hiển thị">
-            <Input value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} placeholder="22 tháng 7, 2026" />
+            <Input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
           </Field>
-          <Field label="Bài liên quan" hint="Nhập các slug, ngăn cách bằng dấu phẩy.">
-            <Input value={form.relatedSlugs} onChange={(e) => setForm({ ...form, relatedSlugs: e.target.value })} placeholder="bai-viet-1, bai-viet-2" />
+          <Field label="Bài viết liên quan" hint="Chọn từ các bài đã xuất bản trước đó.">
+            <div className="space-y-2">
+              <Select value="" onChange={(e) => addRelatedSlug(e.target.value)}>
+                <option value="">Chọn bài viết</option>
+                {publishedOptions
+                  .filter((article) => !form.relatedSlugs.includes(article.slug))
+                  .map((article) => (
+                    <option key={article.slug} value={article.slug}>
+                      {article.title}
+                    </option>
+                  ))}
+              </Select>
+              {form.relatedSlugs.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {form.relatedSlugs.map((slug) => {
+                    const article = rows.find((item) => item.slug === slug);
+                    return (
+                      <button
+                        key={slug}
+                        type="button"
+                        onClick={() => removeRelatedSlug(slug)}
+                        className="rounded-full bg-[#F1EEE8] px-3 py-1 text-xs text-gray-700 transition hover:bg-red-50 hover:text-red-700"
+                        title="Bấm để bỏ bài liên quan"
+                      >
+                        {article?.title || slug} ×
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </Field>
           <Field label="Ảnh thumbnail">
             <div className="space-y-2">

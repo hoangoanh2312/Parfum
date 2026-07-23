@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, MapPin, StickyNote, CreditCard } from "lucide-react";
+import { ArrowLeft, MapPin, StickyNote, CreditCard, Printer } from "lucide-react";
 import { api } from "../lib/api";
 import Footer from "../components/Footer";
 import { StatusBadge, PAY_METHOD, PAY_STATUS } from "./Orders";
@@ -41,6 +41,39 @@ export default function OrderDetail() {
   const [order, setOrder] = useState<Detail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  function exportInvoice() {
+    if (!order) return;
+    const win = window.open("", "_blank", "width=820,height=1000");
+    if (!win) return;
+    const code = order.id.slice(-6).toUpperCase();
+    const itemRows = order.items
+      .map(
+        (it) =>
+          `<tr><td>${it.name}</td><td>${it.volume}</td><td style="text-align:right">${vnd(it.price)}</td><td style="text-align:center">${it.quantity}</td><td style="text-align:right">${vnd(it.lineTotal)}</td></tr>`,
+      )
+      .join("");
+    const payMethod = order.payment ? (PAY_METHOD[order.payment.method] || order.payment.method) : "—";
+    const payStatus = order.payment ? (PAY_STATUS[order.payment.status] || order.payment.status) : "—";
+    const addr = order.address
+      ? [order.address.line, order.address.city, order.address.phone ? "ĐT: " + order.address.phone : ""].filter(Boolean).join("<br>")
+      : "Không có địa chỉ";
+    const html = `<!doctype html><html lang="vi"><head><meta charset="utf-8"><title>Hóa đơn #${code} — L'Essence Noire</title>
+    <style>*{box-sizing:border-box}body{font-family:'Segoe UI',Arial,sans-serif;color:#1C1C19;margin:0;padding:40px;background:#fff}.head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #735C00;padding-bottom:18px;margin-bottom:24px}.brand{font-size:26px;letter-spacing:3px;font-weight:600;color:#735C00}.tag{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#8a8373;margin-top:4px}.meta{font-size:12px;color:#5F5E5E;text-align:right;line-height:1.7}.meta b{color:#1C1C19}h2{font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#735C00;margin:24px 0 8px}table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:9px 8px;border-bottom:1px solid #eee;text-align:left}th{font-size:10px;text-transform:uppercase;color:#8a8373;border-bottom:1px solid #d8cfb8}.total{display:flex;justify-content:flex-end;margin-top:14px}.total .box{min-width:260px}.total .row{display:flex;justify-content:space-between;padding:6px 0;font-size:14px}.total .grand{border-top:2px solid #735C00;margin-top:6px;padding-top:10px;font-size:18px;font-weight:600}.cols{display:flex;gap:24px;margin-top:8px}.cols>div{flex:1;font-size:13px;line-height:1.7}.foot{margin-top:40px;text-align:center;font-size:11px;color:#9b958b;border-top:1px solid #e6e0d3;padding-top:14px}@media print{body{padding:16px}}</style></head><body>
+    <div class="head"><div><div class="brand">L'ESSENCE NOIRE</div><div class="tag">Hóa đơn bán hàng</div></div>
+    <div class="meta">Số hóa đơn: <b>#${code}</b><br>Ngày đặt: <b>${fmtDate(order.createdAt)}</b><br>Trạng thái: <b>${order.status}</b></div></div>
+    <div class="cols"><div><h2>Giao tới</h2>${addr}</div><div><h2>Thanh toán</h2>Phương thức: ${payMethod}<br>Trạng thái: ${payStatus}</div></div>
+    <h2>Chi tiết sản phẩm</h2>
+    <table><thead><tr><th>Sản phẩm</th><th>Dung tích</th><th style="text-align:right">Đơn giá</th><th style="text-align:center">SL</th><th style="text-align:right">Thành tiền</th></tr></thead><tbody>${itemRows}</tbody></table>
+    <div class="total"><div class="box"><div class="row grand"><span>Tổng cộng</span><span>${vnd(order.total)}</span></div></div></div>
+    ${order.note ? `<h2>Ghi chú</h2><p style="font-size:13px;color:#1C1C19">${order.note}</p>` : ""}
+    <div class="foot">Cảm ơn quý khách đã mua sắm tại L'Essence Noire · Hóa đơn xuất lúc ${new Date().toLocaleString("vi-VN")}</div>
+    </body></html>`;
+    win.document.write(html);
+    win.document.close();
+    win.focus();
+    setTimeout(() => win.print(), 500);
+  }
 
   useEffect(() => {
     let active = true;
@@ -89,7 +122,16 @@ export default function OrderDetail() {
                   Đặt lúc {fmtDate(order.createdAt)}
                 </p>
               </div>
-              <StatusBadge status={order.status} />
+              <div className="flex items-center gap-3">
+                <StatusBadge status={order.status} />
+                <button
+                  type="button"
+                  onClick={exportInvoice}
+                  className="inline-flex items-center gap-2 border border-[#735C00] px-4 py-2 font-['Manrope'] text-[11px] font-semibold uppercase tracking-[1.4px] text-[#735C00] transition hover:bg-[#735C00] hover:text-white"
+                >
+                  <Printer size={14} /> Xuất hóa đơn
+                </button>
+              </div>
             </header>
 
             {/* Danh sách sản phẩm */}

@@ -17,6 +17,10 @@ import { Variant } from '../models/variant.model';
 import { Order } from '../models/order.model';
 import { Payment } from '../models/payment.model';
 import { Review } from '../models/review.model';
+import { Discount } from '../models/discount.model';
+import { FlashSale } from '../models/flashSale.model';
+import { PriceHistory } from '../models/priceHistory.model';
+import { Voucher } from '../models/voucher.model';
 
 function slugify(input: string): string {
   return input
@@ -62,16 +66,45 @@ async function seed() {
     Order.deleteMany({}),
     Payment.deleteMany({}),
     Review.deleteMany({}),
+    Discount.deleteMany({}),
+    FlashSale.deleteMany({}),
+    PriceHistory.deleteMany({}),
+    Voucher.deleteMany({}),
   ]);
 
-  // 3) BRANDS + CATEGORIES (model chi co truong name)
+  // 3) BRANDS + CATEGORIES
   const brandDocs = await Brand.insertMany(
-    ["L'Essence Noire", 'Dior', 'Chanel', 'Versace'].map((name) => ({ name })),
+    [
+      {
+        name: "L'Essence Noire",
+        country: 'Vietnam',
+        description: 'Nha tuyen chon nuoc hoa cao cap voi tinh than toi gian, sang trong va ca tinh.',
+        isFeatured: true,
+      },
+      {
+        name: 'Dior',
+        country: 'France',
+        description: 'Bieu tuong thoi trang va mui huong Phap voi cac sang tao nam tinh hien dai.',
+        isFeatured: true,
+      },
+      {
+        name: 'Chanel',
+        country: 'France',
+        description: 'Di san huong thom thanh lich, nu tinh va ben bi qua nhieu the he.',
+        isFeatured: true,
+      },
+      {
+        name: 'Versace',
+        country: 'Italy',
+        description: 'Phong cach Y ruc ro, quyen ru va day nang luong.',
+        isFeatured: true,
+      },
+    ].map((brand) => ({ ...brand, slug: slugify(brand.name) })),
   );
   const brandMap = new Map(brandDocs.map((b: any) => [b.name as string, b._id]));
 
   const catDocs = await Category.insertMany(
-    ['Nuoc hoa nam', 'Nuoc hoa nu', 'Unisex'].map((name) => ({ name })),
+    ['Nước hoa nam', 'Nước hoa nữ', 'Unisex'].map((name) => ({ name, slug: slugify(name) })),
   );
   const catMap = new Map(catDocs.map((c: any) => [c.name as string, c._id]));
   console.log(`   🏷️  ${brandDocs.length} brands, 📂 ${catDocs.length} categories`);
@@ -79,7 +112,7 @@ async function seed() {
   // 4) PRODUCTS + VARIANTS
   const products = [
     {
-      name: 'Noir Intense', brand: "L'Essence Noire", category: 'Nuoc hoa nam', gender: 'male',
+      name: 'Noir Intense', brand: "L'Essence Noire", category: 'Nước hoa nam', gender: 'male',
       fragranceFamily: 'Woody', concentration: 'EDP', season: ['autumn', 'winter'],
       description: 'Huong go am pha chut cay – nam tinh, sang trong, luu huong lau.',
       images: ['https://picsum.photos/seed/noir-intense/600/800'],
@@ -87,7 +120,7 @@ async function seed() {
       variants: [ { volume: '50ml', price: 1250000, stock: 30 }, { volume: '100ml', price: 1950000, stock: 20 } ],
     },
     {
-      name: 'Rose Blanche', brand: "L'Essence Noire", category: 'Nuoc hoa nu', gender: 'female',
+      name: 'Rose Blanche', brand: "L'Essence Noire", category: 'Nước hoa nữ', gender: 'female',
       fragranceFamily: 'Floral', concentration: 'EDP', season: ['spring', 'summer'],
       description: 'Hoa hong trang tinh khoi – nu tinh, thanh lich, nhe nhang.',
       images: ['https://picsum.photos/seed/rose-blanche/600/800'],
@@ -103,7 +136,7 @@ async function seed() {
       variants: [ { volume: '50ml', price: 2850000, stock: 15 }, { volume: '100ml', price: 4950000, stock: 8 } ],
     },
     {
-      name: 'Dior Sauvage EDP', brand: 'Dior', category: 'Nuoc hoa nam', gender: 'male',
+      name: 'Dior Sauvage EDP', brand: 'Dior', category: 'Nước hoa nam', gender: 'male',
       fragranceFamily: 'Fougere', concentration: 'EDP', season: ['autumn', 'winter', 'spring'],
       description: 'Manh me, hoang da va quyen ru – bieu tuong nuoc hoa nam hien dai.',
       images: ['https://picsum.photos/seed/sauvage/600/800'],
@@ -111,7 +144,7 @@ async function seed() {
       variants: [ { volume: '60ml', price: 2650000, stock: 15 }, { volume: '100ml', price: 3450000, stock: 12 } ],
     },
     {
-      name: 'Chanel Coco Mademoiselle EDP', brand: 'Chanel', category: 'Nuoc hoa nu', gender: 'female',
+      name: 'Chanel Coco Mademoiselle EDP', brand: 'Chanel', category: 'Nước hoa nữ', gender: 'female',
       fragranceFamily: 'Oriental', concentration: 'EDP', season: ['spring', 'autumn', 'winter'],
       description: 'Phuong Dong tuoi sang va quyen ru – bieu tuong cua phu nu Chanel.',
       images: ['https://picsum.photos/seed/coco/600/800'],
@@ -119,7 +152,7 @@ async function seed() {
       variants: [ { volume: '50ml', price: 2950000, stock: 10 }, { volume: '100ml', price: 4150000, stock: 8 } ],
     },
     {
-      name: 'Versace Eros EDP', brand: 'Versace', category: 'Nuoc hoa nam', gender: 'male',
+      name: 'Versace Eros EDP', brand: 'Versace', category: 'Nước hoa nam', gender: 'male',
       fragranceFamily: 'Oriental', concentration: 'EDP', season: ['autumn', 'winter'],
       description: 'Cuong nhiet, hung manh va goi tinh – cam hung tu than tinh yeu Eros.',
       images: ['https://picsum.photos/seed/eros/600/800'],
@@ -154,9 +187,17 @@ async function seed() {
         sku,
         volume: v.volume,
         price: v.price,
+        basePrice: v.price,
+        costPrice: Math.round(v.price * 0.58),
         stock: v.stock,
         images: p.images.slice(0, 1),
         isActive: true,
+      });
+      await PriceHistory.create({
+        variant: variant._id,
+        basePrice: v.price,
+        validFrom: variant.createdAt || new Date(),
+        reason: 'Seed gia niem yet ban dau',
       });
       createdVariants.push(variant);
     }
@@ -168,19 +209,72 @@ async function seed() {
   const v1 = createdVariants[0];
   const v2 = createdVariants[2];
   const items = [
-    { variant: v1._id, name: createdProducts[0].name, volume: v1.volume, price: v1.price, quantity: 1 },
-    { variant: v2._id, name: createdProducts[1].name, volume: v2.volume, price: v2.price, quantity: 2 },
+    {
+      variant: v1._id,
+      name: createdProducts[0].name,
+      volume: v1.volume,
+      price: v1.price,
+      basePrice: v1.basePrice ?? v1.price,
+      finalPrice: v1.price,
+      costPrice: v1.costPrice ?? 0,
+      productDiscountAmount: 0,
+      quantity: 1,
+    },
+    {
+      variant: v2._id,
+      name: createdProducts[1].name,
+      volume: v2.volume,
+      price: v2.price,
+      basePrice: v2.basePrice ?? v2.price,
+      finalPrice: v2.price,
+      costPrice: v2.costPrice ?? 0,
+      productDiscountAmount: 0,
+      quantity: 2,
+    },
   ];
   const total = items.reduce((s, it) => s + it.price * it.quantity, 0);
+  const now = new Date();
   const order = await Order.create({
     user: customerId,
     items,
+    subtotal: total,
+    originalTotal: total,
+    productLevelDiscount: 0,
+    voucherDiscount: 0,
+    shippingDiscount: 0,
+    discount: 0,
+    shippingFee: 0,
+    tax: 0,
     total,
-    status: 'paid',
-    address: { line: '45 Tran Hung Dao', city: 'TP. Ho Chi Minh', phone: '0902000001' },
+    status: 'done',
+    address: {
+      fullName: 'Nguyen Thi Mai',
+      email: 'mai.nguyen@gmail.com',
+      phone: '0902000001',
+      line: '45 Tran Hung Dao',
+      ward: 'Phuong Ben Nghe',
+      district: 'Quan 1',
+      province: 'TP. Ho Chi Minh',
+      city: 'TP. Ho Chi Minh',
+    },
     note: 'Giao trong gio hanh chinh',
+    statusHistory: [
+      { status: 'pending', at: now },
+      { status: 'shipping', at: now },
+      { status: 'done', at: now },
+    ],
+    processedAt: now,
+    shippedAt: now,
+    completedAt: now,
   });
-  await Payment.create({ order: order._id, method: 'bank_qr', status: 'paid', amount: total });
+  await Payment.create({
+    order: order._id,
+    method: 'bank_qr',
+    status: 'paid',
+    amount: total,
+    receivedAmount: total,
+    paidAt: now,
+  });
   console.log('   🛍️  1 don hang mau + thanh toan');
 
   // 6) DANH GIA MAU
