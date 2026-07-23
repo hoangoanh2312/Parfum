@@ -446,9 +446,9 @@ export const BLOG_ARTICLES: BlogArticle[] = [
     id: 13,
     slug: "archetype-ambergris",
     category: "Ingredient Focus",
-    title: "Ambergris: The Ocean\'s Slow Alchemy",
+    title: "Ambergris: The Ocean's Slow Alchemy",
     description:
-      "Born in the sea and aged by sun and salt for years, ambergris is one of perfumery\'s strangest and most magical materials.",
+      "Born in the sea and aged by sun and salt for years, ambergris is one of perfumery's strangest and most magical materials.",
     image: "https://images.unsplash.com/photo-1501004318641-b39e6451bec6?w=800&q=80",
     heroImage: "https://images.unsplash.com/photo-1501004318641-b39e6451bec6?w=1600&q=80",
     date: "22 thang 3, 2025",
