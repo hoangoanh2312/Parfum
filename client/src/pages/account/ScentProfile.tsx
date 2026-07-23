@@ -92,12 +92,11 @@ interface ProductListResponse {
 }
 
 export default function ScentProfile() {
-  const [families, setFamilies] = useState<string[]>([
-    "woody",
-    "fresh",
-    "oriental",
-  ]);
+  const [families, setFamilies] = useState<string[]>([]);
+  const [preferredNotes, setPreferredNotes] = useState<string[]>([]);
+  const [dislikedNotes, setDislikedNotes] = useState<string[]>([]);
   const [familyOptions, setFamilyOptions] = useState(fallbackScentFamilies);
+  const [noteOptions, setNoteOptions] = useState<string[]>([]);
   const [recommendations, setRecommendations] = useState<RecommendedProduct[]>([]);
   const [activeRecommendation, setActiveRecommendation] = useState(0);
   const [recommendationsLoading, setRecommendationsLoading] = useState(false);
@@ -112,6 +111,8 @@ export default function ScentProfile() {
       .then(({ data }) => {
         if (!mounted) return;
         setFamilies(data.families || []);
+        setPreferredNotes(data.preferredNotes || []);
+        setDislikedNotes(data.dislikedNotes || []);
       })
       .catch((error) => {
         toast.error(
@@ -130,6 +131,11 @@ export default function ScentProfile() {
           new Set((data.fragranceFamilies || []).map((item) => item.trim()).filter(Boolean)),
         ).map(familyOptionFromName);
         setFamilyOptions(nextFamilies.length ? nextFamilies : fallbackScentFamilies);
+        setNoteOptions(
+          Array.from(
+            new Set((data.notes || []).map((item) => item.trim()).filter(Boolean)),
+          ).sort((left, right) => left.localeCompare(right, "vi")),
+        );
       })
       .catch(() => undefined);
 
@@ -159,15 +165,25 @@ export default function ScentProfile() {
     () => selectedFamilyOptions.map((item) => item.name),
     [selectedFamilyOptions],
   );
-  const discoverPath = selectedFamilyFilters.length
-    ? `/shop?${new URLSearchParams({ scent: selectedFamilyFilters.join(",") }).toString()}`
-    : "/shop";
+  const discoverPath = useMemo(() => {
+    const params = new URLSearchParams();
+    params.set("match", "any");
+    if (selectedFamilyFilters.length) {
+      params.set("scent", selectedFamilyFilters.join(","));
+    }
+    if (preferredNotes.length) params.set("note", preferredNotes.join(","));
+    if (dislikedNotes.length) params.set("excludeNote", dislikedNotes.join(","));
+    const query = params.toString();
+    return query ? `/shop?${query}` : "/shop";
+  }, [dislikedNotes, preferredNotes, selectedFamilyFilters]);
 
   useEffect(() => {
     let active = true;
     const scent = selectedFamilyFilters.join(",");
+    const note = preferredNotes.join(",");
+    const excludeNote = dislikedNotes.join(",");
 
-    if (!scent) {
+    if (!scent && !note) {
       setRecommendations([]);
       setActiveRecommendation(0);
       return () => {
@@ -178,13 +194,29 @@ export default function ScentProfile() {
     setRecommendationsLoading(true);
     api
       .get<ProductListResponse>("/products", {
-        params: { page: 1, limit: 100, scent, sort: "best_selling" },
+        params: {
+          page: 1,
+          limit: 100,
+          scent: scent || undefined,
+          note: note || undefined,
+          excludeNote: excludeNote || undefined,
+          match: "any",
+          sort: "best_selling",
+        },
       })
       .then(async ({ data: firstPage }) => {
         const additionalPages = await Promise.all(
           Array.from({ length: Math.max(0, firstPage.totalPages - 1) }, (_, index) =>
             api.get<ProductListResponse>("/products", {
-              params: { page: index + 2, limit: 100, scent, sort: "best_selling" },
+              params: {
+                page: index + 2,
+                limit: 100,
+                scent: scent || undefined,
+                note: note || undefined,
+                excludeNote: excludeNote || undefined,
+                match: "any",
+                sort: "best_selling",
+              },
             }),
           ),
         );
@@ -209,7 +241,7 @@ export default function ScentProfile() {
     return () => {
       active = false;
     };
-  }, [selectedFamilyFilters]);
+  }, [dislikedNotes, preferredNotes, selectedFamilyFilters]);
 
   const toggleFamily = (id: string) => {
     const normalizedId = familyId(id);
@@ -220,19 +252,47 @@ export default function ScentProfile() {
     );
   };
 
+  const togglePreferredNote = (note: string) => {
+    setPreferredNotes((current) =>
+      current.some((item) => familyId(item) === familyId(note))
+        ? current.filter((item) => familyId(item) !== familyId(note))
+        : [...current, note],
+    );
+    setDislikedNotes((current) =>
+      current.filter((item) => familyId(item) !== familyId(note)),
+    );
+  };
+
+  const toggleDislikedNote = (note: string) => {
+    setDislikedNotes((current) =>
+      current.some((item) => familyId(item) === familyId(note))
+        ? current.filter((item) => familyId(item) !== familyId(note))
+        : [...current, note],
+    );
+    setPreferredNotes((current) =>
+      current.filter((item) => familyId(item) !== familyId(note)),
+    );
+  };
+
   const saveProfile = async () => {
     setSaving(true);
     try {
-      const { data } = await api.put<ScentProfileData>(
+      const { data } = await api.put<ScentProfileData & { newMemberVoucherIssued?: boolean; profileCompletionVoucherCode?: string }>(
         "/account/scent-profile",
         {
           families,
-          preferredNotes: [],
-          dislikedNotes: [],
+          preferredNotes,
+          dislikedNotes,
         },
       );
       setFamilies(data.families || []);
-      toast.success("Đã lưu hồ sơ mùi hương");
+      setPreferredNotes(data.preferredNotes || []);
+      setDislikedNotes(data.dislikedNotes || []);
+      toast.success(
+        data.newMemberVoucherIssued
+          ? `Đã lưu hồ sơ mùi hương. Voucher chào mừng ${data.profileCompletionVoucherCode} đã sẵn sàng.`
+          : "Đã lưu hồ sơ mùi hương",
+      );
     } catch (error: any) {
       toast.error(
         error?.response?.data?.message || "Không thể lưu hồ sơ mùi hương",
@@ -460,6 +520,76 @@ export default function ScentProfile() {
                 </button>
               );
             })}
+          </div>
+        </section>
+
+        <section className="grid gap-6 xl:grid-cols-2">
+          <div className="border border-[#E0D9D0] bg-[#FFFDF9] p-7">
+            <div className="mb-5">
+              <p className="text-[9px] uppercase tracking-[0.22em] text-[#8A7000]">
+                Preferred notes
+              </p>
+              <h2 className="mt-2 font-serif text-2xl">Note hương yêu thích</h2>
+              <p className="mt-2 text-sm leading-6 text-[#81786F]">
+                Sản phẩm gợi ý và bộ lọc khám phá sẽ ưu tiên các note bạn chọn.
+              </p>
+            </div>
+            <div className="flex max-h-72 flex-wrap content-start gap-2 overflow-y-auto pr-2">
+              {noteOptions.map((note) => {
+                const selected = preferredNotes.some(
+                  (item) => familyId(item) === familyId(note),
+                );
+                return (
+                  <button
+                    key={note}
+                    type="button"
+                    onClick={() => togglePreferredNote(note)}
+                    className={`inline-flex items-center gap-2 border px-3 py-2 text-xs transition ${
+                      selected
+                        ? "border-[#8A7000] bg-[#F2EDDC] text-[#5E4D00]"
+                        : "border-[#DED7CF] bg-white text-[#625A52] hover:border-[#A99D90]"
+                    }`}
+                  >
+                    {selected && <Check size={12} />}
+                    {note}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="border border-[#E0D9D0] bg-[#FFFDF9] p-7">
+            <div className="mb-5">
+              <p className="text-[9px] uppercase tracking-[0.22em] text-[#9A665C]">
+                Notes to avoid
+              </p>
+              <h2 className="mt-2 font-serif text-2xl">Note hương không thích</h2>
+              <p className="mt-2 text-sm leading-6 text-[#81786F]">
+                Sản phẩm chứa các note này sẽ được loại khỏi danh sách đề xuất.
+              </p>
+            </div>
+            <div className="flex max-h-72 flex-wrap content-start gap-2 overflow-y-auto pr-2">
+              {noteOptions.map((note) => {
+                const selected = dislikedNotes.some(
+                  (item) => familyId(item) === familyId(note),
+                );
+                return (
+                  <button
+                    key={note}
+                    type="button"
+                    onClick={() => toggleDislikedNote(note)}
+                    className={`inline-flex items-center gap-2 border px-3 py-2 text-xs transition ${
+                      selected
+                        ? "border-[#9A665C] bg-[#F6EAE7] text-[#74483F]"
+                        : "border-[#DED7CF] bg-white text-[#625A52] hover:border-[#A99D90]"
+                    }`}
+                  >
+                    {selected && <Check size={12} />}
+                    {note}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </section>
 

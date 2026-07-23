@@ -1,5 +1,5 @@
 import { Heart, ShoppingBag, ChevronDown } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { useCart } from "../store/cart.store";
 import { useWishlist } from "../store/wishlist.store";
@@ -48,6 +48,7 @@ interface ProductCardBaseProps {
   cartMode?: "always" | "hover";
   showDescription?: boolean;
   compact?: boolean;
+  imageAspectClassName?: string;
 }
 
 function formatVnd(value?: number | null) {
@@ -59,7 +60,9 @@ export default function ProductCardBase({
   cartMode = "always",
   showDescription = false,
   compact = false,
+  imageAspectClassName = "aspect-[4/5]",
 }: ProductCardBaseProps) {
+  const location = useLocation();
   const addItem = useCart((s) => s.addItem);
   const productId = product.id || product._id || "";
 
@@ -72,6 +75,10 @@ export default function ProductCardBase({
   }, [ensureWishlist]);
 
   const detailPath = `/products/${product.slug || productId}`;
+  const detailState =
+    location.pathname === "/shop"
+      ? { fromShop: `${location.pathname}${location.search}` }
+      : undefined;
   const image = product.images?.[0] || product.image || PLACEHOLDER;
   const brand =
     product.brand ||
@@ -140,6 +147,7 @@ export default function ProductCardBase({
           product: productId,
           name: product.name,
           slug: product.slug,
+          description: product.description,
           image,
           volume: currentSize,
           price: activePrice || 0,
@@ -165,8 +173,10 @@ export default function ProductCardBase({
   return (
     <article className="group flex h-full flex-col">
       {/* Anh */}
-      <div className="relative overflow-hidden bg-[#F3EEE7] aspect-[4/5]">
-        <Link to={detailPath} className="block h-full w-full">
+      <div
+        className={`relative overflow-hidden bg-[#F3EEE7] ${imageAspectClassName}`}
+      >
+        <Link to={detailPath} state={detailState} className="block h-full w-full">
           <img
             src={image}
             alt={product.name}
@@ -237,7 +247,7 @@ export default function ProductCardBase({
           {brand}
         </p>
 
-        <Link to={detailPath}>
+        <Link to={detailPath} state={detailState}>
           <h3
             className={
               "mt-1.5 overflow-hidden font-serif text-[#1E1D1A] line-clamp-2 " +
@@ -258,7 +268,8 @@ export default function ProductCardBase({
 
         <div
           className={
-            "flex items-center justify-between gap-3 " + (compact ? "mt-2" : "mt-2.5")
+            "flex items-start justify-between gap-3 " +
+            (compact ? "mt-2 min-h-[34px]" : "mt-2.5 min-h-[38px]")
           }
         >
           <div className="min-w-0">

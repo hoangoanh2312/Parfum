@@ -110,7 +110,7 @@ export default function SavedAddresses() {
       setForm(emptyForm);
       toast.success(
         profileJustCompleted
-          ? "Cap nhat ho so thanh cong. Voucher hoan tat ho so da san sang."
+          ? "Cap nhat ho so thanh cong. Voucher chao mung thanh vien moi da san sang."
           : editingId ? "Da cap nhat dia chi" : "Da them dia chi",
       );
     } catch (error: any) {
@@ -136,7 +136,7 @@ export default function SavedAddresses() {
       const profileJustCompleted = await refreshUser(data);
       toast.success(
         profileJustCompleted
-          ? "Cap nhat ho so thanh cong. Voucher hoan tat ho so da san sang."
+          ? "Cap nhat ho so thanh cong. Voucher chao mung thanh vien moi da san sang."
           : "Da dat lam dia chi mac dinh",
       );
     } catch (error: any) {

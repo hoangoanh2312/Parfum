@@ -81,14 +81,28 @@ export default function BannerSection() {
   const [contentVisible, setContentVisible] = useState(true);
   const [paused, setPaused] = useState(false);
   const timerRef = useRef<number | null>(null);
+  const transitionTimerRef = useRef<number | null>(null);
+  const activeIndexRef = useRef(0);
 
   const changeCollection = useCallback((next: number) => {
-    setContentVisible(false);
-    window.setTimeout(() => {
-      const total = COLLECTIONS.length;
-      setActiveIndex(((next % total) + total) % total);
+    const total = COLLECTIONS.length;
+    const normalizedIndex = ((next % total) + total) % total;
+
+    if (transitionTimerRef.current) {
+      window.clearTimeout(transitionTimerRef.current);
+      transitionTimerRef.current = null;
+    }
+    if (normalizedIndex === activeIndexRef.current) {
       setContentVisible(true);
-    }, 320);
+      return;
+    }
+    setContentVisible(false);
+    transitionTimerRef.current = window.setTimeout(() => {
+      activeIndexRef.current = normalizedIndex;
+      setActiveIndex(normalizedIndex);
+      setContentVisible(true);
+      transitionTimerRef.current = null;
+    }, 260);
   }, []);
 
   useEffect(() => {
@@ -101,13 +115,15 @@ export default function BannerSection() {
     };
   }, [activeIndex, paused, changeCollection]);
 
+  useEffect(() => () => {
+    if (transitionTimerRef.current) window.clearTimeout(transitionTimerRef.current);
+  }, []);
+
   const active = COLLECTIONS[activeIndex];
 
   return (
     <section
       className="relative isolate min-h-[92vh] w-full overflow-hidden bg-[#111]"
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
     >
       <style>{`
         @keyframes bannerDust {
@@ -146,28 +162,8 @@ export default function BannerSection() {
       </div>
 
       <div className="relative z-10 mx-auto flex min-h-[92vh] max-w-[1240px] flex-col justify-center px-6 py-24 md:px-10 lg:px-14">
-        <div className="flex flex-wrap gap-x-8 gap-y-2">
-          {COLLECTIONS.map((item, index) => (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => changeCollection(index)}
-              className={`relative pb-2 text-[11px] font-medium uppercase tracking-[2px] transition-colors duration-300 ${
-                index === activeIndex ? "text-white" : "text-white/45 hover:text-white/80"
-              }`}
-            >
-              {item.tab}
-              <span
-                className={`absolute inset-x-0 bottom-0 h-px origin-left bg-[#d8c990] transition-transform duration-500 ${
-                  index === activeIndex ? "scale-x-100" : "scale-x-0"
-                }`}
-              />
-            </button>
-          ))}
-        </div>
-
         <div
-          className="mt-10 max-w-[640px] transition-all duration-500 ease-out"
+          className="max-w-[640px] transition-all duration-500 ease-out"
           style={{
             opacity: contentVisible ? 1 : 0,
             transform: contentVisible ? "translateY(0)" : "translateY(16px)",
@@ -206,6 +202,37 @@ export default function BannerSection() {
               </div>
             ))}
           </div>
+        </div>
+
+        <div
+          className="mt-10 flex flex-wrap gap-x-8 gap-y-2"
+          onMouseEnter={() => setPaused(true)}
+          onMouseLeave={() => setPaused(false)}
+          onFocus={() => setPaused(true)}
+          onBlur={(event) => {
+            if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setPaused(false);
+          }}
+        >
+          {COLLECTIONS.map((item, index) => (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => changeCollection(index)}
+              onMouseEnter={() => changeCollection(index)}
+              onFocus={() => changeCollection(index)}
+              aria-pressed={index === activeIndex}
+              className={`relative pb-2 text-[11px] font-medium uppercase tracking-[2px] transition-colors duration-300 ${
+                index === activeIndex ? "text-white" : "text-white/45 hover:text-white/80"
+              }`}
+            >
+              {item.tab}
+              <span
+                className={`absolute inset-x-0 bottom-0 h-px origin-left bg-[#d8c990] transition-transform duration-500 ${
+                  index === activeIndex ? "scale-x-100" : "scale-x-0"
+                }`}
+              />
+            </button>
+          ))}
         </div>
       </div>
 

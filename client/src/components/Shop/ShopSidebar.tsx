@@ -6,6 +6,7 @@ import ScentFilter from "./ScentFilter";
 import SizeFilter from "./SizeFilter";
 import OccasionFilter from "./OccasionFilter";
 import ConcentrationFilter from "./ConcentrationFilter";
+import NoteFilter from "./NoteFilter";
 
 interface Props {
   scents: string[];
@@ -22,6 +23,9 @@ interface Props {
   toggleConcentration: (item: string) => void;
   selectedScents: string[];
   toggleScent: (value: string) => void;
+  notes: string[];
+  selectedNotes: string[];
+  toggleNote: (value: string) => void;
   search: string;
   setSearch: (v: string) => void;
 
@@ -42,6 +46,7 @@ interface Props {
 
   brandCounts?: Record<string, number>;
   priceBuckets?: number[];
+  noteCounts?: Record<string, number>;
 }
 
 // Anh banner o sidebar - THAY ANH CUA BAN TAI DAY
@@ -83,6 +88,13 @@ export default function ShopSidebar(props: Props) {
         selected={props.selectedScents}
         onToggle={props.toggleScent}
         initialVisible={8}
+      />
+
+      <NoteFilter
+        notes={props.notes}
+        selected={props.selectedNotes}
+        onToggle={props.toggleNote}
+        counts={props.noteCounts}
       />
 
       {/* Size */}

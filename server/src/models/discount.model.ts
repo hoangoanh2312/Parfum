@@ -15,6 +15,7 @@ const discountSchema = new Schema({
   isConcentratedPromotion: { type: Boolean, default: false },
   referencePriceConfirmed: { type: Boolean, default: false },
   referencePriceNote: { type: String, trim: true, default: '' },
+  promotionNotifiedAt: Date,
 }, { timestamps: true });
 
 discountSchema.index({ isActive: 1, startDate: 1, endDate: 1, priority: -1 });

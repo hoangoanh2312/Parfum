@@ -18,6 +18,7 @@ import blogRoutes from './blog.routes';
 import siteContentRoutes from './siteContent.routes';
 import paymentWebhookRoutes from './payment-webhook.routes';
 import supportRoutes from './support.routes';
+import scentFamilyCardRoutes from './scentFamilyCard.routes';
 
 const router = Router();
 
@@ -44,6 +45,7 @@ router.use('/account', accountRoutes);
 router.use('/blog', blogRoutes);
 router.use('/site-content', siteContentRoutes);
 router.use('/support', supportRoutes);
+router.use('/scent-family-cards', scentFamilyCardRoutes);
 router.use('/', uploadRoutes);
 
 // Khu vuc quan tri. /admin/orders phai dat TRUOC /admin de khong bi nuot route.

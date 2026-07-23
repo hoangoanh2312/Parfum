@@ -11,6 +11,12 @@ interface User {
   addresses?: Address[];
   profileCompletedAt?: string;
   profileCompletionVoucherCode?: string;
+  notificationPreferences?: {
+    orderNotifications: boolean;
+    emailNotifications: boolean;
+    promotionNotifications: boolean;
+    journalNotifications: boolean;
+  };
 }
 
 // Shape dia chi thong nhat voi backend (fullName, phone, line, ward, district, province).
@@ -99,17 +105,21 @@ export const useAuth = create<AuthState>((set) => ({
             addresses: data.addresses || [],
             profileCompletedAt: data.profileCompletedAt,
             profileCompletionVoucherCode: data.profileCompletionVoucherCode,
+            notificationPreferences: data.notificationPreferences,
           },
           isBootstrapped: true,
         });
       } catch {
-        const decoded = decodeJwt<User & JWTPayload>(token!);
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
         set({
-          user: { id: decoded.id, name: "", email: "", role: decoded.role },
+          user: null,
           isBootstrapped: true,
         });
       }
     } else {
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
       set({ user: null, isBootstrapped: true });
     }
   },

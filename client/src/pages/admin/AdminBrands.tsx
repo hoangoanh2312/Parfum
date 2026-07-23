@@ -9,6 +9,7 @@ import {
 import { adminApi, apiMessage, type AdminBrand } from "../../lib/adminApi";
 import { toast } from "../../store/toast.store";
 import ImageUploader from "../../components/admin/ImageUploader";
+import ScentFamilyCardManager from "../../components/admin/ScentFamilyCardManager";
 import {
   Badge,
   Button,
@@ -291,6 +292,8 @@ export default function AdminBrands() {
           </div>
         )}
       </Card>
+
+      <ScentFamilyCardManager />
 
       <Modal
         open={modalOpen}

@@ -9,7 +9,6 @@ import {
   ensureDefaultAdmin,
   fixLegacySlugIndexes,
 } from './services/security.service';
-import { ensureProfileCompletionVoucher } from './services/auth.service';
 
 async function start() {
   await connectDB();

@@ -5,7 +5,7 @@ import { resolveVariantPrices } from './pricing-engine.service';
 // Populate giỏ -> lấy kèm thông tin variant + product (tên, ảnh, slug)
 const populateOpt = {
   path: 'items.variant',
-  populate: { path: 'product', select: 'name slug images category' },
+  populate: { path: 'product', select: 'name slug description images category' },
 };
 
 // Chuẩn hóa dữ liệu giỏ trả về cho FE: tính giá dòng, tổng tiền, tổng số lượng
@@ -24,6 +24,7 @@ async function serialize(cart: any) {
         product: product._id ? String(product._id) : undefined,
         name: product.name,
         slug: product.slug,
+        description: product.description || '',
         image: (product.images && product.images[0]) || (v.images && v.images[0]) || null,
         volume: v.volume,
         price: finalPrice,

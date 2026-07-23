@@ -14,6 +14,7 @@ const flashSaleSchema = new Schema({
   isConcentratedPromotion: { type: Boolean, default: false },
   referencePriceConfirmed: { type: Boolean, default: false },
   referencePriceNote: { type: String, trim: true, default: '' },
+  promotionNotifiedAt: Date,
 }, { timestamps: true });
 
 flashSaleSchema.index({ variant: 1, isActive: 1, startTime: 1, endTime: 1 });

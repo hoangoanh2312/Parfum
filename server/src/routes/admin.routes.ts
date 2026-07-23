@@ -16,6 +16,7 @@ import * as blog from '../controllers/blog.controller';
 import * as siteContent from '../controllers/siteContent.controller';
 import * as reports from '../controllers/report.controller';
 import * as promotion from '../controllers/promotion.controller';
+import * as scentFamilyCard from '../controllers/scentFamilyCard.controller';
 
 const r = Router();
 
@@ -76,6 +77,13 @@ const brandSchema = z.object({
   foundedYear: z.number().int().min(1000).max(3000).nullable().optional(),
   isFeatured: z.boolean().optional(),
 });
+const scentFamilyCardSchema = z.object({
+  name: z.string().trim().min(1).max(80),
+  image: z.string().trim().url(),
+  description: z.string().trim().max(500).optional(),
+  displayOrder: z.number().int().min(0).optional(),
+  isActive: z.boolean().optional(),
+});
 const orderStatusSchema = z.object({
   status: z.enum(['pending', 'shipping', 'done', 'cancelled', 'returned']),
 });
@@ -115,7 +123,8 @@ const voucherSchema = z.object({
   startDate: z.string(), endDate: z.string(), usageLimit: z.number().int().min(0).optional(),
   usageLimitPerUser: z.number().int().min(0).optional(), stackable: z.boolean().optional(),
   userSegment: z.enum(['ALL', 'NEW', 'RETURNING', 'LOYAL', 'VIP']).optional(),
-  isPrivate: z.boolean().optional(), isConcentratedPromotion: z.boolean().optional(), isActive: z.boolean().optional(),
+  appliesToNewMembers: z.boolean().optional(), isPrivate: z.boolean().optional(),
+  isConcentratedPromotion: z.boolean().optional(), isActive: z.boolean().optional(),
 });
 const discountSchema = z.object({
   name: z.string().trim().min(2), scope: z.enum(['PRODUCT', 'CATEGORY']), type: z.enum(['PERCENTAGE', 'FIXED']),
@@ -179,6 +188,12 @@ r.post(
 r.post('/brands', validate(brandSchema), ctrl.createBrand);
 r.put('/brands/:id', validate(brandSchema), ctrl.updateBrand);
 r.delete('/brands/:id', ctrl.deleteBrand);
+
+// Scent family cards on /brand
+r.get('/scent-family-cards', scentFamilyCard.listAdmin);
+r.post('/scent-family-cards', validate(scentFamilyCardSchema), scentFamilyCard.create);
+r.put('/scent-family-cards/:id', validate(scentFamilyCardSchema), scentFamilyCard.update);
+r.delete('/scent-family-cards/:id', scentFamilyCard.remove);
 
 // Categories
 r.get('/categories', ctrl.listCategories);

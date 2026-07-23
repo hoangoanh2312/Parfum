@@ -1,7 +1,8 @@
 import { BlogArticle } from '../models/blogArticle.model';
 import { JournalSubscriber } from '../models/journalSubscriber.model';
-import { sendMail } from '../utils/mailer';
+import { isMailConfigured, sendMail } from '../utils/mailer';
 import { logger } from '../utils/logger';
+import { activateJournalForEmail } from './notification.service';
 
 function httpError(message: string, status = 400) {
   return Object.assign(new Error(message), { status });
@@ -13,7 +14,7 @@ type JournalNotificationResult = {
   subscriberCount: number;
   sentCount: number;
   failedCount: number;
-  skippedReason?: 'not_published' | 'already_notified' | 'no_subscribers';
+  skippedReason?: 'not_published' | 'already_notified' | 'no_subscribers' | 'smtp_not_configured';
 };
 
 function slugify(value: string) {
@@ -122,6 +123,14 @@ async function notifyJournalSubscribers(article: any): Promise<JournalNotificati
   if (!subscribers.length) {
     return { subscriberCount: 0, sentCount: 0, failedCount: 0, skippedReason: 'no_subscribers' };
   }
+  if (!isMailConfigured()) {
+    return {
+      subscriberCount: subscribers.length,
+      sentCount: 0,
+      failedCount: subscribers.length,
+      skippedReason: 'smtp_not_configured',
+    };
+  }
 
   const url = absoluteUrl(`/blog/${article.slug}`);
   const title = escapeHtml(article.title);
@@ -220,10 +229,12 @@ export async function subscribeJournal(emailInput: string) {
     existing.isActive = true;
     if (wasInactive) existing.adminSeenAt = undefined;
     await existing.save();
+    await activateJournalForEmail(email);
     return { email: existing.email, message: 'Da dang ky nhan journal' };
   }
 
   const doc = await JournalSubscriber.create({ email, isActive: true, subscribedAt: new Date() });
+  await activateJournalForEmail(email);
 
   return { email: doc.email, message: 'Da dang ky nhan journal' };
 }

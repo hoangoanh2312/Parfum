@@ -6,6 +6,8 @@ interface ScentFilterProps {
   selected: string[];
   onToggle: (value: string) => void;
   initialVisible?: number;
+  title?: string;
+  emptyMessage?: string;
 }
 
 const norm = (value: string) => value.trim().toLowerCase();
@@ -15,6 +17,8 @@ export default function ScentFilter({
   selected,
   onToggle,
   initialVisible = 8,
+  title = "Scent Profile",
+  emptyMessage = "Chưa có nhóm mùi hương.",
 }: ScentFilterProps) {
   const [showAll, setShowAll] = useState(false);
   const selectedSet = new Set(selected.map(norm));
@@ -28,7 +32,7 @@ export default function ScentFilter({
   const canToggle = scents.length > initialVisible;
 
   return (
-    <FilterSection title="Scent Profile">
+    <FilterSection title={title}>
       <div className="space-y-3">
         {visible.map((item) => (
           <label
@@ -47,7 +51,7 @@ export default function ScentFilter({
         ))}
 
         {visible.length === 0 && (
-          <p className="text-xs text-[#A29D91]">Chưa có nhóm mùi hương.</p>
+          <p className="text-xs text-[#A29D91]">{emptyMessage}</p>
         )}
       </div>
 

@@ -6,6 +6,7 @@ export interface CartItem {
   product?: string;
   name?: string;
   slug?: string;
+  description?: string;
   image?: string | null;
   volume?: string;
   price: number;
@@ -32,12 +33,43 @@ interface CartState {
 }
 
 const GUEST_KEY = "guest_cart";
-// Đã đăng nhập hay chưa? (dựa vào accessToken trong localStorage)
-const isAuthed = () => !!localStorage.getItem("accessToken");
+
+// Không coi một accessToken cũ/hết hạn là phiên đăng nhập hợp lệ.
+// Trước đây chỉ kiểm tra key tồn tại nên giỏ guest bị gửi nhầm lên API /cart
+// rồi không được lưu vào localStorage.
+function isAuthed() {
+  const token = localStorage.getItem("accessToken");
+  if (!token) return false;
+  try {
+    const payload = token.split(".")[1];
+    if (!payload) return false;
+    const normalized = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
+    const decoded = JSON.parse(atob(padded)) as { exp?: number };
+    return typeof decoded.exp === "number" && decoded.exp > Date.now() / 1000;
+  } catch {
+    return false;
+  }
+}
 
 function readGuest(): CartItem[] {
   try {
-    return JSON.parse(localStorage.getItem(GUEST_KEY) || "[]");
+    const parsed = JSON.parse(localStorage.getItem(GUEST_KEY) || "[]");
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .filter(
+        (item): item is CartItem =>
+          !!item
+          && typeof item.variant === "string"
+          && item.variant.length > 0
+          && Number.isFinite(Number(item.quantity))
+          && Number(item.quantity) > 0,
+      )
+      .map((item) => ({
+        ...item,
+        price: Number(item.price) || 0,
+        quantity: Math.max(1, Math.floor(Number(item.quantity))),
+      }));
   } catch {
     return [];
   }

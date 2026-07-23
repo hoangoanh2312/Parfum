@@ -172,6 +172,10 @@ export default function AdminBlog() {
       toast.success("Đã xuất bản bài viết. Hiện chưa có email đăng ký nhận journal.");
       return;
     }
+    if (journal.skippedReason === "smtp_not_configured") {
+      toast.error("Đã xuất bản bài viết nhưng chưa gửi email: SMTP chưa được cấu hình.");
+      return;
+    }
     if (journal.sentCount > 0) {
       toast.success(`Đã xuất bản và gửi email cho ${journal.sentCount}/${journal.subscriberCount} khách đăng ký journal`);
       return;

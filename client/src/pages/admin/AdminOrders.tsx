@@ -100,7 +100,17 @@ export default function AdminOrders() {
         status: newStatus,
       });
       setDetail(updated);
-      toast.success("Đã cập nhật trạng thái");
+      if (updated.notificationDelivery?.sent) {
+        toast.success(
+          `Đã cập nhật trạng thái và gửi email tới ${updated.notificationDelivery.email}`,
+        );
+      } else if (updated.notificationDelivery?.reason === "disabled_by_customer") {
+        toast.success("Đã cập nhật trạng thái. Khách hàng đang tắt thông báo đơn hàng.");
+      } else if (updated.notificationDelivery?.reason === "smtp_not_configured") {
+        toast.error("Đã cập nhật trạng thái nhưng chưa gửi email: SMTP chưa được cấu hình.");
+      } else {
+        toast.error("Đã cập nhật trạng thái nhưng email chưa gửi được.");
+      }
       load();
     } catch (e) {
       toast.error(apiMessage(e, "Cập nhật thất bại"));

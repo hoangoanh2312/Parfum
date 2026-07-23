@@ -41,11 +41,11 @@ export default function Footer() {
       className="border-t border-white/[0.06] bg-[#161412] text-[#8A8580]"
       style={{ fontFamily: "'Manrope', sans-serif" }}
     >
-      <div className="mx-auto max-w-[1440px] px-6 sm:px-8 lg:px-12">
-        <div className="grid gap-9 py-10 lg:grid-cols-[320px_1fr] lg:gap-16 lg:py-14">
+      <div className="mx-auto w-full max-w-[1680px] px-5 sm:px-8 lg:px-10 2xl:px-2.5">
+        <div className="grid gap-10 py-10 lg:grid-cols-[minmax(280px,360px)_minmax(0,1fr)] lg:gap-12 lg:py-16 2xl:grid-cols-[380px_minmax(0,1fr)] 2xl:gap-20">
           <Link
             to="/shop"
-            className="group relative hidden min-h-[340px] overflow-hidden rounded-md lg:block"
+            className="group relative hidden min-h-[380px] overflow-hidden rounded-md lg:block"
           >
             <img
               src={PROMO_IMAGE}
@@ -71,8 +71,8 @@ export default function Footer() {
             </div>
           </Link>
 
-          <div className="flex flex-col">
-            <div className="mb-9">
+          <div className="grid content-start gap-10 xl:grid-cols-[minmax(220px,0.75fr)_minmax(0,1.75fr)] xl:gap-14 2xl:gap-24">
+            <div>
               <Link
                 to="/"
                 className="inline-flex text-[15px] font-semibold uppercase tracking-[0.22em] text-white"
@@ -80,13 +80,13 @@ export default function Footer() {
               >
                 L&apos;Essence Noire
               </Link>
-              <p className="mt-4 max-w-xl text-sm leading-6 text-[#8A8580]">
+              <p className="mt-4 max-w-[380px] text-sm leading-7 text-[#8A8580]">
                 Nước hoa chính hãng, tuyển chọn theo cá tính mùi hương và trải
                 nghiệm mua sắm tinh gọn.
               </p>
             </div>
 
-            <nav className="grid grid-cols-2 gap-x-8 gap-y-9 sm:grid-cols-3">
+            <nav className="grid grid-cols-2 gap-x-8 gap-y-10 sm:grid-cols-3 lg:gap-x-10 2xl:gap-x-16">
               {FOOTER_LINKS.map((col) => (
                 <div key={col.heading}>
                   <p className="mb-5 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/80">
@@ -113,7 +113,7 @@ export default function Footer() {
 
       <div className="border-t border-white/[0.06]" />
 
-      <div className="mx-auto max-w-[1440px] px-6 sm:px-8 lg:px-12">
+      <div className="mx-auto w-full max-w-[1680px] px-5 sm:px-8 lg:px-10 2xl:px-2.5">
         <div className="py-6">
           <p className="text-center text-xs tracking-wide text-[#5C5650]">
             © 2026 L&apos;Essence Noire. All rights reserved.

@@ -5,6 +5,7 @@ import { PriceHistory } from '../models/priceHistory.model';
 import { Product } from '../models/product.model';
 import { Variant } from '../models/variant.model';
 import { Voucher } from '../models/voucher.model';
+import { sendPromotionNotification } from './notification.service';
 
 function error(message: string, status = 400) {
   return Object.assign(new Error(message), { status });
@@ -101,29 +102,7 @@ function assertLegalDiscount(input: any, variants: any[]) {
   }
 }
 
-// Ma voucher chao mung danh cho khach moi da hoan tat ho so (giam 10%).
-// Duoc tao san & luon hien trong tab Voucher cua admin.
-export const WELCOME_VOUCHER_CODE = 'WELCOME10';
-
-export async function ensureWelcomeVoucher() {
-  const existing = await Voucher.findOne({ code: WELCOME_VOUCHER_CODE });
-  if (existing) return existing;
-  const now = new Date();
-  const endDate = new Date(now.getTime() + 5 * 365 * 24 * 60 * 60 * 1000);
-  return Voucher.create({
-    code: WELCOME_VOUCHER_CODE,
-    name: 'Ưu đãi chào mừng thành viên mới',
-    type: 'percentage', value: 10,
-    minOrder: 0, maxDiscount: 0,
-    startDate: now, endDate, expiresAt: endDate,
-    usageLimit: 0, usageLimitPerUser: 1,
-    stackable: true, userSegment: 'NEW',
-    isPrivate: true, isConcentratedPromotion: false, isActive: true,
-  });
-}
-
 export async function listVouchers() {
-  await ensureWelcomeVoucher();
   return Voucher.find({}).sort({ createdAt: -1 }).lean();
 }
 
@@ -137,22 +116,32 @@ function normalizeVoucher(input: any) {
     maxDiscount: Number(input.maxDiscountAmount || input.maxDiscount || 0),
     startDate, endDate, expiresAt: endDate,
     usageLimit: Number(input.usageLimit || 0), usageLimitPerUser: Number(input.usageLimitPerUser || 0),
-    stackable: input.stackable !== false, userSegment: input.userSegment || 'ALL',
+    stackable: input.stackable !== false,
+    userSegment: input.appliesToNewMembers ? 'NEW' : input.userSegment || 'ALL',
+    appliesToNewMembers: Boolean(input.appliesToNewMembers),
     isPrivate: Boolean(input.isPrivate), isConcentratedPromotion: Boolean(input.isConcentratedPromotion), isActive: input.isActive !== false,
   };
 }
 
+// LUU Y: Voucher KHONG gui email hang loat khi admin tao/cap nhat ma.
+// - Voucher "Ap dung cho thanh vien moi" (appliesToNewMembers) chi duoc gui RIENG
+//   cho tung khach chua co don khi ho cap nhat ho so (xem issueNewMemberVoucher
+//   trong auth.service.ts) - do la luc ma co hieu luc voi khach do.
+// - Cac voucher thong thuong khac khong tu dong gui mail; khach dung ma tren shop.
+// Discount va Flash Sale van gui thong bao khuyen mai binh thuong (xem ben duoi).
+
 export async function createVoucher(input: any) {
   const data = normalizeVoucher(input);
   if (await Voucher.exists({ code: data.code })) throw error('Mã voucher đã tồn tại', 409);
-  return Voucher.create(data);
+  const item: any = await Voucher.create(data);
+  return { ...item.toObject(), notificationDelivery: undefined };
 }
 export async function updateVoucher(id: string, input: any) {
   const data = normalizeVoucher(input);
   if (await Voucher.exists({ code: data.code, _id: { $ne: id } })) throw error('Mã voucher đã tồn tại', 409);
   const item = await Voucher.findByIdAndUpdate(id, data, { new: true, runValidators: true });
   if (!item) throw error('Không tìm thấy voucher', 404);
-  return item;
+  return { ...item.toObject(), notificationDelivery: undefined };
 }
 export async function deleteVoucher(id: string) {
   const item = await Voucher.findByIdAndDelete(id);
@@ -181,11 +170,36 @@ async function normalizeAndValidateDiscount(input: any) {
   await assertReferenceEvidence(variants, startDate, data.referencePriceConfirmed, data.referencePriceNote);
   return data;
 }
-export async function createDiscount(input: any) { return Discount.create(await normalizeAndValidateDiscount(input)); }
+async function notifyDiscount(item: any) {
+  if (!item.isActive) return undefined;
+  const benefit = item.type === 'FIXED'
+    ? `Giảm ${Number(item.value || 0).toLocaleString('vi-VN')}đ`
+    : `Giảm ${Number(item.value || 0)}%`;
+  const result = await sendPromotionNotification({
+    name: item.name,
+    detail: `${benefit} cho các sản phẩm được chọn trong thời gian chương trình.`,
+    url: '/shop',
+  });
+  if (result.recipientCount === 0 || result.sentCount > 0) {
+    item.promotionNotifiedAt = new Date();
+    await item.save();
+  }
+  return result;
+}
+
+export async function createDiscount(input: any) {
+  const item: any = await Discount.create(await normalizeAndValidateDiscount(input));
+  const notificationDelivery = await notifyDiscount(item);
+  return { ...item.toObject(), notificationDelivery };
+}
 export async function updateDiscount(id: string, input: any) {
+  const previous: any = await Discount.findById(id).select('isActive').lean();
+  if (!previous) throw error('Không tìm thấy discount', 404);
   const item = await Discount.findByIdAndUpdate(id, await normalizeAndValidateDiscount(input), { new: true, runValidators: true });
   if (!item) throw error('Không tìm thấy discount', 404);
-  return item;
+  const notificationDelivery =
+    !previous.isActive && item.isActive ? await notifyDiscount(item) : undefined;
+  return { ...item.toObject(), notificationDelivery };
 }
 export async function deleteDiscount(id: string) {
   const item = await Discount.findByIdAndDelete(id); if (!item) throw error('Không tìm thấy discount', 404); return { id };
@@ -231,14 +245,36 @@ async function normalizeAndValidateFlash(input: any, existingId?: string) {
     referencePriceConfirmed: Boolean(input.referencePriceConfirmed), referencePriceNote: String(input.referencePriceNote || '').trim(),
   };
 }
-export async function createFlashSale(input: any) { return FlashSale.create(await normalizeAndValidateFlash(input)); }
+async function notifyFlashSale(item: any) {
+  if (!item.isActive) return undefined;
+  const result = await sendPromotionNotification({
+    name: item.name,
+    detail: `Giá Flash Sale ${Number(item.flashPrice || 0).toLocaleString('vi-VN')}đ, số lượng có hạn.`,
+    url: '/shop',
+  });
+  if (result.recipientCount === 0 || result.sentCount > 0) {
+    item.promotionNotifiedAt = new Date();
+    await item.save();
+  }
+  return result;
+}
+
+export async function createFlashSale(input: any) {
+  const item: any = await FlashSale.create(await normalizeAndValidateFlash(input));
+  const notificationDelivery = await notifyFlashSale(item);
+  return { ...item.toObject(), notificationDelivery };
+}
 export async function updateFlashSale(id: string, input: any) {
   const current: any = await FlashSale.findById(id);
   if (!current) throw error('Không tìm thấy flash sale', 404);
   const data: any = await normalizeAndValidateFlash(input, id);
   if (Number(data.stockAllocated) < Number(current.soldCount || 0)) throw error('Tồn phân bổ không thể nhỏ hơn số đã bán');
   data.soldCount = current.soldCount;
-  return FlashSale.findByIdAndUpdate(id, data, { new: true, runValidators: true });
+  const item: any = await FlashSale.findByIdAndUpdate(id, data, { new: true, runValidators: true });
+  if (!item) throw error('Không tìm thấy flash sale', 404);
+  const notificationDelivery =
+    !current.isActive && item.isActive ? await notifyFlashSale(item) : undefined;
+  return { ...item.toObject(), notificationDelivery };
 }
 export async function deleteFlashSale(id: string) {
   const item = await FlashSale.findByIdAndDelete(id); if (!item) throw error('Không tìm thấy flash sale', 404); return { id };

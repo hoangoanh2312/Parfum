@@ -75,7 +75,7 @@ Tài liệu này giải thích **từng thành phần** trong trang `admin/báo 
 | `totalWithOrders` | Số khách từng có đơn trả tiền | Đếm khách trong bản đồ chi tiêu |
 | `registered` | Số tài khoản khách đã đăng ký | Đếm user role = customer |
 
-**Quy tắc phân khúc:** VIP = ≥5 đơn **hoặc** chi tiêu ≥ 20 triệu; LOYAL = ≥3 đơn; RETURNING = ≥2 đơn; còn lại = NEW.
+**Quy tắc phân khúc:** VIP = ≥20 đơn **hoặc** chi tiêu ≥ 50 triệu; LOYAL = ≥3 đơn; RETURNING = ≥2 đơn; còn lại = NEW.
 
 **Vì sao có:** hiểu tệp khách — thu hút khách mới tốt không, giữ chân ra sao, mỗi khách đáng giá bao nhiêu.
 
@@ -140,11 +140,11 @@ Ngoài ra giá Flash phải **thấp hơn giá g��c** (và không dưới 50
 
 ---
 
-# Phụ lục C — Voucher chào mừng khách mới: `WELCOME10`
+# Phụ lục C — Voucher chào mừng thành viên mới
 
-- **Mã:** `WELCOME10` — **giảm 10%**, dùng **1 lần / khách**, dành cho phân khúc **NEW** (khách mới), là voucher **riêng tư** (không hiển thị công khai).
-- Mã được **tạo sẵn tự động** và luôn xuất hiện trong **admin → Ưu đãi & Voucher → tab Voucher** (không cần tạo tay).
-- **Luồng phát (mới):** mã `WELCOME10` được **gửi ngay qua email** tại thời điểm khách **đăng ký tài khoản** (không còn chờ hoàn tất hồ sơ). Chỉ gửi 1 lần / tài khoản (dựa trên `welcomeVoucherIssuedAt`). Nội dung email đã được viết chi tiết: lời chào mừng thành viên mới, mã giảm 10% nổi bật và hướng dẫn dùng ngay.
-- **Banner hồ sơ (tách riêng):** trang *account dashboard* hiển thị nhắc nhở **liệt kê đúng những mục còn thiếu** (họ tên / số điện thoại / địa chỉ). Khi khách cập nhật đủ, banner **tự động biến mất**. Mật khẩu **không** thuộc diện bắt buộc của hồ sơ.
+- Mã và mức ưu đãi **không còn cố định**. Admin tạo hoặc sửa voucher tại **admin → Ưu đãi & Voucher → tab Voucher**, sau đó tích **“Áp dụng cho thành viên mới”**.
+- Khi khách hàng đã đăng nhập cập nhật thông tin cá nhân, địa chỉ hoặc hồ sơ mùi hương, hệ thống cấp voucher đang hoạt động được đánh dấu cho thành viên mới. Guest, admin và tài khoản đã có bất kỳ đơn hàng nào đều không được cấp.
+- Mã được lưu vào tài khoản và trả về giao diện ngay sau khi cập nhật thành công. Email thông báo voucher được gửi thêm nếu SMTP đã được cấu hình.
+- Khi thanh toán, voucher loại này chỉ dùng được bởi đúng tài khoản đã được cấp và tài khoản vẫn chưa có đơn hàng.
 
-> Email chỉ gửi được khi máy chủ đã cấu hình SMTP (biến môi trường `SMTP_HOST/PORT/USER/PASS`, `MAIL_FROM`). Nếu chưa cấu hình, hệ thống vẫn ghi nhận đã phát; mã `WELCOME10` luôn có sẵn trong tab Voucher để admin gửi tay khi cần.
+> Email cần các biến `SMTP_HOST/PORT/USER/PASS`, `MAIL_FROM`. Việc SMTP chưa được cấu hình không làm mất mã đã cấp trong tài khoản.

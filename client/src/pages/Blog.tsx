@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import { api } from "../lib/api";
 import Footer from "../components/Footer";
+import Pagination from "../components/Shop/Pagination";
 import BrandJournal from "./BrandJournal";
 import { toast } from "../store/toast.store";
 import { BLOG_ARTICLES, ARCHETYPES, type BlogArticle } from "./blogData";
@@ -13,21 +14,6 @@ interface Archetype {
   slug: string; // slug bài viết tương ứng
 }
 
-type ProductListItem = {
-  id: string;
-  slug?: string;
-  name: string;
-  brand?: string;
-  category?: string;
-  description?: string;
-  image?: string | null;
-  images?: string[];
-  fragranceFamily?: string;
-};
-
-type ProductListResponse = {
-  data: ProductListItem[];
-};
 type BlogListResponse = {
   data: BlogArticle[];
 };
@@ -65,31 +51,17 @@ const fallbackArchetypes: Archetype[] = [
   },
 ];
 
+const ARTICLES_PER_PAGE = 6;
+
 export default function Blog() {
   const [searchParams] = useSearchParams();
   const brandParam = searchParams.get("brand");
   const sliderRef = useRef<HTMLDivElement>(null);
-  const [products, setProducts] = useState<ProductListItem[]>([]);
   const [managedArticles, setManagedArticles] = useState<BlogArticle[] | null>(null);
   const [email, setEmail] = useState("");
   const [subscribing, setSubscribing] = useState(false);
-
-  useEffect(() => {
-    let mounted = true;
-    api
-      .get<ProductListResponse>("/products", {
-        params: { limit: 12, sort: "newest" },
-      })
-      .then(({ data }) => {
-        if (mounted) setProducts(Array.isArray(data.data) ? data.data : []);
-      })
-      .catch(() => {
-        if (mounted) setProducts([]);
-      });
-    return () => {
-      mounted = false;
-    };
-  }, []);
+  const [articlePage, setArticlePage] = useState(1);
+  const [showAllArticles, setShowAllArticles] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -109,34 +81,30 @@ export default function Blog() {
   // Archetypes: mỗi item có slug trỏ tới bài viết /blog/:slug
   const archetypes = ARCHETYPES.length ? ARCHETYPES : fallbackArchetypes;
 
-  // Article grid: 5 bài tĩnh + bổ sung product nếu thiếu, tối đa 6
-  const articles = useMemo(() => {
-    const fromProducts = products.slice(0, 3).map((p, i) => ({
-      id: 100 + i,
-      slug: p.slug || p.id,
-      category: p.fragranceFamily || p.category || p.brand || "Scent journal",
-      title: p.name,
-      description:
-        p.description ||
-        `A closer look at ${p.name}, its mood, character, and olfactory structure.`,
-      image:
-        p.images?.[0] ||
-        p.image ||
-        fallbackArchetypes[i % fallbackArchetypes.length].image,
-      heroImage: "",
-      date: "",
-      readTime: "",
-      author: p.brand || "",
-      sections: [],
-      relatedSlugs: [],
-      isProduct: true,
-    }));
+  // Grid chỉ chứa bài báo thật; sản phẩm không được trộn vào Journal.
+  const articles = managedArticles?.length ? managedArticles : BLOG_ARTICLES;
+  const articleTotalPages = Math.max(
+    1,
+    Math.ceil(articles.length / ARTICLES_PER_PAGE),
+  );
+  const visibleArticles = showAllArticles
+    ? articles
+    : articles.slice(
+        (articlePage - 1) * ARTICLES_PER_PAGE,
+        articlePage * ARTICLES_PER_PAGE,
+      );
 
-    // Ưu tiên bài viết tĩnh; ghép thêm product nếu chưa đủ 6
-    const managed = managedArticles?.length ? managedArticles : BLOG_ARTICLES;
-    const merged = [...managed, ...fromProducts].slice(0, 6);
-    return merged;
-  }, [managedArticles, products]);
+  useEffect(() => {
+    setArticlePage((current) => Math.min(current, articleTotalPages));
+  }, [articleTotalPages]);
+
+  const changeArticlePage = (nextPage: number) => {
+    if (nextPage < 1 || nextPage > articleTotalPages) return;
+    setArticlePage(nextPage);
+    document
+      .getElementById("journal-articles")
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   const scrollArchetypes = (dir: "left" | "right") => {
     sliderRef.current?.scrollBy({ left: dir === "right" ? 320 : -320, behavior: "smooth" });
@@ -350,17 +318,29 @@ export default function Blog() {
         </section>
 
         {/* ARTICLE GRID — tất cả link tới /blog/:slug */}
-        <section className="px-6 py-20 sm:px-10 lg:px-16 lg:py-28">
-          <div className="mx-auto grid max-w-[1060px] gap-x-10 gap-y-16 md:grid-cols-2 xl:grid-cols-3">
-            {articles.map((article) => {
-              const isProduct =
-                "isProduct" in article && (article as Record<string, unknown>).isProduct;
-              // Bài tĩnh → /blog/:slug | Product → /products/:slug
-              const href = isProduct ? `/products/${article.slug}` : `/blog/${article.slug}`;
-              const cta = isProduct ? "View fragrance" : "Read article";
+        <section id="journal-articles" className="scroll-mt-24 px-6 py-20 sm:px-10 lg:px-16 lg:py-28">
+          <div className="mx-auto max-w-[1060px]">
+            <div className="mb-12 border-b border-[#DCD4C8] pb-7">
+              <p className="text-[9px] font-semibold uppercase tracking-[0.24em] text-[#997F20]">
+                Journal archive
+              </p>
+              <div className="mt-3 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+                <h2
+                  className="text-4xl tracking-[-0.025em] lg:text-5xl"
+                  style={{ fontFamily: "'Cormorant Garamond', 'Spectral', serif" }}
+                >
+                  Tất cả bài viết
+                </h2>
+                <p className="text-[9px] uppercase tracking-[0.16em] text-[#918B82]">
+                  {articles.length} bài viết
+                </p>
+              </div>
+            </div>
 
+            <div className="grid gap-x-10 gap-y-16 md:grid-cols-2 xl:grid-cols-3">
+            {visibleArticles.map((article) => {
               return (
-                <Link key={article.id} to={href} className="group block">
+                <Link key={article.id} to={`/blog/${article.slug}`} className="group block">
                   <div className="overflow-hidden bg-[#EEEAE4]">
                     <img
                       src={article.image}
@@ -382,7 +362,7 @@ export default function Blog() {
                       {article.description}
                     </p>
                     <span className="mt-5 inline-flex border-b border-[#AB9851] pb-1 text-[8px] font-semibold uppercase tracking-[0.18em] text-[#675711]">
-                      {cta}
+                      Read article
                     </span>
                   </div>
                 </Link>
@@ -420,6 +400,32 @@ export default function Blog() {
                 </button>
               </form>
             </aside>
+            </div>
+
+            <div className="mt-4 flex flex-col items-center">
+              {!showAllArticles && (
+                <Pagination
+                  currentPage={articlePage}
+                  totalPages={articleTotalPages}
+                  onPageChange={changeArticlePage}
+                />
+              )}
+              {articles.length > ARTICLES_PER_PAGE && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAllArticles((current) => !current);
+                    setArticlePage(1);
+                    document
+                      .getElementById("journal-articles")
+                      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  }}
+                  className="mt-8 border border-[#A88D2A] px-8 py-3 text-[9px] font-semibold uppercase tracking-[0.2em] text-[#675711] transition hover:bg-[#8B7200] hover:text-white"
+                >
+                  {showAllArticles ? "Thu gọn" : `Show all (${articles.length})`}
+                </button>
+              )}
+            </div>
           </div>
         </section>
       </main>

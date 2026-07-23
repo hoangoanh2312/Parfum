@@ -14,16 +14,19 @@ const voucherSchema = new Schema(
     usageLimitPerUser: { type: Number, default: 0, min: 0 },
     stackable: { type: Boolean, default: true },
     userSegment: { type: String, enum: ['ALL', 'NEW', 'RETURNING', 'LOYAL', 'VIP'], default: 'ALL' },
+    appliesToNewMembers: { type: Boolean, default: false },
     isPrivate: { type: Boolean, default: false },
     isConcentratedPromotion: { type: Boolean, default: false },
     usageLimit: { type: Number, default: 0, min: 0 },
     usedCount: { type: Number, default: 0, min: 0 },
     isActive: { type: Boolean, default: true },
+    promotionNotifiedAt: Date,
   },
   { timestamps: true },
 );
 
 voucherSchema.index({ isActive: 1, startDate: 1, endDate: 1 });
+voucherSchema.index({ appliesToNewMembers: 1, isActive: 1, updatedAt: -1 });
 
 export type VoucherDoc = InferSchemaType<typeof voucherSchema>;
 export const Voucher = model('Voucher', voucherSchema);

@@ -71,7 +71,7 @@ export default function BrandSection() {
                   key={`${brand}-top-${copy}-${index}`}
                   to={brandLink(brand)}
                   tabIndex={copy === 1 ? -1 : undefined}
-                  className="uppercase tracking-[4px] text-gray-400 transition duration-10000 hover:scale-110 hover:text-[#b8860b]"
+                  className="uppercase tracking-[4px] text-gray-400 transition duration-300 hover:scale-110 hover:text-[#b8860b]"
                 >
                   {brand}
                 </Link>
@@ -95,7 +95,7 @@ export default function BrandSection() {
                   key={`${brand}-bottom-${copy}-${index}`}
                   to={brandLink(brand)}
                   tabIndex={copy === 1 ? -1 : undefined}
-                  className="uppercase tracking-[4px] text-gray-400 transition duration-10000 hover:scale-110 hover:text-[#b8860b]"
+                  className="uppercase tracking-[4px] text-gray-400 transition duration-300 hover:scale-110 hover:text-[#b8860b]"
                 >
                   {brand}
                 </Link>
