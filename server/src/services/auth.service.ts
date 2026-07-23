@@ -8,7 +8,7 @@ import { assertMailConfigured, sendMail } from '../utils/mailer';
 import { AddressInput } from '../types/dto';
 import { assertValidContact, normalizeEmail, normalizePhone } from '../utils/contactValidation';
 import { assertSmsConfigured, sendPasswordResetOtp } from '../utils/sms';
-import { Voucher } from '../models/voucher.model';
+import { ensureWelcomeVoucher, WELCOME_VOUCHER_CODE } from './promotion.service';
 
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
 export const PROFILE_COMPLETION_VOUCHER_CODE = 'NEWPROFILE10';
@@ -130,6 +130,45 @@ async function claimGuestOrdersForUser(user: any, email: string, phone: string) 
   return guestOrders.length;
 }
 
+// Phat voucher chao mung (WELCOME10) NGAY khi khach dang ky tai khoan moi.
+// Chi phat 1 lan / tai khoan (dua tren welcomeVoucherIssuedAt).
+// Loi gui email khong duoc lam hong luong dang ky/cap nhat.
+async function maybeIssueWelcomeVoucher(userId: string) {
+  try {
+    const user: any = await User.findById(userId);
+    if (!user || user.role !== 'customer' || user.welcomeVoucherIssuedAt) return;
+    await ensureWelcomeVoucher();
+    const firstName = String(user.name || 'ban').trim().split(/\s+/).slice(-1)[0] || 'ban';
+    const sent = await sendMail({
+      to: user.email,
+      subject: `Chao mung ${user.name} den voi L'Essence Noire - Tang ban ma giam 10% ${WELCOME_VOUCHER_CODE}`,
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;padding:32px;color:#27231f;line-height:1.6">
+          <p style="font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#806b3d">L'Essence Noire</p>
+          <h1 style="font-size:26px;font-weight:500;margin:8px 0 16px">Chao mung ban da tham gia!</h1>
+          <p>Xin chao ${firstName},</p>
+          <p>Cam on ban da tro thanh thanh vien moi cua <strong>L'Essence Noire</strong>. Chung toi co mot ma giam gia danh rieng cho thanh vien moi - ban hay dung ngay hom nay nhe:</p>
+          <div style="text-align:center;margin:24px 0;padding:20px;border:1px dashed #b89a4e;border-radius:10px;background:#fbf7ee">
+            <p style="margin:0 0 6px;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#9a8248">Ma danh cho thanh vien moi</p>
+            <p style="margin:0;font-size:34px;letter-spacing:8px;font-weight:700;color:#806b3d">${WELCOME_VOUCHER_CODE}</p>
+            <p style="margin:8px 0 0;font-size:14px;color:#4a453f">Giam <strong>10%</strong> cho don hang dau tien</p>
+          </div>
+          <p>Cach dung: nhap ma <strong>${WELCOME_VOUCHER_CODE}</strong> tai buoc thanh toan de duoc giam 10%.</p>
+          <p style="color:#777;font-size:12px">Ma ap dung 1 lan cho moi tai khoan thanh vien moi. Chuc ban co trai nghiem mua sam that tuyet voi tai L'Essence Noire!</p>
+        </div>`,
+      text: `Chao mung ${user.name} den voi L'Essence Noire! Chung toi tang ban ma giam 10% danh cho thanh vien moi: ${WELCOME_VOUCHER_CODE}. Hay dung ngay o buoc thanh toan cho don hang dau tien.`,
+    }).catch(() => false);
+    // Chi danh dau da phat khi email gui THANH CONG. Neu SMTP loi/chua cau hinh,
+    // lan khach cap nhat thong tin sau (SDT / dia chi) se tu dong gui lai WELCOME10.
+    if (sent) {
+      user.welcomeVoucherIssuedAt = new Date();
+      await user.save();
+    }
+  } catch {
+    // Bo qua loi phat voucher de khong chan luong chinh
+  }
+}
+
 export async function register(name: string, email: string, password: string, phone: string) {
   const normalizedEmail = normalizeEmail(email);
   const normalizedPhone = normalizePhone(phone);
@@ -143,6 +182,8 @@ export async function register(name: string, email: string, password: string, ph
   const hash = await bcrypt.hash(password, 10);
   const user = await User.create({ name, email: normalizedEmail, phone: normalizedPhone, password: hash });
   await claimGuestOrdersForUser(user, normalizedEmail, normalizedPhone);
+  // Gui NGAY voucher chao mung (WELCOME10) qua email cho thanh vien moi
+  await maybeIssueWelcomeVoucher(String(user._id));
   // Gui email xac thuc (khong chan luong dang ky neu SMTP chua cau hinh)
   void sendEmailVerification(String(user._id)).catch(() => null);
   return issueTokens(user);
@@ -204,7 +245,8 @@ export async function updateProfile(userId: string, input: { name: string; email
   );
   if (!user) throw Object.assign(new Error('User not found'), { status: 404 });
   if (phone) await claimGuestOrdersForUser(user, email, phone);
-  return maybeIssueProfileCompletionVoucher(String(user._id));
+  await maybeIssueWelcomeVoucher(String(user._id));
+  return user;
 }
 
 export async function changePassword(
@@ -249,7 +291,7 @@ export async function addAddress(userId: string, input: AddressInput) {
   }
   user.addresses.push(addr);
   await user.save();
-  await maybeIssueProfileCompletionVoucher(userId);
+  await maybeIssueWelcomeVoucher(userId);
   return user.addresses;
 }
 
@@ -266,7 +308,7 @@ export async function updateAddress(userId: string, addressId: string, input: Ad
   }
   address.set(addr);
   await user.save();
-  await maybeIssueProfileCompletionVoucher(userId);
+  await maybeIssueWelcomeVoucher(userId);
   return user.addresses;
 }
 
@@ -294,7 +336,7 @@ export async function setDefaultAddress(userId: string, addressId: string) {
   });
   if (!found) throw Object.assign(new Error('Address not found'), { status: 404 });
   await user.save();
-  await maybeIssueProfileCompletionVoucher(userId);
+  await maybeIssueWelcomeVoucher(userId);
   return user.addresses;
 }
 

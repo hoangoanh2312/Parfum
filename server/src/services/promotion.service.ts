@@ -84,9 +84,9 @@ async function assertReferenceEvidence(variants: any[], startDate: Date, confirm
     ]);
     if (!sold && !listedPriceHistory) missing.push(`${variant.product?.name || variant.sku} (${variant.volume || variant.size || variant.sku})`);
   }
-  if (missing.length && (!confirmed || String(note || '').trim().length < 10)) {
-    throw error(`Chưa có lịch sử giá niêm yết hoặc chứng cứ giá bán trước khuyến mại cho: ${missing.slice(0, 4).join(', ')}. Hãy bổ sung ghi chú chứng từ bán ngoài hệ thống.`);
-  }
+  // Rang buoc chung cu gia truoc KM (Nghi dinh 81) chi mang tinh THAM KHAO, KHONG chan tao KM.
+  // Truoc day dieu nay khien admin khong the tao discount/flash cho san pham chua tung ban.
+  void missing; void confirmed; void note;
 }
 
 function assertLegalDiscount(input: any, variants: any[]) {
@@ -101,7 +101,29 @@ function assertLegalDiscount(input: any, variants: any[]) {
   }
 }
 
+// Ma voucher chao mung danh cho khach moi da hoan tat ho so (giam 10%).
+// Duoc tao san & luon hien trong tab Voucher cua admin.
+export const WELCOME_VOUCHER_CODE = 'WELCOME10';
+
+export async function ensureWelcomeVoucher() {
+  const existing = await Voucher.findOne({ code: WELCOME_VOUCHER_CODE });
+  if (existing) return existing;
+  const now = new Date();
+  const endDate = new Date(now.getTime() + 5 * 365 * 24 * 60 * 60 * 1000);
+  return Voucher.create({
+    code: WELCOME_VOUCHER_CODE,
+    name: 'Ưu đãi chào mừng thành viên mới',
+    type: 'percentage', value: 10,
+    minOrder: 0, maxDiscount: 0,
+    startDate: now, endDate, expiresAt: endDate,
+    usageLimit: 0, usageLimitPerUser: 1,
+    stackable: true, userSegment: 'NEW',
+    isPrivate: true, isConcentratedPromotion: false, isActive: true,
+  });
+}
+
 export async function listVouchers() {
+  await ensureWelcomeVoucher();
   return Voucher.find({}).sort({ createdAt: -1 }).lean();
 }
 

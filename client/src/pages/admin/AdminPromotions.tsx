@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useParams } from "react-router-dom";
 import { adminApi, apiMessage, formatDate, formatVnd, type AdminCategory, type AdminProduct, type AdminVariant, type Paginated } from "../../lib/adminApi";
 import { toast } from "../../store/toast.store";
@@ -18,36 +18,68 @@ const ids = (values: any[] = []) => values.map((item) => String(item?._id || ite
 const emptyVoucher = () => ({ code: "", name: "", type: "percentage", value: "10", minOrderValue: "0", maxDiscountAmount: "0", startDate: localDateTime(), endDate: future(30), usageLimit: "0", usageLimitPerUser: "1", stackable: true, userSegment: "ALL", isPrivate: false, isActive: true });
 const emptyDiscount = () => ({ name: "", scope: "PRODUCT" as const, type: "PERCENTAGE" as const, value: "10", maxDiscountAmount: "0", products: [] as string[], categories: [] as string[], priority: "0", startDate: localDateTime(), endDate: future(30), isActive: true, isConcentratedPromotion: false, referencePriceConfirmed: false, referencePriceNote: "" });
 const emptyFlash = () => ({ name: "", variant: "", flashPrice: "", stockAllocated: "1", maxPerUser: "1", startTime: localDateTime(), endTime: future(1), isActive: true, isConcentratedPromotion: false, referencePriceConfirmed: false, referencePriceNote: "" });
+const emptyVariant = () => ({ product: "", sku: "", volume: "", price: "", costPrice: "0", stock: "0", reason: "Tạo biến thể mới" });
 
-function MultiSelect({ value, options, onChange }: { value: string[]; options: { id: string; name: string }[]; onChange: (value: string[]) => void }) {
-  const selected = new Set(value);
-  const toggle = (id: string) =>
-    onChange(selected.has(id) ? value.filter((item) => item !== id) : [...value, id]);
-
+// Chọn nhiều bằng ô tìm kiếm + checkbox + chip, thay cho Select multiple (Ctrl+click) khó dùng.
+function SearchableMultiSelect({ value, options, onChange, emptyLabel }: { value: string[]; options: { id: string; name: string }[]; onChange: (value: string[]) => void; emptyLabel: string }) {
+  const [query, setQuery] = useState("");
+  const selected = options.filter((option) => value.includes(option.id));
+  const filtered = useMemo(() => {
+    const term = query.trim().toLowerCase();
+    return term ? options.filter((option) => option.name.toLowerCase().includes(term)) : options;
+  }, [query, options]);
+  const toggle = (id: string) => onChange(value.includes(id) ? value.filter((item) => item !== id) : [...value, id]);
   return (
-    <div className="max-h-64 overflow-y-auto rounded-md border border-gray-200 bg-white p-2">
-      <div className="sticky top-0 z-10 mb-2 flex items-center justify-between bg-white px-2 py-1 text-xs text-gray-500">
-        <span>Đã chọn {value.length}</span>
-        {value.length > 0 && (
-          <button type="button" className="text-gray-900 underline" onClick={() => onChange([])}>
-            Bỏ chọn
-          </button>
+    <div className="rounded-lg border border-gray-300 p-3">
+      <div className="mb-2 flex flex-wrap gap-1.5">
+        {selected.length === 0 ? (
+          <span className="text-xs text-gray-400">{emptyLabel}</span>
+        ) : (
+          selected.map((option) => (
+            <span key={option.id} className="inline-flex items-center gap-1 rounded-full bg-gray-900 px-2.5 py-1 text-xs text-white">
+              {option.name}
+              <button type="button" className="text-white/70 hover:text-white" onClick={() => toggle(option.id)} aria-label="Bỏ chọn">×</button>
+            </span>
+          ))
         )}
       </div>
-      <div className="grid gap-1 sm:grid-cols-2">
-        {options.map((option) => (
-          <label key={option.id} className="flex cursor-pointer items-center gap-2 rounded px-2 py-2 text-sm hover:bg-gray-50">
-            <input type="checkbox" checked={selected.has(option.id)} onChange={() => toggle(option.id)} />
-            <span className="min-w-0 truncate" title={option.name}>{option.name}</span>
-          </label>
-        ))}
+      <Input placeholder="Tìm nhanh theo tên..." value={query} onChange={(event) => setQuery(event.target.value)} />
+      <div className="mt-2 flex items-center justify-between text-xs text-gray-400">
+        <span>Đã chọn {selected.length} mục</span>
+        {value.length > 0 && <button type="button" className="hover:text-gray-700" onClick={() => onChange([])}>Bỏ chọn tất cả</button>}
+      </div>
+      <div className="mt-2 max-h-48 space-y-1 overflow-y-auto">
+        {filtered.length === 0 ? (
+          <p className="py-3 text-center text-xs text-gray-400">Không tìm thấy kết quả</p>
+        ) : (
+          filtered.map((option) => (
+            <label key={option.id} className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-gray-50">
+              <input type="checkbox" checked={value.includes(option.id)} onChange={() => toggle(option.id)} />
+              <span>{option.name}</span>
+            </label>
+          ))
+        )}
       </div>
     </div>
   );
 }
 
 function EvidenceFields({ form, set }: { form: any; set: (patch: any) => void }) {
-  return <div className="space-y-3 border-t border-gray-100 pt-4"><label className="flex items-start gap-2 text-sm"><input type="checkbox" checked={form.isConcentratedPromotion} onChange={(e) => set({ isConcentratedPromotion: e.target.checked })} /><span>Chương trình khuyến mại tập trung được phép vượt hạn mức thông thường</span></label><label className="flex items-start gap-2 text-sm"><input type="checkbox" checked={form.referencePriceConfirmed} onChange={(e) => set({ referencePriceConfirmed: e.target.checked })} /><span>Có chứng từ giá đã bán thực tế ngoài hệ thống</span></label>{form.referencePriceConfirmed && <Field label="Ghi chú chứng cứ" hint="Ví dụ: số hóa đơn, thời gian bán, nguồn dữ liệu đối chiếu"><Textarea rows={3} value={form.referencePriceNote} onChange={(e) => set({ referencePriceNote: e.target.value })} /></Field>}</div>;
+  return (
+    <details className="rounded-lg border border-gray-200 bg-gray-50/70 p-4">
+      <summary className="cursor-pointer select-none text-sm font-medium text-gray-700">Tùy chọn nâng cao · Tuân thủ giá khuyến mại (không bắt buộc)</summary>
+      <div className="mt-3 space-y-3">
+        <p className="text-xs leading-5 text-gray-500">Các mục dưới đây chỉ phục vụ tuân thủ pháp lý (Nghị định 81) và <strong>không bắt buộc</strong> để tạo ưu đãi. Bạn có thể bỏ qua và tạo ngay.</p>
+        <label className="flex items-start gap-2 text-sm"><input type="checkbox" checked={form.isConcentratedPromotion} onChange={(e) => set({ isConcentratedPromotion: e.target.checked })} /><span>Chương trình khuyến mại tập trung (được phép giảm sâu hơn mức thông thường 50%)</span></label>
+        <label className="flex items-start gap-2 text-sm"><input type="checkbox" checked={form.referencePriceConfirmed} onChange={(e) => set({ referencePriceConfirmed: e.target.checked })} /><span>Có chứng từ giá đã bán thực tế ngoài hệ thống</span></label>
+        {form.referencePriceConfirmed && <Field label="Ghi chú chứng cứ" hint="Ví dụ: số hóa đơn, thời gian bán, nguồn dữ liệu đối chiếu"><Textarea rows={3} value={form.referencePriceNote} onChange={(e) => set({ referencePriceNote: e.target.value })} /></Field>}
+      </div>
+    </details>
+  );
+}
+
+function InfoNote({ children }: { children: ReactNode }) {
+  return <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">{children}</div>;
 }
 
 export default function AdminPromotions() {
@@ -58,6 +90,8 @@ export default function AdminPromotions() {
   const [products, setProducts] = useState<AdminProduct[]>([]); const [categories, setCategories] = useState<AdminCategory[]>([]); const [variants, setVariants] = useState<AdminVariant[]>([]);
   const [modal, setModal] = useState(false); const [editing, setEditing] = useState<any>(null); const [saving, setSaving] = useState(false); const [deleting, setDeleting] = useState<any>(null);
   const [voucherForm, setVoucherForm] = useState(emptyVoucher()); const [discountForm, setDiscountForm] = useState(emptyDiscount()); const [flashForm, setFlashForm] = useState(emptyFlash()); const [historyVariant, setHistoryVariant] = useState("");
+  const [variantModal, setVariantModal] = useState(false); const [variantForm, setVariantForm] = useState(emptyVariant()); const [savingVariant, setSavingVariant] = useState(false);
+  const [priceTarget, setPriceTarget] = useState<{ id: string; label: string; current: number } | null>(null); const [priceForm, setPriceForm] = useState({ price: "", reason: "" }); const [savingPrice, setSavingPrice] = useState(false);
 
   async function allProducts() { const first = await adminApi.get<Paginated<AdminProduct>>("/products", { page: 1, limit: 100 }); const rest = await Promise.all(Array.from({ length: Math.max(0, first.totalPages - 1) }, (_, index) => adminApi.get<Paginated<AdminProduct>>("/products", { page: index + 2, limit: 100 }))); return [first, ...rest].flatMap((page) => page.data); }
   async function load() { try { setLoading(true); const [v, d, f, h, p, c, vr] = await Promise.all([adminApi.get<Voucher[]>("/promotions/vouchers"), adminApi.get<Discount[]>("/promotions/discounts"), adminApi.get<FlashSale[]>("/promotions/flash-sales"), adminApi.get<History[]>("/promotions/price-history", { variant: historyVariant || undefined }), allProducts(), adminApi.get<AdminCategory[]>("/categories"), adminApi.get<AdminVariant[]>("/variants")]); setVouchers(v); setDiscounts(d); setFlashSales(f); setHistory(h); setProducts(p); setCategories(c); setVariants(vr); } catch (error) { toast.error(apiMessage(error, "Không tải được chương trình ưu đãi")); } finally { setLoading(false); } }
@@ -86,26 +120,140 @@ export default function AdminPromotions() {
     }));
   }, [history]);
 
+  // Gom lịch sử giá theo từng biến thể để hiển thị dạng thẻ + timeline thân thiện.
+  const historyGroups = useMemo(() => {
+    const map = new Map<string, { key: string; product: string; detail: string; rows: History[] }>();
+    for (const row of history) {
+      const key = String(row.variant?._id || row.variant || "?");
+      if (!map.has(key)) map.set(key, { key, product: row.variant?.product?.name || "Biến thể", detail: row.variant?.volume || row.variant?.sku || "", rows: [] });
+      map.get(key)!.rows.push(row);
+    }
+    for (const group of map.values()) group.rows.sort((a, b) => new Date(b.validFrom).getTime() - new Date(a.validFrom).getTime());
+    return Array.from(map.values()).sort((a, b) => a.product.localeCompare(b.product));
+  }, [history]);
+
   function openCreate() { setEditing(null); if (tab === "vouchers") setVoucherForm(emptyVoucher()); if (tab === "discounts") setDiscountForm(emptyDiscount()); if (tab === "flash-sales") setFlashForm(emptyFlash()); setModal(true); }
   function openEdit(item: any) { setEditing(item); if (tab === "vouchers") setVoucherForm({ code: item.code, name: item.name || "", type: item.type === "percent" ? "percentage" : item.type, value: String(item.value || 0), minOrderValue: String(item.minOrder || 0), maxDiscountAmount: String(item.maxDiscount || 0), startDate: localDateTime(item.startDate || item.createdAt), endDate: localDateTime(item.endDate || item.expiresAt), usageLimit: String(item.usageLimit || 0), usageLimitPerUser: String(item.usageLimitPerUser || 0), stackable: item.stackable !== false, userSegment: item.userSegment || "ALL", isPrivate: Boolean(item.isPrivate), isActive: item.isActive !== false }); if (tab === "discounts") setDiscountForm({ name: item.name, scope: item.scope, type: item.type, value: String(item.value), maxDiscountAmount: String(item.maxDiscountAmount || 0), products: ids(item.products), categories: ids(item.categories), priority: String(item.priority || 0), startDate: localDateTime(item.startDate), endDate: localDateTime(item.endDate), isActive: item.isActive !== false, isConcentratedPromotion: Boolean(item.isConcentratedPromotion), referencePriceConfirmed: Boolean(item.referencePriceConfirmed), referencePriceNote: item.referencePriceNote || "" }); if (tab === "flash-sales") setFlashForm({ name: item.name, variant: String(item.variant?._id || item.variant), flashPrice: String(item.flashPrice), stockAllocated: String(item.stockAllocated), maxPerUser: String(item.maxPerUser || 0), startTime: localDateTime(item.startTime), endTime: localDateTime(item.endTime), isActive: item.isActive !== false, isConcentratedPromotion: Boolean(item.isConcentratedPromotion), referencePriceConfirmed: Boolean(item.referencePriceConfirmed), referencePriceNote: item.referencePriceNote || "" }); setModal(true); }
 
   async function save() { try { setSaving(true); const section = tab === "vouchers" ? "vouchers" : tab === "discounts" ? "discounts" : "flash-sales"; const raw: any = tab === "vouchers" ? voucherForm : tab === "discounts" ? discountForm : flashForm; if (tab === "flash-sales") { if (!flashForm.variant) throw new Error("Vui lòng chọn biến thể"); if (selectedFlashVariant && Number(flashForm.flashPrice || 0) >= selectedFlashVariant.price) throw new Error("Giá Flash Sale phải thấp hơn giá niêm yết"); if (selectedFlashVariant && Number(flashForm.stockAllocated || 0) > selectedFlashVariant.stock) throw new Error(`Tồn phân bổ không được vượt quá tồn kho hiện tại (${selectedFlashVariant.stock})`); } const payload: any = { ...raw }; for (const key of ["value", "minOrderValue", "maxDiscountAmount", "usageLimit", "usageLimitPerUser", "priority", "flashPrice", "stockAllocated", "maxPerUser"]) if (key in payload) payload[key] = Number(payload[key] || 0); if (editing) await adminApi.put(`/promotions/${section}/${editing._id}`, payload); else await adminApi.post(`/promotions/${section}`, payload); toast.success(editing ? "Đã cập nhật ưu đãi" : "Đã tạo ưu đãi"); setModal(false); await load(); } catch (error) { toast.error(apiMessage(error, error instanceof Error ? error.message : "Không lưu được ưu đãi")); } finally { setSaving(false); } }
   async function remove() { if (!deleting) return; try { const section = tab === "vouchers" ? "vouchers" : tab === "discounts" ? "discounts" : "flash-sales"; await adminApi.del(`/promotions/${section}/${deleting._id}`); toast.success("Đã xóa ưu đãi"); setDeleting(null); await load(); } catch (error) { toast.error(apiMessage(error, "Không xóa được ưu đãi")); } }
 
-  return <div><PageHeader title="Ưu đãi & Voucher" subtitle="Giá niêm yết không bị ghi đè; mọi ưu đãi được resolve và snapshot khi đặt hàng" actions={tab !== "price-history" ? <Button onClick={openCreate}>+ Tạo mới</Button> : undefined} />
+  function openVariantCreate() { setVariantForm(emptyVariant()); setVariantModal(true); }
+  async function saveVariant() {
+    if (!variantForm.product || !variantForm.sku || !variantForm.price) { toast.error("Vui lòng chọn sản phẩm, nhập SKU và giá"); return; }
+    try {
+      setSavingVariant(true);
+      await adminApi.post("/variants", { product: variantForm.product, sku: variantForm.sku.trim(), volume: variantForm.volume.trim() || undefined, price: Number(variantForm.price || 0), costPrice: Number(variantForm.costPrice || 0), stock: Number(variantForm.stock || 0), priceHistoryReason: variantForm.reason.trim() || undefined });
+      toast.success("Đã thêm biến thể mới"); setVariantModal(false); await load();
+    } catch (error) { toast.error(apiMessage(error, "Không thêm được biến thể")); } finally { setSavingVariant(false); }
+  }
+
+  function openPriceAdjust(target: { id: string; label: string; current: number }) { setPriceTarget(target); setPriceForm({ price: String(target.current || ""), reason: "" }); }
+  async function savePrice() {
+    if (!priceTarget) return;
+    if (!priceForm.price || Number(priceForm.price) <= 0) { toast.error("Nhập giá mới hợp lệ"); return; }
+    if (!priceForm.reason.trim()) { toast.error("Vui lòng nhập lý do điều chỉnh giá"); return; }
+    try {
+      setSavingPrice(true);
+      await adminApi.put(`/variants/${priceTarget.id}`, { price: Number(priceForm.price), priceHistoryReason: priceForm.reason.trim() });
+      toast.success("Đã điều chỉnh giá & ghi vào lịch sử"); setPriceTarget(null); await load();
+    } catch (error) { toast.error(apiMessage(error, "Không điều chỉnh được giá")); } finally { setSavingPrice(false); }
+  }
+
+  const headerActions = tab === "price-history"
+    ? <Button onClick={openVariantCreate}>+ Thêm biến thể</Button>
+    : <Button onClick={openCreate}>+ Tạo mới</Button>;
+
+  return <div><PageHeader title="Ưu đãi & Voucher" subtitle="Giá niêm yết không bị ghi đè; mọi ưu đãi được resolve và snapshot khi đặt hàng" actions={headerActions} />
     <div className="mb-5 flex gap-1 overflow-x-auto border-b">{tabs.map((item) => <a key={item.id} href={`/admin/promotions/${item.id}`} className={`shrink-0 border-b-2 px-4 py-3 text-sm ${tab === item.id ? "border-black text-black" : "border-transparent text-gray-500"}`}>{item.label}</a>)}</div>
-    {loading ? <LoadingState /> : <Card className="overflow-hidden rounded-md shadow-none"><div className="overflow-x-auto">
+    {loading ? <LoadingState /> : <>
+      {tab === "flash-sales" && <InfoNote><strong>Flash Sale hoạt động thế nào?</strong> Một flash sale chỉ tự động áp dụng ngoài cửa hàng khi hội đủ: (1) <em>Kích hoạt</em> đang bật, (2) thời điểm hiện tại nằm trong khoảng Bắt đầu–Kết thúc, (3) còn tồn phân bổ (Đã bán &lt; Tồn phân bổ). Khi đó giá Flash luôn được ưu tiên cao hơn mọi Discount. Nếu flash "không chạy", hãy kiểm tra lại 3 điều kiện trên và đảm bảo giá Flash thấp hơn giá gốc.</InfoNote>}
+      {tab === "discounts" && <InfoNote><strong>Priority (Độ ưu tiên):</strong> khi một sản phẩm thuộc nhiều chương trình Discount cùng lúc, hệ thống chọn discount có <em>priority lớn nhất</em> (số càng lớn càng ưu tiên; bằng nhau thì lấy chương trình tạo trước). Flash Sale luôn thắng Discount. <br /><strong>Áp dụng nhiều sản phẩm trong 1 mã:</strong> chọn phạm vi "Sản phẩm" rồi tick nhiều sản phẩm trong ô tìm kiếm bên dưới (hoặc chọn phạm vi "Danh mục" để áp cho cả danh mục).</InfoNote>}
+
+      {(tab === "vouchers" || tab === "discounts" || tab === "flash-sales") && <Card className="overflow-hidden rounded-md shadow-none"><div className="overflow-x-auto">
       {tab === "vouchers" && <table className="w-full min-w-[900px] text-sm"><thead><tr className="border-b text-left text-xs uppercase text-gray-400"><th className="p-4">Mã</th><th>Tên</th><th>Ưu đãi</th><th>Điều kiện</th><th>Lượt dùng</th><th>Thời gian</th><th>Trạng thái</th><th /></tr></thead><tbody>{vouchers.map((item) => <tr key={item._id} className="border-b"><td className="p-4 font-mono font-semibold">{item.code}</td><td>{item.name || "—"}{item.isPrivate && <p className="text-xs text-gray-400">Riêng tư</p>}</td><td>{item.type === "free_shipping" ? "Miễn phí ship" : item.type === "fixed" ? formatVnd(item.value) : `${item.value}%`}</td><td>Từ {formatVnd(item.minOrder)}<p className="text-xs text-gray-400">{item.stackable ? "Dùng chung ưu đãi" : "Không cộng dồn"} · {item.userSegment}</p></td><td>{item.usedCount || 0}/{item.usageLimit || "∞"}<p className="text-xs text-gray-400">Mỗi khách {item.usageLimitPerUser || "∞"}</p></td><td>{formatDate(item.startDate)}<br />{formatDate(item.endDate)}</td><td><Badge color={item.isActive ? "green" : "gray"}>{item.isActive ? "Đang bật" : "Đã tắt"}</Badge></td><td><div className="flex gap-2"><Button variant="secondary" onClick={() => openEdit(item)}>Sửa</Button><Button variant="danger" onClick={() => setDeleting(item)}>Xóa</Button></div></td></tr>)}</tbody></table>}
       {tab === "discounts" && <table className="w-full min-w-[900px] text-sm"><thead><tr className="border-b text-left text-xs uppercase text-gray-400"><th className="p-4">Chương trình</th><th>Phạm vi</th><th>Mức giảm</th><th>Priority</th><th>Thời gian</th><th>Trạng thái</th><th /></tr></thead><tbody>{discounts.map((item) => <tr key={item._id} className="border-b"><td className="p-4 font-medium">{item.name}</td><td>{item.scope === "PRODUCT" ? `${item.products?.length || 0} sản phẩm` : `${item.categories?.length || 0} danh mục`}</td><td>{item.type === "PERCENTAGE" ? `${item.value}%` : formatVnd(item.value)}</td><td>{item.priority}</td><td>{formatDate(item.startDate)}<br />{formatDate(item.endDate)}</td><td><Badge color={item.isActive ? "green" : "gray"}>{item.isActive ? "Đang bật" : "Đã tắt"}</Badge></td><td><div className="flex gap-2"><Button variant="secondary" onClick={() => openEdit(item)}>Sửa</Button><Button variant="danger" onClick={() => setDeleting(item)}>Xóa</Button></div></td></tr>)}</tbody></table>}
-      {tab === "flash-sales" && <table className="w-full min-w-[960px] text-sm"><thead><tr className="border-b text-left text-xs uppercase text-gray-400"><th className="p-4">Flash sale</th><th>Sản phẩm</th><th>Giá gốc / Flash</th><th>Phân bổ</th><th>Mỗi khách</th><th>Thời gian</th><th>Trạng thái</th><th /></tr></thead><tbody>{flashSales.map((item) => <tr key={item._id} className="border-b"><td className="p-4 font-medium">{item.name}</td><td>{item.variant?.product?.name || "—"}<p className="text-xs text-gray-400">{item.variant?.volume || item.variant?.size || item.variant?.sku}</p></td><td><span className="text-gray-400 line-through">{formatVnd(item.originalPrice)}</span><br /><strong className="text-red-700">{formatVnd(item.flashPrice)}</strong></td><td>{item.soldCount}/{item.stockAllocated}<p className="text-xs text-gray-400">Còn {item.remaining}</p></td><td>{item.maxPerUser || "∞"}</td><td>{formatDate(item.startTime)}<br />{formatDate(item.endTime)}</td><td><Badge color={item.status === "ACTIVE" ? "green" : item.status === "UPCOMING" ? "blue" : "gray"}>{item.status}</Badge><p className="mt-1 max-w-[180px] text-xs text-gray-400">{item.statusReason || "—"}</p></td><td><div className="flex gap-2"><Button variant="secondary" onClick={() => openEdit(item)}>Sửa</Button><Button variant="danger" onClick={() => setDeleting(item)}>Xóa</Button></div></td></tr>)}</tbody></table>}
-      {tab === "price-history" && <div><div className="border-b p-4"><Field label="Lọc theo biến thể" hint="Mỗi biến thể có timeline giá riêng theo từng thời điểm điều chỉnh."><Select className="max-w-xl" value={historyVariant} onChange={(e) => setHistoryVariant(e.target.value)}><option value="">Tất cả biến thể</option>{variants.map((item) => <option key={item.id} value={item.id}>{variantName(item)}</option>)}</Select></Field></div><div className="space-y-4 p-4">{historyGroups.length === 0 && <EmptyState message="Chưa có lịch sử giá." />}{historyGroups.map((group) => <section key={group.key} className="rounded-md border border-gray-200 bg-white"><div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 px-4 py-3"><div><h3 className="font-medium text-gray-950">{group.productName}</h3><p className="mt-1 text-xs text-gray-500">{group.variantLabel} · {group.rows.length} mốc giá</p></div><Badge color="blue">{formatVnd(group.rows[0]?.basePrice || 0)}</Badge></div><div className="divide-y divide-gray-100">{group.rows.map((item, index) => <div key={item._id} className="grid gap-3 px-4 py-4 md:grid-cols-[160px_150px_minmax(0,1fr)]"><div><p className="text-xs font-medium text-gray-950">{formatDate(item.validFrom)}</p><p className="mt-1 text-[11px] text-gray-400">{item.validTo ? `Đến ${formatDate(item.validTo)}` : "Đang áp dụng"}</p></div><div><p className="font-semibold text-gray-950">{formatVnd(item.basePrice)}</p>{index === 0 && !item.validTo && <Badge color="green">Hiện tại</Badge>}</div><p className="text-sm leading-6 text-gray-600">{item.reason || "Không ghi lý do điều chỉnh"}</p></div>)}</div></section>)}</div></div>}
-    </div></Card>}
+      {tab === "flash-sales" && <table className="w-full min-w-[960px] text-sm"><thead><tr className="border-b text-left text-xs uppercase text-gray-400"><th className="p-4">Flash sale</th><th>Sản phẩm</th><th>Giá gốc / Flash</th><th>Phân bổ</th><th>Mỗi khách</th><th>Thời gian</th><th>Trạng thái</th><th /></tr></thead><tbody>{flashSales.map((item) => <tr key={item._id} className="border-b"><td className="p-4 font-medium">{item.name}</td><td>{item.variant?.product?.name || "—"}<p className="text-xs text-gray-400">{item.variant?.volume || item.variant?.sku}</p></td><td><span className="text-gray-400 line-through">{formatVnd(item.originalPrice)}</span><br /><strong className="text-red-700">{formatVnd(item.flashPrice)}</strong></td><td>{item.soldCount}/{item.stockAllocated}<p className="text-xs text-gray-400">Còn {item.remaining}</p></td><td>{item.maxPerUser || "∞"}</td><td>{formatDate(item.startTime)}<br />{formatDate(item.endTime)}</td><td><Badge color={item.status === "ACTIVE" ? "green" : item.status === "UPCOMING" ? "blue" : "gray"}>{item.status}</Badge></td><td><div className="flex gap-2"><Button variant="secondary" onClick={() => openEdit(item)}>Sửa</Button><Button variant="danger" onClick={() => setDeleting(item)}>Xóa</Button></div></td></tr>)}</tbody></table>}
+      </div></Card>}
+
+      {tab === "price-history" && <div className="space-y-4">
+        <Card className="flex flex-col gap-3 rounded-md p-4 shadow-none sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm font-medium">Lịch sử giá theo biến thể</p>
+            <p className="text-xs text-gray-500">Mỗi lần điều chỉnh giá đều được ghi kèm thời điểm & lý do. Chọn biến thể để lọc.</p>
+          </div>
+          <Select className="max-w-md" value={historyVariant} onChange={(e) => setHistoryVariant(e.target.value)}><option value="">Tất cả biến thể</option>{variants.map((item) => <option key={item.id} value={item.id}>{variantName(item)}</option>)}</Select>
+        </Card>
+        {historyGroups.length === 0 ? (
+          <Card className="rounded-md p-10 text-center text-sm text-gray-400 shadow-none">Chưa có dữ liệu lịch sử giá.</Card>
+        ) : (
+          <div className="grid gap-4 xl:grid-cols-2">
+            {historyGroups.map((group) => {
+              const current = group.rows[0];
+              return (
+                <Card key={group.key} className="rounded-md p-5 shadow-none">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-medium">{group.product}</p>
+                      <p className="text-xs text-gray-500">{group.detail}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-lg font-semibold">{formatVnd(current.basePrice)}</p>
+                      <Button variant="secondary" onClick={() => openPriceAdjust({ id: group.key, label: `${group.product} · ${group.detail}`, current: current.basePrice })}>Điều chỉnh giá</Button>
+                    </div>
+                  </div>
+                  <ol className="mt-4 space-y-3 border-l border-gray-200 pl-4">
+                    {group.rows.map((row, index) => {
+                      const older = group.rows[index + 1];
+                      const delta = older ? row.basePrice - older.basePrice : 0;
+                      return (
+                        <li key={row._id} className="relative">
+                          <span className={`absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full ${index === 0 ? "bg-emerald-500" : "bg-gray-300"}`} />
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="font-medium">{formatVnd(row.basePrice)}</span>
+                            {delta !== 0 && <Badge color={delta > 0 ? "red" : "green"}>{delta > 0 ? "▲" : "▼"} {formatVnd(Math.abs(delta))}</Badge>}
+                            {index === 0 && <Badge color="green">Hiện tại</Badge>}
+                          </div>
+                          <p className="text-xs text-gray-500">{formatDate(row.validFrom)} → {row.validTo ? formatDate(row.validTo) : "nay"}</p>
+                          <p className="text-xs text-gray-600">Lý do: {row.reason || "—"}</p>
+                        </li>
+                      );
+                    })}
+                  </ol>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </div>}
+    </>}
 
     <Modal open={modal} onClose={() => setModal(false)} wide title={editing ? "Chỉnh sửa ưu đãi" : "Tạo ưu đãi"} footer={<><Button variant="secondary" onClick={() => setModal(false)}>Hủy</Button><Button onClick={save} disabled={saving}>{saving ? "Đang lưu..." : "Lưu"}</Button></>}>
-      {tab === "vouchers" && <div className="grid gap-4 sm:grid-cols-2"><Field label="Mã voucher"><Input value={voucherForm.code} onChange={(e) => setVoucherForm({ ...voucherForm, code: e.target.value.toUpperCase() })} /></Field><Field label="Tên chương trình"><Input value={voucherForm.name} onChange={(e) => setVoucherForm({ ...voucherForm, name: e.target.value })} /></Field><Field label="Loại"><Select value={voucherForm.type} onChange={(e) => setVoucherForm({ ...voucherForm, type: e.target.value })}><option value="percentage">Phần trăm</option><option value="fixed">Số tiền cố định</option><option value="free_shipping">Miễn phí vận chuyển</option></Select></Field><Field label="Giá trị"><Input type="number" disabled={voucherForm.type === "free_shipping"} value={voucherForm.value} onChange={(e) => setVoucherForm({ ...voucherForm, value: e.target.value })} /></Field><Field label="Đơn tối thiểu"><Input type="number" value={voucherForm.minOrderValue} onChange={(e) => setVoucherForm({ ...voucherForm, minOrderValue: e.target.value })} /></Field><Field label="Giảm tối đa"><Input type="number" value={voucherForm.maxDiscountAmount} onChange={(e) => setVoucherForm({ ...voucherForm, maxDiscountAmount: e.target.value })} /></Field><Field label="Bắt đầu"><Input type="datetime-local" value={voucherForm.startDate} onChange={(e) => setVoucherForm({ ...voucherForm, startDate: e.target.value })} /></Field><Field label="Kết thúc"><Input type="datetime-local" value={voucherForm.endDate} onChange={(e) => setVoucherForm({ ...voucherForm, endDate: e.target.value })} /></Field><Field label="Giới hạn toàn hệ thống"><Input type="number" value={voucherForm.usageLimit} onChange={(e) => setVoucherForm({ ...voucherForm, usageLimit: e.target.value })} /></Field><Field label="Giới hạn mỗi khách"><Input type="number" value={voucherForm.usageLimitPerUser} onChange={(e) => setVoucherForm({ ...voucherForm, usageLimitPerUser: e.target.value })} /></Field><Field label="Phân khúc khách"><Select value={voucherForm.userSegment} onChange={(e) => setVoucherForm({ ...voucherForm, userSegment: e.target.value })}>{["ALL", "NEW", "RETURNING", "LOYAL", "VIP"].map((item) => <option key={item}>{item}</option>)}</Select></Field><div className="space-y-2 pt-6"><label className="flex gap-2 text-sm"><input type="checkbox" checked={voucherForm.stackable} onChange={(e) => setVoucherForm({ ...voucherForm, stackable: e.target.checked })} />Cho dùng chung ưu đãi sản phẩm</label><label className="flex gap-2 text-sm"><input type="checkbox" checked={voucherForm.isPrivate} onChange={(e) => setVoucherForm({ ...voucherForm, isPrivate: e.target.checked })} />Voucher riêng tư</label><label className="flex gap-2 text-sm"><input type="checkbox" checked={voucherForm.isActive} onChange={(e) => setVoucherForm({ ...voucherForm, isActive: e.target.checked })} />Kích hoạt</label></div></div>}
-      {tab === "discounts" && <div className="space-y-4"><div className="grid gap-4 sm:grid-cols-2"><Field label="Tên chương trình"><Input value={discountForm.name} onChange={(e) => setDiscountForm({ ...discountForm, name: e.target.value })} /></Field><Field label="Priority" hint="Nếu một sản phẩm khớp nhiều discount cùng lúc, hệ thống lấy discount có priority cao hơn. Bằng nhau thì ưu tiên chương trình tạo trước."><Input type="number" value={discountForm.priority} onChange={(e) => setDiscountForm({ ...discountForm, priority: e.target.value })} /></Field><Field label="Phạm vi"><Select value={discountForm.scope} onChange={(e) => setDiscountForm({ ...discountForm, scope: e.target.value as any, products: [], categories: [] })}><option value="PRODUCT">Sản phẩm</option><option value="CATEGORY">Danh mục</option></Select></Field><Field label="Loại giảm"><Select value={discountForm.type} onChange={(e) => setDiscountForm({ ...discountForm, type: e.target.value as any })}><option value="PERCENTAGE">Phần trăm</option><option value="FIXED">Số tiền cố định</option></Select></Field><Field label="Giá trị"><Input type="number" value={discountForm.value} onChange={(e) => setDiscountForm({ ...discountForm, value: e.target.value })} /></Field><Field label="Giảm tối đa"><Input type="number" value={discountForm.maxDiscountAmount} onChange={(e) => setDiscountForm({ ...discountForm, maxDiscountAmount: e.target.value })} /></Field><Field label="Bắt đầu"><Input type="datetime-local" value={discountForm.startDate} onChange={(e) => setDiscountForm({ ...discountForm, startDate: e.target.value })} /></Field><Field label="Kết thúc"><Input type="datetime-local" value={discountForm.endDate} onChange={(e) => setDiscountForm({ ...discountForm, endDate: e.target.value })} /></Field></div><Field label={discountForm.scope === "PRODUCT" ? "Sản phẩm áp dụng" : "Danh mục áp dụng"} hint="Có thể chọn nhiều mục trong cùng một chương trình.">{discountForm.scope === "PRODUCT" ? <MultiSelect value={discountForm.products} options={productOptions} onChange={(value) => setDiscountForm({ ...discountForm, products: value })} /> : <MultiSelect value={discountForm.categories} options={categoryOptions} onChange={(value) => setDiscountForm({ ...discountForm, categories: value })} />}</Field><label className="flex gap-2 text-sm"><input type="checkbox" checked={discountForm.isActive} onChange={(e) => setDiscountForm({ ...discountForm, isActive: e.target.checked })} />Kích hoạt</label><EvidenceFields form={discountForm} set={(patch) => setDiscountForm({ ...discountForm, ...patch })} /></div>}
-      {tab === "flash-sales" && <div className="space-y-4"><div className="grid gap-4 sm:grid-cols-2"><Field label="Tên Flash Sale"><Input value={flashForm.name} onChange={(e) => setFlashForm({ ...flashForm, name: e.target.value })} /></Field><Field label="Biến thể" hint={selectedFlashVariant ? `Giá niêm yết ${formatVnd(selectedFlashVariant.price)} · Tồn hiện tại ${selectedFlashVariant.stock}` : "Chọn đúng dung tích/SKU cần chạy flash sale."}><Select value={flashForm.variant} onChange={(e) => setFlashForm({ ...flashForm, variant: e.target.value })}><option value="">Chọn biến thể</option>{variants.map((item) => <option key={item.id} value={item.id}>{variantName(item)}</option>)}</Select></Field><Field label="Giá Flash Sale" hint={selectedFlashVariant ? `Phải nhỏ hơn ${formatVnd(selectedFlashVariant.price)}.` : undefined}><Input type="number" value={flashForm.flashPrice} onChange={(e) => setFlashForm({ ...flashForm, flashPrice: e.target.value })} /></Field><Field label="Tồn phân bổ" hint={selectedFlashVariant ? `Tối đa ${selectedFlashVariant.stock} sản phẩm.` : undefined}><Input type="number" value={flashForm.stockAllocated} onChange={(e) => setFlashForm({ ...flashForm, stockAllocated: e.target.value })} /></Field><Field label="Tối đa mỗi khách"><Input type="number" value={flashForm.maxPerUser} onChange={(e) => setFlashForm({ ...flashForm, maxPerUser: e.target.value })} /></Field><Field label="Bắt đầu"><Input type="datetime-local" value={flashForm.startTime} onChange={(e) => setFlashForm({ ...flashForm, startTime: e.target.value })} /></Field><Field label="Kết thúc"><Input type="datetime-local" value={flashForm.endTime} onChange={(e) => setFlashForm({ ...flashForm, endTime: e.target.value })} /></Field></div><label className="flex gap-2 text-sm"><input type="checkbox" checked={flashForm.isActive} onChange={(e) => setFlashForm({ ...flashForm, isActive: e.target.checked })} />Kích hoạt</label><EvidenceFields form={flashForm} set={(patch) => setFlashForm({ ...flashForm, ...patch })} /></div>}
+      {tab === "vouchers" && <div className="grid gap-4 sm:grid-cols-2"><Field label="Mã voucher" hint="Khách sẽ nhập mã này ở bước thanh toán (tự động viết hoa)"><Input value={voucherForm.code} onChange={(e) => setVoucherForm({ ...voucherForm, code: e.target.value.toUpperCase() })} /></Field><Field label="Tên chương trình" hint="Tên nội bộ để nhận biết, không hiển thị cho khách"><Input value={voucherForm.name} onChange={(e) => setVoucherForm({ ...voucherForm, name: e.target.value })} /></Field><Field label="Loại"><Select value={voucherForm.type} onChange={(e) => setVoucherForm({ ...voucherForm, type: e.target.value })}><option value="percentage">Phần trăm (%)</option><option value="fixed">Số tiền cố định (đ)</option><option value="free_shipping">Miễn phí vận chuyển</option></Select></Field><Field label="Giá trị" hint={voucherForm.type === "percentage" ? "Nhập % (ví dụ 10 = giảm 10%). Voucher % tối đa 50% nếu không phải KM tập trung." : voucherForm.type === "fixed" ? "Nhập số tiền giảm (đồng)" : "Miễn phí ship - không cần nhập giá trị"}><Input type="number" disabled={voucherForm.type === "free_shipping"} value={voucherForm.value} onChange={(e) => setVoucherForm({ ...voucherForm, value: e.target.value })} /></Field><Field label="Đơn tối thiểu" hint="Giá trị đơn hàng tối thiểu để dùng mã (0 = không yêu cầu)"><Input type="number" value={voucherForm.minOrderValue} onChange={(e) => setVoucherForm({ ...voucherForm, minOrderValue: e.target.value })} /></Field><Field label="Giảm tối đa" hint="Trần số tiền được giảm với voucher %; 0 = không giới hạn"><Input type="number" value={voucherForm.maxDiscountAmount} onChange={(e) => setVoucherForm({ ...voucherForm, maxDiscountAmount: e.target.value })} /></Field><Field label="Bắt đầu"><Input type="datetime-local" value={voucherForm.startDate} onChange={(e) => setVoucherForm({ ...voucherForm, startDate: e.target.value })} /></Field><Field label="Kết thúc"><Input type="datetime-local" value={voucherForm.endDate} onChange={(e) => setVoucherForm({ ...voucherForm, endDate: e.target.value })} /></Field><Field label="Giới hạn toàn hệ thống" hint="Tổng số lượt dùng tối đa; 0 = không giới hạn"><Input type="number" value={voucherForm.usageLimit} onChange={(e) => setVoucherForm({ ...voucherForm, usageLimit: e.target.value })} /></Field><Field label="Giới hạn mỗi khách" hint="Số lần mỗi khách được dùng; 0 = không giới hạn"><Input type="number" value={voucherForm.usageLimitPerUser} onChange={(e) => setVoucherForm({ ...voucherForm, usageLimitPerUser: e.target.value })} /></Field><Field label="Phân khúc khách" hint="Giới hạn nhóm khách được dùng mã (NEW = khách mới)"><Select value={voucherForm.userSegment} onChange={(e) => setVoucherForm({ ...voucherForm, userSegment: e.target.value })}>{["ALL", "NEW", "RETURNING", "LOYAL", "VIP"].map((item) => <option key={item}>{item}</option>)}</Select></Field><div className="space-y-2 pt-6"><label className="flex gap-2 text-sm"><input type="checkbox" checked={voucherForm.stackable} onChange={(e) => setVoucherForm({ ...voucherForm, stackable: e.target.checked })} />Cho dùng chung ưu đãi sản phẩm</label><label className="flex gap-2 text-sm"><input type="checkbox" checked={voucherForm.isPrivate} onChange={(e) => setVoucherForm({ ...voucherForm, isPrivate: e.target.checked })} />Voucher riêng tư (không hiển thị công khai)</label><label className="flex gap-2 text-sm"><input type="checkbox" checked={voucherForm.isActive} onChange={(e) => setVoucherForm({ ...voucherForm, isActive: e.target.checked })} />Kích hoạt</label></div></div>}
+      {tab === "discounts" && <div className="space-y-5"><p className="text-xs font-semibold uppercase tracking-wide text-gray-500">1. Thông tin & giá trị</p><div className="grid gap-4 sm:grid-cols-2"><Field label="Tên chương trình"><Input value={discountForm.name} onChange={(e) => setDiscountForm({ ...discountForm, name: e.target.value })} /></Field><Field label="Priority (Độ ưu tiên)" hint="Số càng lớn càng ưu tiên khi 1 sản phẩm trúng nhiều discount. Flash Sale luôn ưu tiên hơn."><Input type="number" value={discountForm.priority} onChange={(e) => setDiscountForm({ ...discountForm, priority: e.target.value })} /></Field><Field label="Phạm vi" hint="Chọn Sản phẩm để áp cho các sản phẩm cụ thể, hoặc Danh mục để áp cả nhóm"><Select value={discountForm.scope} onChange={(e) => setDiscountForm({ ...discountForm, scope: e.target.value as any, products: [], categories: [] })}><option value="PRODUCT">Sản phẩm</option><option value="CATEGORY">Danh mục</option></Select></Field><Field label="Loại giảm"><Select value={discountForm.type} onChange={(e) => setDiscountForm({ ...discountForm, type: e.target.value as any })}><option value="PERCENTAGE">Phần trăm (%)</option><option value="FIXED">Số tiền cố định (đ)</option></Select></Field><Field label="Giá trị" hint={discountForm.type === "PERCENTAGE" ? "Nhập % (ví dụ 20 = giảm 20%). Tối đa 50% nếu không phải KM tập trung." : "Nhập số tiền giảm (đồng)"}><Input type="number" value={discountForm.value} onChange={(e) => setDiscountForm({ ...discountForm, value: e.target.value })} /></Field><Field label="Giảm tối đa" hint="Trần số tiền giảm cho discount %; 0 = không giới hạn"><Input type="number" value={discountForm.maxDiscountAmount} onChange={(e) => setDiscountForm({ ...discountForm, maxDiscountAmount: e.target.value })} /></Field><Field label="Bắt đầu"><Input type="datetime-local" value={discountForm.startDate} onChange={(e) => setDiscountForm({ ...discountForm, startDate: e.target.value })} /></Field><Field label="Kết thúc"><Input type="datetime-local" value={discountForm.endDate} onChange={(e) => setDiscountForm({ ...discountForm, endDate: e.target.value })} /></Field></div><p className="text-xs font-semibold uppercase tracking-wide text-gray-500">2. Phạm vi áp dụng</p><Field label={discountForm.scope === "PRODUCT" ? "Sản phẩm áp dụng" : "Danh mục áp dụng"} hint="Tìm và tick chọn nhiều mục; các mục đã chọn hiển thị dạng thẻ phía trên">{discountForm.scope === "PRODUCT" ? <SearchableMultiSelect value={discountForm.products} options={productOptions} emptyLabel="Chưa chọn sản phẩm nào" onChange={(value) => setDiscountForm({ ...discountForm, products: value })} /> : <SearchableMultiSelect value={discountForm.categories} options={categoryOptions} emptyLabel="Chưa chọn danh mục nào" onChange={(value) => setDiscountForm({ ...discountForm, categories: value })} />}</Field><label className="flex gap-2 text-sm"><input type="checkbox" checked={discountForm.isActive} onChange={(e) => setDiscountForm({ ...discountForm, isActive: e.target.checked })} />Kích hoạt</label><EvidenceFields form={discountForm} set={(patch) => setDiscountForm({ ...discountForm, ...patch })} /></div>}
+      {tab === "flash-sales" && <div className="space-y-5"><p className="text-xs font-semibold uppercase tracking-wide text-gray-500">1. Thông tin flash sale</p><div className="grid gap-4 sm:grid-cols-2"><Field label="Tên Flash Sale"><Input value={flashForm.name} onChange={(e) => setFlashForm({ ...flashForm, name: e.target.value })} /></Field><Field label="Biến thể" hint="Chọn biến thể sản phẩm sẽ chạy flash sale"><Select value={flashForm.variant} onChange={(e) => setFlashForm({ ...flashForm, variant: e.target.value })}><option value="">Chọn biến thể</option>{variants.map((item) => <option key={item.id} value={item.id}>{variantName(item)}</option>)}</Select></Field><Field label="Giá Flash Sale" hint="Phải thấp hơn giá gốc; không dưới 50% giá gốc nếu không phải KM tập trung"><Input type="number" value={flashForm.flashPrice} onChange={(e) => setFlashForm({ ...flashForm, flashPrice: e.target.value })} /></Field><Field label="Tồn phân bổ" hint="Số lượng dành cho flash; bán hết là flash tự dừng"><Input type="number" value={flashForm.stockAllocated} onChange={(e) => setFlashForm({ ...flashForm, stockAllocated: e.target.value })} /></Field><Field label="Tối đa mỗi khách" hint="Số lượng tối đa 1 khách mua được; 0 = không giới hạn"><Input type="number" value={flashForm.maxPerUser} onChange={(e) => setFlashForm({ ...flashForm, maxPerUser: e.target.value })} /></Field><Field label="Bắt đầu"><Input type="datetime-local" value={flashForm.startTime} onChange={(e) => setFlashForm({ ...flashForm, startTime: e.target.value })} /></Field><Field label="Kết thúc"><Input type="datetime-local" value={flashForm.endTime} onChange={(e) => setFlashForm({ ...flashForm, endTime: e.target.value })} /></Field></div><label className="flex gap-2 text-sm"><input type="checkbox" checked={flashForm.isActive} onChange={(e) => setFlashForm({ ...flashForm, isActive: e.target.checked })} />Kích hoạt (bắt buộc bật để flash chạy)</label><EvidenceFields form={flashForm} set={(patch) => setFlashForm({ ...flashForm, ...patch })} /></div>}
     </Modal>
+
+    <Modal open={variantModal} onClose={() => setVariantModal(false)} title="Thêm biến thể mới" footer={<><Button variant="secondary" onClick={() => setVariantModal(false)}>Hủy</Button><Button onClick={saveVariant} disabled={savingVariant}>{savingVariant ? "Đang lưu..." : "Thêm biến thể"}</Button></>}>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field label="Sản phẩm" hint="Biến thể sẽ thuộc về sản phẩm này"><Select value={variantForm.product} onChange={(e) => setVariantForm({ ...variantForm, product: e.target.value })}><option value="">Chọn sản phẩm</option>{products.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</Select></Field>
+        <Field label="SKU" hint="Mã biến thể, phải là duy nhất"><Input value={variantForm.sku} onChange={(e) => setVariantForm({ ...variantForm, sku: e.target.value })} /></Field>
+        <Field label="Dung tích / Phân loại" hint="Ví dụ: 50ml, 100ml (có thể để trống)"><Input value={variantForm.volume} onChange={(e) => setVariantForm({ ...variantForm, volume: e.target.value })} /></Field>
+        <Field label="Giá niêm yết (đ)"><Input type="number" value={variantForm.price} onChange={(e) => setVariantForm({ ...variantForm, price: e.target.value })} /></Field>
+        <Field label="Giá vốn (đ)" hint="Dùng để tính lợi nhuận trong báo cáo"><Input type="number" value={variantForm.costPrice} onChange={(e) => setVariantForm({ ...variantForm, costPrice: e.target.value })} /></Field>
+        <Field label="Tồn kho"><Input type="number" value={variantForm.stock} onChange={(e) => setVariantForm({ ...variantForm, stock: e.target.value })} /></Field>
+      </div>
+      <Field label="Lý do (ghi vào lịch sử giá)" hint="Mốc giá khởi tạo sẽ được lưu kèm lý do này"><Input value={variantForm.reason} onChange={(e) => setVariantForm({ ...variantForm, reason: e.target.value })} /></Field>
+    </Modal>
+
+    <Modal open={!!priceTarget} onClose={() => setPriceTarget(null)} title="Điều chỉnh giá biến thể" footer={<><Button variant="secondary" onClick={() => setPriceTarget(null)}>Hủy</Button><Button onClick={savePrice} disabled={savingPrice}>{savingPrice ? "Đang lưu..." : "Lưu điều chỉnh"}</Button></>}>
+      <p className="mb-4 text-sm text-gray-600">{priceTarget?.label} — giá hiện tại <strong>{formatVnd(priceTarget?.current || 0)}</strong></p>
+      <div className="space-y-4">
+        <Field label="Giá mới (đ)"><Input type="number" value={priceForm.price} onChange={(e) => setPriceForm({ ...priceForm, price: e.target.value })} /></Field>
+        <Field label="Lý do điều chỉnh" hint="Bắt buộc — sẽ được ghi vào lịch sử giá tại thời điểm này"><Textarea rows={3} value={priceForm.reason} onChange={(e) => setPriceForm({ ...priceForm, reason: e.target.value })} /></Field>
+      </div>
+    </Modal>
+
     <ConfirmDialog open={!!deleting} title="Xóa ưu đãi" message="Đơn hàng cũ vẫn giữ snapshot giá và ưu đãi. Bạn có chắc muốn xóa?" onCancel={() => setDeleting(null)} onConfirm={remove} />
   </div>;
 }

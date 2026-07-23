@@ -4,7 +4,6 @@ import { Link } from "react-router-dom";
 type Collection = {
   id: string;
   tab: string;
-  label?: string;
   title: string;
   subtitle: string;
   description: string;

@@ -55,6 +55,8 @@ const userSchema = new Schema(
     profileCompletedAt: Date,
     profileCompletionVoucherCode: { type: String, trim: true, uppercase: true },
     lastLoginAt: Date,
+    // Da phat voucher chao mung (WELCOME10) sau khi khach hoan tat ho so hay chua
+    welcomeVoucherIssuedAt: Date,
   },
   {
     timestamps: true,

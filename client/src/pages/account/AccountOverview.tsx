@@ -1,6 +1,7 @@
 import {
   ArrowRight,
   ChevronRight,
+  Gift,
   MapPin,
   Package,
   Plus,
@@ -131,19 +132,12 @@ export default function AccountOverview() {
   }, []);
 
   const defaultAddress = user?.addresses?.[0];
-  const hasCompleteAddress = Boolean(
-    user?.addresses?.some(
-      (address) =>
-        address.phone &&
-        (address.line || address.detail) &&
-        address.ward &&
-        address.province,
-    ),
-  );
-  const profileComplete = Boolean(
-    user?.name && user.email && /^0\d{9}$/.test(user.phone || "") && hasCompleteAddress,
-  );
-  const profileVoucherCode = user?.profileCompletionVoucherCode || "NEWPROFILE10";
+  // Xac dinh cac muc con thieu trong ho so (KHONG tinh mat khau).
+  const missingProfile: string[] = [];
+  if (!user?.name) missingProfile.push("Họ và tên");
+  if (!user?.phone) missingProfile.push("Số điện thoại");
+  if (!user?.addresses?.length) missingProfile.push("Địa chỉ nhận hàng");
+  const profileComplete = missingProfile.length === 0;
   const refillProductPath = refillProduct
     ? `/products/${refillProduct.slug || refillProduct.id}`
     : "/shop";
@@ -173,40 +167,50 @@ export default function AccountOverview() {
       </section>
 
       <main className="space-y-14 px-6 py-10 lg:px-12">
-        <section
-          className={`border px-6 py-5 ${
-            profileComplete
-              ? "border-[#D8C990] bg-[#FFF8D8]"
-              : "border-[#E2DBD2] bg-[#FFFDF9]"
-          }`}
-        >
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div>
-              <p className="text-[9px] uppercase tracking-[0.22em] text-[#8C7200]">
-                Ưu đãi tài khoản mới
-              </p>
-              <h2 className="mt-2 font-serif text-2xl">
-                {profileComplete
-                  ? "Hồ sơ đã hoàn tất"
-                  : "Hoàn tất hồ sơ để nhận voucher 10%"}
-              </h2>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-[#746C63]">
-                {profileComplete
-                  ? `Voucher dành cho người mới của bạn là ${profileVoucherCode}. Mã cũng đã được gửi qua email khi hệ thống ghi nhận hồ sơ đầy đủ.`
-                  : "Cập nhật họ tên, số điện thoại và địa chỉ giao hàng đầy đủ để hệ thống gửi voucher 10% qua email cho tài khoản mới."}
-              </p>
+        {!profileComplete ? (
+          <section className="flex flex-col gap-4 border border-[#E0D6C6] bg-[#FBF5EA] p-6 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-start gap-4">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#887000] text-white">
+                <Gift size={20} />
+              </span>
+              <div>
+                <h2 className="font-serif text-xl">
+                  Hoàn thiện hồ sơ của bạn
+                </h2>
+                <p className="mt-1 max-w-xl text-sm leading-6 text-[#746C63]">
+                  Hồ sơ của bạn còn thiếu một số thông tin. Cập nhật đầy đủ để đặt
+                  hàng nhanh hơn và nhận trọn ưu đãi dành cho thành viên.
+                </p>
+                <ul className="mt-3 space-y-1.5">
+                  {missingProfile.map((field) => (
+                    <li
+                      key={field}
+                      className="flex items-center gap-2 text-xs font-medium text-[#8A5A00]"
+                    >
+                      <span className="h-1.5 w-1.5 rounded-full bg-[#B08900]" />
+                      Cần cập nhật: {field}
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
-
-            <Link
-              to={profileComplete ? "/shop" : "/account/settings"}
-              className="flex shrink-0 items-center justify-center gap-3 bg-[#887000] px-6 py-3 text-[10px] uppercase tracking-[0.14em] text-white transition hover:bg-[#6D5900]"
-            >
-              {profileComplete ? profileVoucherCode : "Cập nhật hồ sơ"}
-              <ArrowRight size={13} />
-            </Link>
-          </div>
-        </section>
-
+            <div className="flex shrink-0 flex-wrap gap-2">
+              <Link
+                to="/account/settings"
+                className="flex items-center justify-center gap-2 bg-[#27231F] px-5 py-3 text-[10px] uppercase tracking-[0.16em] text-white transition hover:bg-black"
+              >
+                Cập nhật thông tin
+                <ArrowRight size={13} />
+              </Link>
+              <Link
+                to="/account/addresses"
+                className="flex items-center justify-center gap-2 border border-[#27231F] px-5 py-3 text-[10px] uppercase tracking-[0.16em] text-[#27231F] transition hover:bg-[#27231F] hover:text-white"
+              >
+                Thêm địa chỉ
+              </Link>
+            </div>
+          </section>
+        ) : null}
         <section className="grid gap-5 xl:grid-cols-[2fr_1fr]">
           <div className="grid gap-6 bg-[#F3EFEA] p-6 sm:grid-cols-[1fr_220px] lg:p-8">
             <div className="flex flex-col justify-center">

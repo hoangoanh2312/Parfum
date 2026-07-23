@@ -9,58 +9,58 @@ type ScentFamily = {
 // Nhom mui huong + anh dai dien + mo ta ngan (1-2 cau).
 const SCENT_FAMILIES: ScentFamily[] = [
   {
-    name: "Hoa cỏ (Floral)",
+    name: "Floral",
     image:
-      "https://images.unsplash.com/photo-1490750967868-88df5691cc87?w=900&q=80",
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTcUyeP2qsr7K8Kgg9ndO326Ks5hRCbG-8kowKssfbUKg&s=10?w=900&q=80",
     description:
       "Những cánh hoa hồng, nhài và dành dành hé nở lúc bình minh — thanh lịch, nữ tính và đầy lãng mạn.",
   },
   {
-    name: "Gỗ (Woody)",
+    name: "Woody",
     image:
-      "https://images.unsplash.com/photo-1541643600914-78b084683702?w=900&q=80",
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRYxsQg2lzuPyKUOFk6C58zYBQENvX-8qwMXkpOIVeGEA&s=10?w=900&q=80",
     description:
       "Cốt gỗ đàn hương, tuyết tùng và trầm hương sâu lắng, kiến tạo chiều sâu ấm và vững chãi.",
   },
   {
-    name: "Phương Đông (Oriental)",
+    name: "Oriental",
     image:
-      "https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=900&q=80",
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS1SdGabYja-p6Q6_FrgmOk5hNrgd1uD80iCYQo-QRGWg&s=10?w=900&q=80",
     description:
       "Hổ phách, vanilla và gia vị ấm dệt nên tầng hương huyền bí, quyến rũ và sang trọng.",
   },
   {
-    name: "Cam chánh (Citrus)",
+    name: "Citrus",
     image:
-      "https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=900&q=80",
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRmDCFd7Zn7yuqEgc5CI_eBhhvJmK7mg0VTJaOFwr2bog&s=10?w=900&q=80",
     description:
       "Bergamot, chanh và cam tươi bật tỏa năng lượng rạng rỡ, sảng khoái ngay từ nhịp đầu tiên.",
   },
   {
-    name: "Tươi mát (Fresh)",
+    name: "Fresh",
     image:
-      "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=900&q=80",
+      "https://apaniche.vn/wp-content/webp-express/webp-images/uploads/2025/09/mui-huong-tuoi-moi.png.webp?w=900&q=80",
     description:
       "Hương biển, lá xanh và không khí núi cao mang lại cảm giác sạch, thoáng và tràn đầy sức sống.",
   },
   {
-    name: "Thảo mộc (Aromatic)",
+    name: "Aromatic",
     image:
-      "https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?w=900&q=80",
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT_zquUzhIzdUYO-j8PWlDrbSPjWBmZod1wdei_lV3Bzw&s=10?w=900&q=80",
     description:
       "Oải hương, hương thảo và xô thơm gợi nên nét phong trần, lịch lãm và cân bằng.",
   },
   {
-    name: "Da thuộc (Leather)",
+    name: "Leather",
     image:
-      "https://images.unsplash.com/photo-1520975954732-35dd22299614?w=900&q=80",
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTCe5JzyIg_5Z5eV1_Vmw0OQe2HWA-pS5pJznj4AdMmIQ&s=10?w=900&q=80",
     description:
       "Da thuộc và khói gợi cảm giác cổ điển, mạnh mẽ — dấu ấn cá tính không thể nhầm lẫn.",
   },
   {
-    name: "Ngọt ngào (Gourmand)",
+    name: "Gourmand",
     image:
-      "https://images.unsplash.com/photo-1481391319762-47dff72954d9?w=900&q=80",
+      "https://nuochoamc.com/upload/images/bai-viet/421/nuoc-hoa-mui-huong-banh-keo-gourmand-la-gi.webp?w=900&q=80",
     description:
       "Vanilla, caramel và cacao ngọt ngào như một món tráng miệng — ấm áp và đầy mời gọi.",
   },
