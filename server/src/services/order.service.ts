@@ -14,6 +14,8 @@ import { logger } from '../utils/logger';
 import { env } from '../config/env';
 import { assertValidContact, normalizeEmail, normalizePhone } from '../utils/contactValidation';
 import { normalizeOrderStatus } from '../utils/orderStatus';
+import { sendOrderNotification } from './notification.service';
+import { claimGuestOrdersForUser } from './auth.service';
 import '../models/product.model';
 
 export type StockItem = { variant: string; quantity: number };
@@ -191,6 +193,29 @@ function normalizeOrderAddress(a: OrderAddressInput = {}) {
   };
 }
 
+/**
+ * Khách đã có tài khoản nhưng checkout khi chưa đăng nhập:
+ * chỉ gắn đơn khi CẢ email và số điện thoại khớp chính xác tài khoản customer.
+ * Điều kiện kép tránh gắn nhầm đơn chỉ vì người khác nhập nhầm một email.
+ */
+async function resolveOrderUserId(
+  authenticatedUserId: string | undefined,
+  address: ReturnType<typeof normalizeOrderAddress>,
+) {
+  if (authenticatedUserId) return authenticatedUserId;
+  if (!address.email || !address.phone) return undefined;
+
+  const existingUser: any = await User.findOne({
+    role: 'customer',
+    email: address.email,
+    phone: address.phone,
+  })
+    .select('_id')
+    .lean();
+
+  return existingUser?._id ? String(existingUser._id) : undefined;
+}
+
 async function incrementCustomerCounter(Model: any, query: any, field: string, amount: number, limit: number, session?: mongoose.ClientSession) {
   const options: any = { new: true, session };
   if (limit <= 0) {
@@ -309,10 +334,11 @@ export async function createOrder(userId: string | undefined, opts: CreateOrderO
   }
 
   const address = normalizeOrderAddress(opts.address);
+  const orderUserId = await resolveOrderUserId(userId, address);
   // Server resolve lai tat ca gia tu DB. Khong doc gia/discount do client gui.
   const quote = await quoteOrder(stockItems, {
     voucherCode: opts.voucherCode, shippingMethod: opts.shippingMethod,
-    userId, email: address.email,
+    userId: orderUserId, email: address.email,
   });
   const totals = {
     subtotal: quote.subtotal,
@@ -327,7 +353,7 @@ export async function createOrder(userId: string | undefined, opts: CreateOrderO
     shippingDiscount: quote.shippingDiscount,
   };
   const method = opts.method === 'bank_qr' ? 'bank_qr' : 'cod';
-  const customerKey = pricingCustomerKey(userId, address.email);
+  const customerKey = pricingCustomerKey(orderUserId, address.email);
   const orderItems = quote.items.map((x) => ({
     variant: x.variant,
     name: x.name,
@@ -344,7 +370,7 @@ export async function createOrder(userId: string | undefined, opts: CreateOrderO
   }));
 
   const buildDoc = () => ({
-    ...(userId ? { user: userId } : {}),
+    ...(orderUserId ? { user: orderUserId } : {}),
     items: orderItems,
     subtotal: totals.subtotal,
     originalTotal: totals.originalTotal,
@@ -377,8 +403,8 @@ export async function createOrder(userId: string | undefined, opts: CreateOrderO
       const docs = await Order.create([buildDoc()], { session });
       created = docs[0];
       await Payment.create([{ order: created._id, method, status: 'unpaid', amount: totals.total }], { session });
-      if (userId && totals.pointsEarned) {
-        await User.updateOne({ _id: userId }, { $inc: { loyaltyPoints: totals.pointsEarned } }, { session });
+      if (orderUserId && totals.pointsEarned) {
+        await User.updateOne({ _id: orderUserId }, { $inc: { loyaltyPoints: totals.pointsEarned } }, { session });
       }
       if (cart && !explicitItems) {
         cart.items = [];
@@ -393,10 +419,14 @@ export async function createOrder(userId: string | undefined, opts: CreateOrderO
       /Transaction numbers|replica set|not support|Transactions are not/i.test(msg);
     if (!unsupported) throw txnErr;
     logger.warn('[order] Mongo khong ho tro transaction -> dung fallback rollback thu cong');
-    created = await createOrderFallback({ userId, cart, stockItems, doc: buildDoc(), method, totals, quote, customerKey, explicitItems });
+    created = await createOrderFallback({ userId: orderUserId, cart, stockItems, doc: buildDoc(), method, totals, quote, customerKey, explicitItems });
   } finally {
     await session.endSession();
   }
+
+  void sendOrderNotification(String(created._id), 'created').catch((error) => {
+    logger.error('[order] Gui email xac nhan don hang that bai', error);
+  });
 
   return {
     orderId: String(created._id),
@@ -457,6 +487,7 @@ export async function cancelOrder(userId: string, orderId: string) {
   await restoreStock((order.items || []).map((it: any) => ({ variant: String(it.variant), quantity: it.quantity })));
   order.status = 'cancelled';
   await order.save();
+  void sendOrderNotification(String(order._id), 'status').catch(() => null);
   if (userId && order.pointsEarned) {
     await User.updateOne({ _id: userId }, { $inc: { loyaltyPoints: -order.pointsEarned } });
   }
@@ -484,6 +515,7 @@ export async function cancelPendingQrOrder(orderId: string, userId?: string) {
   await restoreStock((order.items || []).map((it: any) => ({ variant: String(it.variant), quantity: it.quantity })));
   order.status = 'cancelled';
   await order.save();
+  void sendOrderNotification(String(order._id), 'status').catch(() => null);
 
   if (order.user && order.pointsEarned) {
     await User.updateOne({ _id: order.user }, { $inc: { loyaltyPoints: -order.pointsEarned } });
@@ -494,6 +526,11 @@ export async function cancelPendingQrOrder(orderId: string, userId?: string) {
 
 /** Danh sach don cua 1 user (moi nhat truoc). */
 export async function getMyOrders(userId: string) {
+  const user: any = await User.findById(userId).select('email phone').lean();
+  if (user?.email && user?.phone) {
+    await claimGuestOrdersForUser(user, String(user.email), String(user.phone));
+  }
+
   const orders: any[] = await Order.find({ user: userId }).sort({ createdAt: -1 }).lean();
 
   const ids = orders.map((o) => o._id);

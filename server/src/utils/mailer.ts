@@ -7,8 +7,12 @@ export interface MailInput {
   text?: string;
 }
 
+export function isMailConfigured() {
+  return Boolean(process.env.SMTP_USER?.trim() && process.env.SMTP_PASS?.trim());
+}
+
 export function assertMailConfigured() {
-  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+  if (!isMailConfigured()) {
     throw Object.assign(new Error('Dich vu email chua duoc cau hinh'), { status: 503 });
   }
 }
@@ -47,7 +51,7 @@ function normalizeMailFrom(mailFrom: string | undefined, smtpUser: string) {
 export async function sendMail(input: MailInput): Promise<boolean> {
   const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, MAIL_FROM } = process.env;
 
-  if (!SMTP_USER || !SMTP_PASS) {
+  if (!isMailConfigured() || !SMTP_USER || !SMTP_PASS) {
     logger.warn(
       `SMTP chua cau hinh - bo qua gui email toi ${input.to} (subject: ${input.subject})`,
     );
@@ -57,7 +61,20 @@ export async function sendMail(input: MailInput): Promise<boolean> {
   try {
     const moduleName = 'nodemailer';
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const nodemailer: any = await import(moduleName);
+    const imported: any = await import(moduleName);
+    // Ho tro ca CommonJS (module.exports) lan ESM (export default) cua nodemailer,
+    // vi tuy trinh chay (tsx/tsc) ma dynamic import tra ve namespace khac nhau.
+    const nodemailer: any = imported?.createTransport
+      ? imported
+      : imported?.default;
+
+    if (!nodemailer?.createTransport) {
+      logger.error(
+        'Khong nap duoc nodemailer.createTransport - kiem tra da cai dat nodemailer (phien ban hop le, vi du ^6.9.14) hay chua',
+      );
+      return false;
+    }
+
     const transport = nodemailer.createTransport({
       host: SMTP_HOST || 'smtp.gmail.com',
       port: Number(SMTP_PORT || 587),

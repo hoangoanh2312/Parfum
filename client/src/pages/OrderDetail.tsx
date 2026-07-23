@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
 import { ArrowLeft, MapPin, StickyNote, CreditCard, Printer } from "lucide-react";
 import { api } from "../lib/api";
 import Footer from "../components/Footer";
@@ -38,6 +38,12 @@ type Detail = {
 
 export default function OrderDetail() {
   const { id } = useParams();
+  const location = useLocation();
+  const locationState = location.state as { from?: unknown } | null;
+  const returnPath =
+    locationState?.from === "/account/orders"
+      ? "/account/orders"
+      : "/orders";
   const [order, setOrder] = useState<Detail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -98,7 +104,7 @@ export default function OrderDetail() {
     <>
       <section className="max-w-4xl mx-auto px-6 py-12 bg-[#FDF9F4] min-h-[70vh]">
         <Link
-          to="/orders"
+          to={returnPath}
           className="inline-flex items-center gap-2 font-['Manrope'] text-xs uppercase tracking-[2px] text-[#5F5E5E] hover:text-[#735C00] mb-6"
         >
           <ArrowLeft size={14} /> Danh sách đơn hàng

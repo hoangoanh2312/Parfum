@@ -160,6 +160,17 @@ export type AdminBrand = {
   productCount: number;
   createdAt?: string;
 };
+
+export type AdminScentFamilyCard = {
+  id: string;
+  name: string;
+  image: string;
+  description: string;
+  displayOrder: number;
+  isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+};
 export type AdminCategory = { id: string; name: string; productCount: number };
 
 export type AdminOrder = {
@@ -192,6 +203,11 @@ export type AdminOrder = {
     bankReference?: string;
     providerTransactionId?: string;
   } | null;
+  notificationDelivery?: {
+    sent: boolean;
+    reason?: string;
+    email?: string;
+  };
 };
 
 export type AdminUser = {

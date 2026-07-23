@@ -16,7 +16,8 @@ body,
 
 html,
 body {
-  overflow-x: hidden;
+  /* `hidden` tao scroll container va lam position: sticky bi vo hieu o mot so trinh duyet. */
+  overflow-x: clip;
 }
 
 body {
@@ -66,6 +67,40 @@ textarea {
   text-transform: uppercase;
 }
 
+@keyframes accountBestSellerFloatUp {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 24px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.account-best-seller-float-up {
+  opacity: 0;
+  animation: accountBestSellerFloatUp 620ms cubic-bezier(0.22, 1, 0.36, 1)
+    forwards;
+}
+
+@keyframes cartSimilarFloatUp {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 20px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.cart-similar-float-up {
+  opacity: 0;
+  animation: cartSimilarFloatUp 560ms cubic-bezier(0.22, 1, 0.36, 1)
+    forwards;
+}
+
 @keyframes toastEnter {
   from {
     opacity: 0;
@@ -91,10 +126,14 @@ textarea {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .account-best-seller-float-up,
+  .cart-similar-float-up,
   .toast-item,
   .toast-progress {
     animation: none;
+    opacity: 1;
   }
+
 }
 
 .font-title {
@@ -135,11 +174,11 @@ textarea {
 }
 
 .marquee-left {
-  animation: marqueeLeft 10s linear infinite;
+  animation: marqueeLeft 40s linear infinite;
 }
 
 .marquee-right {
-  animation: marqueeRight 10s linear infinite;
+  animation: marqueeRight 40s linear infinite;
 }
 
 .marquee-group {

@@ -5,6 +5,7 @@ import { SupportRequest } from '../models/supportRequest.model';
 import { User } from '../models/user.model';
 import { Variant } from '../models/variant.model';
 import { normalizeOrderStatus } from '../utils/orderStatus';
+import { LOYAL_MIN_ORDERS, VIP_MIN_ORDERS, VIP_MIN_SPEND, isVipCustomer } from '../constants/customerSegment';
 
 type Granularity = 'day' | 'week' | 'month' | 'quarter' | 'year';
 
@@ -71,6 +72,10 @@ export async function getReports(query: Record<string, unknown>) {
     const order: any = orderMap.get(String(payment.order));
     return payment.status === 'paid' && order && !['cancelled', 'returned'].includes(normalizeOrderStatus(order.status));
   });
+  const historicalPaidPayments = validPaidPayments.filter((payment: any) => {
+    const paidAt = new Date(payment.paidAt || payment.updatedAt).getTime();
+    return Number.isFinite(paidAt) && paidAt <= to.getTime();
+  });
   const revenueFor = (start: Date, end: Date) => validPaidPayments
     .filter((payment: any) => inRange(payment.paidAt || payment.updatedAt, start, end))
     .reduce((sum: number, payment: any) => sum + Number(payment.amount || 0), 0);
@@ -80,14 +85,25 @@ export async function getReports(query: Record<string, unknown>) {
   const selectedExpenses = expenses.filter((expense: any) => inRange(expense.date, from, to));
 
   const productMap = new Map<string, any>();
+  let inventoryValue = 0;
+  let stockUnits = 0;
+  let costedStockUnits = 0;
+  let missingCostSku = 0;
   for (const variant of variants) {
+    const stock = Math.max(0, Number(variant.stock) || 0);
+    const costPrice = Math.max(0, Number(variant.costPrice) || 0);
+    inventoryValue += stock * costPrice;
+    stockUnits += stock;
+    if (stock > 0 && costPrice > 0) costedStockUnits += stock;
+    if (stock > 0 && costPrice <= 0) missingCostSku += 1;
+
     const product = variant.product;
     if (!product) continue;
     const id = String(product._id);
     if (!productMap.has(id)) productMap.set(id, { id, name: product.name, category: product.category?.name || 'Khác', stock: 0, inventoryValue: 0, revenue: 0, quantity: 0, cogs: 0 });
     const row = productMap.get(id);
-    row.stock += Number(variant.stock || 0);
-    row.inventoryValue += Number(variant.stock || 0) * Number(variant.costPrice || 0);
+    row.stock += stock;
+    row.inventoryValue += stock * costPrice;
   }
 
   let cogs = 0;
@@ -121,8 +137,6 @@ export async function getReports(query: Record<string, unknown>) {
   const expenseTotal = selectedExpenses.reduce((sum: number, item: any) => sum + Number(item.amount || 0), 0);
   const grossProfit = revenue - cogs;
   const netProfit = grossProfit - expenseTotal;
-  const inventoryValue = Array.from(productMap.values()).reduce((sum, row) => sum + row.inventoryValue, 0);
-
   const seriesMap = new Map<string, { key: string; revenue: number; expenses: number; cashFlow: number; orders: number }>();
   const seriesRow = (key: string) => {
     if (!seriesMap.has(key)) seriesMap.set(key, { key, revenue: 0, expenses: 0, cashFlow: 0, orders: 0 });
@@ -139,7 +153,7 @@ export async function getReports(query: Record<string, unknown>) {
   const returned = statusCounts.returned || 0;
 
   const allPaidByUser = new Map<string, { orders: number; spend: number; firstAt: Date }>();
-  for (const payment of validPaidPayments) {
+  for (const payment of historicalPaidPayments) {
     const order: any = orderMap.get(String(payment.order));
     if (!order?.user) continue;
     const userId = String(order.user);
@@ -151,11 +165,92 @@ export async function getReports(query: Record<string, unknown>) {
   }
   const currentCustomerIds = new Set<string>(selectedPaidOrders.map(({ order }: any) => String(order.user || '')).filter(Boolean));
   const previousCustomerIds = new Set<string>(validPaidPayments.filter((p: any) => inRange(p.paidAt || p.updatedAt, previousFrom, previousTo)).map((p: any) => String((orderMap.get(String(p.order)) as any)?.user || '')).filter(Boolean));
-  let newCustomers = 0;
-  currentCustomerIds.forEach((id) => { if ((allPaidByUser.get(id)?.firstAt.getTime() || 0) >= from.getTime()) newCustomers += 1; });
   const retained = Array.from(previousCustomerIds).filter((id) => currentCustomerIds.has(id)).length;
   const segments = { new: 0, returning: 0, loyal: 0, vip: 0 };
-  allPaidByUser.forEach((value) => { if (value.orders >= 5 || value.spend >= 20_000_000) segments.vip += 1; else if (value.orders >= 3) segments.loyal += 1; else if (value.orders >= 2) segments.returning += 1; else segments.new += 1; });
+  const userMap = new Map(users.map((user: any) => [String(user._id), user]));
+  const periodPurchasesByUser = new Map<string, Array<{ order: any; payment: any }>>();
+  selectedPaidOrders.forEach(({ order, payment }: any) => {
+    const userId = String(order?.user || '');
+    if (!userId) return;
+    const purchases = periodPurchasesByUser.get(userId) || [];
+    purchases.push({ order, payment });
+    periodPurchasesByUser.set(userId, purchases);
+  });
+
+  const segmentRank: Record<string, number> = { vip: 0, loyal: 1, returning: 2, new: 3 };
+  const customerDetails = Array.from(currentCustomerIds)
+    .map((userId) => {
+      const lifetime = allPaidByUser.get(userId);
+      const purchases = periodPurchasesByUser.get(userId) || [];
+      if (!lifetime || !purchases.length) return null;
+
+      const firstPurchaseInPeriod = lifetime.firstAt.getTime() >= from.getTime();
+      let segment: 'new' | 'returning' | 'loyal' | 'vip';
+      let reason: string;
+      if (isVipCustomer(lifetime.orders, lifetime.spend)) {
+        segment = 'vip';
+        reason = lifetime.orders >= VIP_MIN_ORDERS && lifetime.spend >= VIP_MIN_SPEND
+          ? `Có ${lifetime.orders} đơn và tổng chi tiêu ${Math.round(lifetime.spend).toLocaleString('vi-VN')}đ.`
+          : lifetime.orders >= VIP_MIN_ORDERS
+            ? `Có ${lifetime.orders} đơn, đạt ngưỡng VIP từ ${VIP_MIN_ORDERS} đơn.`
+            : `Tổng chi tiêu ${Math.round(lifetime.spend).toLocaleString('vi-VN')}đ, đạt ngưỡng VIP từ ${VIP_MIN_SPEND.toLocaleString('vi-VN')}đ.`;
+      } else if (lifetime.orders >= LOYAL_MIN_ORDERS) {
+        segment = 'loyal';
+        reason = `Có ${lifetime.orders} đơn, đạt ngưỡng khách trung thành từ ${LOYAL_MIN_ORDERS} đơn.`;
+      } else if (firstPurchaseInPeriod) {
+        segment = 'new';
+        reason = `Đơn đầu tiên phát sinh trong kỳ báo cáo; hiện có ${lifetime.orders} đơn.`;
+      } else {
+        segment = 'returning';
+        reason = `Đã mua trước kỳ báo cáo và quay lại mua trong kỳ này; tổng cộng ${lifetime.orders} đơn.`;
+      }
+      segments[segment] += 1;
+
+      const user: any = userMap.get(userId);
+      const firstOrder = purchases[0]?.order;
+      const periodSpend = purchases.reduce((sum, item) => sum + Number(item.payment?.amount || item.order?.total || 0), 0);
+      const detailOrders = purchases
+        .slice()
+        .sort((a, b) => new Date(b.payment?.paidAt || b.order?.updatedAt).getTime() - new Date(a.payment?.paidAt || a.order?.updatedAt).getTime())
+        .map(({ order, payment }) => ({
+          id: String(order._id),
+          code: `#${String(order._id).slice(-8).toUpperCase()}`,
+          date: payment?.paidAt || order.createdAt,
+          status: normalizeOrderStatus(order.status),
+          total: Number(payment?.amount || order.total || 0),
+          items: (order.items || []).map((item: any) => {
+            const quantity = Number(item.quantity || 0);
+            const price = Number(item.finalPrice ?? item.price ?? 0);
+            return {
+              name: item.name || 'Sản phẩm',
+              volume: item.volume || '',
+              quantity,
+              price,
+              total: price * quantity,
+            };
+          }),
+        }));
+
+      return {
+        id: userId,
+        name: user?.name || firstOrder?.address?.fullName || 'Khách hàng',
+        email: user?.email || firstOrder?.address?.email || '',
+        segment,
+        reason,
+        lifetimeOrders: lifetime.orders,
+        lifetimeSpend: lifetime.spend,
+        periodOrders: purchases.length,
+        periodSpend,
+        orders: detailOrders,
+      };
+    })
+    .filter(Boolean)
+    .sort((a: any, b: any) => segmentRank[a.segment] - segmentRank[b.segment] || b.lifetimeSpend - a.lifetimeSpend);
+
+  const newCustomers = segments.new;
+  const returningCustomers = segments.returning + segments.loyal + segments.vip;
+  const currentCustomerLifetimeSpend = customerDetails.reduce((sum: number, item: any) => sum + Number(item.lifetimeSpend || 0), 0);
+  const currentCustomerClv = customerDetails.length ? currentCustomerLifetimeSpend / customerDetails.length : 0;
 
   const paymentMethods = new Map<string, { method: string; count: number; amount: number }>();
   selectedPayments.forEach((payment: any) => { const row = paymentMethods.get(payment.method) || { method: payment.method, count: 0, amount: 0 }; row.count += 1; row.amount += Number(payment.amount || 0); paymentMethods.set(payment.method, row); });
@@ -172,15 +267,59 @@ export async function getReports(query: Record<string, unknown>) {
   selectedSupport.forEach((item: any) => { const s = item.status || 'open'; if (s in supportStatusCounts) supportStatusCounts[s] += 1; });
 
   const products = Array.from(productMap.values()).map((row) => ({ ...row, margin: row.revenue ? Math.round(((row.revenue - row.cogs) / row.revenue) * 1000) / 10 : null })).sort((a, b) => b.quantity - a.quantity);
-  const expenseByType = Object.entries(selectedExpenses.reduce((result: Record<string, number>, item: any) => { result[item.type] = (result[item.type] || 0) + Number(item.amount || 0); return result; }, {})).map(([type, amount]) => ({ type, amount }));
+  const activeVariants = variants.filter((variant: any) => variant.isActive !== false && variant.product?.isActive !== false);
+  const lowStock = activeVariants.filter((variant: any) => {
+    const stock = Number(variant.stock) || 0;
+    return stock > 0 && stock <= 5;
+  }).length;
+  const outOfStock = activeVariants.filter((variant: any) => (Number(variant.stock) || 0) <= 0).length;
+  const inventoryCostCoverage = stockUnits ? (costedStockUnits / stockUnits) * 100 : null;
+  const soldCostCoverage = soldUnits ? (costCoveredUnits / soldUnits) * 100 : null;
+  const slowProducts = products
+    .filter((row) => row.stock > 0)
+    .sort((a, b) => a.quantity - b.quantity || b.stock - a.stock)
+    .slice(0, 10);
+  const expenseTotalsByType: Record<string, number> = selectedExpenses.reduce((result: Record<string, number>, item: any) => {
+    const amount = Number(item.amount || 0);
+    if (Number.isFinite(amount) && amount > 0) {
+      result[item.type] = (result[item.type] || 0) + amount;
+    }
+    return result;
+  }, {});
+  const expenseByType = Object.entries(expenseTotalsByType)
+    .map(([type, amount]) => ({ type, amount: Number(amount) }))
+    .sort((a, b) => b.amount - a.amount);
 
   return {
     range: { from, to, granularity },
     revenue: { total: revenue, paidOrderCount: selectedPayments.length, previous: previousRevenue, previousChange: percentChange(revenue, previousRevenue), yoy: yoyRevenue, yoyChange: percentChange(revenue, yoyRevenue), byCategory: Array.from(categoryMap, ([name, value]) => ({ name, value })), byProduct: products.filter((row) => row.quantity > 0), series },
     orders: { total: selectedOrders.length, statusCounts, aov: selectedPayments.length ? revenue / selectedPayments.length : 0, cancellationRate: selectedOrders.length ? ((cancelled + returned) / selectedOrders.length) * 100 : 0, returnRate: selectedOrders.length ? (returned / selectedOrders.length) * 100 : 0, series },
-    inventory: { top: products.slice(0, 10), slow: [...products].sort((a, b) => a.quantity - b.quantity).slice(0, 10).sort((a, b) => (b.stock || 0) - (a.stock || 0)), products, inventoryValue, turnover: inventoryValue ? cogs / inventoryValue : null, lowStock: variants.filter((variant: any) => Number(variant.stock || 0) <= 5).length, costCoverage: soldUnits ? (costCoveredUnits / soldUnits) * 100 : 0 },
-    customers: { newCustomers, returningCustomers: Math.max(0, currentCustomerIds.size - newCustomers), clv: allPaidByUser.size ? Array.from(allPaidByUser.values()).reduce((sum, value) => sum + value.spend, 0) / allPaidByUser.size : 0, retentionRate: previousCustomerIds.size ? (retained / previousCustomerIds.size) * 100 : 0, segments, totalWithOrders: allPaidByUser.size, registered: users.length },
-    finance: { revenue, cogs, grossProfit, operatingExpenses: expenseTotal, netProfit, expenseByType, series, costCoverage: soldUnits ? (costCoveredUnits / soldUnits) * 100 : 0, expenses: selectedExpenses.slice(0, 100).map((item: any) => ({ id: String(item._id), type: item.type, amount: item.amount, date: item.date, note: item.note })) },
+    inventory: {
+      top: products.filter((row) => row.quantity > 0).slice(0, 10),
+      slow: slowProducts,
+      products,
+      inventoryValue,
+      turnover: inventoryValue ? cogs / inventoryValue : null,
+      turnoverCogs: cogs,
+      lowStock,
+      outOfStock,
+      activeSkuCount: activeVariants.length,
+      stockUnits,
+      missingCostSku,
+      inventoryCostCoverage,
+      costCoverage: soldCostCoverage,
+    },
+    customers: {
+      newCustomers,
+      returningCustomers,
+      clv: currentCustomerClv,
+      retentionRate: previousCustomerIds.size ? (retained / previousCustomerIds.size) * 100 : 0,
+      segments,
+      totalWithOrders: currentCustomerIds.size,
+      registered: users.length,
+      details: customerDetails,
+    },
+    finance: { revenue, cogs, grossProfit, operatingExpenses: expenseTotal, netProfit, expenseByType, series, costCoverage: soldCostCoverage, expenses: selectedExpenses.slice(0, 100).map((item: any) => ({ id: String(item._id), type: item.type, amount: item.amount, date: item.date, note: item.note })) },
     operations: { averageProcessingHours: processHours.length ? processHours.reduce((a, b) => a + b, 0) / processHours.length : null, averageDeliveryHours: deliveryHours.length ? deliveryHours.reduce((a, b) => a + b, 0) / deliveryHours.length : null, timingCoverage: selectedOrders.length ? Math.max(processHours.length, deliveryHours.length) / selectedOrders.length * 100 : 0, paymentMethods: Array.from(paymentMethods.values()).sort((a, b) => b.count - a.count), support: { total: selectedSupport.length, open: selectedSupport.filter((item: any) => ['open', 'in_progress'].includes(item.status)).length, resolved: resolvedSupport.length, byStatus: supportStatusCounts, averageResolutionHours: resolvedSupport.length ? resolvedSupport.reduce((sum: number, item: any) => sum + (new Date(item.resolvedAt).getTime() - new Date(item.createdAt).getTime()) / 3_600_000, 0) / resolvedSupport.length : null }, supportRequests: selectedSupport.slice(0, 100).map((item: any) => ({ id: String(item._id), name: item.name, email: item.email, subject: item.subject, message: item.message, status: item.status, createdAt: item.createdAt, resolvedAt: item.resolvedAt })) },
   };
 }

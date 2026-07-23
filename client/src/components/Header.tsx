@@ -54,7 +54,8 @@ export default function Header() {
     `flex h-20 w-full items-center justify-center whitespace-nowrap text-[10px] uppercase tracking-[2px] transition-colors duration-300 ${
       isActive ? "text-[#746A5F]" : "text-[#A18D5D] hover:text-[#746A5F]"
     }`;
-  const desktopNavWidth = user?.role === "admin" ? "w-[290px]" : "w-[330px]";
+  const desktopGroupPadding =
+    user?.role === "admin" ? "2xl:px-[270px]" : "2xl:px-[220px]";
 
   return (
     <header
@@ -62,7 +63,9 @@ export default function Header() {
         isVisible ? "translate-y-0" : "-translate-y-full"
       }`}
     >
-      <div className="relative mx-auto grid h-20 max-w-[1440px] grid-cols-[44px_1fr_auto] items-center gap-2 px-6 sm:px-8 lg:px-12 2xl:grid-cols-[1fr_190px_1fr] 2xl:gap-0">
+      <div
+        className={`relative mx-auto grid h-20 w-full max-w-[1680px] grid-cols-[44px_1fr_auto] items-center gap-2 px-6 sm:px-8 lg:px-12 2xl:grid-cols-[minmax(0,1fr)_190px_minmax(0,1fr)] 2xl:gap-0 ${desktopGroupPadding}`}
+      >
         <button
           type="button"
           onClick={() => setMenuOpen((open) => !open)}
@@ -74,11 +77,23 @@ export default function Header() {
         </button>
 
         <nav
-          className={`hidden grid-cols-3 items-center justify-self-end 2xl:grid ${desktopNavWidth}`}
+          className="hidden h-full w-full grid-cols-3 items-center 2xl:grid"
           aria-label="Primary"
         >
-          {menuItems.slice(0, 3).map((item) => (
-            <NavLink key={item.link} to={item.link} className={navClass}>
+          {menuItems.slice(0, 3).map((item, index) => (
+            <NavLink
+              key={item.link}
+              to={item.link}
+              className={(state) =>
+                `${navClass(state)} ${
+                  index === 0
+                    ? "2xl:-translate-x-[200px]"
+                    : index === 1
+                      ? "2xl:-translate-x-[133px]"
+                      : "2xl:-translate-x-[67px]"
+                }`
+              }
+            >
               {label(item.vi, item.en)}
             </NavLink>
           ))}
@@ -86,14 +101,14 @@ export default function Header() {
 
         <Link to="/" className="absolute left-1/2 -translate-x-1/2 2xl:static 2xl:justify-self-center 2xl:translate-x-0" aria-label="L'Essence Noire">
           <img
-            src="https://res.cloudinary.com/dwj2trmn0/image/upload/v1784438101/Screenshot_2026-07-19_121449_kus9fn.png"
+            src="https://res.cloudinary.com/dwj2trmn0/image/upload/v1784798994/1784798990705-226061.png"
             alt="L'Essence Noire"
             className="h-11 w-auto max-w-[112px] object-contain transition-transform duration-300 hover:scale-105 sm:h-14 sm:max-w-[170px] 2xl:max-w-[190px]"
           />
         </Link>
 
         <nav
-          className={`hidden grid-cols-3 items-center justify-self-start 2xl:grid ${desktopNavWidth}`}
+          className="hidden h-full w-full grid-cols-3 items-center 2xl:grid"
           aria-label="Secondary"
         >
           {menuItems.slice(3).map((item) => (
@@ -103,7 +118,7 @@ export default function Header() {
           ))}
         </nav>
 
-        <div className="col-start-3 flex min-w-0 items-center justify-end gap-2 sm:gap-3 2xl:absolute 2xl:right-12 2xl:top-5">
+        <div className="col-start-3 flex min-w-0 items-center justify-end gap-2 sm:gap-3 2xl:absolute 2xl:right-2.5 2xl:top-5">
           <Link to="/order-lookup" className="header-icon-button hidden sm:flex" title={label("Tra cứu đơn hàng", "Order lookup")}>
             <Search size={17} />
           </Link>
@@ -135,7 +150,7 @@ export default function Header() {
       </div>
 
       {menuOpen && (
-        <div className="border-t border-[#E4DACE] bg-[#F5ECE3] px-5 pb-6 pt-3 shadow-lg 2xl:hidden">
+        <div className="max-h-[calc(100dvh-80px)] overflow-y-auto border-t border-[#E4DACE] bg-[#F5ECE3] px-5 pb-6 pt-3 shadow-lg 2xl:hidden">
           <nav className="mx-auto grid max-w-xl" aria-label="Mobile">
             {menuItems.map((item) => (
               <NavLink key={item.link} to={item.link} className={({ isActive }) => `border-b border-[#E6DDD2] py-4 text-[11px] uppercase tracking-[2px] ${isActive ? "text-[#5F554A]" : "text-[#907C4D]"}`}>

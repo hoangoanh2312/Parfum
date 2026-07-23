@@ -276,8 +276,11 @@ export default function BrandJournal({ brand: brandOverride }: { brand?: string 
               </div>
 
               {/* RIGHT RAIL — intentionally sparse, chỉ vài thông tin nhỏ */}
-              <aside className="hidden lg:block">
-                <div className="sticky top-24 space-y-10 border-l border-[#E1DDD5] pl-10">
+              <aside
+                className="hidden lg:block"
+                style={{ position: "sticky", top: 96, alignSelf: "start" }}
+              >
+                <div className="space-y-10 border-l border-[#E1DDD5] pl-10">
                   <div>
                     <p className="text-[8px] font-semibold uppercase tracking-[0.22em] text-[#A19D94]">
                       About

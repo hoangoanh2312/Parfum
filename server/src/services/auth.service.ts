@@ -9,10 +9,13 @@ import { assertMailConfigured, sendMail } from '../utils/mailer';
 import { AddressInput } from '../types/dto';
 import { assertValidContact, normalizeEmail, normalizePhone } from '../utils/contactValidation';
 import { assertSmsConfigured, sendPasswordResetOtp } from '../utils/sms';
-import { ensureWelcomeVoucher, WELCOME_VOUCHER_CODE } from './promotion.service';
+import {
+  moveJournalSubscription,
+  subscribeNewAccountToJournal,
+  userAllowsNotification,
+} from './notification.service';
 
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
-export const PROFILE_COMPLETION_VOUCHER_CODE = 'NEWPROFILE10';
 
 function hashToken(token: string) {
   return crypto.createHash('sha256').update(token).digest('hex');
@@ -22,87 +25,105 @@ function escapeRegExp(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-function profileIsComplete(user: any) {
-  const hasName = String(user?.name || '').trim().length >= 2;
-  const hasEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(user?.email || '').trim());
-  const hasPhone = /^0\d{9}$/.test(String(user?.phone || '').trim());
-  const hasAddress = (user?.addresses || []).some((address: any) =>
-    String(address?.phone || '').trim() &&
-    String(address?.line || address?.detail || '').trim() &&
-    String(address?.ward || '').trim() &&
-    String(address?.province || '').trim(),
-  );
-  return hasName && hasEmail && hasPhone && hasAddress;
+function escapeHtml(value: unknown) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
-export async function ensureProfileCompletionVoucher() {
-  const now = new Date();
-  const endDate = new Date(now);
-  endDate.setFullYear(endDate.getFullYear() + 5);
-
-  return Voucher.findOneAndUpdate(
-    { code: PROFILE_COMPLETION_VOUCHER_CODE },
-    {
-      $setOnInsert: {
-        code: PROFILE_COMPLETION_VOUCHER_CODE,
-        name: 'Voucher người mới hoàn tất hồ sơ',
-        type: 'percentage',
-        value: 10,
-        minOrder: 0,
-        maxDiscount: 0,
-        startDate: now,
-        endDate,
-        expiresAt: endDate,
-        usageLimit: 0,
-        usageLimitPerUser: 1,
-        stackable: true,
-        userSegment: 'NEW',
-        isPrivate: false,
-        isActive: true,
-      },
-    },
-    { upsert: true, new: true, setDefaultsOnInsert: true },
-  );
+function voucherIsAvailable(voucher: any, now = new Date()) {
+  const start = voucher?.startDate ? new Date(voucher.startDate) : null;
+  const endValue = voucher?.endDate || voucher?.expiresAt;
+  const end = endValue ? new Date(endValue) : null;
+  return voucher?.isActive !== false
+    && (!start || start <= now)
+    && (!end || end > now)
+    && !(Number(voucher?.usageLimit || 0) > 0 && Number(voucher?.usedCount || 0) >= Number(voucher.usageLimit));
 }
 
-async function sendProfileCompletionVoucherEmail(user: any, code: string) {
+function voucherBenefit(voucher: any) {
+  if (voucher.type === 'free_shipping') return 'miễn phí vận chuyển';
+  if (voucher.type === 'fixed') return `giảm ${Number(voucher.value || 0).toLocaleString('vi-VN')}đ`;
+  const percent = Number(voucher.value || 0);
+  const cap = Number(voucher.maxDiscount || 0);
+  return `giảm ${percent}%${cap > 0 ? `, tối đa ${cap.toLocaleString('vi-VN')}đ` : ''}`;
+}
+
+async function sendNewMemberVoucherEmail(user: any, voucher: any) {
+  if (!userAllowsNotification(user, 'emailNotifications')) return false;
+  const code = String(voucher.code);
+  const htmlCode = escapeHtml(code);
+  const benefit = voucherBenefit(voucher);
   await sendMail({
     to: String(user.email),
-    subject: `${code} - Voucher 10% cho tài khoản mới`,
+    subject: `${code} - Voucher chào mừng thành viên mới`,
     html: `
       <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;padding:32px;color:#27231f">
         <p style="font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#806b3d">L'Essence Noire</p>
-        <h1 style="font-size:28px;font-weight:500">Cảm ơn bạn đã hoàn tất hồ sơ</h1>
-        <p>Bạn vừa nhận voucher dành cho khách hàng mới đã cập nhật đầy đủ thông tin.</p>
-        <p style="display:inline-block;padding:14px 22px;border:1px solid #806b3d;font-size:22px;letter-spacing:3px;font-weight:700;color:#806b3d">${code}</p>
-        <p>Ưu đãi giảm 10%, dùng 1 lần cho tài khoản mới.</p>
+        <h1 style="font-size:28px;font-weight:500">Cảm ơn bạn đã cập nhật hồ sơ</h1>
+        <p>Bạn vừa nhận voucher dành cho thành viên mới chưa có đơn hàng.</p>
+        <p style="display:inline-block;padding:14px 22px;border:1px solid #806b3d;font-size:22px;letter-spacing:3px;font-weight:700;color:#806b3d">${htmlCode}</p>
+        <p>Ưu đãi ${benefit}. Hãy nhập mã tại bước thanh toán.</p>
       </div>`,
-    text: `Cam on ban da hoan tat ho so. Ma voucher 10% cua ban la ${code}.`,
+    text: `Cam on ban da cap nhat ho so. Voucher chao mung cua ban la ${code} (${benefit}).`,
   });
 }
 
-async function maybeIssueProfileCompletionVoucher(userId: string) {
+export async function issueNewMemberVoucher(userId: string) {
   const user: any = await User.findById(userId);
-  if (!user || user.profileCompletionVoucherCode || !profileIsComplete(user)) return user;
+  if (!user || user.role !== 'customer') return { user, voucherIssued: false };
+  if (await Order.exists({ user: user._id })) return { user, voucherIssued: false };
 
-  const voucher = await ensureProfileCompletionVoucher();
-  user.profileCompletedAt = new Date();
-  user.profileCompletionVoucherCode = PROFILE_COMPLETION_VOUCHER_CODE;
-  await user.save();
-  void sendProfileCompletionVoucherEmail(user, voucher.code).catch(() => null);
-  return user;
+  const now = new Date();
+  const assignedCode = String(user.profileCompletionVoucherCode || '').trim().toUpperCase();
+  if (assignedCode) {
+    const assignedVoucher: any = await Voucher.findOne({
+      code: assignedCode,
+      appliesToNewMembers: true,
+    }).lean();
+    if (assignedVoucher && voucherIsAvailable(assignedVoucher, now)) {
+      return { user, voucherIssued: false };
+    }
+  }
+
+  const candidates: any[] = await Voucher.find({
+    appliesToNewMembers: true,
+    isActive: true,
+  }).sort({ updatedAt: -1 }).lean();
+  const voucher = candidates.find((item) => voucherIsAvailable(item, now));
+  if (!voucher) return { user, voucherIssued: false };
+
+  const claimFilter: any = { _id: user._id, role: 'customer' };
+  if (assignedCode) {
+    claimFilter.profileCompletionVoucherCode = assignedCode;
+  } else {
+    claimFilter.$or = [
+      { profileCompletionVoucherCode: { $exists: false } },
+      { profileCompletionVoucherCode: null },
+      { profileCompletionVoucherCode: '' },
+    ];
+  }
+  const updated: any = await User.findOneAndUpdate(
+    claimFilter,
+    {
+      $set: {
+        profileCompletedAt: now,
+        profileCompletionVoucherCode: voucher.code,
+        welcomeVoucherIssuedAt: now,
+      },
+    },
+    { new: true },
+  );
+  if (!updated) return { user: await User.findById(userId), voucherIssued: false };
+
+  void sendNewMemberVoucherEmail(updated, voucher).catch(() => null);
+  return { user: updated, voucherIssued: true };
 }
 
-async function refreshProfileCompletion(userId: string) {
-  const before: any = await User.findById(userId).select('profileCompletionVoucherCode').lean();
-  const user = await maybeIssueProfileCompletionVoucher(userId);
-  return {
-    user,
-    profileJustCompleted: !before?.profileCompletionVoucherCode && Boolean((user as any)?.profileCompletionVoucherCode),
-  };
-}
-
-async function claimGuestOrdersForUser(user: any, email: string, phone: string) {
+export async function claimGuestOrdersForUser(user: any, email: string, phone: string) {
   const normalizedEmail = normalizeEmail(email);
   const normalizedPhone = normalizePhone(phone);
   if (!normalizedEmail || !normalizedPhone) return 0;
@@ -140,43 +161,22 @@ async function claimGuestOrdersForUser(user: any, email: string, phone: string) 
   return guestOrders.length;
 }
 
-// Phat voucher chao mung (WELCOME10) NGAY khi khach dang ky tai khoan moi.
-// Chi phat 1 lan / tai khoan (dua tren welcomeVoucherIssuedAt).
-// Loi gui email khong duoc lam hong luong dang ky/cap nhat.
-async function maybeIssueWelcomeVoucher(userId: string) {
-  try {
-    const user: any = await User.findById(userId);
-    if (!user || user.role !== 'customer' || user.welcomeVoucherIssuedAt) return;
-    await ensureWelcomeVoucher();
-    const firstName = String(user.name || 'ban').trim().split(/\s+/).slice(-1)[0] || 'ban';
-    const sent = await sendMail({
-      to: user.email,
-      subject: `Chao mung ${user.name} den voi L'Essence Noire - Tang ban ma giam 10% ${WELCOME_VOUCHER_CODE}`,
-      html: `
-        <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;padding:32px;color:#27231f;line-height:1.6">
-          <p style="font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#806b3d">L'Essence Noire</p>
-          <h1 style="font-size:26px;font-weight:500;margin:8px 0 16px">Chao mung ban da tham gia!</h1>
-          <p>Xin chao ${firstName},</p>
-          <p>Cam on ban da tro thanh thanh vien moi cua <strong>L'Essence Noire</strong>. Chung toi co mot ma giam gia danh rieng cho thanh vien moi - ban hay dung ngay hom nay nhe:</p>
-          <div style="text-align:center;margin:24px 0;padding:20px;border:1px dashed #b89a4e;border-radius:10px;background:#fbf7ee">
-            <p style="margin:0 0 6px;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#9a8248">Ma danh cho thanh vien moi</p>
-            <p style="margin:0;font-size:34px;letter-spacing:8px;font-weight:700;color:#806b3d">${WELCOME_VOUCHER_CODE}</p>
-            <p style="margin:8px 0 0;font-size:14px;color:#4a453f">Giam <strong>10%</strong> cho don hang dau tien</p>
-          </div>
-          <p>Cach dung: nhap ma <strong>${WELCOME_VOUCHER_CODE}</strong> tai buoc thanh toan de duoc giam 10%.</p>
-          <p style="color:#777;font-size:12px">Ma ap dung 1 lan cho moi tai khoan thanh vien moi. Chuc ban co trai nghiem mua sam that tuyet voi tai L'Essence Noire!</p>
-        </div>`,
-      text: `Chao mung ${user.name} den voi L'Essence Noire! Chung toi tang ban ma giam 10% danh cho thanh vien moi: ${WELCOME_VOUCHER_CODE}. Hay dung ngay o buoc thanh toan cho don hang dau tien.`,
-    }).catch(() => false);
-    // Chi danh dau da phat khi email gui THANH CONG. Neu SMTP loi/chua cau hinh,
-    // lan khach cap nhat thong tin sau (SDT / dia chi) se tu dong gui lai WELCOME10.
-    if (sent) {
-      user.welcomeVoucherIssuedAt = new Date();
-      await user.save();
-    }
-  } catch {
-    // Bo qua loi phat voucher de khong chan luong chinh
-  }
+async function sendWelcomeEmail(user: any) {
+  const firstName = String(user.name || 'bạn').trim().split(/\s+/).slice(-1)[0] || 'bạn';
+  const htmlFirstName = escapeHtml(firstName);
+  return sendMail({
+    to: String(user.email),
+    subject: `Chào mừng ${user.name} đến với L'Essence Noire`,
+    html: `
+      <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;padding:32px;color:#27231f;line-height:1.6">
+        <p style="font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#806b3d">L'Essence Noire</p>
+        <h1 style="font-size:26px;font-weight:500;margin:8px 0 16px">Chào mừng bạn đã tham gia!</h1>
+        <p>Xin chào ${htmlFirstName},</p>
+        <p>Cảm ơn bạn đã trở thành thành viên của <strong>L'Essence Noire</strong>.</p>
+        <p>Hãy cập nhật hồ sơ của bạn. Nếu tài khoản chưa có đơn hàng và đang có voucher dành cho thành viên mới, mã ưu đãi sẽ được gửi ngay sau khi cập nhật.</p>
+      </div>`,
+    text: `Chao mung ${user.name} den voi L'Essence Noire. Hay cap nhat ho so de nhan uu dai thanh vien moi neu tai khoan chua co don hang.`,
+  });
 }
 
 export async function register(name: string, email: string, password: string, phone: string) {
@@ -190,10 +190,22 @@ export async function register(name: string, email: string, password: string, ph
   if (phoneExists) throw Object.assign(new Error('So dien thoai da duoc su dung'), { status: 409 });
 
   const hash = await bcrypt.hash(password, 10);
-  const user = await User.create({ name, email: normalizedEmail, phone: normalizedPhone, password: hash });
+  const user = await User.create({
+    name,
+    email: normalizedEmail,
+    phone: normalizedPhone,
+    password: hash,
+    notificationPreferences: {
+      orderNotifications: true,
+      emailNotifications: true,
+      promotionNotifications: true,
+      journalNotifications: true,
+    },
+  });
+  await subscribeNewAccountToJournal(normalizedEmail);
   await claimGuestOrdersForUser(user, normalizedEmail, normalizedPhone);
-  // Gui NGAY voucher chao mung (WELCOME10) qua email cho thanh vien moi
-  await maybeIssueWelcomeVoucher(String(user._id));
+  // Email chao mung va email xac thuc deu khong chan luong dang ky.
+  void sendWelcomeEmail(user).catch(() => null);
   // Gui email xac thuc (khong chan luong dang ky neu SMTP chua cau hinh)
   void sendEmailVerification(String(user._id)).catch(() => null);
   return issueTokens(user);
@@ -238,6 +250,10 @@ export async function getMe(userId: string) {
 }
 
 export async function updateProfile(userId: string, input: { name: string; email: string; phone?: string }) {
+  const currentUser: any = await User.findById(userId)
+    .select('email notificationPreferences')
+    .lean();
+  if (!currentUser) throw Object.assign(new Error('User not found'), { status: 404 });
   const email = input.email.trim().toLowerCase();
   const exists = await User.findOne({ email, _id: { $ne: userId } });
   if (exists) throw Object.assign(new Error('Email da ton tai'), { status: 409 });
@@ -254,10 +270,14 @@ export async function updateProfile(userId: string, input: { name: string; email
     { new: true, runValidators: true },
   );
   if (!user) throw Object.assign(new Error('User not found'), { status: 404 });
+  await moveJournalSubscription(String(currentUser.email), email);
   if (phone) await claimGuestOrdersForUser(user, email, phone);
-  await maybeIssueWelcomeVoucher(String(user._id));
-  const completed = await refreshProfileCompletion(String(user._id));
-  return { ...completed.user.toJSON(), profileJustCompleted: completed.profileJustCompleted };
+  const issuance = await issueNewMemberVoucher(String(user._id));
+  return {
+    ...issuance.user.toJSON(),
+    profileJustCompleted: issuance.voucherIssued,
+    newMemberVoucherIssued: issuance.voucherIssued,
+  };
 }
 
 export async function changePassword(
@@ -302,8 +322,7 @@ export async function addAddress(userId: string, input: AddressInput) {
   }
   user.addresses.push(addr);
   await user.save();
-  await maybeIssueWelcomeVoucher(userId);
-  await refreshProfileCompletion(userId);
+  await issueNewMemberVoucher(userId);
   return user.addresses;
 }
 
@@ -320,8 +339,7 @@ export async function updateAddress(userId: string, addressId: string, input: Ad
   }
   address.set(addr);
   await user.save();
-  await maybeIssueWelcomeVoucher(userId);
-  await refreshProfileCompletion(userId);
+  await issueNewMemberVoucher(userId);
   return user.addresses;
 }
 
@@ -334,7 +352,6 @@ export async function deleteAddress(userId: string, addressId: string) {
 
   address.deleteOne();
   await user.save();
-  await refreshProfileCompletion(userId);
   return user.addresses;
 }
 
@@ -350,7 +367,7 @@ export async function setDefaultAddress(userId: string, addressId: string) {
   });
   if (!found) throw Object.assign(new Error('Address not found'), { status: 404 });
   await user.save();
-  await maybeIssueWelcomeVoucher(userId);
+  await issueNewMemberVoucher(userId);
   return user.addresses;
 }
 
@@ -609,5 +626,6 @@ function serializeUser(user: any) {
     addresses: user.addresses || [],
     profileCompletedAt: user.profileCompletedAt,
     profileCompletionVoucherCode: user.profileCompletionVoucherCode,
+    notificationPreferences: user.notificationPreferences,
   };
 }

@@ -29,44 +29,30 @@ interface RecommendationItem {
   description: string;
   image: string;
   stock?: number;
+  soldCount?: number;
 }
 
-const recommendations: RecommendationItem[] = [
-  {
-    category: "Eau de Parfum",
-    name: "Encens Suprême",
-    description:
-      "Hương trầm khói hòa cùng gỗ bạch dương và vanilla ấm áp, phù hợp cho những ngày mùa đông.",
-    image:
-      "https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=1200&auto=format&fit=crop",
-  },
-  {
-    category: "Intense Collection",
-    name: "L'Or de Cuir",
-    description:
-      "Hương da thuộc cổ điển kết hợp nghệ tây và xạ hương, mang phong cách mạnh mẽ và sang trọng.",
-    image:
-      "https://images.unsplash.com/photo-1547887538-e3a2f32cb1cc?q=80&w=1200&auto=format&fit=crop",
-  },
-  {
-    category: "Floral Essence",
-    name: "Noire Gardenia",
-    description:
-      "Hương hoa dành dành kết hợp tiêu đen, tạo nên cảm giác bí ẩn, thanh lịch và cuốn hút.",
-    image:
-      "https://images.unsplash.com/photo-1490750967868-88aa4486c946?q=80&w=1200&auto=format&fit=crop",
-  },
-];
-
-const scentTags = ["Oud", "Amber", "Bergamot"];
+interface ScentProfileData {
+  families: string[];
+  preferredNotes?: string[];
+  dislikedNotes?: string[];
+}
 
 export default function AccountOverview() {
   const user = useAuth((state) => state.user);
   const [orders, setOrders] = useState<OrderItem[]>([]);
-  const [items, setItems] = useState<RecommendationItem[]>(recommendations);
+  const [items, setItems] = useState<RecommendationItem[]>([]);
+  const [bestSellersLoading, setBestSellersLoading] = useState(true);
+  const [recommendationOffset, setRecommendationOffset] = useState(0);
+  const [recommendationAnimationKey, setRecommendationAnimationKey] =
+    useState(0);
   const [refillProduct, setRefillProduct] = useState<RecommendationItem | null>(
     null,
   );
+  const [scentProfile, setScentProfile] = useState<ScentProfileData | null>(
+    null,
+  );
+  const [scentProfileLoading, setScentProfileLoading] = useState(true);
 
   useEffect(() => {
     let mounted = true;
@@ -96,8 +82,26 @@ export default function AccountOverview() {
       });
 
     api
+      .get<ScentProfileData>("/account/scent-profile")
+      .then(({ data }) => {
+        if (mounted) setScentProfile(data);
+      })
+      .catch(() => {
+        if (mounted) {
+          setScentProfile({
+            families: [],
+            preferredNotes: [],
+            dislikedNotes: [],
+          });
+        }
+      })
+      .finally(() => {
+        if (mounted) setScentProfileLoading(false);
+      });
+
+    api
       .get<{ data: any[] }>("/products", {
-        params: { limit: 100, sort: "newest" },
+        params: { limit: 100, sort: "best_selling" },
       })
       .then(({ data }) => {
         if (!mounted || !Array.isArray(data.data) || data.data.length === 0)
@@ -113,9 +117,11 @@ export default function AccountOverview() {
             product.image ||
             "https://placehold.co/800x600?text=No+Image",
           stock: product.stock || 0,
+          soldCount: product.soldCount || 0,
         }));
 
-        setItems(products.slice(0, 3));
+        setItems(products.filter((product) => (product.soldCount || 0) > 0));
+        setRecommendationOffset(0);
         setRefillProduct(
           products
             .filter((product) => (product.stock || 0) > 0)
@@ -124,7 +130,12 @@ export default function AccountOverview() {
             null,
         );
       })
-      .catch(() => undefined);
+      .catch(() => {
+        if (mounted) setItems([]);
+      })
+      .finally(() => {
+        if (mounted) setBestSellersLoading(false);
+      });
 
     return () => {
       mounted = false;
@@ -141,6 +152,42 @@ export default function AccountOverview() {
   const refillProductPath = refillProduct
     ? `/products/${refillProduct.slug || refillProduct.id}`
     : "/shop";
+  const scentFamilies = scentProfile?.families || [];
+  const preferredNotes = scentProfile?.preferredNotes || [];
+  const scentTags = Array.from(
+    new Set([...scentFamilies, ...preferredNotes].map((item) => item.trim()).filter(Boolean)),
+  );
+  const hasScentProfile = scentTags.length > 0;
+  const formatScentLabel = (value: string) =>
+    value ? `${value.charAt(0).toLocaleUpperCase("vi-VN")}${value.slice(1)}` : value;
+  const scentProfileDescription = scentProfileLoading
+    ? "Đang tải hồ sơ mùi hương của bạn..."
+    : hasScentProfile
+      ? [
+          scentFamilies.length
+            ? `Nhóm hương yêu thích: ${scentFamilies.map(formatScentLabel).join(", ")}.`
+            : "",
+          preferredNotes.length
+            ? `Note hương yêu thích: ${preferredNotes.map(formatScentLabel).join(", ")}.`
+            : "",
+        ]
+          .filter(Boolean)
+          .join(" ")
+      : "Bạn chưa thiết lập hồ sơ mùi hương. Hãy chọn nhóm hương và note yêu thích để nhận gợi ý sản phẩm phù hợp hơn.";
+  const visibleRecommendations = Array.from(
+    { length: Math.min(3, items.length) },
+    (_, index) => items[(recommendationOffset + index) % items.length],
+  );
+  useEffect(() => {
+    if (!items.length) return;
+
+    const timeoutId = window.setTimeout(() => {
+      setRecommendationOffset((current) => (current + 3) % items.length);
+      setRecommendationAnimationKey((current) => current + 1);
+    }, 5000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [items.length, recommendationAnimationKey]);
 
   return (
     <div className="min-h-screen bg-[#FCF9F4] text-[#27231F]">
@@ -217,26 +264,27 @@ export default function AccountOverview() {
               <h2 className="font-serif text-2xl">Hồ sơ mùi hương</h2>
 
               <p className="mt-3 max-w-lg text-sm leading-6 text-[#746C63]">
-                Sở thích của bạn thiên về nhóm hương gỗ phương Đông, nổi bật với
-                các nốt hương gỗ đàn hương, trầm hương và hổ phách.
+                {scentProfileDescription}
               </p>
 
-              <div className="mt-5 flex flex-wrap gap-2">
-                {scentTags.map((item) => (
-                  <span
-                    key={item}
-                    className="border border-[#D6CFC5] bg-[#FCF9F4] px-3 py-1 text-[9px] uppercase tracking-widest"
-                  >
-                    {item}
-                  </span>
-                ))}
-              </div>
+              {hasScentProfile && (
+                <div className="mt-5 flex flex-wrap gap-2">
+                  {scentTags.map((item) => (
+                    <span
+                      key={item}
+                      className="border border-[#D6CFC5] bg-[#FCF9F4] px-3 py-1 text-[9px] uppercase tracking-widest"
+                    >
+                      {formatScentLabel(item)}
+                    </span>
+                  ))}
+                </div>
+              )}
 
               <Link
                 to="/account/scent-profile"
                 className="mt-6 flex w-fit items-center gap-3 bg-[#887000] px-6 py-3 text-[10px] uppercase tracking-[0.14em] text-white transition hover:bg-[#6D5900]"
               >
-                Chỉnh sửa hồ sơ
+                {hasScentProfile ? "Chỉnh sửa hồ sơ" : "Thiết lập hồ sơ"}
                 <ArrowRight size={13} />
               </Link>
             </div>
@@ -397,59 +445,84 @@ export default function AccountOverview() {
         </section>
 
         <section>
-          <div className="mb-8 text-center">
-            <div className="flex items-center justify-center gap-2">
-              <Sparkles size={13} strokeWidth={1.2} />
+          <div className="mb-8 flex flex-col items-center justify-between gap-5 text-center sm:flex-row sm:text-left">
+            <div>
+              <div className="flex items-center justify-center gap-2 sm:justify-start">
+                <Sparkles size={13} strokeWidth={1.2} />
 
-              <p className="text-[9px] uppercase tracking-[0.35em] text-[#9A9186]">
-                Dành riêng cho bạn
-              </p>
+                <p className="text-[9px] uppercase tracking-[0.35em] text-[#9A9186]">
+                  Được yêu thích nhất
+                </p>
+              </div>
+
+              <h2 className="mt-3 font-serif text-3xl italic lg:text-4xl">
+                Sản phẩm bán chạy
+              </h2>
             </div>
 
-            <h2 className="mt-3 font-serif text-3xl italic lg:text-4xl">
-              Gợi ý cho mùa đông
-            </h2>
           </div>
 
-          <div className="grid gap-8 md:grid-cols-3">
-            {items.map((item) => (
-              <Link
-                key={item.id || item.name}
-                to={
-                  item.id || item.slug
-                    ? `/products/${item.slug || item.id}`
-                    : "/shop"
-                }
-                className="group block"
-              >
-                <div className="overflow-hidden bg-[#ECE7E0]">
-                  <img
-                    src={item.image}
-                    alt={item.name}
-                    className="aspect-[4/3] w-full object-cover transition duration-700 group-hover:scale-105"
-                  />
-                </div>
+          {bestSellersLoading ? (
+            <div className="grid gap-8 md:grid-cols-3">
+              {[0, 1, 2].map((item) => (
+                <div
+                  key={item}
+                  className="h-[360px] animate-pulse bg-[#ECE7E0]"
+                />
+              ))}
+            </div>
+          ) : visibleRecommendations.length > 0 ? (
+            <div
+              key={recommendationAnimationKey}
+              className="grid gap-8 md:grid-cols-3"
+            >
+              {visibleRecommendations.map((item, index) => (
+                <Link
+                  key={`${recommendationAnimationKey}-${item.id || item.name}`}
+                  to={
+                    item.id || item.slug
+                      ? `/products/${item.slug || item.id}`
+                      : "/shop"
+                  }
+                  className="account-best-seller-float-up group block"
+                  style={{ animationDelay: `${index * 90}ms` }}
+                >
+                  <div className="overflow-hidden bg-[#ECE7E0]">
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      className="aspect-[4/3] w-full object-cover transition duration-700 group-hover:scale-105"
+                    />
+                  </div>
 
-                <p className="mt-5 text-[9px] uppercase tracking-[0.2em] text-[#9A9186]">
-                  {item.category}
-                </p>
+                  <div className="mt-5 flex items-center justify-between gap-3 text-[9px] uppercase tracking-[0.2em] text-[#9A9186]">
+                    <p>{item.category}</p>
+                    <p>
+                      Đã bán {(item.soldCount || 0).toLocaleString("vi-VN")}
+                    </p>
+                  </div>
 
-                <div className="mt-2 flex items-center justify-between gap-3">
-                  <h3 className="font-serif text-xl">{item.name}</h3>
+                  <div className="mt-2 flex items-center justify-between gap-3">
+                    <h3 className="font-serif text-xl">{item.name}</h3>
 
-                  <ChevronRight
-                    size={17}
-                    strokeWidth={1.2}
-                    className="transition group-hover:translate-x-1"
-                  />
-                </div>
+                    <ChevronRight
+                      size={17}
+                      strokeWidth={1.2}
+                      className="transition group-hover:translate-x-1"
+                    />
+                  </div>
 
-                <p className="mt-3 text-sm leading-6 text-[#7D746B]">
-                  {item.description}
-                </p>
-              </Link>
-            ))}
-          </div>
+                  <p className="mt-3 text-sm leading-6 text-[#7D746B]">
+                    {item.description}
+                  </p>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="border border-[#E4DDD4] bg-[#FCF9F4] p-8 text-center text-sm text-[#7D746B]">
+              Chưa có dữ liệu lượt mua để xác định sản phẩm bán chạy.
+            </div>
+          )}
         </section>
       </main>
     </div>

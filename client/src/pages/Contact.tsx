@@ -113,37 +113,75 @@ export default function ContactPage() {
             </p>
           </div>
 
-          {/* Right — dark quote panel */}
-          <div
-            className="contact-quote flex flex-col justify-end"
-            style={{ background: "#1a1a18", padding: "32px 36px", minHeight: 260 }}
-          >
-            <p
-              style={{
-                fontSize: 9,
-                letterSpacing: "0.16em",
-                textTransform: "uppercase",
-                color: "rgba(255,255,255,0.3)",
-                marginBottom: 8,
-              }}
+          {/* Right — video quote panel */}
+            <div
+              className="contact-quote flex flex-col justify-end"
+              style={{ position: "relative", minHeight: 260, overflow: "hidden" }}
             >
-              The editorial voice
-            </p>
-            <blockquote
-              className="break-words"
-              style={{
-                fontFamily: "'Spectral', Georgia, serif",
-                fontStyle: "italic",
-                fontSize: 15,
-                color: "rgba(255,255,255,0.68)",
-                lineHeight: 1.75,
-                borderLeft: "1.5px solid #A8893A",
-                paddingLeft: 14,
-              }}
-            >
-              "A fragrance is not chosen — it reveals itself through conversation."
-            </blockquote>
-          </div>
+              {/* Video background */}
+
+              <video
+                autoPlay
+                muted
+                loop
+                playsInline
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  zIndex: 0,
+                }}
+              >
+                <source src="https://res.cloudinary.com/dwj2trmn0/video/upload/v1784436800/Video_Project_3_eqolkb.mp4" type="video/mp4" />
+              </video>
+
+              {/* Dark overlay để chữ dễ đọc */}
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  background: "rgba(26, 26, 24, 0.62)",
+                  zIndex: 1,
+                }}
+              />
+
+              {/* Text content — chồng lên video */}
+              <div
+                style={{
+                  position: "relative",
+                  zIndex: 2,
+                  padding: "32px 36px",
+                }}
+              >
+                <p
+                  style={{
+                    fontSize: 9,
+                    letterSpacing: "0.16em",
+                    textTransform: "uppercase",
+                    color: "rgba(255,255,255,0.3)",
+                    marginBottom: 8,
+                  }}
+                >
+                  The editorial voice
+                </p>
+                <blockquote
+                  className="break-words"
+                  style={{
+                    fontFamily: "'Spectral', Georgia, serif",
+                    fontStyle: "italic",
+                    fontSize: 15,
+                    color: "rgba(255,255,255,0.68)",
+                    lineHeight: 1.75,
+                    borderLeft: "1.5px solid #A8893A",
+                    paddingLeft: 14,
+                  }}
+                >
+                  "A fragrance is not chosen — it reveals itself through conversation."
+                </blockquote>
+              </div>
+            </div>
         </div>
 
         {/* ── Body: info + form ── */}
@@ -167,11 +205,16 @@ export default function ContactPage() {
                 icon: <MapPin size={16} color="#735C00" style={{ marginTop: 2, flexShrink: 0 }} />,
                 label: "Atelier",
                 content: (
-                  <p style={{ fontSize: 13, lineHeight: 1.7 }}>
-                    126 Nguyễn Thiện Thành<br />
-                    Phường Trà Vinh<br />
-                    Vĩnh Long, Việt Nam
-                  </p>
+                  <a
+                    href="https://www.google.com/maps/search/?api=1&query=W8FW%2B9J%20Hoa%20Thuan%2C%20Tra%20Vinh%2C%20Vietnam"
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label="Mở vị trí cửa hàng L'Essence Noire Trà Vinh trên Google Maps"
+                    style={{ fontSize: 13, lineHeight: 1.7, color: "#1a1a18", textDecoration: "none" }}
+                  >
+                    W8FW+9J, Hòa Thuận<br />
+                    Trà Vinh, Việt Nam
+                  </a>
                 ),
               },
               {
@@ -179,7 +222,8 @@ export default function ContactPage() {
                 label: "Phone",
                 content: (
                   <a
-                    href="tel:+84123456789"
+                    href="tel:+84328779845"
+                    aria-label="Gọi L'Essence Noire qua số 0328 779 845"
                     style={{
                       fontSize: 13,
                       color: "#1a1a18",
@@ -196,7 +240,8 @@ export default function ContactPage() {
                 label: "Correspondence",
                 content: (
                   <a
-                    href="mailto:tranvungochuynh136@gmail.com"
+                    href="mailto:tranvungochuynh136@gmail.com?subject=Li%C3%AAn%20h%E1%BB%87%20L%27Essence%20Noire"
+                    aria-label="Soạn email gửi L'Essence Noire"
                     className="break-all"
                     style={{
                       fontSize: 13,

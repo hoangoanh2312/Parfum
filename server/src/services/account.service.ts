@@ -5,14 +5,15 @@ import { User } from '../models/user.model';
 import '../models/product.model';
 import { Variant } from '../models/variant.model';
 import { normalizeOrderStatus } from '../utils/orderStatus';
-
-const defaultScentProfile = {
-  families: ['woody', 'fresh', 'oriental'],
-  preferredNotes: ['Oud', 'Amber', 'Bergamot', 'Sandalwood', 'Vanilla', 'Musk'],
-  dislikedNotes: ['Tobacco', 'Leather'],
-};
+import { claimGuestOrdersForUser, issueNewMemberVoucher } from './auth.service';
 
 export async function getOrders(userId: string) {
+  // Đồng bộ cả các đơn cũ đã đặt lúc chưa đăng nhập trước khi trả lịch sử.
+  const user: any = await User.findById(userId).select('email phone').lean();
+  if (user?.email && user?.phone) {
+    await claimGuestOrdersForUser(user, String(user.email), String(user.phone));
+  }
+
   const orders: any[] = await Order.find({ user: userId }).sort({ createdAt: -1 }).lean();
   const payments: any[] = await Payment.find({
     order: { $in: orders.map((order) => order._id) },
@@ -123,14 +124,19 @@ export async function removeWishlistItem(userId: string, productId: string) {
 
 export async function getScentProfile(userId: string) {
   const user: any = await User.findById(userId).select('scentProfile').lean();
+  const profile = user?.scentProfile;
+  if (!profile) {
+    return {
+      families: [],
+      preferredNotes: [],
+      dislikedNotes: [],
+    };
+  }
+
   return {
-    families: user?.scentProfile?.families?.length
-      ? user.scentProfile.families
-      : defaultScentProfile.families,
-    preferredNotes: user?.scentProfile?.preferredNotes?.length
-      ? user.scentProfile.preferredNotes
-      : defaultScentProfile.preferredNotes,
-    dislikedNotes: user?.scentProfile?.dislikedNotes || defaultScentProfile.dislikedNotes,
+    families: Array.isArray(profile.families) ? profile.families : [],
+    preferredNotes: Array.isArray(profile.preferredNotes) ? profile.preferredNotes : [],
+    dislikedNotes: Array.isArray(profile.dislikedNotes) ? profile.dislikedNotes : [],
   };
 }
 
@@ -146,5 +152,10 @@ export async function updateScentProfile(
     .select('scentProfile')
     .lean();
 
-  return user?.scentProfile || profile;
+  const issuance = await issueNewMemberVoucher(userId);
+  return {
+    ...(user?.scentProfile || profile),
+    newMemberVoucherIssued: issuance.voucherIssued,
+    profileCompletionVoucherCode: issuance.user?.profileCompletionVoucherCode,
+  };
 }

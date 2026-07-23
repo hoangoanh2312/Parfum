@@ -25,6 +25,16 @@ const scentProfileSchema = new Schema(
   { _id: false },
 );
 
+const notificationPreferencesSchema = new Schema(
+  {
+    orderNotifications: { type: Boolean, default: true },
+    emailNotifications: { type: Boolean, default: true },
+    promotionNotifications: { type: Boolean, default: true },
+    journalNotifications: { type: Boolean, default: true },
+  },
+  { _id: false },
+);
+
 const userSchema = new Schema(
   {
     name: { type: String, required: true, trim: true },
@@ -55,7 +65,11 @@ const userSchema = new Schema(
     profileCompletedAt: Date,
     profileCompletionVoucherCode: { type: String, trim: true, uppercase: true },
     lastLoginAt: Date,
-    // Da phat voucher chao mung (WELCOME10) sau khi khach hoan tat ho so hay chua
+    notificationPreferences: {
+      type: notificationPreferencesSchema,
+      default: () => ({}),
+    },
+    // Thoi diem tai khoan duoc cap voucher co co "appliesToNewMembers".
     welcomeVoucherIssuedAt: Date,
   },
   {

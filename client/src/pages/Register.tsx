@@ -4,6 +4,8 @@ import { api } from "../lib/api";
 import { getPasswordError } from "../lib/password";
 import { PasswordRequirements } from "../components/PasswordRequirements";
 import { useAuth } from "../store/auth.store";
+import { toast } from "../store/toast.store";
+import { useCart } from "../store/cart.store";
 
 const color = {
   pageBg: "#FDF9F4",
@@ -168,6 +170,13 @@ export default function Register() {
       });
       useAuth.getState().setTokens(data.accessToken, data.refreshToken);
       setUser(data.user);
+      try {
+        await useCart.getState().syncOnLogin();
+      } catch {
+        // Giữ nguyên guest_cart để không mất giỏ nếu API merge tạm thời lỗi.
+        await useCart.getState().loadCart().catch(() => null);
+      }
+      toast.success(`Chào mừng ${data.user?.name || name}! Tài khoản của bạn đã được tạo.`);
       navigate("/");
     } catch (err: any) {
       setError(err.response?.data?.message || "Đăng ký thất bại");

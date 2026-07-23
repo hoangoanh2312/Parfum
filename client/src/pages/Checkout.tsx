@@ -303,7 +303,7 @@ export default function Checkout() {
       },
       note: fullNote,
       voucherCode: voucherCode || undefined,
-      items: isBuyNow || !localStorage.getItem("accessToken")
+      items: isBuyNow || !user
         ? items.map((item) => ({
             variant: item.variant,
             quantity: item.quantity,
@@ -411,7 +411,7 @@ export default function Checkout() {
     try {
       setCancellingQr(true);
       await api.post("/orders/" + pendingQr.orderId + "/cancel-pending-qr");
-      if (!isBuyNow && localStorage.getItem("accessToken")) {
+      if (!isBuyNow && user) {
         for (const item of qrCartSnapshot) {
           await addItem(item, item.quantity);
         }

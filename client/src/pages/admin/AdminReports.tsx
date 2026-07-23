@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { BarChart3, Boxes, CircleDollarSign, ClipboardList, Download, Users, Workflow } from "lucide-react";
+import { BarChart3, Boxes, ChevronDown, ChevronUp, CircleDollarSign, ClipboardList, Download, Info, Users, Workflow } from "lucide-react";
 import { adminApi, apiMessage, formatDate, formatVnd } from "../../lib/adminApi";
 import { toast } from "../../store/toast.store";
 import { Badge, Button, Card, EmptyState, Field, Input, LoadingState, PageHeader, Select } from "../../components/admin/ui";
@@ -9,6 +9,27 @@ type SeriesRow = { key: string; revenue: number; expenses: number; cashFlow: num
 type ProductRow = { id: string; name: string; category: string; stock: number; inventoryValue: number; revenue: number; quantity: number; cogs: number; margin: number | null };
 type Expense = { id: string; type: string; amount: number; date: string; note: string };
 type SupportItem = { id: string; name: string; email: string; subject: string; message: string; status: string; createdAt: string; resolvedAt: string | null };
+type CustomerSegment = "new" | "returning" | "loyal" | "vip";
+type CustomerOrderDetail = {
+  id: string;
+  code: string;
+  date: string;
+  status: string;
+  total: number;
+  items: { name: string; volume: string; quantity: number; price: number; total: number }[];
+};
+type CustomerDetail = {
+  id: string;
+  name: string;
+  email: string;
+  segment: CustomerSegment;
+  reason: string;
+  lifetimeOrders: number;
+  lifetimeSpend: number;
+  periodOrders: number;
+  periodSpend: number;
+  orders: CustomerOrderDetail[];
+};
 type ReportData = {
   range: { from: string; to: string; granularity: string };
   revenue: {
@@ -16,9 +37,14 @@ type ReportData = {
     byCategory: { name: string; value: number }[]; byProduct: ProductRow[]; series: SeriesRow[];
   };
   orders: { total: number; statusCounts: Record<string, number>; aov: number; cancellationRate: number; returnRate: number; series: SeriesRow[] };
-  inventory: { top: ProductRow[]; slow: ProductRow[]; products: ProductRow[]; inventoryValue: number; turnover: number | null; lowStock: number; costCoverage: number };
-  customers: { newCustomers: number; returningCustomers: number; clv: number; retentionRate: number; segments: Record<string, number>; totalWithOrders: number; registered: number };
-  finance: { revenue: number; cogs: number; grossProfit: number; operatingExpenses: number; netProfit: number; expenseByType: { type: string; amount: number }[]; series: SeriesRow[]; costCoverage: number; expenses: Expense[] };
+  inventory: {
+    top: ProductRow[]; slow: ProductRow[]; products: ProductRow[];
+    inventoryValue: number; turnover: number | null; turnoverCogs: number;
+    lowStock: number; outOfStock: number; activeSkuCount: number;
+    stockUnits: number; missingCostSku: number; inventoryCostCoverage: number | null; costCoverage: number | null;
+  };
+  customers: { newCustomers: number; returningCustomers: number; clv: number; retentionRate: number; segments: Record<CustomerSegment, number>; totalWithOrders: number; registered: number; details: CustomerDetail[] };
+  finance: { revenue: number; cogs: number; grossProfit: number; operatingExpenses: number; netProfit: number; expenseByType: { type: string; amount: number }[]; series: SeriesRow[]; costCoverage: number | null; expenses: Expense[] };
   operations: {
     averageProcessingHours: number | null; averageDeliveryHours: number | null; timingCoverage: number;
     paymentMethods: { method: string; count: number; amount: number }[];
@@ -40,6 +66,13 @@ const STATUS_LABELS: Record<string, string> = {
   pending: "Chờ xử lý", shipping: "Đang giao", done: "Hoàn tất", cancelled: "Đã hủy", returned: "Hoàn trả",
 };
 const SEGMENT_LABELS: Record<string, string> = { new: "Mua lần đầu", returning: "Quay lại", loyal: "Trung thành", vip: "VIP" };
+const SEGMENT_ORDER: CustomerSegment[] = ["new", "returning", "loyal", "vip"];
+const SEGMENT_STYLES: Record<CustomerSegment, { border: string; badge: string; dot: string }> = {
+  new: { border: "border-sky-200", badge: "bg-sky-50 text-sky-800", dot: "bg-sky-500" },
+  returning: { border: "border-amber-200", badge: "bg-amber-50 text-amber-800", dot: "bg-amber-500" },
+  loyal: { border: "border-emerald-200", badge: "bg-emerald-50 text-emerald-800", dot: "bg-emerald-600" },
+  vip: { border: "border-[#B69A40]", badge: "bg-[#F8F1D7] text-[#6E5B18]", dot: "bg-[#8B7419]" },
+};
 const EXPENSE_LABELS: Record<string, string> = { shipping: "Vận chuyển", marketing: "Marketing", returns: "Hoàn hàng", operations: "Vận hành", other: "Khác" };
 const CHART_COLORS = ["#181817", "#76682E", "#A39153", "#8F9A8C", "#C9C3B8", "#B66355", "#D8D2C7"];
 const STATUS_COLORS: Record<string, string> = {
@@ -73,17 +106,17 @@ const REPORT_EXPLAINS: Record<string, { title: string; items: string[] }> = {
   inventory: {
     title: "Tồn kho và giá vốn",
     items: [
-      "Giá trị tồn kho = số lượng tồn của từng biến thể nhân với giá vốn.",
-      "Vòng quay tồn kho = giá vốn hàng bán chia cho giá trị tồn kho hiện tại.",
-      "Độ phủ giá vốn cho biết bao nhiêu sản phẩm bán ra đã có costPrice để tính lợi nhuận chính xác.",
+      "Giá trị tồn kho là ảnh chụp hiện tại: số lượng còn tồn của từng SKU nhân với giá vốn hiện tại.",
+      "Vòng quay trong kỳ = giá vốn của các đơn đã thanh toán, không hủy/hoàn trong kỳ ÷ giá trị tồn kho hiện tại.",
+      "Độ phủ giá vốn tính theo số lượng đã bán trong kỳ; SKU sắp hết chỉ gồm SKU đang bán và còn từ 1–5 sản phẩm.",
     ],
   },
   customers: {
     title: "Khách hàng và phân khúc",
     items: [
-      "Khách mới là khách có đơn đầu tiên nằm trong kỳ lọc.",
-      "Khách quay lại là khách đã mua trước đó và tiếp tục mua trong kỳ.",
-      "CLV = tổng chi tiêu của nhóm khách từng mua chia cho số khách có đơn.",
+      "Mọi chỉ số và biểu đồ trong tab chỉ tính các khách có đơn đã thanh toán trong kỳ đang lọc.",
+      "Mua lần đầu: bắt đầu mua trong kỳ. Quay lại: đã mua trước kỳ và tiếp tục mua trong kỳ. Trung thành: từ 3 đơn. VIP: từ 20 đơn hoặc tổng chi tiêu từ 50 triệu.",
+      "Khách quay lại gồm nhóm Quay lại, Trung thành và VIP. CLV là chi tiêu vòng đời trung bình của chính nhóm khách có mua trong kỳ.",
     ],
   },
   finance: {
@@ -132,13 +165,110 @@ function chartValue(value: number, money?: boolean) {
   return money ? formatVnd(value) : value.toLocaleString("vi-VN");
 }
 
+function InfoTooltip({
+  title,
+  items,
+}: {
+  title: string;
+  items: string[];
+}) {
+  const rootRef = useRef<HTMLSpanElement | null>(null);
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const [hovered, setHovered] = useState(false);
+  const [pinned, setPinned] = useState(false);
+  const [position, setPosition] = useState({ left: 12, top: 12 });
+  const open = hovered || pinned;
+
+  useEffect(() => {
+    if (!pinned) return;
+    const closeOutside = (event: PointerEvent) => {
+      if (!rootRef.current?.contains(event.target as Node)) setPinned(false);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setPinned(false);
+    };
+    document.addEventListener("pointerdown", closeOutside);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOutside);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [pinned]);
+
+  useEffect(() => {
+    if (!open) return;
+    const updatePosition = () => {
+      const rect = buttonRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const width = Math.min(320, window.innerWidth - 24);
+      const estimatedHeight = Math.min(360, 64 + items.length * 52);
+      const roomBelow = window.innerHeight - rect.bottom - 12;
+      setPosition({
+        left: Math.max(12, Math.min(rect.left, window.innerWidth - width - 12)),
+        top:
+          roomBelow >= estimatedHeight
+            ? rect.bottom + 8
+            : Math.max(12, rect.top - estimatedHeight - 8),
+      });
+    };
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+    };
+  }, [open, items.length]);
+
+  return (
+    <span ref={rootRef} className="relative inline-flex shrink-0 align-middle">
+      <button
+        ref={buttonRef}
+        type="button"
+        aria-label={`Xem chú thích: ${title}`}
+        aria-expanded={open}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        onFocus={() => setHovered(true)}
+        onBlur={() => setHovered(false)}
+        onClick={() => setPinned((value) => !value)}
+        className="inline-flex h-[18px] w-[18px] items-center justify-center rounded-full text-[#81734A] transition hover:bg-[#F2EBD8] hover:text-[#66551E] focus:outline-none focus:ring-2 focus:ring-[#B9A767]/40"
+      >
+        <Info className="h-4 w-4" strokeWidth={1.8} />
+      </button>
+
+      {open && (
+        <span
+          role="tooltip"
+          className="fixed z-[90] block max-h-[min(360px,calc(100vh-24px))] w-[min(320px,calc(100vw-24px))] overflow-y-auto border border-[#D8CFB6] bg-[#FFFEFB] p-4 text-left shadow-[0_16px_40px_rgba(45,39,28,0.18)]"
+          style={{ left: position.left, top: position.top }}
+        >
+          <strong className="block text-xs font-semibold text-gray-950">
+            {title}
+          </strong>
+          <span className="mt-2 block space-y-1.5 text-xs font-normal normal-case leading-5 tracking-normal text-gray-600">
+            {items.map((item) => (
+              <span key={item} className="flex gap-2">
+                <span className="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-[#927A20]" />
+                <span>{item}</span>
+              </span>
+            ))}
+          </span>
+        </span>
+      )}
+    </span>
+  );
+}
+
 function Kpi({ label, value, hint, tone = "dark" }: { label: string; value: string | number; hint?: string; tone?: "dark" | "red" | "gold" }) {
   const color = tone === "red" ? "text-red-700" : tone === "gold" ? "text-[#75621E]" : "text-gray-950";
   return (
     <div className="min-w-0 border-t border-gray-200 py-4">
-      <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-gray-500">{label}</p>
+      <div className="flex items-center gap-1.5">
+        <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-gray-500">{label}</p>
+        {hint && <InfoTooltip title={label} items={[hint]} />}
+      </div>
       <p className={`mt-2 break-words font-title text-2xl ${color}`}>{value}</p>
-      {hint && <p className="mt-1 text-xs text-gray-500">{hint}</p>}
     </div>
   );
 }
@@ -155,15 +285,31 @@ function Section({ title, children, action }: { title: string; children: React.R
   );
 }
 
+function formatTurnover(value: number | null) {
+  if (value == null) return "Chưa đủ dữ liệu";
+  if (value > 0 && value < 0.0001) return "< 0,0001 vòng";
+  return `${value.toLocaleString("vi-VN", {
+    minimumFractionDigits: value > 0 && value < 0.01 ? 4 : 2,
+    maximumFractionDigits: value > 0 && value < 0.01 ? 4 : 2,
+  })} vòng`;
+}
+
+function normalizeChartRows<T extends { value: number }>(rows: T[]) {
+  return rows
+    .map((row) => ({ ...row, value: Number(row.value) }))
+    .filter((row) => Number.isFinite(row.value) && row.value > 0)
+    .sort((a, b) => b.value - a.value);
+}
+
 function DonutChart({ rows, center, money = false }: { rows: { label: string; value: number; color?: string }[]; center: string; money?: boolean }) {
-  const normalized = rows.filter((row) => row.value > 0);
+  const normalized = normalizeChartRows(rows);
   const total = normalized.reduce((sum, row) => sum + row.value, 0);
   if (!total) return <EmptyState message="Chưa có dữ liệu để hiển thị biểu đồ." />;
   let cursor = 0;
   const gradient = normalized
     .map((row, index) => {
       const start = cursor;
-      cursor += (row.value / total) * 100;
+      cursor = index === normalized.length - 1 ? 100 : cursor + (row.value / total) * 100;
       return `${row.color || CHART_COLORS[index % CHART_COLORS.length]} ${start}% ${cursor}%`;
     })
     .join(", ");
@@ -179,14 +325,15 @@ function DonutChart({ rows, center, money = false }: { rows: { label: string; va
       </div>
       <div className="space-y-3 self-center">
         {normalized.map((row, index) => {
-          const percent = Math.round((row.value / total) * 100);
+          const percent = (row.value / total) * 100;
+          const percentLabel = percent >= 10 ? Math.round(percent) : Number(percent.toFixed(1));
           const color = row.color || CHART_COLORS[index % CHART_COLORS.length];
           return (
             <div key={row.label}>
               <div className="mb-1 flex items-center gap-2 text-xs">
                 <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: color }} />
                 <span className="min-w-0 flex-1 truncate text-gray-700">{row.label}</span>
-                <span className="text-gray-500">{percent}%</span>
+                <span className="text-gray-500">{percentLabel}%</span>
                 <strong className="min-w-16 text-right text-gray-950">{chartValue(row.value, money)}</strong>
               </div>
               <div className="h-1.5 overflow-hidden rounded-full bg-[#EEEAE3]">
@@ -201,7 +348,7 @@ function DonutChart({ rows, center, money = false }: { rows: { label: string; va
 }
 
 function HorizontalBars({ rows, money = false, limit = 8 }: { rows: { label: string; value: number; meta?: string; color?: string }[]; money?: boolean; limit?: number }) {
-  const visibleRows = rows.filter((row) => row.value > 0).slice(0, limit);
+  const visibleRows = normalizeChartRows(rows).slice(0, limit);
   const max = Math.max(1, ...visibleRows.map((row) => row.value));
   if (!visibleRows.length) return <EmptyState message="Chưa có dữ liệu để hiển thị biểu đồ." />;
   return (
@@ -215,12 +362,107 @@ function HorizontalBars({ rows, money = false, limit = 8 }: { rows: { label: str
               {row.meta && <p className="mt-0.5 truncate text-[11px] text-gray-400">{row.meta}</p>}
             </div>
             <div className="h-2 overflow-hidden rounded-full bg-[#EEEAE3]">
-              <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.max(4, (row.value / max) * 100)}%`, background: color }} />
+              <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(100, (row.value / max) * 100)}%`, background: color }} />
             </div>
             <strong className="text-right text-xs text-gray-950">{chartValue(row.value, money)}</strong>
           </div>
         );
       })}
+    </div>
+  );
+}
+
+function CustomerSegmentExplorer({ customers }: { customers: CustomerDetail[] }) {
+  if (!customers.length) return <EmptyState message="Chưa có khách hàng phát sinh đơn đã thanh toán trong kỳ này." />;
+
+  return (
+    <div className="mt-8 border-t border-gray-100 pt-6">
+      <div className="mb-6 flex items-center gap-2">
+        <h3 className="text-sm font-semibold text-gray-950">Khách hàng trong từng phân khúc</h3>
+        <InfoTooltip
+          title="Cách đọc và phân loại khách hàng"
+          items={[
+            "Mở từng khách để xem lý do phân loại, đơn hàng và sản phẩm đã mua trong kỳ báo cáo.",
+            "Mua lần đầu: bắt đầu mua trong kỳ lọc.",
+            "Quay lại: đã mua trước kỳ và tiếp tục mua trong kỳ.",
+            "Trung thành: có từ 3 đơn trong vòng đời.",
+            "VIP: từ 20 đơn hoặc tổng chi tiêu từ 50 triệu.",
+          ]}
+        />
+      </div>
+
+      <div className="space-y-7">
+        {SEGMENT_ORDER.map((segment) => {
+          const rows = customers.filter((customer) => customer.segment === segment);
+          if (!rows.length) return null;
+          const style = SEGMENT_STYLES[segment];
+          return (
+            <section key={segment}>
+              <div className="mb-3 flex items-center gap-2">
+                <span className={`h-2.5 w-2.5 rounded-full ${style.dot}`} />
+                <h4 className="text-xs font-semibold uppercase tracking-[0.1em] text-gray-700">{SEGMENT_LABELS[segment]}</h4>
+                <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] text-gray-600">{rows.length} khách</span>
+              </div>
+
+              <div className="grid gap-3 xl:grid-cols-2">
+                {rows.map((customer) => (
+                  <details key={customer.id} className={`group border bg-white ${style.border}`}>
+                    <summary className="flex cursor-pointer list-none items-start gap-3 p-4 [&::-webkit-details-marker]:hidden">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-900 text-xs font-semibold text-white">
+                        {(customer.name || customer.email || "?").trim().charAt(0).toUpperCase()}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="truncate text-sm font-semibold text-gray-950">{customer.name}</p>
+                          <span className={`px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${style.badge}`}>{SEGMENT_LABELS[segment]}</span>
+                        </div>
+                        <p className="mt-0.5 truncate text-xs text-gray-500">{customer.email || "Không có email"}</p>
+                        <p className="mt-2 text-xs leading-5 text-gray-600">{customer.reason}</p>
+                      </div>
+                      <span className="mt-1 text-lg leading-none text-gray-400 transition group-open:rotate-45">+</span>
+                    </summary>
+
+                    <div className="border-t border-gray-100 px-4 pb-4 pt-4">
+                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                        <div className="bg-gray-50 p-2.5"><p className="text-[9px] uppercase text-gray-400">Đơn trong kỳ</p><strong className="mt-1 block text-sm">{customer.periodOrders}</strong></div>
+                        <div className="bg-gray-50 p-2.5"><p className="text-[9px] uppercase text-gray-400">Chi trong kỳ</p><strong className="mt-1 block text-sm">{formatVnd(customer.periodSpend)}</strong></div>
+                        <div className="bg-gray-50 p-2.5"><p className="text-[9px] uppercase text-gray-400">Tổng đơn</p><strong className="mt-1 block text-sm">{customer.lifetimeOrders}</strong></div>
+                        <div className="bg-gray-50 p-2.5"><p className="text-[9px] uppercase text-gray-400">Chi tiêu vòng đời</p><strong className="mt-1 block text-sm">{formatVnd(customer.lifetimeSpend)}</strong></div>
+                      </div>
+
+                      <div className="mt-4 space-y-3">
+                        {customer.orders.map((order) => (
+                          <div key={order.id} className="border border-gray-100 bg-[#FCFBF8] p-3">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <Link to={`/admin/orders?open=${order.id}`} className="text-xs font-semibold text-[#75621E] hover:underline">{order.code}</Link>
+                                <span className="text-[10px] text-gray-400">{formatDate(order.date)}</span>
+                                <span className="bg-gray-100 px-2 py-0.5 text-[9px] uppercase text-gray-600">{STATUS_LABELS[order.status] || order.status}</span>
+                              </div>
+                              <strong className="text-xs">{formatVnd(order.total)}</strong>
+                            </div>
+                            <div className="mt-2 divide-y divide-gray-100">
+                              {order.items.map((item, index) => (
+                                <div key={`${order.id}-${item.name}-${index}`} className="flex items-start justify-between gap-3 py-2 text-xs">
+                                  <div className="min-w-0">
+                                    <p className="truncate font-medium text-gray-800">{item.name}</p>
+                                    <p className="mt-0.5 text-[10px] text-gray-400">{item.volume || "Không có phân loại"} · {formatVnd(item.price)} × {item.quantity}</p>
+                                  </div>
+                                  <span className="shrink-0 text-gray-700">{formatVnd(item.total)}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </details>
+                ))}
+              </div>
+            </section>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -318,14 +560,32 @@ function SeriesChart({ rows, field, money = false }: { rows: SeriesRow[]; field:
   );
 }
 
-function ProductTable({ rows, mode }: { rows: ProductRow[]; mode: "sales" | "stock" | "margin" }) {
+function ProductTable({ rows, mode, collapsible = false, initialLimit = 12 }: { rows: ProductRow[]; mode: "sales" | "stock" | "margin"; collapsible?: boolean; initialLimit?: number }) {
+  const [expanded, setExpanded] = useState(false);
   if (!rows.length) return <EmptyState message="Chưa có dữ liệu sản phẩm." />;
+  const canToggle = collapsible && rows.length > initialLimit;
+  const visibleRows = canToggle && !expanded ? rows.slice(0, initialLimit) : rows;
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[620px] text-left text-sm">
-        <thead><tr className="border-b text-[10px] uppercase tracking-wider text-gray-400"><th className="py-3">Sản phẩm</th><th>Danh mục</th><th className="text-right">Đã bán</th><th className="text-right">Doanh thu</th>{mode !== "sales" && <th className="text-right">Tồn kho</th>}{mode === "margin" && <th className="text-right">Biên LN</th>}</tr></thead>
-        <tbody>{rows.map((row) => <tr key={row.id} className="border-b border-gray-100"><td className="py-3 pr-4 font-medium">{row.name}</td><td className="pr-4 text-gray-500">{row.category}</td><td className="text-right">{row.quantity}</td><td className="text-right">{formatVnd(row.revenue)}</td>{mode !== "sales" && <td className="text-right">{row.stock}</td>}{mode === "margin" && <td className="text-right">{row.margin == null ? "—" : pct(row.margin)}</td>}</tr>)}</tbody>
-      </table>
+    <div>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[760px] text-left text-sm">
+          <thead><tr className="border-b text-[10px] uppercase tracking-wider text-gray-400"><th className="py-3">Sản phẩm</th><th>Danh mục</th><th className="text-right">Đã bán</th><th className="text-right">Doanh thu</th>{mode !== "sales" && <th className="text-right">Tồn kho</th>}{mode === "margin" && <><th className="text-right">Giá trị tồn</th><th className="text-right">Biên LN kỳ</th></>}</tr></thead>
+          <tbody>{visibleRows.map((row) => <tr key={row.id} className="border-b border-gray-100"><td className="py-3 pr-4 font-medium">{row.name}</td><td className="pr-4 text-gray-500">{row.category}</td><td className="text-right">{row.quantity.toLocaleString("vi-VN")}</td><td className="text-right">{formatVnd(row.revenue)}</td>{mode !== "sales" && <td className="text-right">{row.stock.toLocaleString("vi-VN")}</td>}{mode === "margin" && <><td className="text-right">{formatVnd(row.inventoryValue)}</td><td className="text-right">{row.margin == null ? "—" : pct(row.margin)}</td></>}</tr>)}</tbody>
+        </table>
+      </div>
+      {canToggle && (
+        <div className="mt-4 flex justify-center border-t border-gray-100 pt-4">
+          <button
+            type="button"
+            aria-expanded={expanded}
+            onClick={() => setExpanded((value) => !value)}
+            className="inline-flex items-center gap-2 border border-[#C7B56F] px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#6F5D1E] transition hover:bg-[#F7F2E3]"
+          >
+            {expanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+            {expanded ? `Thu gọn còn ${initialLimit} sản phẩm` : `Hiển thị tất cả ${rows.length} sản phẩm`}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -401,19 +661,37 @@ export default function AdminReports() {
       <PageHeader title="Báo cáo kinh doanh" subtitle="Số liệu thực tế từ đơn hàng, thanh toán, tồn kho và yêu cầu hỗ trợ" actions={<Button variant="secondary" onClick={exportReport} disabled={loading || !data}><Download className="h-4 w-4" />Xuất báo cáo (PDF)</Button>} />
 
       <div className="mb-5 flex gap-1 overflow-x-auto border-b border-gray-200">
-        {TABS.map((item) => { const Icon = item.icon; return <Link key={item.id} to={`/admin/reports/${item.id}`} className={`flex shrink-0 items-center gap-2 border-b-2 px-3 py-3 text-xs font-medium ${tab === item.id ? "border-black text-black" : "border-transparent text-gray-500 hover:text-black"}`}><Icon className="h-4 w-4" />{item.label}</Link>; })}
+        {TABS.map((item) => {
+          const Icon = item.icon;
+          const active = tab === item.id;
+          return (
+            <div
+              key={item.id}
+              className={`flex shrink-0 items-center border-b-2 ${
+                active
+                  ? "border-black text-black"
+                  : "border-transparent text-gray-500 hover:text-black"
+              }`}
+            >
+              <Link
+                to={`/admin/reports/${item.id}`}
+                className="flex items-center gap-2 px-3 py-3 text-xs font-medium"
+              >
+                <Icon className="h-4 w-4" />
+                {item.label}
+              </Link>
+              {active && (
+                <span className="-ml-1 pr-2">
+                  <InfoTooltip
+                    title={REPORT_EXPLAINS[tab].title}
+                    items={REPORT_EXPLAINS[tab].items}
+                  />
+                </span>
+              )}
+            </div>
+          );
+        })}
       </div>
-
-      <Card className="mb-5 rounded-md border-l-4 border-l-[#927A20] shadow-none">
-        <div className="p-4">
-          <h2 className="text-sm font-semibold text-gray-950">{REPORT_EXPLAINS[tab].title}</h2>
-          <div className="mt-3 grid gap-2 text-xs leading-5 text-gray-600 md:grid-cols-3">
-            {REPORT_EXPLAINS[tab].items.map((item) => (
-              <p key={item}>{item}</p>
-            ))}
-          </div>
-        </div>
-      </Card>
 
       <div className="mb-6 grid gap-3 border-b border-gray-200 pb-5 sm:grid-cols-3 lg:max-w-3xl">
         <Field label="Từ ngày"><Input type="date" value={from} max={to} onChange={(event) => setFrom(event.target.value)} /></Field>
@@ -437,19 +715,20 @@ export default function AdminReports() {
           </>}
 
           {tab === "inventory" && <>
-            <div className="grid gap-x-6 sm:grid-cols-2 lg:grid-cols-4"><Kpi label="Giá trị tồn theo giá vốn" value={formatVnd(data.inventory.inventoryValue)} hint="Tổng (tồn kho × giá vốn) của tất cả SKU" /><Kpi label="Vòng quay tồn kho" value={data.inventory.turnover == null ? "Chưa đủ dữ liệu" : `${data.inventory.turnover.toFixed(2)} vòng`} hint="Giá vốn hàng bán ÷ giá trị tồn kho" /><Kpi label="SKU sắp hết" value={data.inventory.lowStock} tone="red" /><Kpi label="Độ phủ giá vốn" value={pct(data.inventory.costCoverage)} hint="Tỷ lệ sản phẩm bán ra đã có giá vốn" /></div>
-            <div className="grid gap-5 xl:grid-cols-2"><Section title="Bán chạy nhất"><HorizontalBars rows={data.inventory.top.map((row, index) => ({ label: row.name, value: row.quantity, meta: formatVnd(row.revenue), color: CHART_COLORS[index % CHART_COLORS.length] }))} /></Section><Section title="Bán chậm nhất"><HorizontalBars rows={data.inventory.slow.map((row, index) => ({ label: row.name, value: Math.max(1, row.stock), meta: `${row.stock} tồn kho`, color: index === 0 ? "#B66355" : CHART_COLORS[(index + 2) % CHART_COLORS.length] }))} /></Section></div>
-            <Section title="Tồn kho và biên lợi nhuận từng sản phẩm" action={<Link to="/admin/variants" className="text-xs font-medium text-[#75621E]">Cập nhật giá vốn & tồn kho</Link>}><ProductTable rows={data.inventory.products} mode="margin" /></Section>
+            <div className="grid gap-x-6 sm:grid-cols-2 lg:grid-cols-4"><Kpi label="Giá trị tồn theo giá vốn" value={formatVnd(data.inventory.inventoryValue)} hint={`${data.inventory.stockUnits.toLocaleString("vi-VN")} sản phẩm còn tồn × giá vốn hiện tại`} /><Kpi label="Vòng quay tồn kho trong kỳ" value={formatTurnover(data.inventory.turnover)} hint={`${formatVnd(data.inventory.turnoverCogs)} giá vốn đã bán ÷ tồn kho hiện tại`} /><Kpi label="SKU sắp hết" value={data.inventory.lowStock} tone="red" hint={`Còn 1–5; ${data.inventory.outOfStock} SKU đang bán đã hết, không tính SKU ngừng bán`} /><Kpi label="Độ phủ giá vốn" value={pct(data.inventory.costCoverage)} hint="Tỷ lệ số lượng đã bán trong kỳ có giá vốn" /></div>
+            {data.inventory.missingCostSku > 0 && <div className="border-l-2 border-amber-500 bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-900">Giá trị tồn kho có thể đang thấp hơn thực tế: còn {data.inventory.missingCostSku} SKU có tồn nhưng chưa nhập giá vốn. Độ phủ định giá tồn hiện tại là {pct(data.inventory.inventoryCostCoverage)}.</div>}
+            <div className="grid gap-5 xl:grid-cols-2"><Section title="Bán chạy nhất"><HorizontalBars rows={data.inventory.top.map((row, index) => ({ label: row.name, value: row.quantity, meta: formatVnd(row.revenue), color: CHART_COLORS[index % CHART_COLORS.length] }))} /></Section><Section title="Bán chậm nhất"><HorizontalBars rows={data.inventory.slow.map((row, index) => ({ label: row.name, value: row.stock, meta: `${row.stock} tồn kho`, color: index === 0 ? "#B66355" : CHART_COLORS[(index + 2) % CHART_COLORS.length] }))} /></Section></div>
+            <Section title="Tồn kho và biên lợi nhuận từng sản phẩm" action={<Link to="/admin/variants" className="text-xs font-medium text-[#75621E]">Cập nhật giá vốn & tồn kho</Link>}><ProductTable rows={data.inventory.products} mode="margin" collapsible /></Section>
           </>}
 
           {tab === "customers" && <>
-            <div className="grid gap-x-6 sm:grid-cols-2 lg:grid-cols-4"><Kpi label="Khách hàng mới" value={data.customers.newCustomers} /><Kpi label="Khách quay lại" value={data.customers.returningCustomers} /><Kpi label="Giá trị vòng đời TB (CLV)" value={formatVnd(data.customers.clv)} hint="Chi tiêu trung bình mỗi khách từng mua" /><Kpi label="Tỷ lệ giữ chân" value={pct(data.customers.retentionRate)} hint="Khách kỳ trước còn quay lại mua ở kỳ này" /></div>
-            <Section title="Phân khúc theo hành vi mua"><DonutChart rows={Object.entries(data.customers.segments).map(([segment, count], index) => ({ label: SEGMENT_LABELS[segment] || segment, value: count, color: CHART_COLORS[index % CHART_COLORS.length] }))} center={data.customers.totalWithOrders.toLocaleString("vi-VN")} /><p className="mt-5 text-xs text-gray-500">Có {data.customers.totalWithOrders} khách từng mua trên tổng {data.customers.registered} tài khoản khách hàng.</p></Section>
+            <div className="grid gap-x-6 sm:grid-cols-2 lg:grid-cols-4"><Kpi label="Khách hàng mới" value={data.customers.newCustomers} hint="Nhóm Mua lần đầu trong biểu đồ" /><Kpi label="Khách quay lại" value={data.customers.returningCustomers} hint="Tổng nhóm Quay lại + Trung thành + VIP" /><Kpi label="Giá trị vòng đời TB (CLV)" value={formatVnd(data.customers.clv)} hint="Chi tiêu vòng đời TB của khách có mua trong kỳ" /><Kpi label="Tỷ lệ giữ chân" value={pct(data.customers.retentionRate)} hint="Khách kỳ trước còn quay lại mua ở kỳ này" /></div>
+            <Section title="Phân khúc theo hành vi mua"><DonutChart rows={Object.entries(data.customers.segments).map(([segment, count], index) => ({ label: SEGMENT_LABELS[segment] || segment, value: count, color: CHART_COLORS[index % CHART_COLORS.length] }))} center={data.customers.totalWithOrders.toLocaleString("vi-VN")} /><p className="mt-5 text-xs text-gray-500">Có {data.customers.totalWithOrders} khách phát sinh đơn đã thanh toán trong kỳ, trên tổng {data.customers.registered} tài khoản khách hàng.</p><CustomerSegmentExplorer customers={data.customers.details || []} /></Section>
           </>}
 
           {tab === "finance" && <>
             <div className="grid gap-x-6 sm:grid-cols-2 lg:grid-cols-5"><Kpi label="Doanh thu" value={formatVnd(data.finance.revenue)} /><Kpi label="Giá vốn" value={formatVnd(data.finance.cogs)} /><Kpi label="Lợi nhuận gộp" value={formatVnd(data.finance.grossProfit)} tone="gold" /><Kpi label="Chi phí vận hành" value={formatVnd(data.finance.operatingExpenses)} /><Kpi label="Lợi nhuận ròng" value={formatVnd(data.finance.netProfit)} tone={data.finance.netProfit < 0 ? "red" : "gold"} /></div>
-            {data.finance.costCoverage < 100 && <div className="border-l-2 border-amber-500 bg-amber-50 px-4 py-3 text-xs text-amber-900">Lợi nhuận hiện có độ phủ giá vốn {pct(data.finance.costCoverage)}. Hãy nhập giá vốn cho các biến thể còn thiếu để báo cáo chính xác hoàn toàn.</div>}
+            {data.finance.costCoverage != null && data.finance.costCoverage < 100 && <div className="border-l-2 border-amber-500 bg-amber-50 px-4 py-3 text-xs text-amber-900">Lợi nhuận hiện có độ phủ giá vốn {pct(data.finance.costCoverage)}. Hãy nhập giá vốn cho các biến thể còn thiếu để báo cáo chính xác hoàn toàn.</div>}
             <Section title="Dòng tiền theo thời gian"><SeriesChart rows={data.finance.series} field="cashFlow" money /></Section>
             <Section title="Cơ cấu chi phí vận hành"><DonutChart rows={data.finance.expenseByType.map((item, index) => ({ label: EXPENSE_LABELS[item.type] || item.type, value: item.amount, color: CHART_COLORS[index % CHART_COLORS.length] }))} center={formatVnd(data.finance.operatingExpenses)} money /></Section>
             <Section title="Ghi nhận chi phí"><div className="grid gap-3 md:grid-cols-[160px_180px_160px_1fr_auto]"><Select value={expense.type} onChange={(e) => setExpense({ ...expense, type: e.target.value })}>{Object.entries(EXPENSE_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</Select><Input type="number" min="1" placeholder="Số tiền" value={expense.amount} onChange={(e) => setExpense({ ...expense, amount: e.target.value })} /><Input type="date" value={expense.date} onChange={(e) => setExpense({ ...expense, date: e.target.value })} /><Input placeholder="Ghi chú" value={expense.note} onChange={(e) => setExpense({ ...expense, note: e.target.value })} /><Button onClick={addExpense} disabled={savingExpense}>{savingExpense ? "Đang lưu" : "Thêm"}</Button></div>{data.finance.expenses.length > 0 && <div className="mt-5 overflow-x-auto"><table className="w-full min-w-[620px] text-sm"><thead><tr className="border-b text-left text-[10px] uppercase text-gray-400"><th className="py-3">Ngày</th><th>Loại</th><th>Ghi chú</th><th className="text-right">Số tiền</th><th /></tr></thead><tbody>{data.finance.expenses.map((item) => <tr key={item.id} className="border-b border-gray-100"><td className="py-3">{formatDate(item.date)}</td><td>{EXPENSE_LABELS[item.type] || item.type}</td><td className="text-gray-500">{item.note || "—"}</td><td className="text-right font-medium">{formatVnd(item.amount)}</td><td className="text-right"><button className="text-xs text-red-600" onClick={() => removeExpense(item.id)}>Xóa</button></td></tr>)}</tbody></table></div>}</Section>

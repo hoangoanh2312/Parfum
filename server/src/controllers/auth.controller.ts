@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import * as authService from '../services/auth.service';
+import * as notificationService from '../services/notification.service';
 import { setRefreshCookie, clearRefreshCookie, parseCookies } from '../utils/cookies';
 
 const uid = (req: Request) => (req as any).user?.id;
@@ -53,6 +54,22 @@ export async function logout(req: Request, res: Response, next: NextFunction) {
 export async function me(req: Request, res: Response, next: NextFunction) {
   try {
     res.json(await authService.getMe(uid(req)));
+  } catch (e) {
+    next(e);
+  }
+}
+
+export async function getNotificationPreferences(req: Request, res: Response, next: NextFunction) {
+  try {
+    res.json(await notificationService.getNotificationPreferences(uid(req)));
+  } catch (e) {
+    next(e);
+  }
+}
+
+export async function updateNotificationPreferences(req: Request, res: Response, next: NextFunction) {
+  try {
+    res.json(await notificationService.updateNotificationPreferences(uid(req), req.body));
   } catch (e) {
     next(e);
   }

@@ -53,6 +53,7 @@ type ProductFilters = {
   maxPrice: number;
   minPrice?: number;
   brandCounts?: Record<string, number>;
+  noteCounts?: Record<string, number>;
   priceBuckets?: number[];
   total: number;
 };
@@ -72,29 +73,48 @@ const normBrand = (value: string) =>
 
 const normFilter = (value: string) => value.trim().toLowerCase();
 
-// 4 cot x 3 hang = 12 san pham / trang; so trang tang theo so luong san pham
-const PAGE_SIZE = 12;
+// Desktop: 4 cot x 4 hang = 16 san pham / trang.
+const PAGE_SIZE = 16;
 
 export default function Shop() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialList = (key: string) =>
+    (searchParams.get(key) || "")
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+  const initialPrice = (key: string, fallback: number) => {
+    const rawValue = searchParams.get(key);
+    if (rawValue == null || rawValue === "") return fallback;
+    const value = Number(rawValue);
+    return Number.isFinite(value) && value >= 0 ? value : fallback;
+  };
   const [products, setProducts] = useState<Product[]>([]);
   const [productTotal, setProductTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [filters, setFilters] = useState<ProductFilters | null>(null);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [selectedScents, setSelectedScents] = useState<string[]>([]);
-  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
-  const [selectedGenders, setSelectedGenders] = useState<string[]>([]);
-  const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
-  const [selectedOccasions, setSelectedOccasions] = useState<string[]>([]);
+  const [search, setSearch] = useState(() => searchParams.get("search") || "");
+  const [selectedScents, setSelectedScents] = useState<string[]>(() => initialList("scent"));
+  const [selectedNotes, setSelectedNotes] = useState<string[]>(() => initialList("note"));
+  const [selectedBrands, setSelectedBrands] = useState<string[]>(() => initialList("brand"));
+  const [selectedGenders, setSelectedGenders] = useState<string[]>(() => initialList("gender"));
+  const [selectedSizes, setSelectedSizes] = useState<string[]>(() => initialList("size"));
+  const [selectedOccasions, setSelectedOccasions] = useState<string[]>(() => initialList("season"));
   const [selectedSeasons, setSelectedSeasons] = useState<string[]>([]);
-  const [selectedConcentrations, setSelectedConcentrations] = useState<string[]>([]);
-  const [priceMin, setPriceMin] = useState(0);
-  const [priceMax, setPriceMax] = useState(Number.MAX_SAFE_INTEGER);
-  const [sort, setSort] = useState("newest");
+  const [selectedConcentrations, setSelectedConcentrations] = useState<string[]>(
+    () => initialList("concentration"),
+  );
+  const [priceMin, setPriceMin] = useState(() => initialPrice("minPrice", 0));
+  const [priceMax, setPriceMax] = useState(() =>
+    initialPrice("maxPrice", Number.MAX_SAFE_INTEGER),
+  );
+  const [sort, setSort] = useState(() => searchParams.get("sort") || "newest");
   const [page, setPage] = useState(1);
   const [filterOpen, setFilterOpen] = useState(false);
+  const excludedNotes = searchParams.get("excludeNote") || "";
+  const preferenceMatch =
+    searchParams.get("match") === "any" ? "any" : undefined;
 
   const toggleSize = (value: string) => {
     setSelectedSizes((prev) =>
@@ -118,34 +138,13 @@ export default function Shop() {
         : [...prev, value],
     );
   };
-
-  useEffect(() => {
-    const nextSearch = searchParams.get("search") || "";
-    const nextBrand = searchParams.get("brand") || "";
-    const nextScent = searchParams.get("scent") || "";
-    const nextSeason = searchParams.get("season") || "";
-    const nextGender = searchParams.get("gender") || "";
-    const nextSort = searchParams.get("sort") || "";
-
-    setSearch(nextSearch);
-    setSelectedBrands(nextBrand ? [nextBrand] : []);
-    setSelectedScents(
-      nextScent
-        ? nextScent.split(",").map((item) => item.trim()).filter(Boolean)
-        : [],
+  const toggleNote = (value: string) => {
+    setSelectedNotes((prev) =>
+      prev.some((item) => normFilter(item) === normFilter(value))
+        ? prev.filter((item) => normFilter(item) !== normFilter(value))
+        : [...prev, value],
     );
-    setSelectedSeasons(
-      nextSeason
-        ? nextSeason.split(",").map((item) => item.trim()).filter(Boolean)
-        : [],
-    );
-    setSelectedGenders(
-      nextGender
-        ? nextGender.split(",").map((item) => item.trim()).filter(Boolean)
-        : [],
-    );
-    if (nextSort) setSort(nextSort);
-  }, [searchParams]);
+  };
 
   // Facet loc lay tu TOAN BO san pham trong MongoDB (khong bi gioi han 100)
   useEffect(() => {
@@ -177,6 +176,9 @@ export default function Shop() {
             brand: selectedBrands.join(",") || undefined,
             gender: selectedGenders.join(",") || undefined,
             scent: selectedScents.join(",") || undefined,
+            note: selectedNotes.join(",") || undefined,
+            excludeNote: excludedNotes || undefined,
+            match: preferenceMatch,
             size: selectedSizes.join(",") || undefined,
             season:
               [...selectedOccasions, ...selectedSeasons].join(",") ||
@@ -218,10 +220,13 @@ export default function Shop() {
     selectedBrands,
     selectedGenders,
     selectedScents,
+    selectedNotes,
     selectedSizes,
     selectedOccasions,
     selectedSeasons,
     selectedConcentrations,
+    excludedNotes,
+    preferenceMatch,
     priceMin,
     priceMax,
     sort,
@@ -239,6 +244,13 @@ export default function Shop() {
       ),
     [filters],
   );
+  const notes = useMemo(
+    () =>
+      Array.from(new Set(filters?.notes ?? [])).sort((left, right) =>
+        left.localeCompare(right, "vi"),
+      ),
+    [filters],
+  );
   const concentrations = useMemo(() => filters?.concentrations ?? [], [filters]);
   const sizes = useMemo(
     () =>
@@ -251,6 +263,7 @@ export default function Shop() {
   const maxPrice = filters?.maxPrice ?? 0;
   const minPrice = filters?.minPrice ?? 0;
   const brandCounts = useMemo(() => filters?.brandCounts ?? {}, [filters]);
+  const noteCounts = useMemo(() => filters?.noteCounts ?? {}, [filters]);
   const priceBuckets = useMemo(() => filters?.priceBuckets ?? [], [filters]);
 
   useEffect(() => {
@@ -260,6 +273,62 @@ export default function Shop() {
     }
   }, [maxPrice, minPrice, priceMax]);
 
+  // Ghi toàn bộ bộ lọc vào URL để khi mở chi tiết rồi quay lại Shop
+  // trình duyệt có thể khôi phục chính xác trạng thái khách đang xem.
+  useEffect(() => {
+    const nextParams = new URLSearchParams(searchParams);
+    const setParam = (key: string, value: string) => {
+      if (value) nextParams.set(key, value);
+      else nextParams.delete(key);
+    };
+
+    setParam("search", search.trim());
+    setParam("brand", selectedBrands.join(","));
+    setParam("gender", selectedGenders.join(","));
+    setParam("scent", selectedScents.join(","));
+    setParam("note", selectedNotes.join(","));
+    setParam("size", selectedSizes.join(","));
+    setParam(
+      "season",
+      Array.from(new Set([...selectedOccasions, ...selectedSeasons])).join(","),
+    );
+    setParam("concentration", selectedConcentrations.join(","));
+    setParam("sort", sort === "newest" ? "" : sort);
+
+    if (filters) {
+      setParam(
+        "minPrice",
+        priceMin > (filters.minPrice ?? 0) ? String(priceMin) : "",
+      );
+      setParam(
+        "maxPrice",
+        priceMax < (filters.maxPrice ?? Number.MAX_SAFE_INTEGER)
+          ? String(priceMax)
+          : "",
+      );
+    }
+
+    if (nextParams.toString() !== searchParams.toString()) {
+      setSearchParams(nextParams, { replace: true });
+    }
+  }, [
+    search,
+    selectedBrands,
+    selectedGenders,
+    selectedScents,
+    selectedNotes,
+    selectedSizes,
+    selectedOccasions,
+    selectedSeasons,
+    selectedConcentrations,
+    priceMin,
+    priceMax,
+    sort,
+    filters,
+    searchParams,
+    setSearchParams,
+  ]);
+
   // Reset ve trang 1 khi doi bo loc / tim kiem / sap xep
   useEffect(() => {
     setPage(1);
@@ -268,6 +337,7 @@ export default function Shop() {
     selectedBrands,
     selectedGenders,
     selectedScents,
+    selectedNotes,
     selectedSizes,
     selectedOccasions,
     selectedSeasons,
@@ -365,10 +435,14 @@ export default function Shop() {
               setPriceMax(hi);
             }}
             brandCounts={brandCounts}
+            noteCounts={noteCounts}
             priceBuckets={priceBuckets}
             selectedScents={selectedScents}
             scents={scents}
             toggleScent={toggleScent}
+            notes={notes}
+            selectedNotes={selectedNotes}
+            toggleNote={toggleNote}
             selectedSizes={selectedSizes}
             sizes={sizes}
             toggleSize={toggleSize}
@@ -405,10 +479,14 @@ export default function Shop() {
                   maxPrice={maxPrice}
                   setPriceRange={(lo, hi) => { setPriceMin(lo); setPriceMax(hi); }}
                   brandCounts={brandCounts}
+                  noteCounts={noteCounts}
                   priceBuckets={priceBuckets}
                   selectedScents={selectedScents}
                   scents={scents}
                   toggleScent={toggleScent}
+                  notes={notes}
+                  selectedNotes={selectedNotes}
+                  toggleNote={toggleNote}
                   selectedSizes={selectedSizes}
                   sizes={sizes}
                   toggleSize={toggleSize}

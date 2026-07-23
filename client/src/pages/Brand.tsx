@@ -148,25 +148,23 @@ export default function Brand() {
 
   return (
     <>
-      <main className="overflow-hidden bg-[#FCF9F4] text-[#201F1B]">
+      <main className="overflow-hidden bg-[#F4F1EB] text-[#201F1B]">
         {/* INTRO */}
         <section className="px-6 pb-10 pt-16 sm:px-10 lg:px-16 lg:pb-14 lg:pt-24">
           <div className="mx-auto max-w-[1420px]">
             <h1
-              className="max-w-[580px] text-[58px] leading-[1.02] tracking-[-0.045em] sm:text-[72px] lg:text-[92px]"
+              className="max-w-[720px] text-[58px] leading-[1.02] tracking-[-0.045em] sm:text-[72px] lg:text-[92px]"
               style={{ fontFamily: "'Spectral', serif" }}
             >
-              Curated
+              Những nhà hương
               <br />
-              Houses
+              được tuyển chọn
             </h1>
 
-            <p className="mt-8 max-w-[670px] text-sm leading-7 text-[#69665F] lg:mt-10">
-              From the historic ateliers of Paris to the avant-garde
-              laboratories of Stockholm, we present a collection of the
-              world&apos;s most distinguished perfumeries. Each brand in our
-              portfolio is selected for its architectural approach to scent and
-              uncompromising commitment to the olfactory arts.
+            <p className="mt-8 max-w-[720px] text-sm leading-7 text-[#69665F] lg:mt-10">
+              Từ những nhà chế tác giàu di sản tại Paris đến các phòng hương
+              đương đại ở Stockholm, mỗi thương hiệu được lựa chọn bởi bản sắc
+              riêng, kỹ nghệ tinh xảo và cách kể chuyện độc đáo qua mùi hương.
             </p>
 
             {loading && (
@@ -178,28 +176,28 @@ export default function Brand() {
         </section>
 
         {/* BRAND GRID */}
-        <section className="px-6 pb-16 sm:px-10 lg:px-16 lg:pb-24">
+        <section className="px-[20px] pb-16 lg:pb-30 lg:px-16">
           {displayedBrands.length ? (
-            <div className="mx-auto grid max-w-[1420px] gap-x-10 gap-y-16 md:grid-cols-2 xl:grid-cols-3 xl:gap-x-12 xl:gap-y-20">
+            <div className="grid w-full grid-cols-1 gap-x-[20px] gap-y-16 md:grid-cols-2 xl:grid-cols-3 xl:gap-y-20">
               {displayedBrands.map((brand) => (
                 <div key={brand.id} className="group block">
                   <div className="overflow-hidden bg-[#EFECE7]">
                     <img
                       src={brand.image}
                       alt={brand.name}
-                      className="aspect-[1.28/1] w-full object-cover transition duration-700 ease-out group-hover:scale-[1.045]"
+                      className="aspect-[1.35/1] w-full object-cover transition duration-700 ease-out group-hover:scale-[1.045]"
                     />
                   </div>
 
-                  <div className="pt-6">
+                  <div className="px-1 pt-7">
                     <h2
-                      className="text-[28px] leading-none tracking-[-0.02em]"
+                      className="text-[30px] leading-none tracking-[-0.02em] lg:text-[34px]"
                       style={{ fontFamily: "'Spectral', serif" }}
                     >
                       {brand.name}
                     </h2>
 
-                    <p className="mt-4 min-h-[72px] max-w-[400px] text-xs leading-5 text-[#6E6A63]">
+                    <p className="mt-4 min-h-[72px] max-w-[520px] text-[13px] leading-6 text-[#6E6A63]">
                       {brand.description}
                     </p>
 
@@ -279,8 +277,8 @@ export default function Brand() {
         {/* Tất cả nhóm mùi hương */}
         <ScentFamilyMarquee />
 
-        {/* CTA */}
-        <section className="relative min-h-[560px] overflow-hidden bg-gradient-to-br from-[#211B12] via-[#2E2617] to-[#0E0B07]">
+        {/* Khoảng cách mt-10 giữa ảnh card nhóm hương và Your Signature Awaits */}
+        <section className="relative mt-10 min-h-[560px] overflow-hidden bg-[#050403]">
           <style>{`
             @keyframes sigZoom{from{transform:scale(1.14)}to{transform:scale(1)}}
             @keyframes sigFade{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:none}}
@@ -304,8 +302,8 @@ export default function Brand() {
             aria-hidden
           />
 
-          {/* Lớp phủ tối + vệt sáng vàng */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-black/35 to-black/70" />
+          {/* Ombre nối màu ảnh card phía trên và đậm dần về đáy */}
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,#26221D_0%,rgba(22,18,14,0.5)_0%,rgba(5,4,3,0.98)_80%)]" />
           <div className="sig-glow pointer-events-none absolute -left-1/4 top-1/2 h-[520px] w-[520px] -translate-y-1/2 rounded-full bg-[#C8A44D]/25 blur-[120px]" />
 
           <div className="relative z-10 flex min-h-[560px] flex-col items-center justify-center px-6 py-24 text-center text-white">

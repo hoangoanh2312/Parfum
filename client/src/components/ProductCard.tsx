@@ -9,8 +9,19 @@ interface ProductCardProps {
   item: ProductCardData;
   liked?: boolean;
   onWishlist?: (id: string) => void;
+  imageAspectClassName?: string;
 }
 
-export default function ProductCard({ item }: ProductCardProps) {
-  return <ProductCardBase product={item} cartMode="always" compact />;
+export default function ProductCard({
+  item,
+  imageAspectClassName,
+}: ProductCardProps) {
+  return (
+    <ProductCardBase
+      product={item}
+      cartMode="always"
+      compact
+      imageAspectClassName={imageAspectClassName}
+    />
+  );
 }

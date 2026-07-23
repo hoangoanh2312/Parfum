@@ -2,6 +2,7 @@ import React, { useState, CSSProperties } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
 import { useAuth } from "../store/auth.store";
+import { useCart } from "../store/cart.store";
 
 const color = {
   pageBg: "#FDF9F4",
@@ -141,6 +142,12 @@ export default function Login() {
       const { data } = await api.post("/auth/login", { email, password });
       useAuth.getState().setTokens(data.accessToken, data.refreshToken);
       setUser(data.user);
+      try {
+        await useCart.getState().syncOnLogin();
+      } catch {
+        // Không xóa guest_cart nếu merge lỗi; lần đăng nhập sau có thể thử lại.
+        await useCart.getState().loadCart().catch(() => null);
+      }
       navigate("/");
     } catch (err: any) {
       setError(err.response?.data?.message || "Đăng nhập thất bại");

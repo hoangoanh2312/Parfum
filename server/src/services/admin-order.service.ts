@@ -4,6 +4,7 @@ import { User } from '../models/user.model';
 import { releaseOrderPromotionReservations, restoreStock } from './order.service';
 import { OrderStatus } from '../types/dto';
 import { normalizeOrderStatus } from '../utils/orderStatus';
+import { sendOrderNotification } from './notification.service';
 
 // So do chuyen trang thai hop le
 const FLOW: Record<OrderStatus, OrderStatus[]> = {
@@ -197,9 +198,13 @@ export async function updateStatus(id: string, next: OrderStatus) {
   if (next === 'cancelled') order.cancelledAt ||= now;
   if (next === 'returned') order.returnedAt ||= now;
   await order.save();
+  const notificationDelivery = await sendOrderNotification(String(order._id), 'status');
   // FIX: tra ve DAY DU don hang (getOrder) thay vi chi { id, status }.
   // Truoc day client setDetail(updated) -> detail.items = undefined -> modal crash "reading 'map'".
-  return getOrder(String(order._id));
+  return {
+    ...(await getOrder(String(order._id))),
+    notificationDelivery,
+  };
 }
 
 /** Admin xac nhan da nhan tien. Trang thai giao nhan cua don duoc giu nguyen. */

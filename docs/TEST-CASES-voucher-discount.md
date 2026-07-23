@@ -81,7 +81,7 @@ Ràng buộc chính (`resolveVoucher` trong pricing-engine):
 - `usageLimitPerUser`: đếm theo `VoucherCounter(voucher, customerKey)`.
 - Chồng mã: `mayStackVoucher(stackable, productPromotionDiscount)` — nếu SP đang có KM sản phẩm (>0) thì voucher phải `stackable = true` mới dùng được.
 
-Phân khúc khách (`customerSegment`): đã thanh toán >= 5 đơn HOẶC tổng chi >= 20.000.000đ → **VIP**; >= 3 đơn → **LOYAL**; >= 1 đơn → **RETURNING**; còn lại → **NEW**. `customerKey` = `user:{id}` nếu đăng nhập, ngược lại `email:{email viết thường}`.
+Phân khúc khách (`customerSegment`): đã thanh toán >= 20 đơn HOẶC tổng chi >= 50.000.000đ → **VIP**; >= 3 đơn → **LOYAL**; >= 1 đơn → **RETURNING**; còn lại → **NEW**. `customerKey` = `user:{id}` nếu đăng nhập, ngược lại `email:{email viết thường}`.
 
 | ID | Mục tiêu | Tiền điều kiện | Thao tác | Kết quả mong đợi |
 |----|----------|----------------|----------|------------------|

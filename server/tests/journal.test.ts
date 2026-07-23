@@ -7,6 +7,10 @@ vi.mock('../src/models/journalSubscriber.model', () => ({
   },
 }));
 
+vi.mock('../src/services/notification.service', () => ({
+  activateJournalForEmail: vi.fn().mockResolvedValue(undefined),
+}));
+
 import { JournalSubscriber } from '../src/models/journalSubscriber.model';
 import { subscribeJournal } from '../src/services/blog.service';
 

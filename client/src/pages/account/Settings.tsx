@@ -21,6 +21,7 @@ export default function Settings() {
   const setUser = useAuth((state) => state.setUser);
   const [saving, setSaving] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
+  const [savingNotification, setSavingNotification] = useState<string | null>(null);
 
   const [form, setForm] = useState({
     fullName: "",
@@ -30,8 +31,9 @@ export default function Settings() {
     newPassword: "",
     confirmPassword: "",
     emailNotifications: true,
-    promotionNotifications: false,
+    promotionNotifications: true,
     orderNotifications: true,
+    journalNotifications: true,
   });
 
   useEffect(() => {
@@ -43,6 +45,31 @@ export default function Settings() {
       email: user.email || "",
       phone: user.phone || user.addresses?.[0]?.phone || "",
     }));
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+    let active = true;
+
+    api
+      .get("/auth/me/notification-preferences")
+      .then(({ data }) => {
+        if (!active) return;
+        setForm((previous) => ({
+          ...previous,
+          orderNotifications: data.orderNotifications !== false,
+          emailNotifications: data.emailNotifications !== false,
+          promotionNotifications: data.promotionNotifications === true,
+          journalNotifications: data.journalNotifications === true,
+        }));
+      })
+      .catch(() => {
+        if (active) toast.error("Không thể tải tùy chọn thông báo");
+      });
+
+    return () => {
+      active = false;
+    };
   }, [user]);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -57,6 +84,69 @@ export default function Settings() {
             ? value.replace(/\D/g, "").slice(0, 10)
             : value,
     }));
+  };
+
+  type NotificationPreferenceKey =
+    | "orderNotifications"
+    | "emailNotifications"
+    | "promotionNotifications"
+    | "journalNotifications";
+
+  const handleNotificationChange = async (
+    name: NotificationPreferenceKey,
+    checked: boolean,
+  ) => {
+    const previousPreferences = {
+      orderNotifications: form.orderNotifications,
+      emailNotifications: form.emailNotifications,
+      promotionNotifications: form.promotionNotifications,
+      journalNotifications: form.journalNotifications,
+    };
+    const base = { ...previousPreferences, [name]: checked };
+    // "Thông báo qua email" là công tắc tổng: tắt nó thì tắt hết 3 cái còn lại.
+    const nextPreferences = base.emailNotifications
+      ? base
+      : {
+          emailNotifications: false,
+          orderNotifications: false,
+          promotionNotifications: false,
+          journalNotifications: false,
+        };
+
+    setForm((previous) => ({ ...previous, ...nextPreferences }));
+    setSavingNotification(name);
+    try {
+      const { data } = await api.put(
+        "/auth/me/notification-preferences",
+        nextPreferences,
+      );
+      setForm((previous) => ({
+        ...previous,
+        orderNotifications: data.orderNotifications,
+        emailNotifications: data.emailNotifications,
+        promotionNotifications: data.promotionNotifications,
+        journalNotifications: data.journalNotifications,
+      }));
+      if (user) {
+        setUser({
+          ...user,
+          notificationPreferences: {
+            orderNotifications: data.orderNotifications,
+            emailNotifications: data.emailNotifications,
+            promotionNotifications: data.promotionNotifications,
+            journalNotifications: data.journalNotifications,
+          },
+        });
+      }
+      toast.success(checked ? "Đã bật thông báo" : "Đã tắt thông báo");
+    } catch (error: any) {
+      setForm((previous) => ({ ...previous, ...previousPreferences }));
+      toast.error(
+        error?.response?.data?.message || "Không thể lưu tùy chọn thông báo",
+      );
+    } finally {
+      setSavingNotification(null);
+    }
   };
 
   // Luu thong tin ca nhan - HOAN TOAN doc lap voi mat khau.
@@ -90,11 +180,13 @@ export default function Settings() {
         addresses: data.addresses || [],
         profileCompletedAt: data.profileCompletedAt,
         profileCompletionVoucherCode: data.profileCompletionVoucherCode,
+        notificationPreferences:
+          data.notificationPreferences || user?.notificationPreferences,
       });
 
       toast.success(
         data.profileJustCompleted
-          ? "Cập nhật hồ sơ thành công. Voucher hoàn tất hồ sơ đã sẵn sàng."
+          ? `Cập nhật hồ sơ thành công. Voucher chào mừng ${data.profileCompletionVoucherCode} đã sẵn sàng.`
           : "Đã lưu thông tin cá nhân",
       );
     } catch (error: any) {
@@ -261,27 +353,40 @@ export default function Settings() {
 
             <div className="divide-y divide-[#EAE4DC] px-6">
               <NotificationToggle
-                title="Thông báo đơn hàng"
-                description="Nhận thông báo về xác nhận, vận chuyển và trạng thái đơn hàng."
-                name="orderNotifications"
-                checked={form.orderNotifications}
-                onChange={handleChange}
+                title="Thông báo qua email"
+                description="Công tắc chính cho email. Tắt mục này sẽ tắt toàn bộ email bên dưới."
+                name="emailNotifications"
+                checked={form.emailNotifications}
+                onChange={handleNotificationChange}
+                disabled={savingNotification !== null}
               />
 
               <NotificationToggle
-                title="Thông báo qua email"
-                description="Nhận cập nhật quan trọng về tài khoản qua email."
-                name="emailNotifications"
-                checked={form.emailNotifications}
-                onChange={handleChange}
+                title="Thông báo đơn hàng"
+                description="Nhận thông báo về xác nhận, vận chuyển và trạng thái đơn hàng."
+                name="orderNotifications"
+                checked={form.emailNotifications && form.orderNotifications}
+                onChange={handleNotificationChange}
+                disabled={savingNotification !== null || !form.emailNotifications}
               />
 
               <NotificationToggle
                 title="Khuyến mãi và ưu đãi"
-                description="Nhận thông tin về chương trình giảm giá và sản phẩm mới."
+                description="Nhận thông tin về chương trình giảm giá và sản phẩm mới.(Lưu ý: Bạn cần cập nhật hồ sơ để nhận ưu đãi chào mừng)"
                 name="promotionNotifications"
-                checked={form.promotionNotifications}
-                onChange={handleChange}
+                checked={form.emailNotifications && form.promotionNotifications}
+                onChange={handleNotificationChange}
+                disabled={savingNotification !== null || !form.emailNotifications}
+              />
+
+              <NotificationToggle
+                title="Thông báo bài viết mới"
+                description="Nhận Journal mới qua email ngay khi bài viết được xuất bản.
+                (Lưu ý: Bạn cần đăng ký nhận thông báo bài viết mới ở trang tin tức trước)."
+                name="journalNotifications"
+                checked={form.emailNotifications && form.journalNotifications}
+                onChange={handleNotificationChange}
+                disabled={savingNotification !== null || !form.emailNotifications}
               />
             </div>
           </section>
@@ -391,9 +496,17 @@ export default function Settings() {
 interface NotificationToggleProps {
   title: string;
   description: string;
-  name: string;
+  name:
+    | "orderNotifications"
+    | "emailNotifications"
+    | "promotionNotifications"
+    | "journalNotifications";
   checked: boolean;
-  onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onChange: (
+    name: NotificationToggleProps["name"],
+    checked: boolean,
+  ) => void;
+  disabled?: boolean;
 }
 
 function NotificationToggle({
@@ -402,9 +515,20 @@ function NotificationToggle({
   name,
   checked,
   onChange,
+  disabled = false,
 }: NotificationToggleProps) {
   return (
-    <label className="flex cursor-pointer items-center justify-between gap-5 py-6">
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={title}
+      disabled={disabled}
+      onClick={() => onChange(name, !checked)}
+      className={`flex w-full items-center justify-between gap-5 py-6 text-left ${
+        disabled ? "cursor-wait opacity-65" : "cursor-pointer"
+      }`}
+    >
       <div>
         <p className="font-serif text-lg">{title}</p>
 
@@ -414,18 +538,17 @@ function NotificationToggle({
       </div>
 
       <div className="relative shrink-0">
-        <input
-          type="checkbox"
-          name={name}
-          checked={checked}
-          onChange={onChange}
-          className="peer sr-only"
+        <div
+          className={`h-6 w-11 rounded-full transition ${
+            checked ? "bg-[#887000]" : "bg-[#D8D1C8]"
+          }`}
         />
-
-        <div className="h-6 w-11 rounded-full bg-[#D8D1C8] transition peer-checked:bg-[#887000]" />
-
-        <div className="absolute left-1 top-1 h-4 w-4 rounded-full bg-white transition peer-checked:translate-x-5" />
+        <div
+          className={`absolute left-1 top-1 h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${
+            checked ? "translate-x-5" : ""
+          }`}
+        />
       </div>
-    </label>
+    </button>
   );
 }

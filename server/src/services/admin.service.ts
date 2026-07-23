@@ -17,6 +17,7 @@ import { SupportRequest } from '../models/supportRequest.model';
 import { releaseOrderPromotionReservations, restoreStock } from './order.service';
 import { normalizeOrderStatus } from '../utils/orderStatus';
 import { changeVariantBasePrice, ensurePriceHistory } from './promotion.service';
+import { sendOrderNotification } from './notification.service';
 
 // ------------------------------------------------------------------ helpers --
 const ORDER_STATUSES = ['pending', 'shipping', 'done', 'cancelled', 'returned'] as const;
@@ -1049,6 +1050,9 @@ export async function updateOrderStatus(id: string, status: string) {
   if (status === 'cancelled') order.cancelledAt ||= now;
   if (status === 'returned') order.returnedAt ||= now;
   await order.save();
+  if (previousStatus !== status) {
+    void sendOrderNotification(String(order._id), 'status').catch(() => null);
+  }
 
   return getOrder(id);
 }

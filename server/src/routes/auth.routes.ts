@@ -82,6 +82,22 @@ r.post('/verify-email', validate(z.object({ token: z.string().min(10) })), ctrl.
 r.post('/me/send-verification', authenticate, ctrl.sendVerification);
 
 r.get('/me', authenticate, ctrl.me);
+r.get('/me/notification-preferences', authenticate, ctrl.getNotificationPreferences);
+r.put(
+  '/me/notification-preferences',
+  authenticate,
+  validate(
+    z.object({
+      orderNotifications: z.boolean().optional(),
+      emailNotifications: z.boolean().optional(),
+      promotionNotifications: z.boolean().optional(),
+      journalNotifications: z.boolean().optional(),
+    }).refine((value) => Object.values(value).some((item) => typeof item === 'boolean'), {
+      message: 'Can it nhat mot tuy chon thong bao',
+    }),
+  ),
+  ctrl.updateNotificationPreferences,
+);
 r.put(
   '/me',
   authenticate,

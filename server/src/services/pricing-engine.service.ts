@@ -1,4 +1,5 @@
 import { Types } from 'mongoose';
+import { LOYAL_MIN_ORDERS, isVipCustomer } from '../constants/customerSegment';
 import { Discount } from '../models/discount.model';
 import { FlashSale } from '../models/flashSale.model';
 import { Order } from '../models/order.model';
@@ -6,8 +7,8 @@ import { Payment } from '../models/payment.model';
 import { Variant } from '../models/variant.model';
 import { Voucher } from '../models/voucher.model';
 import { VoucherCounter } from '../models/voucherCounter.model';
+import { User } from '../models/user.model';
 import { mayStackVoucher, productPromotionPrice, voucherDiscountAmount } from '../utils/promotionPricing';
-import { ensureWelcomeVoucher, WELCOME_VOUCHER_CODE } from './promotion.service';
 
 export type PromotionType = 'FLASH_SALE' | 'PRODUCT_DISCOUNT' | 'CATEGORY_DISCOUNT' | null;
 
@@ -155,8 +156,8 @@ async function customerSegment(userId?: string) {
   const paid: any[] = await Payment.find({ order: { $in: orderIds }, status: 'paid' }).select('amount').lean();
   const count = paid.length;
   const spend = paid.reduce((sum, item) => sum + Number(item.amount || 0), 0);
-  if (count >= 5 || spend >= 20_000_000) return 'VIP';
-  if (count >= 3) return 'LOYAL';
+  if (isVipCustomer(count, spend)) return 'VIP';
+  if (count >= LOYAL_MIN_ORDERS) return 'LOYAL';
   return count >= 1 ? 'RETURNING' : 'NEW';
 }
 
@@ -175,9 +176,6 @@ async function resolveVoucher(code: string | undefined, subtotal: number, hasPro
   if (!code?.trim()) return null;
   const now = new Date();
   const normalizedCode = code.trim().toUpperCase();
-  if (normalizedCode === WELCOME_VOUCHER_CODE) {
-    await ensureWelcomeVoucher();
-  }
   const voucher: any = await Voucher.findOne({ code: normalizedCode, isActive: true }).lean();
   if (!voucher) throw Object.assign(new Error('Mã ưu đãi không tồn tại hoặc đã tắt'), { status: 400 });
   const start = voucher.startDate ? new Date(voucher.startDate) : null;
@@ -193,6 +191,22 @@ async function resolveVoucher(code: string | undefined, subtotal: number, hasPro
     throw Object.assign(new Error('Mã này không thể dùng chung với ưu đãi sản phẩm hiện có'), { status: 400 });
   }
   const actualSegment = await customerSegment(userId);
+  if (voucher.appliesToNewMembers) {
+    if (!userId || !Types.ObjectId.isValid(userId)) {
+      throw Object.assign(new Error('Vui lòng đăng nhập để dùng voucher dành cho thành viên mới'), { status: 400 });
+    }
+    const [assignedUser, existingOrder] = await Promise.all([
+      User.exists({
+        _id: userId,
+        role: 'customer',
+        profileCompletionVoucherCode: normalizedCode,
+      }),
+      Order.exists({ user: userId }),
+    ]);
+    if (!assignedUser || existingOrder) {
+      throw Object.assign(new Error('Voucher này chỉ dành cho tài khoản mới chưa có đơn hàng và đã cập nhật hồ sơ'), { status: 400 });
+    }
+  }
   if (actualSegment === 'GUEST' && voucher.userSegment && voucher.userSegment !== 'ALL') {
     throw Object.assign(new Error('Vui lòng đăng ký hoặc đăng nhập để dùng mã ưu đãi thành viên mới'), { status: 400 });
   }

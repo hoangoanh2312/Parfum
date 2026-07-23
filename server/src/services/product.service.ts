@@ -16,6 +16,9 @@ type ProductListQuery = {
   gender?: string | string[];
   scent?: string | string[];
   fragranceFamily?: string | string[];
+  note?: string | string[];
+  excludeNote?: string | string[];
+  match?: string;
   concentration?: string | string[];
   season?: string | string[];
   occasion?: string | string[];
@@ -215,6 +218,9 @@ export async function getProducts(query: ProductListQuery = {}) {
   const categoryFilters = toList(query.category);
   const genderFilters = toList(query.gender);
   const scentFilters = [...toList(query.scent), ...toList(query.fragranceFamily)];
+  const noteFilters = toList(query.note);
+  const excludedNoteFilters = toList(query.excludeNote);
+  const matchAnyPreference = normalize(query.match) === 'any';
   const concentrationFilters = toList(query.concentration);
   const seasonFilters = [...toList(query.season), ...toList(query.occasion)];
   const sizeFilters = toList(query.size);
@@ -369,12 +375,31 @@ export async function getProducts(query: ProductListQuery = {}) {
 
   const filtered = cards.filter((product) => {
     const price = product.price ?? 0;
+    const productNotes = [
+      ...(product.notes?.top || []),
+      ...(product.notes?.middle || []),
+      ...(product.notes?.base || []),
+    ];
+    const hasPreferenceFilters = scentFilters.length > 0 || noteFilters.length > 0;
+    const matchesSelectedScent =
+      scentFilters.length > 0 && matchesScentProfile(product, scentFilters);
+    const matchesSelectedNote =
+      noteFilters.length > 0 && overlaps(productNotes, noteFilters);
+    const matchesPreferences = matchAnyPreference
+      ? !hasPreferenceFilters ||
+        matchesSelectedScent ||
+        matchesSelectedNote
+      : matchesScentProfile(product, scentFilters) &&
+        overlaps(productNotes, noteFilters);
 
     return (
       includesAny(product.brand, brandFilters) &&
       includesAny(product.category, categoryFilters) &&
       includesAny(product.gender, genderFilters) &&
-      matchesScentProfile(product, scentFilters) &&
+      matchesPreferences &&
+      !excludedNoteFilters.some((note) =>
+        productNotes.some((productNote) => normalize(productNote) === normalize(note)),
+      ) &&
       includesAny(product.concentration, concentrationFilters) &&
       overlaps(product.season, seasonFilters) &&
       overlaps(product.sizes, sizeFilters) &&
@@ -499,7 +524,9 @@ export async function getProductFilters() {
 
   const brandSet = new Set<string>();
   const familySet = new Set<string>();
-  const noteSet = new Set<string>();
+  const familyCardMap = new Map<string, { name: string; productCount: number; image: string }>();
+  const noteNameByKey = new Map<string, string>();
+  const noteCountByKey = new Map<string, number>();
   const concentrationSet = new Set<string>();
   const genderSet = new Set<string>();
   const seasonSet = new Set<string>();
@@ -517,14 +544,35 @@ export async function getProductFilters() {
       brandCounts[brandName] = (brandCounts[brandName] || 0) + 1;
     }
     if (product.category?.name) categorySet.add(String(product.category.name).trim());
-    for (const family of scentFamiliesOf(product)) familySet.add(family);
+    const representativeImage =
+      product.images?.find((image: unknown) => typeof image === 'string' && image.trim()) ||
+      (byProduct[String(product._id)] || [])
+        .flatMap((variant: any) => variant.images || [])
+        .find((image: unknown) => typeof image === 'string' && image.trim()) ||
+      '';
+    for (const family of scentFamiliesOf(product)) {
+      familySet.add(family);
+      const key = normalize(family);
+      const current = familyCardMap.get(key) || { name: family, productCount: 0, image: '' };
+      current.productCount += 1;
+      if (!current.image && representativeImage) current.image = String(representativeImage);
+      familyCardMap.set(key, current);
+    }
     const productNotes = [
       ...notesOf(product).top,
       ...notesOf(product).middle,
       ...notesOf(product).base,
     ];
+    const productNoteKeys = new Set<string>();
     for (const note of productNotes) {
-      if (note) noteSet.add(String(note).trim());
+      const name = String(note || '').trim();
+      const key = normalize(name);
+      if (!key) continue;
+      if (!noteNameByKey.has(key)) noteNameByKey.set(key, name);
+      productNoteKeys.add(key);
+    }
+    for (const key of productNoteKeys) {
+      noteCountByKey.set(key, (noteCountByKey.get(key) || 0) + 1);
     }
     for (const concentration of asStringArray(product.concentration)) concentrationSet.add(concentration);
     if (product.gender) genderSet.add(String(product.gender).trim());
@@ -560,6 +608,15 @@ export async function getProductFilters() {
   }
 
   const alpha = (a: string, b: string) => a.localeCompare(b);
+  const notes = Array.from(noteNameByKey.entries())
+    .sort((left, right) => alpha(left[1], right[1]))
+    .map(([, name]) => name);
+  const noteCounts = Object.fromEntries(
+    Array.from(noteNameByKey.entries()).map(([key, name]) => [
+      name,
+      noteCountByKey.get(key) || 0,
+    ]),
+  );
   const sizeNumber = (size: string) => {
     const match = size.match(/\d+(\.\d+)?/);
     return match ? Number(match[0]) : Number.MAX_SAFE_INTEGER;
@@ -568,7 +625,9 @@ export async function getProductFilters() {
   return {
     brands: Array.from(brandSet).sort(alpha),
     fragranceFamilies: Array.from(familySet).sort(alpha),
-    notes: Array.from(noteSet).sort(alpha),
+    fragranceFamilyCards: Array.from(familyCardMap.values()).sort((a, b) => alpha(a.name, b.name)),
+    notes,
+    noteCounts,
     concentrations: Array.from(concentrationSet).sort(alpha),
     genders: Array.from(genderSet).sort(alpha),
     seasons: Array.from(seasonSet).sort(alpha),

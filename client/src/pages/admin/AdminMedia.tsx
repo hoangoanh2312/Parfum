@@ -11,8 +11,10 @@ import {
   adminApi,
   apiMessage,
   type AdminProduct,
+  type AdminScentFamilyCard,
   type Paginated,
 } from "../../lib/adminApi";
+import { api } from "../../lib/api";
 import { toast } from "../../store/toast.store";
 import {
   Button,
@@ -39,6 +41,7 @@ type MediaImage = {
 };
 type MediaList = { images: MediaImage[]; nextCursor: string | null; folder: string };
 type MediaStatus = { configured: boolean; cloudName: string | null; folder: string };
+type ProductFilterResponse = { fragranceFamilies?: string[] };
 type ImageAction = "cover" | "append" | "replace";
 type MediaFolder = "" | "products" | "news" | "brand" | "home" | "about" | "feed back";
 
@@ -73,6 +76,11 @@ export default function AdminMedia() {
   const [productResults, setProductResults] = useState<AdminProduct[]>([]);
   const [productsLoading, setProductsLoading] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<AdminProduct | null>(null);
+  const [scentFamilies, setScentFamilies] = useState<AdminScentFamilyCard[]>([]);
+  const [unconfiguredScentFamilies, setUnconfiguredScentFamilies] = useState<string[]>([]);
+  const [selectedScentFamily, setSelectedScentFamily] =
+    useState<AdminScentFamilyCard | null>(null);
+  const [newScentFamilyName, setNewScentFamilyName] = useState("");
   const [imageAction, setImageAction] = useState<ImageAction>("cover");
   const [assigning, setAssigning] = useState(false);
 
@@ -116,6 +124,54 @@ export default function AdminMedia() {
   useEffect(() => {
     if (!assignImage) return;
     let active = true;
+
+    if (folder === "brand") {
+      setProductsLoading(true);
+      void (async () => {
+        try {
+          const result = await adminApi.get<AdminScentFamilyCard[]>("/scent-family-cards");
+          if (!active) return;
+          setScentFamilies(result);
+
+          try {
+            const { data } = await api.get<ProductFilterResponse>("/products/filters");
+            if (!active) return;
+            const configuredNames = new Set(
+              result.map((item) => item.name.trim().toLocaleLowerCase("vi")),
+            );
+            setUnconfiguredScentFamilies(
+              Array.from(
+                new Set(
+                  (data.fragranceFamilies || [])
+                    .map((name) => name.trim())
+                    .filter(Boolean),
+                ),
+              )
+                .filter(
+                  (name) => !configuredNames.has(name.toLocaleLowerCase("vi")),
+                )
+                .sort((left, right) => left.localeCompare(right, "vi")),
+            );
+          } catch {
+            if (active) setUnconfiguredScentFamilies([]);
+          }
+        } catch (error) {
+          if (active) {
+            setScentFamilies([]);
+            setUnconfiguredScentFamilies([]);
+            toast.error(apiMessage(error, "Không tải được danh sách nhóm hương"));
+          }
+        } finally {
+          if (active) setProductsLoading(false);
+        }
+      })();
+
+      return () => {
+        active = false;
+      };
+    }
+
+    if (folder !== "products") return;
     const timer = window.setTimeout(async () => {
       try {
         setProductsLoading(true);
@@ -139,7 +195,7 @@ export default function AdminMedia() {
       active = false;
       window.clearTimeout(timer);
     };
-  }, [assignImage, productSearch]);
+  }, [assignImage, folder, productSearch]);
 
   async function handleDelete() {
     if (!toDelete) return;
@@ -168,6 +224,10 @@ export default function AdminMedia() {
     setProductSearch("");
     setProductResults([]);
     setSelectedProduct(null);
+    setSelectedScentFamily(null);
+    setNewScentFamilyName("");
+    setScentFamilies([]);
+    setUnconfiguredScentFamilies([]);
     setImageAction("cover");
   }
 
@@ -175,6 +235,8 @@ export default function AdminMedia() {
     if (assigning) return;
     setAssignImage(null);
     setSelectedProduct(null);
+    setSelectedScentFamily(null);
+    setNewScentFamilyName("");
   }
 
   async function updateProductImage() {
@@ -210,6 +272,51 @@ export default function AdminMedia() {
       setSelectedProduct(null);
     } catch (error) {
       toast.error(apiMessage(error, "Cập nhật ảnh sản phẩm thất bại"));
+    } finally {
+      setAssigning(false);
+    }
+  }
+
+  async function updateScentFamilyImage() {
+    if (folder !== "brand") {
+      toast.error('Chỉ ảnh trong thư mục "brand" mới được gán cho nhóm hương');
+      return;
+    }
+    if (!assignImage) return;
+
+    const nextName = newScentFamilyName.trim();
+    if (!selectedScentFamily && !nextName) {
+      toast.error("Chọn nhóm hương hoặc nhập tên nhóm hương mới");
+      return;
+    }
+
+    try {
+      setAssigning(true);
+      if (selectedScentFamily) {
+        await adminApi.put(`/scent-family-cards/${selectedScentFamily.id}`, {
+          name: selectedScentFamily.name,
+          image: assignImage.url,
+          description: selectedScentFamily.description || "",
+          displayOrder: selectedScentFamily.displayOrder || 0,
+          isActive: selectedScentFamily.isActive !== false,
+        });
+        toast.success(`Đã gán ảnh cho nhóm hương ${selectedScentFamily.name}`);
+      } else {
+        await adminApi.post("/scent-family-cards", {
+          name: nextName,
+          image: assignImage.url,
+          description: `Khám phá sắc thái đặc trưng của nhóm hương ${nextName}.`,
+          displayOrder: scentFamilies.length,
+          isActive: true,
+        });
+        toast.success(`Đã tạo và gán ảnh cho nhóm hương ${nextName}`);
+      }
+
+      setAssignImage(null);
+      setSelectedScentFamily(null);
+      setNewScentFamilyName("");
+    } catch (error) {
+      toast.error(apiMessage(error, "Không gán được ảnh cho nhóm hương"));
     } finally {
       setAssigning(false);
     }
@@ -289,6 +396,8 @@ CLOUDINARY_FOLDER=perfumeshop`}
           <p className="mt-1 text-xs text-gray-500">
             {folder === "products"
               ? "Ảnh ở đây có thể gán trực tiếp cho sản phẩm. "
+              : folder === "brand"
+                ? "Ảnh ở đây có thể gán trực tiếp cho nhóm hương trên trang /brand. "
               : "Ảnh ở đây chỉ dùng trong khu vực này (copy URL để sử dụng). "}
             Admin được thêm/sửa/xoá (CRUD) ảnh trong thư mục này, nhưng ảnh KHÔNG được
             dùng để gán hoặc CRUD cho thư mục khác — mỗi thư mục quản lý độc lập.
@@ -321,13 +430,13 @@ CLOUDINARY_FOLDER=perfumeshop`}
                     {img.width}×{img.height} · {formatBytes(img.bytes)}
                   </p>
                   <div className="mt-2 flex gap-1">
-                    {folder === "products" ? (
+                    {folder === "products" || folder === "brand" ? (
                       <Button
                         className="flex-1 px-2 py-1 text-xs"
                         onClick={() => openAssignImage(img)}
                       >
                         <ImagePlus className="h-3.5 w-3.5" />
-                        Gán sản phẩm
+                        {folder === "brand" ? "Gán nhóm hương" : "Gán sản phẩm"}
                       </Button>
                     ) : (
                       <span
@@ -387,16 +496,28 @@ CLOUDINARY_FOLDER=perfumeshop`}
       <Modal
         open={!!assignImage}
         onClose={closeAssignImage}
-        title="Cập nhật ảnh sản phẩm"
+        title={folder === "brand" ? "Gán ảnh cho nhóm hương" : "Cập nhật ảnh sản phẩm"}
         wide
         footer={
           <>
             <Button variant="secondary" onClick={closeAssignImage} disabled={assigning}>
               Hủy
             </Button>
-            <Button onClick={updateProductImage} disabled={!selectedProduct || assigning}>
+            <Button
+              onClick={folder === "brand" ? updateScentFamilyImage : updateProductImage}
+              disabled={
+                assigning
+                || (folder === "brand"
+                  ? !selectedScentFamily && !newScentFamilyName.trim()
+                  : !selectedProduct)
+              }
+            >
               {assigning ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
-              {assigning ? "Đang cập nhật..." : "Cập nhật sản phẩm"}
+              {assigning
+                ? "Đang cập nhật..."
+                : folder === "brand"
+                  ? "Gán ảnh nhóm hương"
+                  : "Cập nhật sản phẩm"}
             </Button>
           </>
         }
@@ -413,6 +534,114 @@ CLOUDINARY_FOLDER=perfumeshop`}
             </p>
           </div>
 
+          {folder === "brand" ? (
+            <div className="min-w-0 space-y-4">
+              <Field label="Chọn nhóm hương hiện có">
+                <div className="max-h-72 overflow-y-auto border-y border-gray-100">
+                  {productsLoading ? (
+                    <div className="flex items-center justify-center gap-2 py-10 text-sm text-gray-500">
+                      <LoaderCircle className="h-4 w-4 animate-spin" /> Đang tải nhóm hương
+                    </div>
+                  ) : scentFamilies.length || unconfiguredScentFamilies.length ? (
+                    <>
+                      {scentFamilies.length > 0 && (
+                        <p className="bg-gray-50 px-2 py-2 text-[9px] font-semibold uppercase tracking-[0.14em] text-gray-400">
+                          Đã có card
+                        </p>
+                      )}
+                      {scentFamilies.map((family) => {
+                        const selected = selectedScentFamily?.id === family.id;
+                        return (
+                          <button
+                            key={family.id}
+                            type="button"
+                            onClick={() => {
+                              setSelectedScentFamily(family);
+                              setNewScentFamilyName("");
+                            }}
+                            className={`flex w-full items-center gap-3 border-b border-gray-100 px-2 py-3 text-left transition last:border-0 ${selected ? "bg-[#F1ECE5]" : "hover:bg-gray-50"}`}
+                          >
+                            <span className="h-14 w-11 shrink-0 overflow-hidden bg-gray-100">
+                              <img src={family.image} alt="" className="h-full w-full object-cover" />
+                            </span>
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-sm font-medium text-gray-900">
+                                {family.name}
+                              </span>
+                              <span className="mt-0.5 block text-xs text-gray-500">
+                                {family.isActive ? "Đang hiển thị trên /brand" : "Đang ẩn"}
+                              </span>
+                            </span>
+                            {selected && <Check className="h-5 w-5 shrink-0 text-green-700" />}
+                          </button>
+                        );
+                      })}
+
+                      {unconfiguredScentFamilies.length > 0 && (
+                        <p className="bg-amber-50 px-2 py-2 text-[9px] font-semibold uppercase tracking-[0.14em] text-amber-700">
+                          Nhóm mới từ sản phẩm — chưa có card
+                        </p>
+                      )}
+                      {unconfiguredScentFamilies.map((name) => {
+                        const selected =
+                          !selectedScentFamily && newScentFamilyName === name;
+                        return (
+                          <button
+                            key={name}
+                            type="button"
+                            onClick={() => {
+                              setSelectedScentFamily(null);
+                              setNewScentFamilyName(name);
+                            }}
+                            className={`flex w-full items-center gap-3 border-b border-gray-100 px-2 py-3 text-left transition last:border-0 ${selected ? "bg-[#F1ECE5]" : "hover:bg-gray-50"}`}
+                          >
+                            <span className="flex h-14 w-11 shrink-0 items-center justify-center bg-gray-100">
+                              <ImagePlus className="h-4 w-4 text-gray-400" />
+                            </span>
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-sm font-medium text-gray-900">
+                                {name}
+                              </span>
+                              <span className="mt-0.5 block text-xs text-amber-700">
+                                Chọn ảnh này để tạo card tự động
+                              </span>
+                            </span>
+                            {selected && <Check className="h-5 w-5 shrink-0 text-green-700" />}
+                          </button>
+                        );
+                      })}
+                    </>
+                  ) : (
+                    <p className="py-10 text-center text-sm text-gray-400">
+                      Chưa có nhóm hương nào.
+                    </p>
+                  )}
+                </div>
+              </Field>
+
+              <div className="flex items-center gap-3 text-[10px] uppercase tracking-[0.14em] text-gray-400">
+                <span className="h-px flex-1 bg-gray-200" />
+                Hoặc tạo nhóm mới
+                <span className="h-px flex-1 bg-gray-200" />
+              </div>
+
+              <Field label="Tên nhóm hương mới">
+                <Input
+                  value={newScentFamilyName}
+                  onChange={(event) => {
+                    setNewScentFamilyName(event.target.value);
+                    if (event.target.value) setSelectedScentFamily(null);
+                  }}
+                  placeholder="Ví dụ: Fresh, Marine, Tobacco..."
+                />
+              </Field>
+
+              <p className="text-xs leading-5 text-gray-600">
+                Chọn nhóm hiện có để thay ảnh, hoặc nhập tên mới để tạo card mới.
+                Thay đổi sẽ xuất hiện trên trang /brand sau khi lưu.
+              </p>
+            </div>
+          ) : (
           <div className="min-w-0 space-y-4">
             <Field label="Cách cập nhật">
               <Select value={imageAction} onChange={(event) => setImageAction(event.target.value as ImageAction)}>
@@ -475,6 +704,7 @@ CLOUDINARY_FOLDER=perfumeshop`}
               </p>
             )}
           </div>
+          )}
         </div>
       </Modal>
     </div>

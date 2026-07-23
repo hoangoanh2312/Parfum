@@ -7,9 +7,8 @@ import {
   ImagePlus,
   X,
   ChevronRight,
-  Sparkles,
 } from "lucide-react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../lib/api";
 import { useCart } from "../store/cart.store";
@@ -92,7 +91,15 @@ const vnd = (value: number) => `${(value || 0).toLocaleString("vi-VN")}đ`;
 
 export default function ProductDetail() {
   const { idOrSlug } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
+  const locationState = location.state as { fromShop?: unknown } | null;
+  const shopReturnPath =
+    typeof locationState?.fromShop === "string" &&
+    (locationState.fromShop === "/shop" ||
+      locationState.fromShop.startsWith("/shop?"))
+      ? locationState.fromShop
+      : "/shop";
   const addItem = useCart((state) => state.addItem);
   const user = useAuth((state) => state.user);
   const [product, setProduct] = useState<ProductDetailData | null>(null);
@@ -119,8 +126,7 @@ export default function ProductDetail() {
   const [reviewMessage, setReviewMessage] = useState("");
   const [submittingReview, setSubmittingReview] = useState(false);
 
-  // Trang thai zoom anh chinh khi hover + thanh "Add to cart" dinh khi cuon.
-  const [zoom, setZoom] = useState({ active: false, x: 50, y: 50 });
+  // Trang thai thanh "Add to cart" dinh khi cuon.
   const [showStickyBar, setShowStickyBar] = useState(false);
   const addToCartRef = useRef<HTMLDivElement | null>(null);
 
@@ -475,13 +481,6 @@ export default function ProductDetail() {
     return () => observer.disconnect();
   }, [product]);
 
-  function handleZoomMove(event: React.MouseEvent<HTMLDivElement>) {
-    const rect = event.currentTarget.getBoundingClientRect();
-    const x = ((event.clientX - rect.left) / rect.width) * 100;
-    const y = ((event.clientY - rect.top) / rect.height) * 100;
-    setZoom({ active: true, x, y });
-  }
-
   // Skeleton loading trong khi fetch du lieu tu API -> tranh cam giac trang & layout shift.
   if (loading) {
     return (
@@ -518,7 +517,7 @@ export default function ProductDetail() {
     return (
       <div className="min-h-screen bg-[#fbf8f2] px-6 py-24 text-[#615e57]">
         <div className="mx-auto max-w-[1240px]">
-          <Link to="/shop" className="text-[#8b7100] underline">
+          <Link to={shopReturnPath} className="text-[#8b7100] underline">
             Quay lại Shop
           </Link>
           <p className="mt-6 text-red-600">
@@ -561,7 +560,7 @@ export default function ProductDetail() {
   return (
     <div className="min-h-screen w-full max-w-[100vw] overflow-x-hidden bg-[#fbf8f2] text-[#292824]">
       <main>
-        {/* Breadcrumb: Home > Shop > <ten san pham> */}
+        {/* Breadcrumb: Home > Shop > Brand > Gender > Product */}
         <nav
           aria-label="Breadcrumb"
           className="mx-auto max-w-[1240px] px-6 pt-8 md:px-10 lg:px-14"
@@ -576,13 +575,49 @@ export default function ProductDetail() {
               <ChevronRight size={12} />
             </li>
             <li>
-              <Link to="/shop" className="transition hover:text-[#8b7100]">
+              <Link
+                to={shopReturnPath}
+                className="transition hover:text-[#8b7100]"
+              >
                 Shop
               </Link>
             </li>
             <li aria-hidden="true" className="flex items-center">
               <ChevronRight size={12} />
             </li>
+            {product.brand && (
+              <>
+                <li>
+                  <Link
+                    to={`/shop?brand=${encodeURIComponent(product.brand)}`}
+                    className="transition hover:text-[#8b7100]"
+                  >
+                    {product.brand}
+                  </Link>
+                </li>
+                <li aria-hidden="true" className="flex items-center">
+                  <ChevronRight size={12} />
+                </li>
+              </>
+            )}
+            {product.gender && (
+              <>
+                <li>
+                  <Link
+                    to={`/shop?${new URLSearchParams({
+                      ...(product.brand ? { brand: product.brand } : {}),
+                      gender: product.gender,
+                    }).toString()}`}
+                    className="transition hover:text-[#8b7100]"
+                  >
+                    {product.gender}
+                  </Link>
+                </li>
+                <li aria-hidden="true" className="flex items-center">
+                  <ChevronRight size={12} />
+                </li>
+              </>
+            )}
             <li
               aria-current="page"
               className="max-w-[220px] truncate text-[#615e57]"
@@ -595,32 +630,19 @@ export default function ProductDetail() {
         {/* Product Hero */}
         <section className="bg-[#fbf8f2]">
           <div className="mx-auto grid max-w-[1240px] gap-14 px-6 py-12 md:px-10 lg:grid-cols-[1.1fr_0.9fr] lg:px-14 lg:py-16">
-            {/* Image - chat luong cao + zoom khi hover */}
-            <div
-              className="group relative min-h-[570px] cursor-zoom-in overflow-hidden bg-[#f5f1eb]"
-              onMouseEnter={() => setZoom((z) => ({ ...z, active: true }))}
-              onMouseLeave={() => setZoom({ active: false, x: 50, y: 50 })}
-              onMouseMove={handleZoomMove}
-            >
+            {/* Hai anh san pham tinh, khong zoom khi hover. */}
+            <div className="relative min-h-[570px] overflow-hidden bg-[#f5f1eb]">
               <img
                 src={optimizeCloudinaryImage(currentImage, 900)}
                 alt={product.name}
                 width={900}
                 height={1100}
                 decoding="async"
-                className="h-full min-h-[570px] w-full object-contain p-12 transition-transform duration-200 ease-out will-change-transform"
-                style={{
-                  transform: zoom.active ? "scale(2)" : "scale(1)",
-                  transformOrigin: `${zoom.x}% ${zoom.y}%`,
-                }}
+                className="h-full min-h-[570px] w-full object-contain p-12"
                 onError={(e) => {
                   e.currentTarget.src = PLACEHOLDER;
                 }}
               />
-
-              <span className="pointer-events-none absolute left-4 top-4 flex items-center gap-1 bg-white/80 px-2.5 py-1 text-[8px] font-semibold uppercase tracking-[1.5px] text-[#615e57] opacity-0 backdrop-blur transition group-hover:opacity-100">
-                <Sparkles size={11} /> Di chuột để phóng to
-              </span>
 
               {gallery.length > 1 && (
                 <button
@@ -643,18 +665,9 @@ export default function ProductDetail() {
 
             {/* Information */}
             <div className="flex flex-col justify-center py-6 lg:pl-2">
-              <p className="mb-7 text-[8px] uppercase tracking-[1.5px] text-[#aaa69e]">
-                {product.category || "Collections"}&nbsp;&nbsp;/&nbsp;&nbsp;
-                {product.fragranceFamily || "Signature"}
-              </p>
-
               <h1 className="font-serif text-[44px] leading-[1.05] tracking-[0] md:text-[58px]">
                 {product.name}
               </h1>
-
-              <p className="mt-3 font-serif text-[16px] text-[#8e8980]">
-                {product.concentration || product.brand || "Eau de Parfum"}
-              </p>
 
               {/* Thuong hieu + Trang thai ton kho (con hang / da ban) */}
               <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 text-[11px] text-[#615e57]">
@@ -698,16 +711,6 @@ export default function ProductDetail() {
                   "Mùi hương tinh tế, sang trọng và phù hợp cho nhiều dịp sử dụng."}
               </p>
 
-              {/* Storytelling - cam hung sang tao ra mui huong */}
-              <div className="mt-7 max-w-[475px] border-l-2 border-[#8b7100]/40 bg-[#f5f1eb]/60 px-5 py-4">
-                <p className="flex items-center gap-2 text-[8px] font-semibold uppercase tracking-[2px] text-[#8b7100]">
-                  <Sparkles size={12} /> Cảm hứng sáng tạo
-                </p>
-                <p className="mt-3 text-[12.5px] italic leading-[1.9] text-[#5b574f]">
-                  {storytelling}
-                </p>
-              </div>
-
               {scentFacts.length > 0 && (
                 <div className="mt-6 grid max-w-[475px] gap-2 sm:grid-cols-2">
                   {scentFacts.map((item) => (
@@ -737,10 +740,6 @@ export default function ProductDetail() {
                   </>
                 )}
               </div>
-              {selectedVariant?.promotionName && (
-                <p className="mt-2 text-[11px] uppercase tracking-[1.2px] text-[#8B1E1E]">{selectedVariant.promotionName}</p>
-              )}
-
               {product.variants.length > 0 && (
                 <div className="mt-6 max-w-[410px]">
                   <p className="mb-3 text-[8px] font-semibold uppercase tracking-[1.5px] text-[#8D887F]">
@@ -861,12 +860,19 @@ export default function ProductDetail() {
                   </p>
 
                   <div className="mt-6 space-y-2">
-                    {(note.items.length ? note.items : ["Đang cập nhật"]).map(
-                      (item) => (
-                        <p key={item} className="text-[10px] text-[#3c3a35]">
+                    {note.items.length ? (
+                      note.items.map((item) => (
+                        <Link
+                          key={item}
+                          to={`/shop?${new URLSearchParams({ note: item }).toString()}`}
+                          className="block w-max max-w-full text-[10px] text-[#3c3a35] underline decoration-[#b8aa89] underline-offset-4 transition hover:text-[#8b7100]"
+                          title={`Xem sản phẩm có note ${item}`}
+                        >
                           {item}
-                        </p>
-                      ),
+                        </Link>
+                      ))
+                    ) : (
+                      <p className="text-[10px] text-[#3c3a35]">Đang cập nhật</p>
                     )}
                   </div>
                 </article>
@@ -898,7 +904,7 @@ export default function ProductDetail() {
                       alt={item.name}
                       loading="lazy"
                       decoding="async"
-                      className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                      className="h-full w-full object-cover"
                       onError={(e) => {
                         e.currentTarget.src = PLACEHOLDER;
                       }}
@@ -974,7 +980,7 @@ export default function ProductDetail() {
                               alt="Review"
                               loading="lazy"
                               decoding="async"
-                              className="h-full w-full object-cover transition duration-500 hover:scale-105"
+                              className="h-full w-full object-cover"
                             />
                           </a>
                         ))}
@@ -1028,7 +1034,7 @@ export default function ProductDetail() {
                                 alt="Review"
                                 loading="lazy"
                                 decoding="async"
-                                className="h-full w-full object-cover transition duration-500 hover:scale-105"
+                                className="h-full w-full object-cover"
                               />
                             </a>
                           ))}
