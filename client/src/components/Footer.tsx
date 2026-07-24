@@ -39,7 +39,7 @@ export default function Footer() {
   return (
     <footer
       className="border-t border-white/[0.06] bg-[#161412] text-[#8A8580]"
-      style={{ fontFamily: "'Manrope', 'Be Vietnam Pro', sans-serif" }}
+      style={{ fontFamily: "'Be Vietnam Pro', 'Manrope', sans-serif" }}
     >
       <div className="mx-auto w-full max-w-[1680px] px-5 sm:px-8 lg:px-10 2xl:px-2.5">
         <div className="grid gap-6 py-10 lg:grid-cols-lg:grid-cols-[365px_minmax(0,1fr)] lg:items-start lg:gap-6 lg:py-16 2xl:grid-cols-12 2xl:gap-x-2">
@@ -59,7 +59,7 @@ export default function Footer() {
             <div className="absolute inset-x-0 top-0 p-7">
               <span
                 className="text-[14px] font-semibold uppercase tracking-[0.22em] text-white"
-                style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
+                style={{ fontFamily: "'Noto Serif', 'Noto Serif Display', serif" }}
               >
                 L&apos;Essence Noire
               </span>
@@ -68,7 +68,7 @@ export default function Footer() {
 
               <p
                 className="mt-5 max-w-[240px] text-[12px] leading-6 text-white/80"
-                style={{ fontFamily: "'Manrope', 'Be Vietnam Pro', sans-serif" }}
+                style={{ fontFamily: "'Be Vietnam Pro', 'Manrope', sans-serif" }}
               >
                 Khám phá bộ sưu tập nước hoa chính hãng được tuyển chọn kỹ lưỡng, nơi mỗi mùi hương
                 thể hiện sự thanh lịch, tự tin và cá tính riêng.
@@ -82,7 +82,7 @@ export default function Footer() {
 
               <h3
                 className="mt-3 text-[25px] font-bold leading-[1.12] text-white"
-                style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
+                style={{ fontFamily: "'Noto Serif', 'Noto Serif Display', serif" }}
               >
                 Tìm mùi hương
                 <br />
@@ -100,7 +100,7 @@ export default function Footer() {
               <Link
                 to="/"
                 className="inline-flex text-[15px] font-semibold uppercase tracking-[0.22em] text-white"
-                style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
+                style={{ fontFamily: "'Noto Serif', 'Noto Serif Display', serif" }}
               >
                 L&apos;Essence Noire
               </Link>

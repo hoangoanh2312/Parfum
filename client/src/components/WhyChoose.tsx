@@ -76,7 +76,7 @@ function SubItem({
       {/* Index */}
       <span
         style={{
-          fontFamily: "'Manrope', 'Be Vietnam Pro', sans-serif",
+          fontFamily: "'Be Vietnam Pro', 'Manrope', sans-serif",
           fontSize: 9,
           letterSpacing: "0.18em",
           color: active ? "#735C00" : "rgba(115,92,0,0.4)",
@@ -92,7 +92,7 @@ function SubItem({
         {/* Tag */}
         <p
           style={{
-            fontFamily: "'Manrope', 'Be Vietnam Pro', sans-serif",
+            fontFamily: "'Be Vietnam Pro', 'Manrope', sans-serif",
             fontSize: 9,
             letterSpacing: "0.22em",
             textTransform: "uppercase",
@@ -108,7 +108,7 @@ function SubItem({
         {/* Title */}
         <h3
           style={{
-            fontFamily: "'Noto Serif Display', 'Noto Serif', serif",
+            fontFamily: "'Noto Serif', 'Noto Serif Display', serif",
             fontSize: 17,
             fontWeight: 300,
             color: active ? "#1D1C19" : "#5A554F",
@@ -149,7 +149,7 @@ export default function WhyChooseUs() {
       style={{
         background: "#FCF9F4",
         padding: "64px 32px 96px",
-        fontFamily: "'Manrope', 'Be Vietnam Pro', sans-serif",
+        fontFamily: "'Be Vietnam Pro', 'Manrope', sans-serif",
       }}
     >
       <div style={{ maxWidth: 1400, margin: "0 auto" }}>
@@ -179,7 +179,7 @@ export default function WhyChooseUs() {
             </p>
             <h2
               style={{
-                fontFamily: "'Noto Serif Display', 'Noto Serif', serif",
+                fontFamily: "'Noto Serif', 'Noto Serif Display', serif",
                 fontSize: "clamp(32px, 4vw, 48px)",
                 fontWeight: 300,
                 color: "#1D1C19",
@@ -240,7 +240,7 @@ export default function WhyChooseUs() {
             <h3
               key={`title-${active}`}
               style={{
-                fontFamily: "'Noto Serif Display', 'Noto Serif', serif",
+                fontFamily: "'Noto Serif', 'Noto Serif Display', serif",
                 fontSize: "clamp(36px, 5vw, 56px)",
                 fontWeight: 300,
                 color: "#1D1C19",

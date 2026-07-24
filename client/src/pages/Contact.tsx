@@ -82,7 +82,7 @@ export default function ContactPage() {
         style={{
           background: "#FDF9F4",
           color: "#1a1a18",
-          fontFamily: "'Manrope', 'Be Vietnam Pro', sans-serif",
+          fontFamily: "'Be Vietnam Pro', 'Manrope', sans-serif",
         }}
       >
         <div className="max-w-6xl mx-auto">
@@ -113,7 +113,7 @@ export default function ContactPage() {
               </p>
               <h1
                 style={{
-                  fontFamily: "'Noto Serif Display', 'Noto Serif', serif",
+                  fontFamily: "'Noto Serif', 'Noto Serif Display', serif",
                   fontSize: 52,
                   fontWeight: 300,
                   lineHeight: 1.1,
@@ -189,7 +189,7 @@ export default function ContactPage() {
                 <blockquote
                   className="break-words"
                   style={{
-                    fontFamily: "'Noto Serif Display', 'Noto Serif', serif",
+                    fontFamily: "'Noto Serif', 'Noto Serif Display', serif",
                     fontStyle: "italic",
                     fontSize: 15,
                     color: "rgba(255,255,255,0.68)",
@@ -340,7 +340,7 @@ export default function ContactPage() {
             <div className="contact-form" style={{ padding: "48px 48px" }}>
               <h2
                 style={{
-                  fontFamily: "'Noto Serif Display', 'Noto Serif', serif",
+                  fontFamily: "'Noto Serif', 'Noto Serif Display', serif",
                   fontSize: 26,
                   fontWeight: 300,
                   marginBottom: 6,
@@ -415,7 +415,7 @@ export default function ContactPage() {
                     background: "#1a1a18",
                     color: "#fff",
                     border: "none",
-                    fontFamily: "'Manrope', 'Be Vietnam Pro', sans-serif",
+                    fontFamily: "'Be Vietnam Pro', 'Manrope', sans-serif",
                     fontSize: 10,
                     letterSpacing: "0.12em",
                     textTransform: "uppercase",
@@ -432,7 +432,7 @@ export default function ContactPage() {
                     background: "transparent",
                     border: "0.5px solid rgba(26,26,24,0.2)",
                     color: "#6b6b65",
-                    fontFamily: "'Manrope', 'Be Vietnam Pro', sans-serif",
+                    fontFamily: "'Be Vietnam Pro', 'Manrope', sans-serif",
                     fontSize: 10,
                     letterSpacing: "0.1em",
                     textTransform: "uppercase",
@@ -494,7 +494,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
           border: none;
           border-bottom: 0.5px solid rgba(26,26,24,0.18);
           outline: none;
-          font-family: 'Manrope', 'Be Vietnam Pro', sans-serif;
+          font-family: 'Be Vietnam Pro', 'Manrope', sans-serif;
           font-size: 13px;
           color: #1a1a18;
           padding: 8px 0;

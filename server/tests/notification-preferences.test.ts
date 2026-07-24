@@ -58,10 +58,19 @@ describe('Notification preference switches', () => {
     });
 
     expect(result[key]).toBe(false);
-    expect(UserUpdate()).toMatchObject({
-      ...currentPreferences,
-      [key]: false,
-    });
+    expect(UserUpdate()).toMatchObject(
+      key === 'emailNotifications'
+        ? {
+            emailNotifications: false,
+            orderNotifications: false,
+            promotionNotifications: false,
+            journalNotifications: false,
+          }
+        : {
+            ...currentPreferences,
+            [key]: false,
+          },
+    );
   });
 });
 

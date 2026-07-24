@@ -286,7 +286,7 @@ export default function ScentFamilyMarquee() {
         </div>
         <h2
           className="max-w-[620px] text-[38px] leading-[1.05] tracking-[-0.03em] sm:text-[48px]"
-          style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
+          style={{ fontFamily: "'Noto Serif', 'Noto Serif Display', serif" }}
         >
           Khám phá các nhóm hương
         </h2>
@@ -348,7 +348,7 @@ export default function ScentFamilyMarquee() {
                   <div className="flex-1 px-5 pb-6 pt-5">
                     <h3
                       className="text-[24px] leading-tight tracking-[-0.01em]"
-                      style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
+                      style={{ fontFamily: "'Noto Serif', 'Noto Serif Display', serif" }}
                     >
                       {family.name}
                     </h3>

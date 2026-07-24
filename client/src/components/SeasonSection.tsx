@@ -256,7 +256,7 @@ function ProductCard({
         {/* Nội dung */}
         <h3
           style={{
-            fontFamily: "'Noto Serif Display', 'Noto Serif', serif",
+            fontFamily: "'Noto Serif', 'Noto Serif Display', serif",
             fontSize: 21,
             fontWeight: 300,
             color: "#272521",
@@ -281,7 +281,7 @@ function ProductCard({
             marginTop: 6,
             minHeight: 24,
             lineHeight: 1.5,
-            fontFamily: "'Manrope', 'Be Vietnam Pro', sans-serif",
+            fontFamily: "'Be Vietnam Pro', 'Manrope', sans-serif",
           }}
           className="line-clamp-2"
         >
@@ -301,7 +301,7 @@ function ProductCard({
             paddingBottom: 2,
             textDecoration: "none",
             fontWeight: 500,
-            fontFamily: "'Manrope', 'Be Vietnam Pro', sans-serif",
+            fontFamily: "'Be Vietnam Pro', 'Manrope', sans-serif",
           }}
         >
           Khám phá ngay
@@ -465,7 +465,7 @@ export default function SeasonSection() {
       style={{
         background: "#FCF9F4",
         padding: "64px 32px 72px",
-        fontFamily: "'Manrope', 'Be Vietnam Pro', sans-serif",
+        fontFamily: "'Be Vietnam Pro', 'Manrope', sans-serif",
       }}
     >
       <div style={{ maxWidth: 1400, margin: "0 auto" }}>
@@ -485,7 +485,7 @@ export default function SeasonSection() {
           </p>
           <h2
             style={{
-              fontFamily: "'Noto Serif Display', 'Noto Serif', serif",
+              fontFamily: "'Noto Serif', 'Noto Serif Display', serif",
               fontSize: "clamp(28px, 4vw, 42px)",
               fontWeight: 300,
               color: "#1D1C19",
@@ -615,7 +615,7 @@ export default function SeasonSection() {
             fontSize: 10,
             letterSpacing: "0.1em",
             color: "#7D7870",
-            fontFamily: "'Manrope', 'Be Vietnam Pro', sans-serif",
+            fontFamily: "'Be Vietnam Pro', 'Manrope', sans-serif",
           }}
         >
           {String(safeSlide + 1).padStart(2, "0")} / {String(slidesLen).padStart(2, "0")}

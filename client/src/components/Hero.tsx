@@ -33,7 +33,7 @@ export default function HeroSection() {
           <h1
             className="text-[44px] leading-[1.02] text-[#F4EFE6] sm:text-[56px] lg:text-[72px] xl:text-[80px]"
             style={{
-              fontFamily: "'Noto Serif Display', 'Noto Serif', serif",
+              fontFamily: "'Noto Serif', 'Noto Serif Display', serif",
               fontWeight: 300,
             }}
           >
@@ -48,7 +48,7 @@ export default function HeroSection() {
           <p
             className="mt-6 max-w-[460px] break-words text-[#F4EFE6]/70 leading-[1.75] sm:mt-8 sm:leading-[1.85]"
             style={{
-              fontFamily: "'Manrope', 'Be Vietnam Pro', sans-serif",
+              fontFamily: "'Be Vietnam Pro', 'Manrope', sans-serif",
               fontSize: "clamp(0.8rem, 1.1vw, 0.92rem)",
               fontWeight: 300,
               letterSpacing: "0",

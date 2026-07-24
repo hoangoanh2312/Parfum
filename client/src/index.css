@@ -21,7 +21,7 @@ body {
 }
 
 body {
-  font-family: 'Manrope', 'Be Vietnam Pro', 'Inter', sans-serif;
+  font-family: 'Be Vietnam Pro', 'Manrope', 'Inter', sans-serif;
   background: #F8F5F0;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -34,7 +34,7 @@ h3,
 .font-serif,
 .font-title,
 .font-heading {
-  font-family: 'Noto Serif Display', 'Noto Serif', serif;
+  font-family: 'Noto Serif', 'Noto Serif Display', serif;
 }
 
 img,
@@ -149,11 +149,11 @@ textarea {
 }
 
 .font-title {
-  font-family: 'Noto Serif Display', 'Noto Serif', serif;
+  font-family: 'Noto Serif', 'Noto Serif Display', serif;
 }
 
 .font-heading {
-  font-family: 'Noto Serif Display', 'Noto Serif', serif;
+  font-family: 'Noto Serif', 'Noto Serif Display', serif;
 }
 
 .font-numeric {

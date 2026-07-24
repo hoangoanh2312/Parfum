@@ -19,8 +19,8 @@ const color = {
 };
 
 const font = {
-  serif: "'Noto Serif Display', 'Noto Serif', serif",
-  sans: "'Manrope', 'Be Vietnam Pro', sans-serif",
+  serif: "'Noto Serif', 'Noto Serif Display', serif",
+  sans: "'Be Vietnam Pro', 'Manrope', sans-serif",
 };
 
 const IconSparkles = (p: React.SVGProps<SVGSVGElement>) => (

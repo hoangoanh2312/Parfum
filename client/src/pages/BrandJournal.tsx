@@ -183,7 +183,7 @@ export default function BrandJournal({ brand: brandOverride }: { brand?: string 
             </p>
             <h1
               className="text-[44px] leading-[1] tracking-[-0.03em] text-[#F4EFE6] sm:text-[60px] lg:text-[76px]"
-              style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
+              style={{ fontFamily: "'Noto Serif', 'Noto Serif Display', serif" }}
             >
               {brand}
             </h1>
@@ -258,13 +258,13 @@ export default function BrandJournal({ brand: brandOverride }: { brand?: string 
           <div className="mx-auto max-w-[1180px]">
             <h2
               className="max-w-[820px] text-[36px] leading-[1.08] tracking-[-0.025em] sm:text-[48px] lg:text-[60px]"
-              style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
+              style={{ fontFamily: "'Noto Serif', 'Noto Serif Display', serif" }}
             >
               Câu chuyện đứng sau ngôn ngữ hương của {brand}.
             </h2>
             <p
               className="mt-6 max-w-[680px] text-[15px] italic leading-[1.75] text-[#6B6861]"
-              style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
+              style={{ fontFamily: "'Noto Serif', 'Noto Serif Display', serif" }}
             >
               {brandInfo?.description ||
                 `Mỗi chai hương của ${brand} là một chương trong câu chuyện olfactory riêng biệt, nơi cấu trúc, nguyên liệu và cảm xúc được cân bằng để tạo nên dấu ấn nhận diện rõ ràng.`}
@@ -319,7 +319,7 @@ export default function BrandJournal({ brand: brandOverride }: { brand?: string 
                     <div>
                       <p
                         className="text-[48px] leading-none text-[#8B7419]"
-                        style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
+                        style={{ fontFamily: "'Noto Serif', 'Noto Serif Display', serif" }}
                       >
                         {total}
                       </p>
@@ -410,7 +410,7 @@ function BrandArticle({
         <section key={section.heading} className="grid gap-5 md:grid-cols-[0.34fr_1fr]">
           <h3
             className="text-[26px] leading-tight tracking-[-0.015em] text-[#2A2823]"
-            style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
+            style={{ fontFamily: "'Noto Serif', 'Noto Serif Display', serif" }}
           >
             {section.heading}
           </h3>
@@ -453,7 +453,7 @@ function ProductGrid({ products, brand }: { products: ProductListItem[]; brand: 
               {/* Tên sản phẩm */}
               <h3
                 className="mt-2.5 text-[22px] leading-[1.18] tracking-[-0.015em]"
-                style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
+                style={{ fontFamily: "'Noto Serif', 'Noto Serif Display', serif" }}
               >
                 {product.name}
               </h3>
@@ -489,7 +489,7 @@ function EmptyState({ brand }: { brand: string }) {
       </p>
       <h3
         className="mt-4 text-[30px] leading-tight"
-        style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
+        style={{ fontFamily: "'Noto Serif', 'Noto Serif Display', serif" }}
       >
         Chưa có bài viết cho {brand}
       </h3>

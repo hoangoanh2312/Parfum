@@ -4,9 +4,9 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Manrope', 'Be Vietnam Pro', 'Inter', 'sans-serif'],
-        serif: ['Noto Serif Display', 'Noto Serif', 'serif'],
-        title: ['Noto Serif Display', 'Noto Serif', 'serif'],
+        sans: ['Be Vietnam Pro', 'Manrope', 'Inter', 'sans-serif'],
+        serif: ['Noto Serif', 'Noto Serif Display', 'serif'],
+        title: ['Noto Serif', 'Noto Serif Display', 'serif'],
         numeric: ['Space Grotesk', 'Be Vietnam Pro', 'sans-serif'],
       },
     },

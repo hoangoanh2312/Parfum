@@ -227,9 +227,9 @@ export async function sendOrderNotification(orderId: string, kind: 'created' | '
     to: email,
     subject: `${title} - L'Essence Noire`,
     html: `
-      <div style="font-family:Manrope,'Be Vietnam Pro','Segoe UI',Arial,sans-serif;max-width:600px;margin:auto;padding:32px;color:#27231f;line-height:1.6">
+      <div style="font-family:'Be Vietnam Pro',Manrope,'Segoe UI',Arial,sans-serif;max-width:600px;margin:auto;padding:32px;color:#27231f;line-height:1.6">
         <p style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#806b3d">L'Essence Noire</p>
-        <h1 style="font-family:'Noto Serif Display','Noto Serif',Georgia,serif;font-size:27px;font-weight:500">${escapeHtml(title)}</h1>
+        <h1 style="font-family:'Noto Serif','Noto Serif Display',Georgia,serif;font-size:27px;font-weight:500">${escapeHtml(title)}</h1>
         <p>Trạng thái hiện tại: <strong>${escapeHtml(statusLabel)}</strong></p>
         ${itemLines ? `<ul style="padding-left:18px;color:#625b54">${itemLines}</ul>` : ''}
         <p><strong>Tổng thanh toán:</strong> ${Number(order.total || 0).toLocaleString('vi-VN')}đ</p>
@@ -278,9 +278,9 @@ export async function sendPromotionNotification(input: PromotionNotification) {
         to: user.email,
         subject,
         html: `
-          <div style="font-family:Manrope,'Be Vietnam Pro','Segoe UI',Arial,sans-serif;max-width:600px;margin:auto;padding:32px;color:#27231f;line-height:1.6">
+          <div style="font-family:'Be Vietnam Pro',Manrope,'Segoe UI',Arial,sans-serif;max-width:600px;margin:auto;padding:32px;color:#27231f;line-height:1.6">
             <p style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#806b3d">L'Essence Noire</p>
-            <h1 style="font-family:'Noto Serif Display','Noto Serif',Georgia,serif;font-size:27px;font-weight:500">${escapeHtml(input.name)}</h1>
+            <h1 style="font-family:'Noto Serif','Noto Serif Display',Georgia,serif;font-size:27px;font-weight:500">${escapeHtml(input.name)}</h1>
             <p>${escapeHtml(input.detail)}</p>
             <p><a href="${url}" style="display:inline-block;background:#75621e;color:#fff;text-decoration:none;padding:12px 18px">Khám phá ưu đãi</a></p>
           </div>`,

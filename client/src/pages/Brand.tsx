@@ -159,7 +159,7 @@ export default function Brand() {
           <div className="mx-auto max-w-[1420px]">
             <h1
               className="max-w-[720px] text-[58px] leading-[1.02] tracking-[-0.045em] sm:text-[72px] lg:text-[92px]"
-              style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
+              style={{ fontFamily: "'Noto Serif', 'Noto Serif Display', serif" }}
             >
               Những nhà hương
               <br />
@@ -198,7 +198,7 @@ export default function Brand() {
                   <div className="px-1 pt-7">
                     <h2
                       className="text-[30px] leading-none tracking-[-0.02em] lg:text-[34px]"
-                      style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
+                      style={{ fontFamily: "'Noto Serif', 'Noto Serif Display', serif" }}
                     >
                       {brand.name}
                     </h2>
@@ -321,7 +321,7 @@ export default function Brand() {
 
             <h2
               className="sig-reveal sig-d1 mt-6 text-[46px] leading-[0.98] tracking-[-0.035em] sm:text-[60px] lg:text-[76px]"
-              style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
+              style={{ fontFamily: "'Noto Serif', 'Noto Serif Display', serif" }}
             >
               Dấu hương riêng đang chờ bạn
             </h2>
@@ -357,7 +357,7 @@ export default function Brand() {
         <section className="border-b border-[#E6E1D9] px-6 py-16 text-center lg:hidden">
           <h2
             className="text-3xl"
-            style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
+            style={{ fontFamily: "'Noto Serif', 'Noto Serif Display', serif" }}
           >
             Tham gia bản tin biên tập
           </h2>

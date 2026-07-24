@@ -140,9 +140,9 @@ async function notifyJournalSubscribers(article: any): Promise<JournalNotificati
   const description = escapeHtml(article.description || '');
   const subject = `Nhật ký mới từ L'Essence Noire: ${article.title}`;
   const html = `
-    <div style="font-family:Manrope,'Be Vietnam Pro','Segoe UI',Arial,sans-serif;line-height:1.6;color:#1d1c19">
+    <div style="font-family:'Be Vietnam Pro',Manrope,'Segoe UI',Arial,sans-serif;line-height:1.6;color:#1d1c19">
       <p style="letter-spacing:2px;text-transform:uppercase;color:#75621e;font-size:11px">Nhật ký L'Essence Noire</p>
-      <h1 style="font-family:'Noto Serif Display','Noto Serif',Georgia,serif;font-size:28px;margin:12px 0">${title}</h1>
+      <h1 style="font-family:'Noto Serif','Noto Serif Display',Georgia,serif;font-size:28px;margin:12px 0">${title}</h1>
       <p style="color:#625b54">${description}</p>
       <p><a href="${url}" style="display:inline-block;background:#75621e;color:#fff;text-decoration:none;padding:12px 18px;margin-top:10px">Đọc bài viết</a></p>
       <p style="font-size:12px;color:#8a857d;margin-top:24px">Bạn nhận email này vì đã đăng ký nhận journal từ L'Essence Noire.</p>

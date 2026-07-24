@@ -67,7 +67,7 @@ async function sendNewMemberVoucherEmail(user: any, voucher: any) {
     to: String(user.email),
     subject: `${code} - Voucher chào mừng thành viên mới`,
     html: `
-      <div style="font-family:Manrope,'Be Vietnam Pro','Segoe UI',Arial,sans-serif;max-width:560px;margin:auto;padding:32px;color:#27231f">
+      <div style="font-family:'Be Vietnam Pro',Manrope,'Segoe UI',Arial,sans-serif;max-width:560px;margin:auto;padding:32px;color:#27231f">
         <p style="font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#806b3d">L'Essence Noire</p>
         <h1 style="font-size:28px;font-weight:500">Cảm ơn bạn đã cập nhật hồ sơ</h1>
         <p>Bạn vừa nhận voucher dành cho thành viên mới chưa có đơn hàng.</p>
@@ -189,7 +189,7 @@ async function sendWelcomeEmail(user: any) {
     to: String(user.email),
     subject: `Chào mừng ${user.name} đến với L'Essence Noire`,
     html: `
-      <div style="font-family:Manrope,'Be Vietnam Pro','Segoe UI',Arial,sans-serif;max-width:560px;margin:auto;padding:32px;color:#27231f;line-height:1.6">
+      <div style="font-family:'Be Vietnam Pro',Manrope,'Segoe UI',Arial,sans-serif;max-width:560px;margin:auto;padding:32px;color:#27231f;line-height:1.6">
         <p style="font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#806b3d">L'Essence Noire</p>
         <h1 style="font-size:26px;font-weight:500;margin:8px 0 16px">Chào mừng bạn đã tham gia!</h1>
         <p>Xin chào ${htmlFirstName},</p>
@@ -428,7 +428,7 @@ export async function requestPasswordReset(email: string) {
     to: normalizedEmail,
     subject: `${otp} - Mã xác minh đặt lại mật khẩu`,
     html: `
-      <div style="font-family:Manrope,'Be Vietnam Pro','Segoe UI',Arial,sans-serif;max-width:560px;margin:auto;padding:32px;color:#27231f">
+      <div style="font-family:'Be Vietnam Pro',Manrope,'Segoe UI',Arial,sans-serif;max-width:560px;margin:auto;padding:32px;color:#27231f">
         <p style="font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#806b3d">L'Essence Noire</p>
         <h1 style="font-size:28px;font-weight:500">Khôi phục mật khẩu</h1>
         <p>Mã xác minh của bạn là:</p>

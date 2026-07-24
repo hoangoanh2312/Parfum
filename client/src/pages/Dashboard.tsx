@@ -124,7 +124,7 @@ const pageStyle: CSSProperties = {
 const containerStyle: CSSProperties = { maxWidth: 1100, margin: "0 auto" };
 const titleWrapStyle: CSSProperties = { marginBottom: 28 };
 const h1Style: CSSProperties = {
-  fontFamily: "'Noto Serif Display', 'Noto Serif', serif",
+  fontFamily: "'Noto Serif', 'Noto Serif Display', serif",
   fontSize: 30,
   color: c.ink,
   margin: 0,
@@ -162,7 +162,7 @@ const avatarStyle: CSSProperties = {
   alignItems: "center",
   justifyContent: "center",
   fontSize: 22,
-  fontFamily: "'Noto Serif Display', 'Noto Serif', serif",
+  fontFamily: "'Noto Serif', 'Noto Serif Display', serif",
   flexShrink: 0,
 };
 const userNameStyle: CSSProperties = {
@@ -230,7 +230,7 @@ const contentStyle: CSSProperties = {
   minHeight: 440,
 };
 const sectionH2Style: CSSProperties = {
-  fontFamily: "'Noto Serif Display', 'Noto Serif', serif",
+  fontFamily: "'Noto Serif', 'Noto Serif Display', serif",
   fontSize: 22,
   color: c.ink,
   marginTop: 0,
@@ -279,7 +279,7 @@ const csIconStyle: CSSProperties = {
   marginBottom: 16,
 };
 const csTitleStyle: CSSProperties = {
-  fontFamily: "'Noto Serif Display', 'Noto Serif', serif",
+  fontFamily: "'Noto Serif', 'Noto Serif Display', serif",
   fontSize: 20,
   color: c.ink,
   margin: 0,

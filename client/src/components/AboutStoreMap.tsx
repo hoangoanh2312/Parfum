@@ -523,7 +523,7 @@ export default function AboutStoreMap() {
   return (
     <section
       className="bg-[#F5F2ED] px-4 py-20 sm:px-10 lg:px-16 lg:py-28"
-      style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
+      style={{ fontFamily: "'Noto Serif', 'Noto Serif Display', serif" }}
     >
       <style>{`
         @keyframes ln-radar{0%{transform:translate(-50%,-50%) scale(.35);opacity:.65}100%{transform:translate(-50%,-50%) scale(3.6);opacity:0}}

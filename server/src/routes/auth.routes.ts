@@ -59,7 +59,7 @@ r.post(
   ctrl.login,
 );
 r.post('/refresh', verifyCsrf, ctrl.refresh);
-r.post('/logout', verifyCsrf, authenticate, ctrl.logout);
+r.post('/logout', authenticate, verifyCsrf, ctrl.logout);
 
 // Quên / đặt lại mật khẩu qua email.
 r.post(

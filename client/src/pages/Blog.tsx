@@ -159,7 +159,7 @@ export default function Blog() {
               </p>
               <h1
                 className="max-w-[650px] text-[58px] leading-[1.02] tracking-[-0.04em] sm:text-[72px] lg:text-[86px]"
-                style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
+                style={{ fontFamily: "'Noto Serif', 'Noto Serif Display', serif" }}
               >
                 Ghi chép về điều
                 <br />
@@ -202,7 +202,7 @@ export default function Blog() {
                   </p>
                   <h2
                     className="mt-3 text-[30px] leading-tight tracking-[-0.025em] lg:text-[35px]"
-                    style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
+                    style={{ fontFamily: "'Noto Serif', 'Noto Serif Display', serif" }}
                   >
                     Đạo đức trong khai thác: bảo tồn những loài hoa quý hiếm
                   </h2>
@@ -224,7 +224,7 @@ export default function Blog() {
               </p>
               <h2
                 className="mt-4 text-[25px] leading-tight tracking-[-0.02em]"
-                style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
+                style={{ fontFamily: "'Noto Serif', 'Noto Serif Display', serif" }}
               >
                 Trò chuyện cùng nghệ nhân điều hương Jean-Pierre Volat
               </h2>
@@ -257,7 +257,7 @@ export default function Blog() {
               <div>
                 <h2
                   className="text-3xl tracking-[-0.02em] lg:text-[38px]"
-                  style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
+                  style={{ fontFamily: "'Noto Serif', 'Noto Serif Display', serif" }}
                 >
                   Nguyên mẫu mùi hương
                 </h2>
@@ -305,7 +305,7 @@ export default function Blog() {
                   <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/65 to-transparent px-5 pb-5 pt-20">
                     <h3
                       className="text-xl text-white"
-                      style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
+                      style={{ fontFamily: "'Noto Serif', 'Noto Serif Display', serif" }}
                     >
                       {item.name}
                     </h3>
@@ -332,7 +332,7 @@ export default function Blog() {
               <div className="mt-3 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
                 <h2
                   className="text-4xl tracking-[-0.025em] lg:text-5xl"
-                  style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
+                  style={{ fontFamily: "'Noto Serif', 'Noto Serif Display', serif" }}
                 >
                   Tất cả bài viết
                 </h2>
@@ -360,7 +360,7 @@ export default function Blog() {
                       </p>
                       <h2
                         className="mt-3 text-[25px] leading-[1.15] tracking-[-0.02em]"
-                        style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
+                        style={{ fontFamily: "'Noto Serif', 'Noto Serif Display', serif" }}
                       >
                         {article.title}
                       </h2>
@@ -377,7 +377,7 @@ export default function Blog() {
               <aside className="flex min-h-[410px] flex-col items-center justify-center bg-[#F0EDE8] p-9 text-center">
                 <p
                   className="text-[28px] leading-tight"
-                  style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
+                  style={{ fontFamily: "'Noto Serif', 'Noto Serif Display', serif" }}
                 >
                   Nhận ấn phẩm
                   <br />

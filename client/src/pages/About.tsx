@@ -158,7 +158,7 @@ export default function About() {
 
               <h1
                 className="max-w-[570px] text-[52px] leading-[0.9] tracking-[-0.04em] sm:text-[66px] lg:text-[78px]"
-                style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
+                style={{ fontFamily: "'Noto Serif', 'Noto Serif Display', serif" }}
               >
                 Thuật giả kim của
                 <br />
@@ -190,7 +190,7 @@ export default function About() {
             <div className="max-w-[440px]">
               <h2
                 className="text-4xl tracking-[-0.025em] lg:text-[48px]"
-                style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
+                style={{ fontFamily: "'Noto Serif', 'Noto Serif Display', serif" }}
               >
                 Di sản của chúng tôi
               </h2>
@@ -257,7 +257,7 @@ export default function About() {
 
               <h2
                 className="text-[48px] leading-[1.05] tracking-[-0.03em] lg:text-[58px]"
-                style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
+                style={{ fontFamily: "'Noto Serif', 'Noto Serif Display', serif" }}
               >
                 Làm chủ
                 <br />
@@ -332,7 +332,7 @@ export default function About() {
             <div className="self-center">
               <h2
                 className="text-4xl tracking-[-0.025em] lg:text-[48px]"
-                style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
+                style={{ fontFamily: "'Noto Serif', 'Noto Serif Display', serif" }}
               >
                 Xa xỉ bền vững
               </h2>
@@ -412,7 +412,7 @@ export default function About() {
 
               <h2
                 className="text-4xl tracking-[-0.025em] lg:text-[52px]"
-                style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
+                style={{ fontFamily: "'Noto Serif', 'Noto Serif Display', serif" }}
               >
                 Thông tin & Chính sách
               </h2>
@@ -436,7 +436,7 @@ export default function About() {
 
                   <h3
                     className="mt-4 text-[26px] leading-tight"
-                    style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
+                    style={{ fontFamily: "'Noto Serif', 'Noto Serif Display', serif" }}
                   >
                     {item.title}
                   </h3>
@@ -452,7 +452,7 @@ export default function About() {
         <section className="px-6 pb-28 pt-10 text-center sm:px-10 lg:pb-36">
           <h2
             className="text-4xl tracking-[-0.025em]"
-            style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
+            style={{ fontFamily: "'Noto Serif', 'Noto Serif Display', serif" }}
           >
             Tham gia bản tin biên tập
           </h2>
