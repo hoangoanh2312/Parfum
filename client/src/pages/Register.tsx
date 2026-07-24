@@ -19,54 +19,29 @@ const color = {
 };
 
 const font = {
-  serif: "'Noto Serif', serif",
-  sans: "'Manrope', sans-serif",
+  serif: "'Noto Serif Display', 'Noto Serif', serif",
+  sans: "'Manrope', 'Be Vietnam Pro', sans-serif",
 };
 
 const IconSparkles = (p: React.SVGProps<SVGSVGElement>) => (
-  <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth={1.6}
-    {...p}
-  >
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} {...p}>
     <path d="M12 3v4M12 17v4M4 12h4M16 12h4" strokeLinecap="round" />
-    <path
-      d="M7 7l1.5 1.5M17 17l-1.5-1.5M7 17l1.5-1.5M17 7l-1.5 1.5"
-      strokeLinecap="round"
-    />
+    <path d="M7 7l1.5 1.5M17 17l-1.5-1.5M7 17l1.5-1.5M17 7l-1.5 1.5" strokeLinecap="round" />
   </svg>
 );
 const IconScroll = (p: React.SVGProps<SVGSVGElement>) => (
-  <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth={1.6}
-    {...p}
-  >
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} {...p}>
     <path
       d="M6 4h11a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V4Z"
       strokeLinecap="round"
       strokeLinejoin="round"
     />
-    <path
-      d="M6 4a2 2 0 0 0-2 2v1h4"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
+    <path d="M6 4a2 2 0 0 0-2 2v1h4" strokeLinecap="round" strokeLinejoin="round" />
     <path d="M9 9h6M9 13h6" strokeLinecap="round" />
   </svg>
 );
 const IconTicket = (p: React.SVGProps<SVGSVGElement>) => (
-  <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth={1.6}
-    {...p}
-  >
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} {...p}>
     <path
       d="M3 9a2 2 0 0 0 0 4v2a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-2a2 2 0 0 1 0-4V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v2Z"
       strokeLinecap="round"
@@ -110,21 +85,18 @@ type FeatureItem = {
 const features: FeatureItem[] = [
   {
     icon: <IconSparkles style={{ width: 20, height: 20 }} />,
-    title: "Bespoke Curation",
-    description:
-      "Personalized olfactory profiles designed by our master liquid curators.",
+    title: "Tuyển chọn riêng",
+    description: "Hồ sơ mùi hương cá nhân được gợi ý bởi chuyên gia của chúng tôi.",
   },
   {
     icon: <IconScroll style={{ width: 19, height: 15 }} />,
-    title: "The Manuscript",
-    description:
-      "First access to limited edition scent stories and editorial releases.",
+    title: "Bản thảo mùi hương",
+    description: "Ưu tiên xem trước các bộ sưu tập giới hạn và câu chuyện biên tập mới.",
   },
   {
     icon: <IconTicket style={{ width: 19, height: 15 }} />,
-    title: "Private Vernissages",
-    description:
-      "Invitations to exclusive digital and physical fragrance unveilings globally.",
+    title: "Sự kiện riêng",
+    description: "Nhận lời mời tới những buổi ra mắt mùi hương độc quyền.",
   },
 ];
 
@@ -149,11 +121,7 @@ export default function Register() {
       return;
     }
     if (password !== confirmPassword) {
-      setError(
-        language === "vi"
-          ? "Mật khẩu xác nhận không khớp"
-          : "Passwords do not match",
-      );
+      setError("Mật khẩu xác nhận không khớp");
       return;
     }
     if (!/^0\d{9}$/.test(phone.trim())) {
@@ -174,7 +142,10 @@ export default function Register() {
         await useCart.getState().syncOnLogin();
       } catch {
         // Giữ nguyên guest_cart để không mất giỏ nếu API merge tạm thời lỗi.
-        await useCart.getState().loadCart().catch(() => null);
+        await useCart
+          .getState()
+          .loadCart()
+          .catch(() => null);
       }
       toast.success(`Chào mừng ${data.user?.name || name}! Tài khoản của bạn đã được tạo.`);
       navigate("/");
@@ -219,7 +190,7 @@ export default function Register() {
                 margin: 0,
               }}
             >
-              The Curator&apos;s Circle
+              Vòng tròn nhà tuyển hương
             </p>
 
             <h1
@@ -232,9 +203,9 @@ export default function Register() {
                 margin: "23px 0 0",
               }}
             >
-              Join the
+              Tham gia
               <br />
-              Editorial Club
+              Câu lạc bộ Biên tập
             </h1>
 
             <div style={{ maxWidth: 448, marginTop: 24 }}>
@@ -248,8 +219,8 @@ export default function Register() {
                   margin: 0,
                 }}
               >
-                Become a member of our elite fragrance circle and receive
-                curated insights into the world of luxury olfaction.
+                Trở thành thành viên của cộng đồng yêu hương tinh tuyển và nhận những gợi ý chuyên
+                sâu về nước hoa cao cấp.
               </p>
             </div>
 
@@ -264,10 +235,7 @@ export default function Register() {
               }}
             >
               {features.map((f) => (
-                <li
-                  key={f.title}
-                  style={{ display: "flex", alignItems: "flex-start", gap: 24 }}
-                >
+                <li key={f.title} style={{ display: "flex", alignItems: "flex-start", gap: 24 }}>
                   <div
                     style={{
                       width: 48,
@@ -282,9 +250,7 @@ export default function Register() {
                   >
                     {f.icon}
                   </div>
-                  <div
-                    style={{ display: "flex", flexDirection: "column", gap: 4 }}
-                  >
+                  <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                     <h3
                       style={{
                         fontFamily: font.serif,
@@ -337,7 +303,7 @@ export default function Register() {
                 margin: 0,
               }}
             >
-              Apply for Membership
+              Đăng ký thành viên
             </h2>
             <p
               style={{
@@ -351,7 +317,7 @@ export default function Register() {
                 margin: "8px 0 0",
               }}
             >
-              Create your manuscript credentials
+              Tạo thông tin tài khoản của bạn
             </p>
 
             {error && (
@@ -378,10 +344,8 @@ export default function Register() {
                 gap: 40,
               }}
             >
-              <label
-                style={{ display: "flex", flexDirection: "column", gap: 8 }}
-              >
-                <span style={fieldLabelStyle}>Full Name</span>
+              <label style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <span style={fieldLabelStyle}>Họ và tên</span>
                 <input
                   type="text"
                   value={name}
@@ -392,10 +356,8 @@ export default function Register() {
                 />
               </label>
 
-              <label
-                style={{ display: "flex", flexDirection: "column", gap: 8 }}
-              >
-                <span style={fieldLabelStyle}>Email Address</span>
+              <label style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <span style={fieldLabelStyle}>Địa chỉ email</span>
                 <input
                   type="email"
                   value={email}
@@ -406,16 +368,12 @@ export default function Register() {
                 />
               </label>
 
-              <label
-                style={{ display: "flex", flexDirection: "column", gap: 8 }}
-              >
-                <span style={fieldLabelStyle}>Phone Number</span>
+              <label style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <span style={fieldLabelStyle}>Số điện thoại</span>
                 <input
                   type="tel"
                   value={phone}
-                  onChange={(e) =>
-                    setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))
-                  }
+                  onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
                   placeholder="09xxxxxxxx"
                   style={fieldInputStyle}
                   required
@@ -423,10 +381,8 @@ export default function Register() {
                 />
               </label>
 
-              <label
-                style={{ display: "flex", flexDirection: "column", gap: 8 }}
-              >
-                <span style={fieldLabelStyle}>Password</span>
+              <label style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <span style={fieldLabelStyle}>Mật khẩu</span>
                 <input
                   type="password"
                   value={password}
@@ -436,16 +392,11 @@ export default function Register() {
                   required
                   minLength={8}
                 />
-                <PasswordRequirements
-                  password={password}
-                  language={language}
-                />
+                <PasswordRequirements password={password} language={language} />
               </label>
 
-              <label
-                style={{ display: "flex", flexDirection: "column", gap: 8 }}
-              >
-                <span style={fieldLabelStyle}>Confirm Password</span>
+              <label style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <span style={fieldLabelStyle}>Xác nhận mật khẩu</span>
                 <input
                   type="password"
                   value={confirmPassword}
@@ -475,13 +426,11 @@ export default function Register() {
                   opacity: loading ? 0.5 : 1,
                 }}
               >
-                {loading ? "Processing..." : "Apply for Membership"}
+                {loading ? "Đang xử lý..." : "Đăng ký thành viên"}
               </button>
 
               <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                <span
-                  style={{ flex: 1, height: 1, background: color.divider }}
-                />
+                <span style={{ flex: 1, height: 1, background: color.divider }} />
                 <span
                   style={{
                     fontFamily: font.sans,
@@ -492,11 +441,9 @@ export default function Register() {
                     color: "rgba(95,94,94,0.4)",
                   }}
                 >
-                  Or
+                  Hoặc
                 </span>
-                <span
-                  style={{ flex: 1, height: 1, background: color.divider }}
-                />
+                <span style={{ flex: 1, height: 1, background: color.divider }} />
               </div>
 
               <Link
@@ -517,7 +464,7 @@ export default function Register() {
                   textAlign: "center",
                 }}
               >
-                Sign In to the Club
+                Đăng nhập
               </Link>
             </form>
           </div>

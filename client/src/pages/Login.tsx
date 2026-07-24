@@ -16,54 +16,29 @@ const color = {
 };
 
 const font = {
-  serif: "'Noto Serif', serif",
-  sans: "'Manrope', sans-serif",
+  serif: "'Noto Serif Display', 'Noto Serif', serif",
+  sans: "'Manrope', 'Be Vietnam Pro', sans-serif",
 };
 
 const IconSparkles = (p: React.SVGProps<SVGSVGElement>) => (
-  <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth={1.6}
-    {...p}
-  >
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} {...p}>
     <path d="M12 3v4M12 17v4M4 12h4M16 12h4" strokeLinecap="round" />
-    <path
-      d="M7 7l1.5 1.5M17 17l-1.5-1.5M7 17l1.5-1.5M17 7l-1.5 1.5"
-      strokeLinecap="round"
-    />
+    <path d="M7 7l1.5 1.5M17 17l-1.5-1.5M7 17l1.5-1.5M17 7l-1.5 1.5" strokeLinecap="round" />
   </svg>
 );
 const IconScroll = (p: React.SVGProps<SVGSVGElement>) => (
-  <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth={1.6}
-    {...p}
-  >
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} {...p}>
     <path
       d="M6 4h11a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V4Z"
       strokeLinecap="round"
       strokeLinejoin="round"
     />
-    <path
-      d="M6 4a2 2 0 0 0-2 2v1h4"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
+    <path d="M6 4a2 2 0 0 0-2 2v1h4" strokeLinecap="round" strokeLinejoin="round" />
     <path d="M9 9h6M9 13h6" strokeLinecap="round" />
   </svg>
 );
 const IconTicket = (p: React.SVGProps<SVGSVGElement>) => (
-  <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth={1.6}
-    {...p}
-  >
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} {...p}>
     <path
       d="M3 9a2 2 0 0 0 0 4v2a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-2a2 2 0 0 1 0-4V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v2Z"
       strokeLinecap="round"
@@ -107,21 +82,18 @@ type FeatureItem = {
 const features: FeatureItem[] = [
   {
     icon: <IconSparkles style={{ width: 20, height: 20 }} />,
-    title: "Bespoke Curation",
-    description:
-      "Personalized olfactory profiles designed by our master liquid curators.",
+    title: "Tuyển chọn riêng",
+    description: "Hồ sơ mùi hương cá nhân được gợi ý bởi chuyên gia của chúng tôi.",
   },
   {
     icon: <IconScroll style={{ width: 19, height: 15 }} />,
-    title: "The Manuscript",
-    description:
-      "First access to limited edition scent stories and editorial releases.",
+    title: "Bản thảo mùi hương",
+    description: "Ưu tiên xem trước các bộ sưu tập giới hạn và câu chuyện biên tập mới.",
   },
   {
     icon: <IconTicket style={{ width: 19, height: 15 }} />,
-    title: "Private Vernissages",
-    description:
-      "Invitations to exclusive digital and physical fragrance unveilings globally.",
+    title: "Sự kiện riêng",
+    description: "Nhận lời mời tới những buổi ra mắt mùi hương độc quyền.",
   },
 ];
 
@@ -146,7 +118,10 @@ export default function Login() {
         await useCart.getState().syncOnLogin();
       } catch {
         // Không xóa guest_cart nếu merge lỗi; lần đăng nhập sau có thể thử lại.
-        await useCart.getState().loadCart().catch(() => null);
+        await useCart
+          .getState()
+          .loadCart()
+          .catch(() => null);
       }
       navigate("/");
     } catch (err: any) {
@@ -190,7 +165,7 @@ export default function Login() {
                 margin: 0,
               }}
             >
-              The Curator&apos;s Circle
+              Vòng tròn nhà tuyển hương
             </p>
 
             <h1
@@ -203,9 +178,9 @@ export default function Login() {
                 margin: "23px 0 0",
               }}
             >
-              Access the
+              Truy cập
               <br />
-              Editorial Club
+              Câu lạc bộ Biên tập
             </h1>
 
             <div style={{ maxWidth: 448, marginTop: 24 }}>
@@ -219,8 +194,8 @@ export default function Login() {
                   margin: 0,
                 }}
               >
-                Join an elite circle of fragrance enthusiasts and receive
-                curated insights into the world of luxury olfaction.
+                Tham gia cộng đồng yêu hương tinh tuyển và nhận những gợi ý chuyên sâu về thế giới
+                nước hoa cao cấp.
               </p>
             </div>
 
@@ -235,10 +210,7 @@ export default function Login() {
               }}
             >
               {features.map((f) => (
-                <li
-                  key={f.title}
-                  style={{ display: "flex", alignItems: "flex-start", gap: 24 }}
-                >
+                <li key={f.title} style={{ display: "flex", alignItems: "flex-start", gap: 24 }}>
                   <div
                     style={{
                       width: 48,
@@ -253,9 +225,7 @@ export default function Login() {
                   >
                     {f.icon}
                   </div>
-                  <div
-                    style={{ display: "flex", flexDirection: "column", gap: 4 }}
-                  >
+                  <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                     <h3
                       style={{
                         fontFamily: font.serif,
@@ -308,7 +278,7 @@ export default function Login() {
                 margin: 0,
               }}
             >
-              Welcome Back
+              Chào mừng trở lại
             </h2>
             <p
               style={{
@@ -322,7 +292,7 @@ export default function Login() {
                 margin: "8px 0 0",
               }}
             >
-              Enter your manuscript credentials
+              Nhập thông tin tài khoản của bạn
             </p>
 
             {error && (
@@ -349,10 +319,8 @@ export default function Login() {
                 gap: 40,
               }}
             >
-              <label
-                style={{ display: "flex", flexDirection: "column", gap: 8 }}
-              >
-                <span style={fieldLabelStyle}>Email Address</span>
+              <label style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <span style={fieldLabelStyle}>Địa chỉ email</span>
                 <input
                   type="email"
                   value={email}
@@ -363,9 +331,7 @@ export default function Login() {
                 />
               </label>
 
-              <label
-                style={{ display: "flex", flexDirection: "column", gap: 8 }}
-              >
+              <label style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 <div
                   style={{
                     display: "flex",
@@ -373,7 +339,7 @@ export default function Login() {
                     justifyContent: "space-between",
                   }}
                 >
-                  <span style={fieldLabelStyle}>Password</span>
+                  <span style={fieldLabelStyle}>Mật khẩu</span>
                   <Link
                     to="/forgot-password"
                     style={{
@@ -382,7 +348,7 @@ export default function Login() {
                       color: color.gold,
                     }}
                   >
-                    Forgot?
+                    Quên mật khẩu?
                   </Link>
                 </div>
                 <input
@@ -424,7 +390,7 @@ export default function Login() {
                     color: color.body,
                   }}
                 >
-                  Keep me signed in to the archives
+                  Duy trì đăng nhập
                 </span>
               </label>
 
@@ -455,13 +421,11 @@ export default function Login() {
                     opacity: loading ? 0.5 : 1,
                   }}
                 >
-                  {loading ? "Processing..." : "Sign In to the Club"}
+                  {loading ? "Đang xử lý..." : "Đăng nhập"}
                 </button>
 
                 <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                  <span
-                    style={{ flex: 1, height: 1, background: color.divider }}
-                  />
+                  <span style={{ flex: 1, height: 1, background: color.divider }} />
                   <span
                     style={{
                       fontFamily: font.sans,
@@ -472,11 +436,9 @@ export default function Login() {
                       color: "rgba(95,94,94,0.4)",
                     }}
                   >
-                    Or
+                    Hoặc
                   </span>
-                  <span
-                    style={{ flex: 1, height: 1, background: color.divider }}
-                  />
+                  <span style={{ flex: 1, height: 1, background: color.divider }} />
                 </div>
 
                 <Link
@@ -497,7 +459,7 @@ export default function Login() {
                     textAlign: "center",
                   }}
                 >
-                  Apply for Membership
+                  Đăng ký thành viên
                 </Link>
               </div>
             </form>

@@ -59,10 +59,8 @@ function absoluteUrl(path: string) {
 }
 
 export async function getNotificationPreferences(userId: string) {
-  const user: any = await User.findById(userId)
-    .select('email notificationPreferences')
-    .lean();
-  if (!user) throw Object.assign(new Error('User not found'), { status: 404 });
+  const user: any = await User.findById(userId).select('email notificationPreferences').lean();
+  if (!user) throw Object.assign(new Error('Không tìm thấy người dùng'), { status: 404 });
 
   const preferences = normalizePreferences(user.notificationPreferences);
   const subscriber: any = await JournalSubscriber.findOne({ email: user.email })
@@ -82,16 +80,14 @@ export async function updateNotificationPreferences(
   userId: string,
   input: Partial<NotificationPreferences>,
 ) {
-  const user: any = await User.findById(userId)
-    .select('email notificationPreferences')
-    .lean();
-  if (!user) throw Object.assign(new Error('User not found'), { status: 404 });
+  const user: any = await User.findById(userId).select('email notificationPreferences').lean();
+  if (!user) throw Object.assign(new Error('Không tìm thấy người dùng'), { status: 404 });
 
   const merged = normalizePreferences({
     ...normalizePreferences(user.notificationPreferences),
     ...input,
   });
-  // "Thong bao qua email" la cong tac tong: tat no => tat tat ca cac loai email khac.
+  // "Thông báo qua email" là công tắc tổng: tắt nó thì tắt tất cả các loại email khác.
   // Bat lai chi bat rieng email; 3 loai con lai giu nguyen de khach tu chon.
   const preferences: NotificationPreferences = merged.emailNotifications
     ? merged
@@ -101,10 +97,7 @@ export async function updateNotificationPreferences(
         promotionNotifications: false,
         journalNotifications: false,
       };
-  await User.updateOne(
-    { _id: userId },
-    { $set: { notificationPreferences: preferences } },
-  );
+  await User.updateOne({ _id: userId }, { $set: { notificationPreferences: preferences } });
 
   if (preferences.journalNotifications) {
     await JournalSubscriber.updateOne(
@@ -117,17 +110,16 @@ export async function updateNotificationPreferences(
       { upsert: true },
     );
   } else {
-    await JournalSubscriber.updateOne(
-      { email: user.email },
-      { $set: { isActive: false } },
-    );
+    await JournalSubscriber.updateOne({ email: user.email }, { $set: { isActive: false } });
   }
 
   return preferences;
 }
 
 export async function activateJournalForEmail(emailInput: string) {
-  const email = String(emailInput || '').trim().toLowerCase();
+  const email = String(emailInput || '')
+    .trim()
+    .toLowerCase();
   await User.updateOne(
     { email },
     { $set: { 'notificationPreferences.journalNotifications': true } },
@@ -135,7 +127,9 @@ export async function activateJournalForEmail(emailInput: string) {
 }
 
 export async function subscribeNewAccountToJournal(emailInput: string) {
-  const email = String(emailInput || '').trim().toLowerCase();
+  const email = String(emailInput || '')
+    .trim()
+    .toLowerCase();
   if (!email) return;
 
   await JournalSubscriber.updateOne(
@@ -150,8 +144,12 @@ export async function subscribeNewAccountToJournal(emailInput: string) {
 }
 
 export async function moveJournalSubscription(oldEmailInput: string, newEmailInput: string) {
-  const oldEmail = String(oldEmailInput || '').trim().toLowerCase();
-  const newEmail = String(newEmailInput || '').trim().toLowerCase();
+  const oldEmail = String(oldEmailInput || '')
+    .trim()
+    .toLowerCase();
+  const newEmail = String(newEmailInput || '')
+    .trim()
+    .toLowerCase();
   if (!oldEmail || !newEmail || oldEmail === newEmail) return;
 
   const previous: any = await JournalSubscriber.findOne({ email: oldEmail })
@@ -178,7 +176,7 @@ export function userAllowsNotification(
   key: keyof Omit<NotificationPreferences, 'journalNotifications'>,
 ) {
   const preferences = normalizePreferences(user?.notificationPreferences);
-  // Cong tac tong "emailNotifications" tat => chan moi loai email.
+  // Công tắc tổng "emailNotifications" tắt thì chặn mọi loại email.
   if (!preferences.emailNotifications) return false;
   return preferences[key];
 }
@@ -192,10 +190,7 @@ const ORDER_STATUS_LABELS: Record<string, string> = {
   returned: 'Đã hoàn trả',
 };
 
-export async function sendOrderNotification(
-  orderId: string,
-  kind: 'created' | 'status',
-) {
+export async function sendOrderNotification(orderId: string, kind: 'created' | 'status') {
   const order: any = await Order.findById(orderId)
     .populate('user', 'name email notificationPreferences')
     .lean();
@@ -206,7 +201,9 @@ export async function sendOrderNotification(
     return { sent: false, reason: 'disabled_by_customer' as const };
   }
 
-  const email = String(user?.email || order.address?.email || '').trim().toLowerCase();
+  const email = String(user?.email || order.address?.email || '')
+    .trim()
+    .toLowerCase();
   if (!email) return { sent: false, reason: 'missing_email' as const };
   if (!isMailConfigured()) {
     return { sent: false, reason: 'smtp_not_configured' as const, email };
@@ -230,9 +227,9 @@ export async function sendOrderNotification(
     to: email,
     subject: `${title} - L'Essence Noire`,
     html: `
-      <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:32px;color:#27231f;line-height:1.6">
+      <div style="font-family:Manrope,'Be Vietnam Pro','Segoe UI',Arial,sans-serif;max-width:600px;margin:auto;padding:32px;color:#27231f;line-height:1.6">
         <p style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#806b3d">L'Essence Noire</p>
-        <h1 style="font-family:Georgia,serif;font-size:27px;font-weight:500">${escapeHtml(title)}</h1>
+        <h1 style="font-family:'Noto Serif Display','Noto Serif',Georgia,serif;font-size:27px;font-weight:500">${escapeHtml(title)}</h1>
         <p>Trạng thái hiện tại: <strong>${escapeHtml(statusLabel)}</strong></p>
         ${itemLines ? `<ul style="padding-left:18px;color:#625b54">${itemLines}</ul>` : ''}
         <p><strong>Tổng thanh toán:</strong> ${Number(order.total || 0).toLocaleString('vi-VN')}đ</p>
@@ -281,9 +278,9 @@ export async function sendPromotionNotification(input: PromotionNotification) {
         to: user.email,
         subject,
         html: `
-          <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:32px;color:#27231f;line-height:1.6">
+          <div style="font-family:Manrope,'Be Vietnam Pro','Segoe UI',Arial,sans-serif;max-width:600px;margin:auto;padding:32px;color:#27231f;line-height:1.6">
             <p style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#806b3d">L'Essence Noire</p>
-            <h1 style="font-family:Georgia,serif;font-size:27px;font-weight:500">${escapeHtml(input.name)}</h1>
+            <h1 style="font-family:'Noto Serif Display','Noto Serif',Georgia,serif;font-size:27px;font-weight:500">${escapeHtml(input.name)}</h1>
             <p>${escapeHtml(input.detail)}</p>
             <p><a href="${url}" style="display:inline-block;background:#75621e;color:#fff;text-decoration:none;padding:12px 18px">Khám phá ưu đãi</a></p>
           </div>`,
@@ -294,7 +291,7 @@ export async function sendPromotionNotification(input: PromotionNotification) {
   const sentCount = results.filter(
     (result) => result.status === 'fulfilled' && result.value,
   ).length;
-  logger.info(`[promotion] Da gui ${sentCount}/${users.length} email cho "${input.name}"`);
+  logger.info(`[promotion] Đã gửi ${sentCount}/${users.length} email cho "${input.name}"`);
   return {
     recipientCount: users.length,
     sentCount,

@@ -6,7 +6,9 @@ import { processSePayWebhook } from '../services/payment-webhook.service';
 function constantTimeEqual(left: string, right: string) {
   const leftBuffer = Buffer.from(left);
   const rightBuffer = Buffer.from(right);
-  return leftBuffer.length === rightBuffer.length && crypto.timingSafeEqual(leftBuffer, rightBuffer);
+  return (
+    leftBuffer.length === rightBuffer.length && crypto.timingSafeEqual(leftBuffer, rightBuffer)
+  );
 }
 
 export function verifySePaySignature(req: Request, res: Response, next: NextFunction) {
@@ -19,7 +21,11 @@ export function verifySePaySignature(req: Request, res: Response, next: NextFunc
   const timestampNumber = Number(timestamp);
   const rawBody = (req as any).rawBody as Buffer | undefined;
 
-  if (!rawBody || !Number.isFinite(timestampNumber) || Math.abs(Date.now() / 1000 - timestampNumber) > 300) {
+  if (
+    !rawBody ||
+    !Number.isFinite(timestampNumber) ||
+    Math.abs(Date.now() / 1000 - timestampNumber) > 300
+  ) {
     return res.status(401).json({ success: false, message: 'Webhook request expired' });
   }
 
@@ -30,7 +36,7 @@ export function verifySePaySignature(req: Request, res: Response, next: NextFunc
   const expected = `sha256=${digest}`;
 
   if (!constantTimeEqual(expected, signature)) {
-    return res.status(401).json({ success: false, message: 'Invalid webhook signature' });
+    return res.status(401).json({ success: false, message: 'Chữ ký webhook không hợp lệ' });
   }
 
   next();
@@ -41,6 +47,6 @@ export async function sePayWebhook(req: Request, res: Response) {
     const data = await processSePayWebhook(req.body || {});
     res.status(200).json({ success: true, data });
   } catch (error: any) {
-    res.status(500).json({ success: false, message: error.message || 'Webhook processing failed' });
+    res.status(500).json({ success: false, message: error.message || 'Xử lý webhook thất bại' });
   }
 }

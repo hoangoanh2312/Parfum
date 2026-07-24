@@ -32,17 +32,11 @@ export default function PriceFilter({
 
   const safeMax = max > min ? max : min + 1;
   const lo = Math.min(Math.max(valueMin, min), safeMax);
-  const hi = Math.min(
-    valueMax === Number.MAX_SAFE_INTEGER ? safeMax : valueMax,
-    safeMax,
-  );
+  const hi = Math.min(valueMax === Number.MAX_SAFE_INTEGER ? safeMax : valueMax, safeMax);
 
   const pct = (value: number) => ((value - min) / (safeMax - min)) * 100;
 
-  const maxBucket = useMemo(
-    () => (buckets.length ? Math.max(...buckets, 1) : 1),
-    [buckets],
-  );
+  const maxBucket = useMemo(() => (buckets.length ? Math.max(...buckets, 1) : 1), [buckets]);
 
   const handleMin = (event: React.ChangeEvent<HTMLInputElement>) => {
     const next = Math.min(Number(event.target.value), hi);
@@ -61,7 +55,7 @@ export default function PriceFilter({
         className="w-full flex items-center justify-between"
       >
         <span className="uppercase tracking-[2px] text-[11px] font-semibold text-[#B5A47A]">
-          Price range
+          KHOẢNG GIÁ
         </span>
         <ChevronDown
           size={16}
@@ -74,8 +68,7 @@ export default function PriceFilter({
           {buckets.length > 0 && (
             <div className="flex items-end gap-[2px] h-14 mb-1">
               {buckets.map((count, index) => {
-                const center =
-                  min + ((index + 0.5) / buckets.length) * (safeMax - min);
+                const center = min + ((index + 0.5) / buckets.length) * (safeMax - min);
                 const inRange = center >= lo && center <= hi;
                 return (
                   <div

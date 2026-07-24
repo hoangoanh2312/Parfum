@@ -154,7 +154,7 @@ export default function BrandJournal({ brand: brandOverride }: { brand?: string 
   return (
     <>
       <main className="bg-[#FDF9F4] text-[#211F1B]">
-        {/* ① HERO — full-bleed portrait, không text overlay nặng */}
+        {/* ① HERO - ảnh tràn viền, lớp chữ tối giản */}
         <section className="relative w-full overflow-hidden" style={{ aspectRatio: "16/7" }}>
           <img
             loading="lazy"
@@ -162,70 +162,70 @@ export default function BrandJournal({ brand: brandOverride }: { brand?: string 
             alt={brand}
             className="absolute inset-0 h-full w-full object-cover"
           />
-          {/* Gradient chỉ ở bottom để đặt breadcrumb + eyebrow */}
+          {/* Gradient chỉ ở đáy để đặt breadcrumb và nhãn nhỏ */}
           <div className="absolute inset-0 bg-gradient-to-t from-[#0d0b09]/70 via-[#0d0b09]/10 to-transparent" />
 
-          {/* Back link — top left */}
+          {/* Link quay lại ở góc trên trái */}
           <div className="absolute top-8 left-8 sm:left-12 lg:left-16">
             <Link
               to="/brand"
               className="inline-flex items-center gap-2 text-[8px] font-semibold uppercase tracking-[0.22em] text-white/70 transition hover:text-white"
             >
               <ArrowLeft size={12} strokeWidth={1.5} />
-              Curated Houses
+              Nhà hương tuyển chọn
             </Link>
           </div>
 
-          {/* Title bottom-left — Lampoon style */}
+          {/* Tiêu đề ở góc dưới trái */}
           <div className="absolute bottom-0 left-0 right-0 px-8 pb-10 sm:px-12 lg:px-16">
             <p className="mb-3 text-[8px] font-semibold uppercase tracking-[0.28em] text-[#C9A84C]">
-              House Journal
+              Nhật ký nhà hương
             </p>
             <h1
               className="text-[44px] leading-[1] tracking-[-0.03em] text-[#F4EFE6] sm:text-[60px] lg:text-[76px]"
-              style={{ fontFamily: "'Spectral', 'Georgia', serif" }}
+              style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
             >
               {brand}
             </h1>
           </div>
         </section>
 
-        {/* ② BREADCRUMB + META — dưới hero, kiểu Lampoon */}
+        {/* ② Điều hướng + thông tin dưới hero */}
         <section className="border-b border-[#E1DDD5] px-8 sm:px-12 lg:px-16">
           <div className="mx-auto max-w-[1180px]">
             {/* Breadcrumb */}
             <nav className="flex items-center gap-2 py-4 text-[9px] uppercase tracking-[0.16em] text-[#A19D94]">
               <Link to="/" className="hover:text-[#211F1B] transition">
-                Home
+                Trang chủ
               </Link>
               <span>›</span>
               <Link to="/brand" className="hover:text-[#211F1B] transition">
-                Curated Houses
+                Nhà hương tuyển chọn
               </Link>
               <span>›</span>
               <span className="text-[#6B6861]">{brand}</span>
             </nav>
 
-            {/* Meta bar — dọc theo cột, giống Lampoon "Date / Words / Tag / Share" */}
+            {/* Thanh thông tin theo cột */}
             <div className="grid grid-cols-2 gap-x-8 gap-y-4 border-t border-[#E1DDD5] py-6 sm:grid-cols-4 lg:grid-cols-5">
               <div>
                 <p className="text-[8px] font-semibold uppercase tracking-[0.18em] text-[#A19D94]">
-                  House
+                  Nhà hương
                 </p>
                 <p className="mt-1 text-[11px] text-[#44413C]">{brand}</p>
               </div>
               <div>
                 <p className="text-[8px] font-semibold uppercase tracking-[0.18em] text-[#A19D94]">
-                  Collection
+                  Bộ sưu tập
                 </p>
                 <p className="mt-1 text-[11px] text-[#44413C]">
-                  {loading ? "—" : `${total || brandInfo?.productCount || 0} fragrances`}
+                  {loading ? "—" : `${total || brandInfo?.productCount || 0} mùi hương`}
                 </p>
               </div>
               {(brandInfo?.country || brandInfo?.foundedYear) && (
                 <div>
                   <p className="text-[8px] font-semibold uppercase tracking-[0.18em] text-[#A19D94]">
-                    Origin
+                    Xuất xứ
                   </p>
                   <p className="mt-1 text-[11px] text-[#44413C]">
                     {[brandInfo.country, brandInfo.foundedYear].filter(Boolean).join(" · ")}
@@ -235,7 +235,7 @@ export default function BrandJournal({ brand: brandOverride }: { brand?: string 
               {families.length > 0 && (
                 <div className="col-span-2">
                   <p className="text-[8px] font-semibold uppercase tracking-[0.18em] text-[#A19D94]">
-                    Olfactive families
+                    Nhóm hương
                   </p>
                   <p className="mt-1 text-[11px] text-[#44413C]">{families.join(" · ")}</p>
                 </div>
@@ -245,7 +245,7 @@ export default function BrandJournal({ brand: brandOverride }: { brand?: string 
                   to={collectionUrl}
                   className="inline-flex items-center gap-1.5 border-b border-[#AB9851] pb-0.5 text-[8px] font-semibold uppercase tracking-[0.18em] text-[#675711] transition hover:text-[#9A7C00]"
                 >
-                  Shop collection
+                  Mua bộ sưu tập
                   <ArrowRight size={11} strokeWidth={1.5} />
                 </Link>
               </div>
@@ -253,18 +253,18 @@ export default function BrandJournal({ brand: brandOverride }: { brand?: string 
           </div>
         </section>
 
-        {/* ③ TITLE BLOCK — H1 lớn serif + lead sentence, full width */}
+        {/* ③ Khối tiêu đề */}
         <section className="px-8 pt-16 pb-10 sm:px-12 lg:px-16">
           <div className="mx-auto max-w-[1180px]">
             <h2
               className="max-w-[820px] text-[36px] leading-[1.08] tracking-[-0.025em] sm:text-[48px] lg:text-[60px]"
-              style={{ fontFamily: "'Spectral', 'Georgia', serif" }}
+              style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
             >
               Câu chuyện đứng sau ngôn ngữ hương của {brand}.
             </h2>
             <p
               className="mt-6 max-w-[680px] text-[15px] italic leading-[1.75] text-[#6B6861]"
-              style={{ fontFamily: "'Spectral', 'Georgia', serif" }}
+              style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
             >
               {brandInfo?.description ||
                 `Mỗi chai hương của ${brand} là một chương trong câu chuyện olfactory riêng biệt, nơi cấu trúc, nguyên liệu và cảm xúc được cân bằng để tạo nên dấu ấn nhận diện rõ ràng.`}
@@ -272,7 +272,7 @@ export default function BrandJournal({ brand: brandOverride }: { brand?: string 
           </div>
         </section>
 
-        {/* ④ BODY — editorial article + product suggestions */}
+        {/* ④ Nội dung bài viết và gợi ý sản phẩm */}
         <section className="px-8 pb-20 sm:px-12 lg:px-16">
           <div className="mx-auto max-w-[1180px]">
             <div className="grid gap-16 lg:grid-cols-[1fr_0.42fr]">
@@ -292,14 +292,14 @@ export default function BrandJournal({ brand: brandOverride }: { brand?: string 
                 ) : (
                   <div className="mt-16">
                     <p className="mb-8 text-[8px] font-semibold uppercase tracking-[0.24em] text-[#9B8125]">
-                      Fragrances to start with
+                      Mùi hương nên bắt đầu
                     </p>
                     <ProductGrid products={products} brand={brand} />
                   </div>
                 )}
               </div>
 
-              {/* RIGHT RAIL — intentionally sparse, chỉ vài thông tin nhỏ */}
+              {/* Cột phụ, chỉ giữ vài thông tin nhỏ */}
               <aside
                 className="hidden lg:block"
                 style={{ position: "sticky", top: 96, alignSelf: "start" }}
@@ -307,7 +307,7 @@ export default function BrandJournal({ brand: brandOverride }: { brand?: string 
                 <div className="space-y-10 border-l border-[#E1DDD5] pl-10">
                   <div>
                     <p className="text-[8px] font-semibold uppercase tracking-[0.22em] text-[#A19D94]">
-                      About
+                      Giới thiệu
                     </p>
                     <p className="mt-3 text-[11px] leading-[1.85] text-[#6B6861]">
                       {brandInfo?.description ||
@@ -319,12 +319,12 @@ export default function BrandJournal({ brand: brandOverride }: { brand?: string 
                     <div>
                       <p
                         className="text-[48px] leading-none text-[#8B7419]"
-                        style={{ fontFamily: "'Spectral', 'Georgia', serif" }}
+                        style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
                       >
                         {total}
                       </p>
                       <p className="mt-1 text-[8px] uppercase tracking-[0.18em] text-[#A19D94]">
-                        fragrances in stock
+                        mùi hương còn hàng
                       </p>
                     </div>
                   )}
@@ -332,7 +332,7 @@ export default function BrandJournal({ brand: brandOverride }: { brand?: string 
                   {families.length > 0 && (
                     <div className="space-y-2">
                       <p className="text-[8px] font-semibold uppercase tracking-[0.22em] text-[#A19D94]">
-                        Olfactive families
+                        Nhóm hương
                       </p>
                       {families.map((f) => (
                         <p key={f} className="text-[11px] text-[#44413C]">
@@ -346,7 +346,7 @@ export default function BrandJournal({ brand: brandOverride }: { brand?: string 
                     to={collectionUrl}
                     className="inline-flex items-center gap-2 border border-[#C4A84F] px-5 py-2.5 text-[8px] font-semibold uppercase tracking-[0.2em] text-[#675711] transition hover:bg-[#675711] hover:text-white"
                   >
-                    Shop {brand}
+                    Mua {brand}
                     <ArrowRight size={11} strokeWidth={1.5} />
                   </Link>
                 </div>
@@ -361,7 +361,7 @@ export default function BrandJournal({ brand: brandOverride }: { brand?: string 
   );
 }
 
-/* ——— Sub-components ——— */
+/* ——— Component phụ ——— */
 
 function BrandArticle({
   brand,
@@ -410,7 +410,7 @@ function BrandArticle({
         <section key={section.heading} className="grid gap-5 md:grid-cols-[0.34fr_1fr]">
           <h3
             className="text-[26px] leading-tight tracking-[-0.015em] text-[#2A2823]"
-            style={{ fontFamily: "'Spectral', 'Georgia', serif" }}
+            style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
           >
             {section.heading}
           </h3>
@@ -423,7 +423,7 @@ function BrandArticle({
 
 function ProductGrid({ products, brand }: { products: ProductListItem[]; brand: string }) {
   return (
-    /* Lampoon related-posts style: 2 col grid, editorial card */
+    /* Lưới gợi ý theo phong cách tạp chí */
     <div className="grid gap-x-8 gap-y-14 sm:grid-cols-2">
       {products.map((product) => {
         const image = product.images?.[0] || product.image || FALLBACK_IMAGE;
@@ -433,7 +433,7 @@ function ProductGrid({ products, brand }: { products: ProductListItem[]; brand: 
             to={`/products/${product.slug || product.id}`}
             className="group block"
           >
-            {/* Ảnh — square, no border-radius, grayscale hover effect */}
+            {/* Ảnh vuông với hiệu ứng hover nhẹ */}
             <div className="overflow-hidden bg-[#EEEAE4]">
               <img
                 loading="lazy"
@@ -443,30 +443,30 @@ function ProductGrid({ products, brand }: { products: ProductListItem[]; brand: 
               />
             </div>
 
-            {/* Card text — Lampoon style: tag · title · excerpt · CTA */}
+            {/* Nội dung thẻ: nhãn, tên, mô tả và CTA */}
             <div className="pt-5">
-              {/* Tag / category eyebrow */}
+              {/* Nhãn nhóm hương */}
               <p className="text-[8px] font-semibold uppercase tracking-[0.22em] text-[#9B8125]">
-                {product.fragranceFamily || product.category || "Scent journal"}
+                {product.fragranceFamily || product.category || "Nhật ký hương"}
               </p>
 
-              {/* Title — serif, generous size */}
+              {/* Tên sản phẩm */}
               <h3
                 className="mt-2.5 text-[22px] leading-[1.18] tracking-[-0.015em]"
-                style={{ fontFamily: "'Spectral', 'Georgia', serif" }}
+                style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
               >
                 {product.name}
               </h3>
 
-              {/* Excerpt — prose, not list */}
+              {/* Mô tả ngắn */}
               <p className="mt-3.5 line-clamp-3 text-[12px] leading-[1.8] text-[#706D66]">
                 {product.description ||
                   `Một góc nhìn cận cảnh về ${product.name} — tâm trạng, cá tính và cấu trúc hương riêng biệt của nhà ${product.brand || ""}.`}
               </p>
 
-              {/* CTA — underline link, Lampoon style */}
+              {/* CTA gạch chân */}
               <span className="mt-4 inline-flex items-center gap-1.5 border-b border-[#AB9851] pb-0.5 text-[8px] font-semibold uppercase tracking-[0.2em] text-[#675711] transition group-hover:text-[#9A7C00]">
-                View fragrance
+                Xem mùi hương
                 <ArrowRight
                   size={11}
                   strokeWidth={1.5}
@@ -485,11 +485,11 @@ function EmptyState({ brand }: { brand: string }) {
   return (
     <div className="flex min-h-[320px] flex-col justify-center border border-[#E2DBD2] bg-[#FFFDF9] px-10 py-16">
       <p className="text-[8px] font-semibold uppercase tracking-[0.22em] text-[#9B8125]">
-        Collection
+        Bộ sưu tập
       </p>
       <h3
         className="mt-4 text-[30px] leading-tight"
-        style={{ fontFamily: "'Spectral', 'Georgia', serif" }}
+        style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
       >
         Chưa có bài viết cho {brand}
       </h3>

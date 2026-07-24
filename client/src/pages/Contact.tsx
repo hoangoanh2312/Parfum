@@ -7,11 +7,11 @@ import { api } from "../lib/api";
 import Footer from "../components/Footer";
 
 const SUBJECTS = [
-  "Private consultation",
-  "Product enquiry",
-  "Order support",
-  "Press and editorial",
-  "Other",
+  "Tư vấn riêng",
+  "Hỏi về sản phẩm",
+  "Hỗ trợ đơn hàng",
+  "Báo chí và biên tập",
+  "Khác",
 ];
 
 interface FormState {
@@ -47,7 +47,7 @@ export default function ContactPage() {
 
   const handleSend = async () => {
     if (!form.firstName || !form.email || !form.message) {
-      setToast({ text: "Fill in your name, email, and message to continue.", type: "error" });
+      setToast({ text: "Vui lòng nhập tên, email và tin nhắn để tiếp tục.", type: "error" });
       return;
     }
     try {
@@ -55,14 +55,14 @@ export default function ContactPage() {
       await api.post("/support", {
         name: `${form.firstName} ${form.lastName}`.trim(),
         email: form.email.trim(),
-        subject: form.subject || "Other",
+        subject: form.subject || "Khác",
         message: form.message.trim(),
       });
-      setToast({ text: "Message sent. We'll be in touch shortly.", type: "success" });
+      setToast({ text: "Đã gửi tin nhắn. Chúng tôi sẽ phản hồi sớm.", type: "success" });
       setForm(EMPTY);
     } catch (error: any) {
       setToast({
-        text: error?.response?.data?.message || "Unable to send your message right now.",
+        text: error?.response?.data?.message || "Hiện chưa thể gửi tin nhắn của bạn.",
         type: "error",
       });
     } finally {
@@ -82,7 +82,7 @@ export default function ContactPage() {
         style={{
           background: "#FDF9F4",
           color: "#1a1a18",
-          fontFamily: "'Manrope', 'Helvetica Neue', sans-serif",
+          fontFamily: "'Manrope', 'Be Vietnam Pro', sans-serif",
         }}
       >
         <div className="max-w-6xl mx-auto">
@@ -109,23 +109,24 @@ export default function ContactPage() {
                   marginBottom: 12,
                 }}
               >
-                Contact the atelier
+                Liên hệ xưởng hương
               </p>
               <h1
                 style={{
-                  fontFamily: "'Spectral', Georgia, serif",
+                  fontFamily: "'Noto Serif Display', 'Noto Serif', serif",
                   fontSize: 52,
                   fontWeight: 300,
                   lineHeight: 1.1,
                   marginBottom: 18,
                 }}
               >
-                Begin a<br />
-                <em style={{ fontStyle: "italic" }}>Dialogue</em>
+                Bắt đầu một
+                <br />
+                <em style={{ fontStyle: "italic" }}>cuộc trò chuyện</em>
               </h1>
               <p style={{ fontSize: 13, color: "#6b6b65", lineHeight: 1.8, maxWidth: 280 }}>
-                Whether it's a question about provenance, a private consultation, or simply a note —
-                we read every letter.
+                Dù bạn cần hỏi về nguồn gốc sản phẩm, tư vấn riêng hay chỉ muốn gửi lời nhắn, chúng
+                tôi đều trân trọng đọc từng dòng.
               </p>
             </div>
 
@@ -183,12 +184,12 @@ export default function ContactPage() {
                     marginBottom: 8,
                   }}
                 >
-                  The editorial voice
+                  Góc nhìn biên tập
                 </p>
                 <blockquote
                   className="break-words"
                   style={{
-                    fontFamily: "'Spectral', Georgia, serif",
+                    fontFamily: "'Noto Serif Display', 'Noto Serif', serif",
                     fontStyle: "italic",
                     fontSize: 15,
                     color: "rgba(255,255,255,0.68)",
@@ -197,7 +198,7 @@ export default function ContactPage() {
                     paddingLeft: 14,
                   }}
                 >
-                  "A fragrance is not chosen — it reveals itself through conversation."
+                  "Một mùi hương không được chọn vội, nó tự bộc lộ qua cuộc trò chuyện."
                 </blockquote>
               </div>
             </div>
@@ -223,7 +224,7 @@ export default function ContactPage() {
                   icon: (
                     <MapPin size={16} color="#735C00" style={{ marginTop: 2, flexShrink: 0 }} />
                   ),
-                  label: "Atelier",
+                  label: "Xưởng hương",
                   content: (
                     <a
                       href="https://www.google.com/maps/search/?api=1&query=W8FW%2B9J%20Hoa%20Thuan%2C%20Tra%20Vinh%2C%20Vietnam"
@@ -245,7 +246,7 @@ export default function ContactPage() {
                 },
                 {
                   icon: <Phone size={16} color="#735C00" style={{ marginTop: 2, flexShrink: 0 }} />,
-                  label: "Phone",
+                  label: "Điện thoại",
                   content: (
                     <a
                       href="tel:+84328779845"
@@ -263,7 +264,7 @@ export default function ContactPage() {
                 },
                 {
                   icon: <Mail size={16} color="#735C00" style={{ marginTop: 2, flexShrink: 0 }} />,
-                  label: "Correspondence",
+                  label: "Thư từ",
                   content: (
                     <a
                       href="mailto:tranvungochuynh136@gmail.com?subject=Li%C3%AAn%20h%E1%BB%87%20L%27Essence%20Noire"
@@ -282,7 +283,7 @@ export default function ContactPage() {
                 },
                 {
                   icon: <Clock size={16} color="#735C00" style={{ marginTop: 2, flexShrink: 0 }} />,
-                  label: "Hours",
+                  label: "Giờ làm việc",
                   content: (
                     <div
                       style={{
@@ -292,9 +293,9 @@ export default function ContactPage() {
                       }}
                     >
                       {[
-                        ["Mon – Fri", "10:00 – 19:00"],
-                        ["Saturday", "11:00 – 18:00"],
-                        ["Sunday", "By appointment"],
+                        ["Thứ 2 - Thứ 6", "10:00 - 19:00"],
+                        ["Thứ 7", "11:00 - 18:00"],
+                        ["Chủ nhật", "Theo lịch hẹn"],
                       ].map(([day, time]) => (
                         <>
                           <span style={{ fontSize: 12, color: "#1a1a18" }}>{day}</span>
@@ -339,36 +340,37 @@ export default function ContactPage() {
             <div className="contact-form" style={{ padding: "48px 48px" }}>
               <h2
                 style={{
-                  fontFamily: "'Spectral', Georgia, serif",
+                  fontFamily: "'Noto Serif Display', 'Noto Serif', serif",
                   fontSize: 26,
                   fontWeight: 300,
                   marginBottom: 6,
                 }}
               >
-                Send a message
+                Gửi lời nhắn
               </h2>
               <p style={{ fontSize: 12.5, color: "#6b6b65", marginBottom: 32, lineHeight: 1.7 }}>
-                We respond within one business day. For urgent enquiries, reach us by phone.
+                Chúng tôi phản hồi trong một ngày làm việc. Với yêu cầu khẩn cấp, vui lòng gọi điện
+                trực tiếp.
               </p>
 
               <div
                 className="contact-name-grid"
                 style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 20px" }}
               >
-                <Field label="First name">
+                <Field label="Tên">
                   <input
                     type="text"
                     value={form.firstName}
                     onChange={set("firstName")}
-                    placeholder="Jean"
+                    placeholder="Ngọc"
                   />
                 </Field>
-                <Field label="Last name">
+                <Field label="Họ">
                   <input
                     type="text"
                     value={form.lastName}
                     onChange={set("lastName")}
-                    placeholder="Valmont"
+                    placeholder="Huỳnh"
                   />
                 </Field>
               </div>
@@ -382,10 +384,10 @@ export default function ContactPage() {
                 />
               </Field>
 
-              <Field label="Subject">
+              <Field label="Chủ đề">
                 <select value={form.subject} onChange={set("subject")}>
                   <option value="" disabled>
-                    Select a topic
+                    Chọn chủ đề
                   </option>
                   {SUBJECTS.map((s) => (
                     <option key={s}>{s}</option>
@@ -393,12 +395,12 @@ export default function ContactPage() {
                 </select>
               </Field>
 
-              <Field label="Message">
+              <Field label="Tin nhắn">
                 <textarea
                   rows={5}
                   value={form.message}
                   onChange={set("message")}
-                  placeholder="Tell us what's on your mind…"
+                  placeholder="Hãy cho chúng tôi biết điều bạn đang cần..."
                 />
               </Field>
 
@@ -413,7 +415,7 @@ export default function ContactPage() {
                     background: "#1a1a18",
                     color: "#fff",
                     border: "none",
-                    fontFamily: "'Manrope', sans-serif",
+                    fontFamily: "'Manrope', 'Be Vietnam Pro', sans-serif",
                     fontSize: 10,
                     letterSpacing: "0.12em",
                     textTransform: "uppercase",
@@ -422,7 +424,7 @@ export default function ContactPage() {
                     cursor: "pointer",
                   }}
                 >
-                  {sending ? "Sending..." : "Send message"}
+                  {sending ? "Đang gửi..." : "Gửi tin nhắn"}
                 </button>
                 <button
                   onClick={handleClear}
@@ -430,7 +432,7 @@ export default function ContactPage() {
                     background: "transparent",
                     border: "0.5px solid rgba(26,26,24,0.2)",
                     color: "#6b6b65",
-                    fontFamily: "'Manrope', sans-serif",
+                    fontFamily: "'Manrope', 'Be Vietnam Pro', sans-serif",
                     fontSize: 10,
                     letterSpacing: "0.1em",
                     textTransform: "uppercase",
@@ -439,7 +441,7 @@ export default function ContactPage() {
                     cursor: "pointer",
                   }}
                 >
-                  Clear
+                  Xóa nội dung
                 </button>
               </div>
 
@@ -492,7 +494,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
           border: none;
           border-bottom: 0.5px solid rgba(26,26,24,0.18);
           outline: none;
-          font-family: 'Manrope', 'Helvetica Neue', sans-serif;
+          font-family: 'Manrope', 'Be Vietnam Pro', sans-serif;
           font-size: 13px;
           color: #1a1a18;
           padding: 8px 0;

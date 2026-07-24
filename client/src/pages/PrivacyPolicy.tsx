@@ -32,32 +32,25 @@ export default function PrivacyPolicy() {
           <p className="text-[10px] uppercase tracking-[0.28em] text-[#75621E]">
             L&apos;Essence Noire
           </p>
-          <h1 className="mt-4 font-['Noto_Serif'] text-4xl leading-tight md:text-5xl">
-            Chính sách bảo mật
-          </h1>
+          <h1 className="mt-4 font-serif text-4xl leading-tight md:text-5xl">Chính sách bảo mật</h1>
           <p className="mt-5 max-w-2xl text-sm leading-7 text-[#665F57]">
-            Chính sách này mô tả cách L&apos;Essence Noire thu thập, sử dụng và
-            bảo vệ thông tin cá nhân khi bạn truy cập website, mua hàng hoặc
-            sử dụng các dịch vụ của chúng tôi.
+            Chính sách này mô tả cách L&apos;Essence Noire thu thập, sử dụng và bảo vệ thông tin cá
+            nhân khi bạn truy cập website, mua hàng hoặc sử dụng các dịch vụ của chúng tôi.
           </p>
 
           <div className="mt-10 space-y-7 border-t border-[#DED6CA] pt-8">
             {SECTIONS.map((section) => (
               <article key={section.title}>
-                <h2 className="font-['Noto_Serif'] text-2xl">
-                  {section.title}
-                </h2>
-                <p className="mt-3 text-sm leading-7 text-[#665F57]">
-                  {section.body}
-                </p>
+                <h2 className="font-serif text-2xl">{section.title}</h2>
+                <p className="mt-3 text-sm leading-7 text-[#665F57]">{section.body}</p>
               </article>
             ))}
           </div>
 
           <div className="mt-10 border-t border-[#DED6CA] pt-7">
             <p className="text-sm leading-7 text-[#665F57]">
-              Nếu cần hỗ trợ về dữ liệu cá nhân hoặc quyền riêng tư, vui lòng
-              liên hệ với chúng tôi qua trang hỗ trợ.
+              Nếu cần hỗ trợ về dữ liệu cá nhân hoặc quyền riêng tư, vui lòng liên hệ với chúng tôi
+              qua trang hỗ trợ.
             </p>
             <Link
               to="/contact"

@@ -15,7 +15,7 @@ type WishlistProduct = {
   images?: string[];
 };
 
-const PLACEHOLDER = "https://placehold.co/400x500?text=No+Image";
+const PLACEHOLDER = "https://placehold.co/400x500?text=Chua+co+anh";
 
 export default function Wishlist() {
   const [products, setProducts] = useState<WishlistProduct[]>([]);
@@ -45,27 +45,29 @@ export default function Wishlist() {
     try {
       const { data } = await api.delete<WishlistProduct[]>(`/account/wishlist/${productId}`);
       setProducts(data);
-      toast.success("Đã xóa khỏi wishlist");
+      toast.success("Đã xóa khỏi danh sách yêu thích");
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Không thể xóa wishlist");
+      toast.error(error?.response?.data?.message || "Không thể xóa khỏi danh sách yêu thích");
     }
   }
 
   return (
     <div className="min-h-screen bg-[#FCF9F4] text-[#2D2925]">
       <section className="border-b border-[#E7E0D7] px-6 pb-7 pt-12 lg:px-12">
-        <p className="text-[10px] uppercase tracking-[0.28em] text-[#9B9288]">Personal Portal</p>
+        <p className="text-[10px] uppercase tracking-[0.28em] text-[#9B9288]">
+          Cổng thông tin cá nhân
+        </p>
 
-        <h1 className="mt-2 font-serif text-4xl lg:text-5xl">Wishlist</h1>
+        <h1 className="mt-2 font-serif text-4xl lg:text-5xl">Danh sách yêu thích</h1>
       </section>
 
       <main className="px-6 py-10 lg:px-12">
         {loading ? (
-          <p className="text-sm text-[#7C746C]">Đang tải wishlist...</p>
+          <p className="text-sm text-[#7C746C]">Đang tải danh sách yêu thích...</p>
         ) : products.length === 0 ? (
           <div className="flex min-h-[340px] flex-col items-center justify-center border border-[#E2DBD2] bg-[#FFFDF9] text-center">
             <Heart size={38} className="text-[#8B7200]" />
-            <h2 className="mt-5 font-serif text-3xl">Wishlist trống</h2>
+            <h2 className="mt-5 font-serif text-3xl">Danh sách yêu thích trống</h2>
             <p className="mt-2 max-w-md text-sm text-[#7C746C]">
               Những sản phẩm bạn yêu thích sẽ xuất hiện tại đây.
             </p>
@@ -101,7 +103,7 @@ export default function Wishlist() {
 
                   <div className="p-5">
                     <p className="text-[9px] uppercase tracking-[0.18em] text-[#9A7D00]">
-                      {product.brand || product.category || "Parfum"}
+                      {product.brand || product.category || "Nước hoa"}
                     </p>
                     <Link to={href}>
                       <h2 className="mt-2 font-serif text-xl transition hover:text-[#8B7200]">

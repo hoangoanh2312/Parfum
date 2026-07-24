@@ -185,11 +185,27 @@ export async function getStats() {
     Order.aggregate([
       { $match: { status: { $in: ['paid', 'shipping', 'done'] } } },
       { $unwind: '$items' },
-      { $lookup: { from: 'variants', localField: 'items.variant', foreignField: '_id', as: 'variant' } },
+      {
+        $lookup: {
+          from: 'variants',
+          localField: 'items.variant',
+          foreignField: '_id',
+          as: 'variant',
+        },
+      },
       { $unwind: { path: '$variant', preserveNullAndEmptyArrays: true } },
-      { $lookup: { from: 'products', localField: 'variant.product', foreignField: '_id', as: 'product' } },
+      {
+        $lookup: {
+          from: 'products',
+          localField: 'variant.product',
+          foreignField: '_id',
+          as: 'product',
+        },
+      },
       { $unwind: { path: '$product', preserveNullAndEmptyArrays: true } },
-      { $lookup: { from: 'brands', localField: 'product.brand', foreignField: '_id', as: 'brand' } },
+      {
+        $lookup: { from: 'brands', localField: 'product.brand', foreignField: '_id', as: 'brand' },
+      },
       { $unwind: { path: '$brand', preserveNullAndEmptyArrays: true } },
       {
         $group: {
@@ -203,11 +219,32 @@ export async function getStats() {
     Order.aggregate([
       { $match: { status: { $in: ['paid', 'shipping', 'done'] } } },
       { $unwind: '$items' },
-      { $lookup: { from: 'variants', localField: 'items.variant', foreignField: '_id', as: 'variant' } },
+      {
+        $lookup: {
+          from: 'variants',
+          localField: 'items.variant',
+          foreignField: '_id',
+          as: 'variant',
+        },
+      },
       { $unwind: { path: '$variant', preserveNullAndEmptyArrays: true } },
-      { $lookup: { from: 'products', localField: 'variant.product', foreignField: '_id', as: 'product' } },
+      {
+        $lookup: {
+          from: 'products',
+          localField: 'variant.product',
+          foreignField: '_id',
+          as: 'product',
+        },
+      },
       { $unwind: { path: '$product', preserveNullAndEmptyArrays: true } },
-      { $lookup: { from: 'categories', localField: 'product.category', foreignField: '_id', as: 'category' } },
+      {
+        $lookup: {
+          from: 'categories',
+          localField: 'product.category',
+          foreignField: '_id',
+          as: 'category',
+        },
+      },
       { $unwind: { path: '$category', preserveNullAndEmptyArrays: true } },
       {
         $group: {
@@ -284,7 +321,10 @@ export async function getStats() {
       revenue: row.revenue || 0,
     })),
     revenueByBrand: revenueByBrandAgg.map((row: any) => ({ name: row._id, value: row.value || 0 })),
-    revenueByCategory: revenueByCategoryAgg.map((row: any) => ({ name: row._id, value: row.value || 0 })),
+    revenueByCategory: revenueByCategoryAgg.map((row: any) => ({
+      name: row._id,
+      value: row.value || 0,
+    })),
     lowStockItems: lowStockItemsRaw.map((variant: any) => ({
       id: String(variant._id),
       name: variant.product?.name || variant.sku,
@@ -315,116 +355,186 @@ export async function getStats() {
 }
 
 export async function globalSearch(rawQuery: unknown) {
-  const query = String(rawQuery || '').trim().slice(0, 80);
+  const query = String(rawQuery || '')
+    .trim()
+    .slice(0, 80);
   if (query.length < 2) return { query, groups: [], total: 0 };
   const regex = new RegExp(escapeRegExp(query), 'i');
 
-  const [orders, users, products, variants, brands, categories, reviews, articles, supportRequests]: any[] =
-    await Promise.all([
-      Order.aggregate([
-        { $addFields: { searchId: { $toString: '$_id' } } },
-        {
-          $match: {
-            $or: [
-              { searchId: regex },
-              { 'address.fullName': regex },
-              { 'address.email': regex },
-              { 'address.phone': regex },
-              { note: regex },
-            ],
-          },
+  const [
+    orders,
+    users,
+    products,
+    variants,
+    brands,
+    categories,
+    reviews,
+    articles,
+    supportRequests,
+  ]: any[] = await Promise.all([
+    Order.aggregate([
+      { $addFields: { searchId: { $toString: '$_id' } } },
+      {
+        $match: {
+          $or: [
+            { searchId: regex },
+            { 'address.fullName': regex },
+            { 'address.email': regex },
+            { 'address.phone': regex },
+            { note: regex },
+          ],
         },
-        { $sort: { createdAt: -1 } },
-        { $limit: 5 },
-        { $lookup: { from: 'users', localField: 'user', foreignField: '_id', as: 'userDoc' } },
-        { $unwind: { path: '$userDoc', preserveNullAndEmptyArrays: true } },
-      ]),
-      User.find({ $or: [{ name: regex }, { email: regex }, { phone: regex }] })
-        .sort({ createdAt: -1 }).limit(5).lean(),
-      Product.find({ $or: [{ name: regex }, { slug: regex }, { description: regex }] })
-        .sort({ updatedAt: -1 }).limit(5).populate('brand', 'name').lean(),
-      Variant.find({ $or: [{ sku: regex }, { volume: regex }, { size: regex }] })
-        .sort({ updatedAt: -1 }).limit(5).populate('product', 'name').lean(),
-      Brand.find({ $or: [{ name: regex }, { slug: regex }, { description: regex }] })
-        .sort({ name: 1 }).limit(5).lean(),
-      Category.find({ $or: [{ name: regex }, { slug: regex }] }).sort({ name: 1 }).limit(5).lean(),
-      Review.find({
-        $or: [{ title: regex }, { comment: regex }, { guestName: regex }, { guestEmail: regex }],
-      }).sort({ createdAt: -1 }).limit(5).populate('product', 'name').lean(),
-      BlogArticle.find({
-        $or: [{ title: regex }, { description: regex }, { category: regex }, { author: regex }, { slug: regex }],
-      }).sort({ updatedAt: -1 }).limit(5).lean(),
-      SupportRequest.find({
-        $or: [{ name: regex }, { email: regex }, { subject: regex }, { message: regex }],
-      }).sort({ createdAt: -1 }).limit(5).lean(),
-    ]);
+      },
+      { $sort: { createdAt: -1 } },
+      { $limit: 5 },
+      { $lookup: { from: 'users', localField: 'user', foreignField: '_id', as: 'userDoc' } },
+      { $unwind: { path: '$userDoc', preserveNullAndEmptyArrays: true } },
+    ]),
+    User.find({ $or: [{ name: regex }, { email: regex }, { phone: regex }] })
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .lean(),
+    Product.find({ $or: [{ name: regex }, { slug: regex }, { description: regex }] })
+      .sort({ updatedAt: -1 })
+      .limit(5)
+      .populate('brand', 'name')
+      .lean(),
+    Variant.find({ $or: [{ sku: regex }, { volume: regex }, { size: regex }] })
+      .sort({ updatedAt: -1 })
+      .limit(5)
+      .populate('product', 'name')
+      .lean(),
+    Brand.find({ $or: [{ name: regex }, { slug: regex }, { description: regex }] })
+      .sort({ name: 1 })
+      .limit(5)
+      .lean(),
+    Category.find({ $or: [{ name: regex }, { slug: regex }] })
+      .sort({ name: 1 })
+      .limit(5)
+      .lean(),
+    Review.find({
+      $or: [{ title: regex }, { comment: regex }, { guestName: regex }, { guestEmail: regex }],
+    })
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .populate('product', 'name')
+      .lean(),
+    BlogArticle.find({
+      $or: [
+        { title: regex },
+        { description: regex },
+        { category: regex },
+        { author: regex },
+        { slug: regex },
+      ],
+    })
+      .sort({ updatedAt: -1 })
+      .limit(5)
+      .lean(),
+    SupportRequest.find({
+      $or: [{ name: regex }, { email: regex }, { subject: regex }, { message: regex }],
+    })
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .lean(),
+  ]);
 
   const groups = [
     {
-      key: 'orders', label: 'Đơn hàng',
+      key: 'orders',
+      label: 'Đơn hàng',
       items: orders.map((order: any) => ({
-        id: String(order._id), type: 'order',
+        id: String(order._id),
+        type: 'order',
         title: `#${String(order._id).slice(-6).toUpperCase()} · ${order.address?.fullName || order.userDoc?.name || 'Khách vãng lai'}`,
         subtitle: `${order.address?.phone || order.address?.email || ''} · ${Number(order.total || 0).toLocaleString('vi-VN')}đ`,
         to: `/admin/orders?open=${order._id}`,
       })),
     },
     {
-      key: 'users', label: 'Người dùng',
+      key: 'users',
+      label: 'Người dùng',
       items: users.map((user: any) => ({
-        id: String(user._id), type: 'user', title: user.name,
-        subtitle: [user.email, user.phone].filter(Boolean).join(' · '), to: '/admin/users',
+        id: String(user._id),
+        type: 'user',
+        title: user.name,
+        subtitle: [user.email, user.phone].filter(Boolean).join(' · '),
+        to: '/admin/users',
       })),
     },
     {
-      key: 'products', label: 'Sản phẩm',
+      key: 'products',
+      label: 'Sản phẩm',
       items: products.map((product: any) => ({
-        id: String(product._id), type: 'product', title: product.name,
-        subtitle: product.brand?.name || product.slug, to: '/admin/products',
+        id: String(product._id),
+        type: 'product',
+        title: product.name,
+        subtitle: product.brand?.name || product.slug,
+        to: '/admin/products',
       })),
     },
     {
-      key: 'variants', label: 'Biến thể',
+      key: 'variants',
+      label: 'Biến thể',
       items: variants.map((variant: any) => ({
-        id: String(variant._id), type: 'variant',
+        id: String(variant._id),
+        type: 'variant',
         title: `${variant.product?.name || 'Biến thể'} · ${variant.volume || variant.size || ''}`,
-        subtitle: `${variant.sku} · Tồn ${variant.stock || 0}`, to: '/admin/variants',
+        subtitle: `${variant.sku} · Tồn ${variant.stock || 0}`,
+        to: '/admin/variants',
       })),
     },
     {
-      key: 'brands', label: 'Thương hiệu',
+      key: 'brands',
+      label: 'Thương hiệu',
       items: brands.map((brand: any) => ({
-        id: String(brand._id), type: 'brand', title: brand.name,
-        subtitle: brand.country || brand.website || brand.slug || '', to: '/admin/brands',
+        id: String(brand._id),
+        type: 'brand',
+        title: brand.name,
+        subtitle: brand.country || brand.website || brand.slug || '',
+        to: '/admin/brands',
       })),
     },
     {
-      key: 'categories', label: 'Danh mục',
+      key: 'categories',
+      label: 'Danh mục',
       items: categories.map((category: any) => ({
-        id: String(category._id), type: 'category', title: category.name,
-        subtitle: category.slug || '', to: '/admin/categories',
+        id: String(category._id),
+        type: 'category',
+        title: category.name,
+        subtitle: category.slug || '',
+        to: '/admin/categories',
       })),
     },
     {
-      key: 'reviews', label: 'Đánh giá',
+      key: 'reviews',
+      label: 'Đánh giá',
       items: reviews.map((review: any) => ({
-        id: String(review._id), type: 'review',
+        id: String(review._id),
+        type: 'review',
         title: review.title || review.comment.slice(0, 70),
-        subtitle: `${review.product?.name || 'Sản phẩm'} · ${review.rating}/5 sao`, to: '/admin/reviews',
+        subtitle: `${review.product?.name || 'Sản phẩm'} · ${review.rating}/5 sao`,
+        to: '/admin/reviews',
       })),
     },
     {
-      key: 'articles', label: 'Tin tức',
+      key: 'articles',
+      label: 'Tin tức',
       items: articles.map((article: any) => ({
-        id: String(article._id), type: 'article', title: article.title,
+        id: String(article._id),
+        type: 'article',
+        title: article.title,
         subtitle: `${article.category} · ${article.status === 'published' ? 'Đã xuất bản' : 'Bản nháp'}`,
         to: '/admin/blog',
       })),
     },
     {
-      key: 'support', label: 'Yêu cầu hỗ trợ',
+      key: 'support',
+      label: 'Yêu cầu hỗ trợ',
       items: supportRequests.map((request: any) => ({
-        id: String(request._id), type: 'support', title: request.subject,
+        id: String(request._id),
+        type: 'support',
+        title: request.subject,
         subtitle: `${request.name} · ${request.email}`,
         to: '/admin/reports/operations',
       })),
@@ -435,21 +545,64 @@ export async function globalSearch(rawQuery: unknown) {
 }
 
 export async function getNotifications() {
-  const [pendingOrders, lowStock, pendingReviews, draftArticles, unpaidQr, openSupport] = await Promise.all([
-    Order.countDocuments({ status: { $in: ['pending', 'paid'] } }),
-    Variant.countDocuments({ stock: { $lte: 5 }, isActive: { $ne: false } }),
-    Review.countDocuments({ approved: false }),
-    BlogArticle.countDocuments({ status: 'draft' }),
-    Payment.countDocuments({ method: 'bank_qr', status: 'unpaid' }),
-    SupportRequest.countDocuments({ status: { $in: ['open', 'in_progress'] } }),
-  ]);
+  const [pendingOrders, lowStock, pendingReviews, draftArticles, unpaidQr, openSupport] =
+    await Promise.all([
+      Order.countDocuments({ status: { $in: ['pending', 'paid'] } }),
+      Variant.countDocuments({ stock: { $lte: 5 }, isActive: { $ne: false } }),
+      Review.countDocuments({ approved: false }),
+      BlogArticle.countDocuments({ status: 'draft' }),
+      Payment.countDocuments({ method: 'bank_qr', status: 'unpaid' }),
+      SupportRequest.countDocuments({ status: { $in: ['open', 'in_progress'] } }),
+    ]);
   const items = [
-    { id: 'pending-orders', count: pendingOrders, severity: 'warning', title: 'Đơn hàng chờ xử lý', description: `${pendingOrders} đơn cần được kiểm tra`, to: '/admin/orders?status=pending' },
-    { id: 'low-stock', count: lowStock, severity: 'danger', title: 'Sản phẩm sắp hết hàng', description: `${lowStock} biến thể còn tối đa 5 sản phẩm`, to: '/admin/variants?lowStock=true' },
-    { id: 'pending-reviews', count: pendingReviews, severity: 'info', title: 'Đánh giá chờ duyệt', description: `${pendingReviews} đánh giá cần kiểm duyệt`, to: '/admin/reviews?status=pending' },
-    { id: 'draft-articles', count: draftArticles, severity: 'neutral', title: 'Bài viết chưa xuất bản', description: `${draftArticles} bài đang ở trạng thái nháp`, to: '/admin/blog' },
-    { id: 'unpaid-qr', count: unpaidQr, severity: 'warning', title: 'Thanh toán QR chưa hoàn tất', description: `${unpaidQr} giao dịch đang chờ đối soát`, to: '/admin/orders?payment=unpaid&method=bank_qr' },
-    { id: 'open-support', count: openSupport, severity: 'info', title: 'Yêu cầu hỗ trợ', description: `${openSupport} yêu cầu đang chờ xử lý`, to: '/admin/reports/operations' },
+    {
+      id: 'pending-orders',
+      count: pendingOrders,
+      severity: 'warning',
+      title: 'Đơn hàng chờ xử lý',
+      description: `${pendingOrders} đơn cần được kiểm tra`,
+      to: '/admin/orders?status=pending',
+    },
+    {
+      id: 'low-stock',
+      count: lowStock,
+      severity: 'danger',
+      title: 'Sản phẩm sắp hết hàng',
+      description: `${lowStock} biến thể còn tối đa 5 sản phẩm`,
+      to: '/admin/variants?lowStock=true',
+    },
+    {
+      id: 'pending-reviews',
+      count: pendingReviews,
+      severity: 'info',
+      title: 'Đánh giá chờ duyệt',
+      description: `${pendingReviews} đánh giá cần kiểm duyệt`,
+      to: '/admin/reviews?status=pending',
+    },
+    {
+      id: 'draft-articles',
+      count: draftArticles,
+      severity: 'neutral',
+      title: 'Bài viết chưa xuất bản',
+      description: `${draftArticles} bài đang ở trạng thái nháp`,
+      to: '/admin/blog',
+    },
+    {
+      id: 'unpaid-qr',
+      count: unpaidQr,
+      severity: 'warning',
+      title: 'Thanh toán QR chưa hoàn tất',
+      description: `${unpaidQr} giao dịch đang chờ đối soát`,
+      to: '/admin/orders?payment=unpaid&method=bank_qr',
+    },
+    {
+      id: 'open-support',
+      count: openSupport,
+      severity: 'info',
+      title: 'Yêu cầu hỗ trợ',
+      description: `${openSupport} yêu cầu đang chờ xử lý`,
+      to: '/admin/reports/operations',
+    },
   ].filter((item) => item.count > 0);
   return { items, total: items.reduce((sum, item) => sum + item.count, 0), updatedAt: new Date() };
 }
@@ -467,7 +620,9 @@ function normalizeProduct(product: any, variants: any[] = []) {
     name: product.name,
     slug: product.slug,
     description: product.description || '',
-    brand: product.brand ? { id: String(product.brand._id || product.brand), name: product.brand.name } : null,
+    brand: product.brand
+      ? { id: String(product.brand._id || product.brand), name: product.brand.name }
+      : null,
     category: product.category
       ? { id: String(product.category._id || product.category), name: product.category.name }
       : null,
@@ -536,7 +691,7 @@ export async function getProduct(id: string) {
     .populate('brand', 'name')
     .populate('category', 'name')
     .lean();
-  if (!product) throw httpError('Khong tim thay san pham', 404);
+  if (!product) throw httpError('Không tìm thấy sản phẩm', 404);
   const variants: any[] = await Variant.find({ product: id }).sort({ price: 1 }).lean();
   return {
     ...normalizeProduct(product, variants),
@@ -554,7 +709,9 @@ export async function getProduct(id: string) {
 
 export async function createProduct(input: any) {
   if (!input?.name?.trim()) throw httpError('Ten san pham la bat buoc');
-  const slug = input.slug?.trim() ? await uniqueSlug(input.slug, undefined) : await uniqueSlug(input.name);
+  const slug = input.slug?.trim()
+    ? await uniqueSlug(input.slug, undefined)
+    : await uniqueSlug(input.name);
 
   const product: any = await Product.create({
     name: input.name.trim(),
@@ -579,7 +736,7 @@ export async function createProduct(input: any) {
 
 export async function updateProduct(id: string, input: any) {
   const product: any = await Product.findById(id);
-  if (!product) throw httpError('Khong tim thay san pham', 404);
+  if (!product) throw httpError('Không tìm thấy sản phẩm', 404);
 
   if (input.name !== undefined) product.name = input.name.trim();
   if (input.slug !== undefined && input.slug.trim()) {
@@ -588,7 +745,8 @@ export async function updateProduct(id: string, input: any) {
   if (input.description !== undefined) product.description = input.description;
   if (input.brand !== undefined) product.brand = input.brand || undefined;
   if (input.category !== undefined) product.category = input.category || undefined;
-  if (input.images !== undefined) product.images = Array.isArray(input.images) ? input.images.filter(Boolean) : [];
+  if (input.images !== undefined)
+    product.images = Array.isArray(input.images) ? input.images.filter(Boolean) : [];
   if (input.gender !== undefined) product.gender = input.gender;
   if (input.fragranceFamily !== undefined) product.fragranceFamily = input.fragranceFamily;
   if (input.concentration !== undefined) product.concentration = input.concentration;
@@ -608,7 +766,7 @@ export async function updateProduct(id: string, input: any) {
 
 export async function deleteProduct(id: string) {
   const product = await Product.findById(id);
-  if (!product) throw httpError('Khong tim thay san pham', 404);
+  if (!product) throw httpError('Không tìm thấy sản phẩm', 404);
   // Xoa luon cac bien the con lai de tranh du lieu mo coi
   await Variant.deleteMany({ product: id });
   await product.deleteOne();
@@ -652,7 +810,7 @@ export async function createVariant(input: any, adminId?: string) {
   if (input.price === undefined || input.price === null) throw httpError('Gia la bat buoc');
 
   const productExists = await Product.exists({ _id: input.product });
-  if (!productExists) throw httpError('San pham khong ton tai', 404);
+  if (!productExists) throw httpError('Sản phẩm không tồn tại', 404);
 
   const existed = await Variant.findOne({ sku: input.sku.trim() });
   if (existed) throw httpError('SKU da ton tai', 409);
@@ -674,7 +832,7 @@ export async function createVariant(input: any, adminId?: string) {
 
 export async function updateVariant(id: string, input: any, adminId?: string) {
   const variant: any = await Variant.findById(id);
-  if (!variant) throw httpError('Khong tim thay bien the', 404);
+  if (!variant) throw httpError('Không tìm thấy biến thể', 404);
 
   if (input.sku !== undefined && input.sku.trim() !== variant.sku) {
     const dup = await Variant.findOne({ sku: input.sku.trim(), _id: { $ne: id } });
@@ -688,7 +846,8 @@ export async function updateVariant(id: string, input: any, adminId?: string) {
   }
   if (input.costPrice !== undefined) variant.costPrice = Number(input.costPrice);
   if (input.stock !== undefined) variant.stock = Number(input.stock);
-  if (input.images !== undefined) variant.images = Array.isArray(input.images) ? input.images.filter(Boolean) : [];
+  if (input.images !== undefined)
+    variant.images = Array.isArray(input.images) ? input.images.filter(Boolean) : [];
   if (input.isActive !== undefined) variant.isActive = Boolean(input.isActive);
 
   await variant.save();
@@ -697,7 +856,7 @@ export async function updateVariant(id: string, input: any, adminId?: string) {
 
 export async function deleteVariant(id: string) {
   const variant = await Variant.findByIdAndDelete(id);
-  if (!variant) throw httpError('Khong tim thay bien the', 404);
+  if (!variant) throw httpError('Không tìm thấy biến thể', 404);
   return { id, deleted: true };
 }
 
@@ -767,13 +926,22 @@ export async function importDefaultBrands(brands: any[]) {
     }
 
     const patch: Record<string, unknown> = {};
-    for (const field of ['description', 'logo', 'heroImage', 'viewCollectionUrl', 'journalUrl', 'country', 'website'] as const) {
+    for (const field of [
+      'description',
+      'logo',
+      'heroImage',
+      'viewCollectionUrl',
+      'journalUrl',
+      'country',
+      'website',
+    ] as const) {
       if (!existing[field] && data[field]) patch[field] = data[field];
     }
     if (!existing.foundedYear && data.foundedYear) patch.foundedYear = data.foundedYear;
     if (!existing.isFeatured && data.isFeatured) patch.isFeatured = true;
     if (existing.isPublished === undefined) patch.isPublished = data.isPublished;
-    if (!existing.slug) patch.slug = await uniqueSlugFor(Brand, input.slug || name, String(existing._id));
+    if (!existing.slug)
+      patch.slug = await uniqueSlugFor(Brand, input.slug || name, String(existing._id));
 
     if (Object.keys(patch).length) {
       await Brand.updateOne({ _id: existing._id }, { $set: patch });
@@ -792,10 +960,7 @@ export async function createBrand(input: any) {
   const requestedSlug = String(input.slug || name).trim();
   const slug = await uniqueSlugFor(Brand, requestedSlug || name);
   const existed = await Brand.findOne({
-    $or: [
-      { name: { $regex: `^${escapeRegExp(name)}$`, $options: 'i' } },
-      { slug },
-    ],
+    $or: [{ name: { $regex: `^${escapeRegExp(name)}$`, $options: 'i' } }, { slug }],
   });
   if (existed) throw httpError('Thuong hieu da ton tai', 409);
   const brand: any = await Brand.create({
@@ -804,7 +969,9 @@ export async function createBrand(input: any) {
     description: String(input.description || '').trim(),
     logo: String(input.logo || '').trim(),
     heroImage: String(input.heroImage || '').trim(),
-    viewCollectionUrl: String(input.viewCollectionUrl || `/shop?brand=${encodeURIComponent(name)}`).trim(),
+    viewCollectionUrl: String(
+      input.viewCollectionUrl || `/shop?brand=${encodeURIComponent(name)}`,
+    ).trim(),
     journalUrl: String(input.journalUrl || '').trim(),
     isPublished: input.isPublished !== false,
     country: String(input.country || '').trim(),
@@ -829,7 +996,9 @@ export async function updateBrand(id: string, input: any) {
       description: String(input.description || '').trim(),
       logo: String(input.logo || '').trim(),
       heroImage: String(input.heroImage || '').trim(),
-      viewCollectionUrl: String(input.viewCollectionUrl || `/shop?brand=${encodeURIComponent(name)}`).trim(),
+      viewCollectionUrl: String(
+        input.viewCollectionUrl || `/shop?brand=${encodeURIComponent(name)}`,
+      ).trim(),
       journalUrl: String(input.journalUrl || '').trim(),
       isPublished: input.isPublished !== false,
       country: String(input.country || '').trim(),
@@ -839,24 +1008,27 @@ export async function updateBrand(id: string, input: any) {
     },
     { new: true, runValidators: true },
   );
-  if (!brand) throw httpError('Khong tim thay thuong hieu', 404);
+  if (!brand) throw httpError('Không tìm thấy thương hiệu', 404);
   return { id: String(brand._id), name: brand.name };
 }
 
 export async function getBrand(id: string) {
   const brand: any = await Brand.findById(id).lean();
-  if (!brand) throw httpError('Khong tim thay thuong hieu', 404);
-  return (await listBrands()).find((item) => item.id === String(brand._id)) || {
-    id: String(brand._id),
-    name: brand.name,
-  };
+  if (!brand) throw httpError('Không tìm thấy thương hiệu', 404);
+  return (
+    (await listBrands()).find((item) => item.id === String(brand._id)) || {
+      id: String(brand._id),
+      name: brand.name,
+    }
+  );
 }
 
 export async function deleteBrand(id: string) {
   const inUse = await Product.countDocuments({ brand: id });
-  if (inUse > 0) throw httpError(`Khong the xoa: con ${inUse} san pham dang dung thuong hieu nay`, 409);
+  if (inUse > 0)
+    throw httpError(`Không thể xóa: còn ${inUse} sản phẩm đang dùng thương hiệu này`, 409);
   const brand = await Brand.findByIdAndDelete(id);
-  if (!brand) throw httpError('Khong tim thay thuong hieu', 404);
+  if (!brand) throw httpError('Không tìm thấy thương hiệu', 404);
   return { id, deleted: true };
 }
 
@@ -894,15 +1066,16 @@ export async function updateCategory(id: string, input: any) {
     { name: input.name.trim(), slug: await uniqueSlugFor(Category, input.name.trim(), id) },
     { new: true, runValidators: true },
   );
-  if (!category) throw httpError('Khong tim thay danh muc', 404);
+  if (!category) throw httpError('Không tìm thấy danh mục', 404);
   return { id: String(category._id), name: category.name };
 }
 
 export async function deleteCategory(id: string) {
   const inUse = await Product.countDocuments({ category: id });
-  if (inUse > 0) throw httpError(`Khong the xoa: con ${inUse} san pham dang dung danh muc nay`, 409);
+  if (inUse > 0)
+    throw httpError(`Không thể xóa: còn ${inUse} sản phẩm đang dùng danh mục này`, 409);
   const category = await Category.findByIdAndDelete(id);
-  if (!category) throw httpError('Khong tim thay danh muc', 404);
+  if (!category) throw httpError('Không tìm thấy danh mục', 404);
   return { id, deleted: true };
 }
 
@@ -965,7 +1138,12 @@ export async function listOrders(query: Record<string, any> = {}) {
   }
 
   const [orders, total] = await Promise.all([
-    Order.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).populate('user', 'name email').lean(),
+    Order.find(filter)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .populate('user', 'name email')
+      .lean(),
     Order.countDocuments(filter),
   ]);
 
@@ -987,17 +1165,18 @@ export async function getOrder(id: string) {
   try {
     order = await Order.findById(id).populate('user', 'name email').lean();
   } catch {
-    throw httpError('Khong tim thay don hang', 404);
+    throw httpError('Không tìm thấy đơn hàng', 404);
   }
-  if (!order) throw httpError('Khong tim thay don hang', 404);
+  if (!order) throw httpError('Không tìm thấy đơn hàng', 404);
   const payment: any = await Payment.findOne({ order: order._id }).lean();
   return normalizeOrder(order, payment);
 }
 
 export async function updateOrderStatus(id: string, status: string) {
-  if (!ORDER_STATUSES.includes(status as OrderStatus)) throw httpError('Trang thai don hang khong hop le');
+  if (!ORDER_STATUSES.includes(status as OrderStatus))
+    throw httpError('Trạng thái đơn hàng không hợp lệ');
   const order: any = await Order.findById(id);
-  if (!order) throw httpError('Khong tim thay don hang', 404);
+  if (!order) throw httpError('Không tìm thấy đơn hàng', 404);
 
   const previousStatus = normalizeOrderStatus(order.status);
   const wasCancelled = previousStatus === 'cancelled';
@@ -1042,10 +1221,12 @@ export async function updateOrderStatus(id: string, status: string) {
     );
   }
 
-
   const now = new Date();
   order.statusHistory.push({ status, at: now });
-  if (status === 'shipping') { order.processedAt ||= now; order.shippedAt ||= now; }
+  if (status === 'shipping') {
+    order.processedAt ||= now;
+    order.shippedAt ||= now;
+  }
   if (status === 'done') order.completedAt ||= now;
   if (status === 'cancelled') order.cancelledAt ||= now;
   if (status === 'returned') order.returnedAt ||= now;
@@ -1058,9 +1239,10 @@ export async function updateOrderStatus(id: string, status: string) {
 }
 
 export async function updatePaymentStatus(id: string, status: string) {
-  if (!PAYMENT_STATUSES.includes(status as PaymentStatus)) throw httpError('Trang thai thanh toan khong hop le');
+  if (!PAYMENT_STATUSES.includes(status as PaymentStatus))
+    throw httpError('Trạng thái thanh toán không hợp lệ');
   const order = await Order.findById(id);
-  if (!order) throw httpError('Khong tim thay don hang', 404);
+  if (!order) throw httpError('Không tìm thấy đơn hàng', 404);
   const payment = await Payment.findOneAndUpdate(
     { order: id },
     status === 'paid'
@@ -1068,7 +1250,7 @@ export async function updatePaymentStatus(id: string, status: string) {
       : { $set: { status: 'unpaid' }, $unset: { paidAt: 1 } },
     { new: true },
   );
-  if (!payment) throw httpError('Khong tim thay ban ghi thanh toan', 404);
+  if (!payment) throw httpError('Không tìm thấy bản ghi thanh toán', 404);
   return getOrder(id);
 }
 
@@ -1113,7 +1295,10 @@ export async function listUsers(query: Record<string, any> = {}) {
   const orderMap = new Map(orderCounts.map((o) => [String(o._id), o.count]));
 
   return {
-    data: users.map((u: any) => ({ ...normalizeUser(u), orderCount: orderMap.get(String(u._id)) || 0 })),
+    data: users.map((u: any) => ({
+      ...normalizeUser(u),
+      orderCount: orderMap.get(String(u._id)) || 0,
+    })),
     total,
     page,
     limit,
@@ -1122,19 +1307,20 @@ export async function listUsers(query: Record<string, any> = {}) {
 }
 
 export async function updateUserRole(id: string, role: string, currentUserId: string) {
-  if (!['admin', 'customer'].includes(role)) throw httpError('Vai tro khong hop le');
+  if (!['admin', 'customer'].includes(role)) throw httpError('Vai trò không hợp lệ');
   if (String(id) === String(currentUserId) && role !== 'admin') {
-    throw httpError('Khong the tu ha quyen admin cua chinh minh', 400);
+    throw httpError('Không thể tự hạ quyền admin của chính mình', 400);
   }
   const user: any = await User.findByIdAndUpdate(id, { role }, { new: true }).lean();
-  if (!user) throw httpError('Khong tim thay nguoi dung', 404);
+  if (!user) throw httpError('Không tìm thấy người dùng', 404);
   return normalizeUser(user);
 }
 
 export async function deleteUser(id: string, currentUserId: string) {
-  if (String(id) === String(currentUserId)) throw httpError('Khong the xoa tai khoan cua chinh minh', 400);
+  if (String(id) === String(currentUserId))
+    throw httpError('Không thể xóa tài khoản của chính mình', 400);
   const user = await User.findByIdAndDelete(id);
-  if (!user) throw httpError('Khong tim thay nguoi dung', 404);
+  if (!user) throw httpError('Không tìm thấy người dùng', 404);
   return { id, deleted: true };
 }
 
@@ -1142,7 +1328,9 @@ export async function deleteUser(id: string, currentUserId: string) {
 function normalizeReview(review: any) {
   return {
     id: String(review._id),
-    product: review.product ? { id: String(review.product._id || review.product), name: review.product.name } : null,
+    product: review.product
+      ? { id: String(review.product._id || review.product), name: review.product.name }
+      : null,
     userName: review.user?.name || review.guestName || 'Khach hang',
     guestEmail: review.guestEmail || review.user?.email || '',
     rating: review.rating,
@@ -1169,12 +1357,12 @@ export async function setReviewApproval(id: string, approved: boolean) {
   const review: any = await Review.findByIdAndUpdate(id, { approved }, { new: true })
     .populate('user', 'name email')
     .populate('product', 'name slug');
-  if (!review) throw httpError('Khong tim thay danh gia', 404);
+  if (!review) throw httpError('Không tìm thấy đánh giá', 404);
   return normalizeReview(review);
 }
 
 export async function deleteReview(id: string) {
   const review = await Review.findByIdAndDelete(id);
-  if (!review) throw httpError('Khong tim thay danh gia', 404);
+  if (!review) throw httpError('Không tìm thấy đánh giá', 404);
   return { id, deleted: true };
 }

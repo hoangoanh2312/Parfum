@@ -58,10 +58,12 @@ export default function SavedAddresses() {
         email: data.email,
         phone: data.phone,
         role: data.role,
+        createdAt: data.createdAt || user?.createdAt,
         isEmailVerified: data.isEmailVerified,
         addresses: data.addresses || nextAddresses,
         profileCompletedAt: data.profileCompletedAt,
         profileCompletionVoucherCode: data.profileCompletionVoucherCode,
+        notificationPreferences: data.notificationPreferences || user?.notificationPreferences,
       });
       setAddresses(data.addresses || nextAddresses);
       return !wasComplete && Boolean(data.profileCompletionVoucherCode);
@@ -94,7 +96,7 @@ export default function SavedAddresses() {
     event.preventDefault();
 
     if (!/^0\d{9}$/.test(form.phone.trim())) {
-      toast.error("So dien thoai phai bat dau bang 0 va du 10 so");
+      toast.error("Số điện thoại phải bắt đầu bằng 0 và đủ 10 số");
       return;
     }
 
@@ -110,11 +112,13 @@ export default function SavedAddresses() {
       setForm(emptyForm);
       toast.success(
         profileJustCompleted
-          ? "Cap nhat ho so thanh cong. Voucher chao mung thanh vien moi da san sang."
-          : editingId ? "Da cap nhat dia chi" : "Da them dia chi",
+          ? "Cập nhật hồ sơ thành công. Voucher chào mừng thành viên mới đã sẵn sàng."
+          : editingId
+            ? "Đã cập nhật địa chỉ"
+            : "Đã thêm địa chỉ",
       );
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Khong the luu dia chi");
+      toast.error(error?.response?.data?.message || "Không thể lưu địa chỉ");
     } finally {
       setSaving(false);
     }
@@ -124,9 +128,9 @@ export default function SavedAddresses() {
     try {
       const { data } = await api.delete(`/auth/me/addresses/${addressId}`);
       syncAddresses(data);
-      toast.success("Da xoa dia chi");
+      toast.success("Đã xóa địa chỉ");
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Khong the xoa dia chi");
+      toast.error(error?.response?.data?.message || "Không thể xóa địa chỉ");
     }
   }
 
@@ -136,11 +140,11 @@ export default function SavedAddresses() {
       const profileJustCompleted = await refreshUser(data);
       toast.success(
         profileJustCompleted
-          ? "Cap nhat ho so thanh cong. Voucher chao mung thanh vien moi da san sang."
-          : "Da dat lam dia chi mac dinh",
+          ? "Cập nhật hồ sơ thành công. Voucher chào mừng thành viên mới đã sẵn sàng."
+          : "Đã đặt làm địa chỉ mặc định",
       );
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Khong the dat mac dinh");
+      toast.error(error?.response?.data?.message || "Không thể đặt mặc định");
     }
   }
 
@@ -152,19 +156,19 @@ export default function SavedAddresses() {
     <div className="min-h-screen bg-[#FCF9F4] text-[#2D2925]">
       <section className="border-b border-[#E7E0D7] px-6 pb-7 pt-12 lg:px-12">
         <p className="text-[10px] uppercase tracking-[0.28em] text-[#9B9288]">
-          Personal Portal
+          Cổng thông tin cá nhân
         </p>
 
-        <h1 className="mt-2 font-serif text-4xl lg:text-5xl">Saved Addresses</h1>
+        <h1 className="mt-2 font-serif text-4xl lg:text-5xl">Địa chỉ đã lưu</h1>
       </section>
 
       <main className="px-6 py-10 lg:px-12">
         <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <div>
-            <h2 className="font-serif text-2xl">Dia chi cua ban</h2>
+            <h2 className="font-serif text-2xl">Địa chỉ của bạn</h2>
 
             <p className="mt-1 text-sm text-[#8A8178]">
-              Ban dang co {addresses.length} dia chi da luu.
+              Bạn đang có {addresses.length} địa chỉ đã lưu.
             </p>
           </div>
 
@@ -174,27 +178,27 @@ export default function SavedAddresses() {
             className="flex w-fit items-center gap-2 bg-[#806900] px-5 py-3 text-[10px] uppercase tracking-[0.16em] text-white transition hover:bg-[#675500]"
           >
             <Plus size={15} />
-            Them dia chi
+            Thêm địa chỉ
           </button>
         </div>
 
         {showForm && (
           <form onSubmit={saveAddress} className="mb-8 border border-[#E2DBD2] bg-[#FFFDF9] p-6">
             <h3 className="font-serif text-2xl">
-              {editingId ? "Chinh sua dia chi" : "Them dia chi moi"}
+              {editingId ? "Chỉnh sửa địa chỉ" : "Thêm địa chỉ mới"}
             </h3>
 
             <div className="mt-5 grid gap-4 md:grid-cols-2">
               <input
                 value={form.label}
                 onChange={(event) => setForm((prev) => ({ ...prev, label: event.target.value }))}
-                placeholder="Nhan dia chi (Nha / Van phong)"
+                placeholder="Nhãn địa chỉ (Nhà / Văn phòng)"
                 className="border border-[#DCD4CB] bg-[#FCF9F4] px-4 py-3 text-sm outline-none"
               />
               <input
                 value={form.fullName}
                 onChange={(event) => setForm((prev) => ({ ...prev, fullName: event.target.value }))}
-                placeholder="Ho ten nguoi nhan"
+                placeholder="Họ tên người nhận"
                 className="border border-[#DCD4CB] bg-[#FCF9F4] px-4 py-3 text-sm outline-none"
                 required
               />
@@ -206,26 +210,22 @@ export default function SavedAddresses() {
                     phone: event.target.value.replace(/\D/g, "").slice(0, 10),
                   }))
                 }
-                placeholder="So dien thoai"
+                placeholder="Số điện thoại"
                 className="border border-[#DCD4CB] bg-[#FCF9F4] px-4 py-3 text-sm outline-none"
                 required
               />
               <input
                 value={form.line}
                 onChange={(event) => setForm((prev) => ({ ...prev, line: event.target.value }))}
-                placeholder="So nha, ten duong"
+                placeholder="Số nhà, tên đường"
                 className="border border-[#DCD4CB] bg-[#FCF9F4] px-4 py-3 text-sm outline-none"
                 required
               />
               <VietnamAddressFields
                 province={form.province}
                 ward={form.ward}
-                onProvinceChange={(province) =>
-                  setForm((prev) => ({ ...prev, province }))
-                }
-                onWardChange={(ward) =>
-                  setForm((prev) => ({ ...prev, ward }))
-                }
+                onProvinceChange={(province) => setForm((prev) => ({ ...prev, province }))}
+                onWardChange={(ward) => setForm((prev) => ({ ...prev, ward }))}
                 inputClassName="w-full border border-[#DCD4CB] bg-[#FCF9F4] px-4 py-3 text-sm outline-none focus:border-[#806900]"
                 labelClassName="mb-2 block text-[10px] uppercase tracking-[1.3px] text-[#736B63]"
                 wrapperClassName="grid gap-4 md:col-span-2 md:grid-cols-2"
@@ -238,14 +238,14 @@ export default function SavedAddresses() {
                 disabled={saving}
                 className="bg-[#806900] px-5 py-3 text-[10px] uppercase tracking-[0.16em] text-white disabled:opacity-60"
               >
-                {saving ? "Dang luu..." : "Luu dia chi"}
+                {saving ? "Đang lưu..." : "Lưu địa chỉ"}
               </button>
               <button
                 type="button"
                 onClick={() => setShowForm(false)}
                 className="border border-[#CFC6BB] px-5 py-3 text-[10px] uppercase tracking-[0.16em]"
               >
-                Huy
+                Hủy
               </button>
             </div>
           </form>
@@ -259,7 +259,7 @@ export default function SavedAddresses() {
             >
               {isDefault(item, index) && (
                 <span className="absolute right-5 top-5 bg-[#EEE8D4] px-3 py-1 text-[9px] uppercase tracking-[0.14em] text-[#846E0A]">
-                  Mac dinh
+                  Mặc định
                 </span>
               )}
 
@@ -274,7 +274,7 @@ export default function SavedAddresses() {
 
                 <div className="pr-20">
                   <p className="text-[9px] uppercase tracking-[0.18em] text-[#9A7D00]">
-                    {item.label || "Dia chi"}
+                    {item.label || "Địa chỉ"}
                   </p>
 
                   <h3 className="mt-3 font-serif text-xl">{item.fullName || user?.name}</h3>
@@ -295,7 +295,7 @@ export default function SavedAddresses() {
                     className="flex items-center gap-2 text-[10px] uppercase tracking-[0.12em] text-[#544E48] hover:text-[#8B7200]"
                   >
                     <Pencil size={13} />
-                    Chinh sua
+                    Chỉnh sửa
                   </button>
 
                   <button
@@ -304,7 +304,7 @@ export default function SavedAddresses() {
                     className="flex items-center gap-2 text-[10px] uppercase tracking-[0.12em] text-[#8D8379] hover:text-red-700"
                   >
                     <Trash2 size={13} />
-                    Xoa
+                    Xóa
                   </button>
                 </div>
 
@@ -314,7 +314,7 @@ export default function SavedAddresses() {
                     onClick={() => setDefault(item)}
                     className="text-[10px] uppercase tracking-[0.12em] text-[#8B7200]"
                   >
-                    Dat lam mac dinh
+                    Đặt làm mặc định
                   </button>
                 )}
               </div>
@@ -328,10 +328,10 @@ export default function SavedAddresses() {
           >
             <Plus size={28} strokeWidth={1.2} />
 
-            <span className="mt-4 text-[10px] uppercase tracking-[0.18em]">Them dia chi moi</span>
+            <span className="mt-4 text-[10px] uppercase tracking-[0.18em]">Thêm địa chỉ mới</span>
 
             <span className="mt-2 text-xs text-[#91887E]">
-              Them dia chi giao hang hoac nhan hoa don
+              Thêm địa chỉ giao hàng hoặc nhận hóa đơn
             </span>
           </button>
         </div>

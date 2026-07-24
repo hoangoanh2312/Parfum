@@ -52,7 +52,7 @@ async function main() {
     console.log(`Added notes: ${product.name}`);
   }
 
-  console.log(`Done. Updated ${updated}/${products.length} products.`);
+  console.log(`Hoàn tất. Đã cập nhật ${updated}/${products.length} sản phẩm.`);
   await mongoose.disconnect();
 }
 

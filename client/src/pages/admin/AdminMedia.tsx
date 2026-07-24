@@ -388,8 +388,8 @@ CLOUDINARY_FOLDER=perfumeshop`}
               : folder === "brand"
                 ? "Ảnh ở đây có thể gán trực tiếp cho nhóm hương trên trang /brand. "
                 : "Ảnh ở đây chỉ dùng trong khu vực này (copy URL để sử dụng). "}
-            Admin được thêm/sửa/xoá (CRUD) ảnh trong thư mục này, nhưng ảnh KHÔNG được dùng để gán
-            hoặc CRUD cho thư mục khác — mỗi thư mục quản lý độc lập.
+            Quản trị viên được thêm/sửa/xoá ảnh trong thư mục này, nhưng ảnh KHÔNG được dùng để gán
+            hoặc thao tác cho thư mục khác — mỗi thư mục quản lý độc lập.
           </p>
         </Card>
       )}

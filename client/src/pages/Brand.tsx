@@ -39,7 +39,7 @@ const ITEMS_PER_PAGE = 6;
 
 const defaultBrandImage = "/images/brand/signature-background.jpg";
 const defaultBrandDescription =
-  "A distinguished perfume house selected for its distinctive approach to scent, craft, and timeless olfactory character.";
+  "Một nhà hương được tuyển chọn nhờ phong cách mùi hương riêng biệt, kỹ nghệ tinh xảo và dấu ấn khứu giác vượt thời gian.";
 
 const slugify = (value: string) =>
   value
@@ -159,7 +159,7 @@ export default function Brand() {
           <div className="mx-auto max-w-[1420px]">
             <h1
               className="max-w-[720px] text-[58px] leading-[1.02] tracking-[-0.045em] sm:text-[72px] lg:text-[92px]"
-              style={{ fontFamily: "'Spectral', serif" }}
+              style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
             >
               Những nhà hương
               <br />
@@ -198,7 +198,7 @@ export default function Brand() {
                   <div className="px-1 pt-7">
                     <h2
                       className="text-[30px] leading-none tracking-[-0.02em] lg:text-[34px]"
-                      style={{ fontFamily: "'Spectral', serif" }}
+                      style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
                     >
                       {brand.name}
                     </h2>
@@ -212,7 +212,7 @@ export default function Brand() {
                         to={brand.viewCollectionUrl}
                         className="inline-flex items-center border-b border-[#A8944B] pb-1 text-[8px] font-semibold uppercase tracking-[0.2em] text-[#675711] transition hover:text-[#9A7C00]"
                       >
-                        View collection
+                        Xem bộ sưu tập
                       </Link>
                       <Link
                         to={brand.journalUrl || `/brand/${brand.slug}`}
@@ -228,7 +228,7 @@ export default function Brand() {
           ) : (
             !loading && (
               <div className="mx-auto max-w-[1420px] border-y border-[#E1DDD5] py-12 text-center text-xs uppercase tracking-[0.18em] text-[#8F887A]">
-                Chưa có thương hiệu được xuất bản. Hãy bật Published trong trang quản trị.
+                Chưa có thương hiệu được xuất bản. Hãy bật trạng thái Xuất bản trong trang quản trị.
               </div>
             )
           )}
@@ -244,7 +244,7 @@ export default function Brand() {
                 disabled={currentPage === 1}
                 className="mr-7 text-[8px] uppercase tracking-[0.18em] text-[#A29D91] transition hover:text-[#756000] disabled:cursor-not-allowed disabled:opacity-35"
               >
-                Previous
+                Trước
               </button>
 
               <div className="flex items-center gap-5">
@@ -274,7 +274,7 @@ export default function Brand() {
                 disabled={currentPage === totalPages}
                 className="ml-7 text-[8px] uppercase tracking-[0.18em] text-[#8B7419] transition hover:text-[#4D410F] disabled:cursor-not-allowed disabled:opacity-35"
               >
-                Next
+                Sau
               </button>
             </div>
           </section>
@@ -283,7 +283,7 @@ export default function Brand() {
         {/* Tất cả nhóm mùi hương */}
         <ScentFamilyMarquee />
 
-        {/* Khoảng cách mt-10 giữa ảnh card nhóm hương và Your Signature Awaits */}
+        {/* Khoảng cách mt-10 giữa ảnh card nhóm hương và phần chữ ký mùi hương */}
         <section className="relative mt-10 min-h-[560px] overflow-hidden bg-[#050403]">
           <style>{`
             @keyframes sigZoom{from{transform:scale(1.14)}to{transform:scale(1)}}
@@ -321,9 +321,9 @@ export default function Brand() {
 
             <h2
               className="sig-reveal sig-d1 mt-6 text-[46px] leading-[0.98] tracking-[-0.035em] sm:text-[60px] lg:text-[76px]"
-              style={{ fontFamily: "'Spectral', serif" }}
+              style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
             >
-              Your Signature Awaits
+              Dấu hương riêng đang chờ bạn
             </h2>
 
             <p className="sig-reveal sig-d2 mt-7 max-w-xl text-[15px] leading-[1.9] text-white/80">
@@ -337,7 +337,7 @@ export default function Brand() {
                 to="/shop"
                 className="group inline-flex min-h-12 flex-1 items-center justify-center gap-2 bg-[#FCF9F4] px-7 text-[10px] font-semibold uppercase tracking-[0.22em] text-[#28251F] transition hover:bg-white hover:shadow-[0_10px_30px_rgba(200,164,77,0.35)]"
               >
-                Find your scent
+                Tìm mùi hương của bạn
                 <span className="transition-transform duration-300 group-hover:translate-x-1">
                   →
                 </span>
@@ -347,16 +347,19 @@ export default function Brand() {
                 to="/about"
                 className="inline-flex min-h-12 flex-1 items-center justify-center border border-white/60 bg-transparent px-7 text-[10px] font-semibold uppercase tracking-[0.22em] text-white transition hover:border-white hover:bg-white/10"
               >
-                Private consultation
+                Tư vấn riêng
               </Link>
             </div>
           </div>
         </section>
 
-        {/* MOBILE NEWSLETTER */}
+        {/* Bản tin trên mobile */}
         <section className="border-b border-[#E6E1D9] px-6 py-16 text-center lg:hidden">
-          <h2 className="text-3xl" style={{ fontFamily: "'Spectral', serif" }}>
-            Join the Editorial
+          <h2
+            className="text-3xl"
+            style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
+          >
+            Tham gia bản tin biên tập
           </h2>
 
           <form
@@ -367,14 +370,14 @@ export default function Brand() {
               type="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              placeholder="YOUR EMAIL ADDRESS"
+              placeholder="ĐỊA CHỈ EMAIL CỦA BẠN"
               className="min-w-0 flex-1 bg-transparent py-4 text-[8px] tracking-[0.15em] outline-none placeholder:text-[#A8A49B]"
             />
 
             <button
               type="submit"
               disabled={subscribing}
-              aria-label="Subscribe"
+              aria-label="Đăng ký"
               className="px-2 text-[#8B7419] transition hover:translate-x-1 disabled:cursor-wait disabled:opacity-50"
             >
               <ArrowRight size={17} strokeWidth={1.4} />

@@ -124,5 +124,5 @@ export async function rotateDefaultAdminPassword() {
 
   admin.password = await bcrypt.hash(env.adminBootstrapPassword, 12);
   await admin.save();
-  logger.info('[security] Default admin password rotated');
+  logger.info('[security] Đã xoay mật khẩu admin mặc định');
 }

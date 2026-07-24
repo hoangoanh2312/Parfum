@@ -32,7 +32,7 @@ const scopedStorage = new CloudinaryStorage({
   cloudinary,
   params: async (req) => {
     const folder = String(req.params.folder || '');
-    if (!isAdminMediaFolder(folder)) throw new Error('Thu muc anh khong hop le');
+    if (!isAdminMediaFolder(folder)) throw new Error('Thư mục ảnh không hợp lệ');
     return {
       asset_folder: `${CLOUDINARY_FOLDER}/${folder}`,
       resource_type: 'image',
@@ -50,5 +50,5 @@ export const scopedUpload = multer({
   },
 });
 
-// Anh khach gui kem danh gia duoc tach rieng de de quan ly tren Cloudinary.
+// Ảnh khách gửi kèm đánh giá được tách riêng để dễ quản lý trên Cloudinary.
 export const reviewUpload = createImageUpload(`${CLOUDINARY_FOLDER}/feed back`);

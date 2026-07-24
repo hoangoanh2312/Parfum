@@ -365,14 +365,14 @@ export default function Shop() {
           <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
             <div>
               <h1 className="font-heading text-[48px] leading-none text-[#1C1C19] sm:text-[64px] lg:text-[76px] xl:text-[88px]">
-                The Seasonal
+                Tuyển tập theo mùa
                 <br />
-                <span className="italic text-[#8A6D0E]">Archives</span>
+                <span className="italic text-[#8A6D0E]">Lưu hương</span>
               </h1>
 
               <p className="mt-6 max-w-md text-sm leading-7 text-[#5F5E5E] sm:mt-8 sm:leading-8">
-                A curated selection of olfactory experiences, from the smoky resins of the Orient to
-                the dew-kissed petals of a Grasse morning.
+                Bộ sưu tập mùi hương được tuyển chọn, từ nhựa thơm phương Đông đầy khói đến những
+                cánh hoa còn đẫm sương của buổi sáng Grasse.
               </p>
             </div>
 
@@ -387,13 +387,15 @@ export default function Shop() {
               />
 
               <div className="absolute left-6 bottom-8 text-[#E8E3D8]">
-                <p className="text-[11px] tracking-[0.15em] uppercase leading-tight">Amber Oud</p>
-                <p className="text-[11px] tracking-[0.15em] uppercase leading-tight">Rare Wood</p>
+                <p className="text-[11px] tracking-[0.15em] uppercase leading-tight">
+                  Trầm hổ phách
+                </p>
+                <p className="text-[11px] tracking-[0.15em] uppercase leading-tight">Gỗ quý</p>
               </div>
 
               <div className="absolute bottom-3 left-4 right-4 text-right sm:left-auto sm:right-6">
                 <p className="text-[8px] uppercase leading-4 tracking-[0.12em] text-[#B9B4A8] sm:text-[10px] sm:tracking-[0.2em]">
-                  Issue No. 04 — Autumn/Winter
+                  Số 04 - Thu Đông
                 </p>
               </div>
             </div>
@@ -510,7 +512,7 @@ export default function Shop() {
             <div className="flex flex-col gap-4 border-b border-[#e8deca] pb-5 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                 <p className="text-[10px] uppercase tracking-widest text-[#5F5E5E] sm:text-xs">
-                  Showing {products.length} of {productTotal} products
+                  Hiển thị {products.length} trên {productTotal} sản phẩm
                 </p>
                 <button
                   type="button"

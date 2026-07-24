@@ -8,7 +8,7 @@ import ProductCard, { ProductCardData } from "../components/ProductCard";
 import Footer from "../components/Footer";
 
 const vnd = (n: number) => (n || 0).toLocaleString("vi-VN") + "₫";
-const PLACEHOLDER = "https://placehold.co/256x342?text=No+Image";
+const PLACEHOLDER = "https://placehold.co/256x342?text=Chua+co+anh";
 
 function similarLoopWidth(scroller: HTMLElement) {
   const groups = scroller.querySelectorAll<HTMLElement>("[data-similar-loop]");
@@ -216,13 +216,11 @@ export default function Cart() {
       <>
         <section className="flex min-h-[60vh] flex-col items-center justify-center bg-[#FDF9F4] px-[20px] text-center">
           <ShoppingBag size={60} className="text-[#735C00] mb-6" />
-          <h1 className="font-['Noto_Serif'] text-4xl text-[#1C1C19] mb-3">Giỏ hàng trống</h1>
-          <p className="font-['Manrope'] text-[#5F5E5E] mb-8">
-            Hãy thêm sản phẩm yêu thích vào giỏ.
-          </p>
+          <h1 className="font-serif text-4xl text-[#1C1C19] mb-3">Giỏ hàng trống</h1>
+          <p className="font-sans text-[#5F5E5E] mb-8">Hãy thêm sản phẩm yêu thích vào giỏ.</p>
           <Link
             to="/shop"
-            className="border border-[#735C00] text-[#735C00] px-8 py-3 font-['Manrope'] uppercase tracking-[3px] text-sm hover:bg-[#735C00] hover:text-white duration-300"
+            className="border border-[#735C00] text-[#735C00] px-8 py-3 font-sans uppercase tracking-[3px] text-sm hover:bg-[#735C00] hover:text-white duration-300"
           >
             Tiếp tục mua sắm
           </Link>
@@ -236,10 +234,8 @@ export default function Cart() {
     <>
       <section className="w-full bg-[#FDF9F4] px-[20px] py-[50px] lg:px-[40px] xl:px-[80px]">
         <header className="mb-10">
-          <h1 className="font-['Noto_Serif'] text-5xl text-[#1C1C19] tracking-[-1.8px]">
-            Giỏ hàng của bạn
-          </h1>
-          <p className="font-['Manrope'] uppercase tracking-[3px] text-xs text-[#5F5E5E] mt-3">
+          <h1 className="font-serif text-5xl text-[#1C1C19] tracking-[-1.8px]">Giỏ hàng của bạn</h1>
+          <p className="font-sans uppercase tracking-[3px] text-xs text-[#5F5E5E] mt-3">
             Tuyển chọn cho trải nghiệm của bạn
           </p>
         </header>
@@ -287,11 +283,11 @@ export default function Cart() {
                       <div className="flex items-start justify-between gap-5">
                         <div className="min-w-0">
                           <Link to={detailPath} className="group/title inline-block">
-                            <h3 className="font-['Noto_Serif'] text-[27px] leading-tight text-[#1C1C19] transition-colors group-hover/title:text-[#887000]">
+                            <h3 className="font-serif text-[27px] leading-tight text-[#1C1C19] transition-colors group-hover/title:text-[#887000]">
                               {it.name}
                             </h3>
                           </Link>
-                          <p className="mt-2 font-['Manrope'] text-xs uppercase tracking-[1.5px] text-[#68635D]">
+                          <p className="mt-2 font-sans text-xs uppercase tracking-[1.5px] text-[#68635D]">
                             {it.volume}
                           </p>
                         </div>
@@ -299,7 +295,7 @@ export default function Cart() {
                         <div className="shrink-0 whitespace-nowrap text-right">
                           <span
                             className={
-                              "block font-['Noto_Serif'] text-xl " +
+                              "block font-serif text-xl " +
                               (priced?.discountPercent ? "text-[#8B1E1E]" : "text-[#1C1C19]")
                             }
                           >
@@ -314,7 +310,7 @@ export default function Cart() {
                       </div>
 
                       {description && (
-                        <p className="mt-5 max-w-2xl font-['Manrope'] text-sm leading-6 text-[#615A52]">
+                        <p className="mt-5 max-w-2xl font-sans text-sm leading-6 text-[#615A52]">
                           {description}
                         </p>
                       )}
@@ -334,7 +330,7 @@ export default function Cart() {
                       )}
 
                       <div className="mt-9 flex flex-wrap items-center justify-between gap-5">
-                        <div className="flex w-fit items-center border border-[rgba(208,197,175,0.5)] font-['Manrope'] text-[#1C1C19]">
+                        <div className="flex w-fit items-center border border-[rgba(208,197,175,0.5)] font-sans text-[#1C1C19]">
                           <button
                             type="button"
                             aria-label={`Giảm số lượng ${it.name}`}
@@ -356,7 +352,7 @@ export default function Cart() {
 
                         <button
                           type="button"
-                          className="flex items-center gap-2 whitespace-nowrap font-['Manrope'] text-[10px] uppercase tracking-[1.2px] text-[#6C665F] hover:text-red-500"
+                          className="flex items-center gap-2 whitespace-nowrap font-sans text-[10px] uppercase tracking-[1.2px] text-[#6C665F] hover:text-red-500"
                           onClick={() => removeItem(it.variant)}
                         >
                           <X size={14} /> Xóa
@@ -370,15 +366,15 @@ export default function Cart() {
 
             <button
               onClick={clear}
-              className="mt-8 w-fit font-['Manrope'] text-sm text-[#5F5E5E] underline underline-offset-4 hover:text-red-500"
+              className="mt-8 w-fit font-sans text-sm text-[#5F5E5E] underline underline-offset-4 hover:text-red-500"
             >
               Xóa toàn bộ giỏ hàng
             </button>
           </div>
 
           {/* Tóm tắt đơn hàng luôn ở đầu cột phải trên desktop. */}
-          <aside className="w-full border border-[rgba(208,197,175,0.4)] bg-[#F1EDE8] p-6 font-['Manrope'] sm:p-8 lg:sticky lg:top-24">
-            <h2 className="font-['Noto_Serif'] text-2xl text-[#1C1C19] mb-6 pb-6 border-b border-[rgba(208,197,175,0.2)]">
+          <aside className="w-full border border-[rgba(208,197,175,0.4)] bg-[#F1EDE8] p-6 font-sans sm:p-8 lg:sticky lg:top-24">
+            <h2 className="font-serif text-2xl text-[#1C1C19] mb-6 pb-6 border-b border-[rgba(208,197,175,0.2)]">
               Tóm tắt đơn hàng
             </h2>
 
@@ -408,10 +404,8 @@ export default function Cart() {
             </div>
 
             <div className="flex justify-between items-center py-6 border-t border-[rgba(208,197,175,0.4)] mt-0">
-              <span className="font-['Noto_Serif'] text-lg text-[#1C1C19]">Tổng cộng</span>
-              <span className="font-['Noto_Serif'] text-3xl text-[#1C1C19]">
-                {vnd(displayTotal)}
-              </span>
+              <span className="font-serif text-lg text-[#1C1C19]">Tổng cộng</span>
+              <span className="font-serif text-3xl text-[#1C1C19]">{vnd(displayTotal)}</span>
             </div>
 
             {hasOutOfStock && (
@@ -424,7 +418,7 @@ export default function Cart() {
               onClick={checkout}
               disabled={hasOutOfStock}
               className={
-                "w-full py-5 font-['Manrope'] uppercase tracking-[3.5px] text-sm duration-300 " +
+                "w-full py-5 font-sans uppercase tracking-[3.5px] text-sm duration-300 " +
                 (hasOutOfStock
                   ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                   : "bg-[#735C00] text-white hover:bg-black")
@@ -461,8 +455,8 @@ export default function Cart() {
           <div className="mt-20">
             <div className="mb-5 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
               <div>
-                <h2 className="font-['Noto_Serif'] text-3xl text-[#1C1C19]">Sản phẩm tương tự</h2>
-                <p className="mt-2 font-['Manrope'] text-sm tracking-[0.35px] text-[#5F5E5E]">
+                <h2 className="font-serif text-3xl text-[#1C1C19]">Sản phẩm tương tự</h2>
+                <p className="mt-2 font-sans text-sm tracking-[0.35px] text-[#5F5E5E]">
                   Đặt con trỏ trong dải sản phẩm và lăn để xem theo chiều ngang
                 </p>
               </div>
@@ -470,7 +464,7 @@ export default function Cart() {
               <button
                 type="button"
                 onClick={refreshSuggestions}
-                className="inline-flex min-h-11 w-fit items-center justify-center gap-2 border border-[#CFC5B9] px-5 font-['Manrope'] text-[9px] uppercase tracking-[0.17em] text-[#665E56] transition hover:border-[#887000] hover:text-[#887000]"
+                className="inline-flex min-h-11 w-fit items-center justify-center gap-2 border border-[#CFC5B9] px-5 font-sans text-[9px] uppercase tracking-[0.17em] text-[#665E56] transition hover:border-[#887000] hover:text-[#887000]"
               >
                 <RefreshCw size={14} />
                 Làm mới

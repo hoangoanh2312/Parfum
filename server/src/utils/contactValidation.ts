@@ -8,7 +8,9 @@ const disposableDomains = new Set([
 ]);
 
 export function normalizeEmail(value: string) {
-  return String(value || '').trim().toLowerCase();
+  return String(value || '')
+    .trim()
+    .toLowerCase();
 }
 
 export function normalizePhone(value: string) {
@@ -32,9 +34,9 @@ export function isLikelyValidVietnamPhone(phone: string) {
 
 export function assertValidContact(email: string, phone: string) {
   if (!isLikelyValidEmail(email)) {
-    throw Object.assign(new Error('Email khong hop le hoac khong duoc chap nhan'), { status: 400 });
+    throw Object.assign(new Error('Email không hợp lệ hoặc không được chấp nhận'), { status: 400 });
   }
   if (!isLikelyValidVietnamPhone(phone)) {
-    throw Object.assign(new Error('So dien thoai khong hop le'), { status: 400 });
+    throw Object.assign(new Error('Số điện thoại không hợp lệ'), { status: 400 });
   }
 }

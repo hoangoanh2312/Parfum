@@ -109,33 +109,63 @@ const blogSchema = z.object({
   relatedSlugs: z.array(z.string()).optional(),
   status: z.enum(['draft', 'published']).optional(),
 });
-const siteContentSchema = z.object({ key: z.string().trim().min(1), url: z.string().trim().min(1) });
-const expenseSchema = z.object({ type: z.enum(['shipping', 'marketing', 'returns', 'operations', 'other']), amount: z.number().min(0), date: z.string().or(z.date()), note: z.string().trim().max(500).optional() });
+const siteContentSchema = z.object({
+  key: z.string().trim().min(1),
+  url: z.string().trim().min(1),
+});
+const expenseSchema = z.object({
+  type: z.enum(['shipping', 'marketing', 'returns', 'operations', 'other']),
+  amount: z.number().min(0),
+  date: z.string().or(z.date()),
+  note: z.string().trim().max(500).optional(),
+});
 const promotionEvidence = {
   isConcentratedPromotion: z.boolean().optional(),
   referencePriceConfirmed: z.boolean().optional(),
   referencePriceNote: z.string().trim().max(1000).optional(),
 };
 const voucherSchema = z.object({
-  code: z.string().trim().min(2).max(40), name: z.string().trim().max(120).optional(),
-  type: z.enum(['percentage', 'fixed', 'free_shipping']), value: z.number().min(0),
-  minOrderValue: z.number().min(0).optional(), maxDiscountAmount: z.number().min(0).optional(),
-  startDate: z.string(), endDate: z.string(), usageLimit: z.number().int().min(0).optional(),
-  usageLimitPerUser: z.number().int().min(0).optional(), stackable: z.boolean().optional(),
+  code: z.string().trim().min(2).max(40),
+  name: z.string().trim().max(120).optional(),
+  type: z.enum(['percentage', 'fixed', 'free_shipping']),
+  value: z.number().min(0),
+  minOrderValue: z.number().min(0).optional(),
+  maxDiscountAmount: z.number().min(0).optional(),
+  startDate: z.string(),
+  endDate: z.string(),
+  usageLimit: z.number().int().min(0).optional(),
+  usageLimitPerUser: z.number().int().min(0).optional(),
+  stackable: z.boolean().optional(),
   userSegment: z.enum(['ALL', 'NEW', 'RETURNING', 'LOYAL', 'VIP']).optional(),
-  appliesToNewMembers: z.boolean().optional(), isPrivate: z.boolean().optional(),
-  isConcentratedPromotion: z.boolean().optional(), isActive: z.boolean().optional(),
+  appliesToNewMembers: z.boolean().optional(),
+  isPrivate: z.boolean().optional(),
+  isConcentratedPromotion: z.boolean().optional(),
+  isActive: z.boolean().optional(),
 });
 const discountSchema = z.object({
-  name: z.string().trim().min(2), scope: z.enum(['PRODUCT', 'CATEGORY']), type: z.enum(['PERCENTAGE', 'FIXED']),
-  value: z.number().min(0), maxDiscountAmount: z.number().min(0).optional(),
-  products: z.array(z.string()).optional(), categories: z.array(z.string()).optional(), priority: z.number().int().optional(),
-  startDate: z.string(), endDate: z.string(), isActive: z.boolean().optional(), ...promotionEvidence,
+  name: z.string().trim().min(2),
+  scope: z.enum(['PRODUCT', 'CATEGORY']),
+  type: z.enum(['PERCENTAGE', 'FIXED']),
+  value: z.number().min(0),
+  maxDiscountAmount: z.number().min(0).optional(),
+  products: z.array(z.string()).optional(),
+  categories: z.array(z.string()).optional(),
+  priority: z.number().int().optional(),
+  startDate: z.string(),
+  endDate: z.string(),
+  isActive: z.boolean().optional(),
+  ...promotionEvidence,
 });
 const flashSaleSchema = z.object({
-  name: z.string().trim().min(2), variant: z.string().min(1), flashPrice: z.number().min(0),
-  stockAllocated: z.number().int().min(1), maxPerUser: z.number().int().min(0).optional(),
-  startTime: z.string(), endTime: z.string(), isActive: z.boolean().optional(), ...promotionEvidence,
+  name: z.string().trim().min(2),
+  variant: z.string().min(1),
+  flashPrice: z.number().min(0),
+  stockAllocated: z.number().int().min(1),
+  maxPerUser: z.number().int().min(0).optional(),
+  startTime: z.string(),
+  endTime: z.string(),
+  isActive: z.boolean().optional(),
+  ...promotionEvidence,
 });
 
 // ------------------------------------------------------------------- routes --
@@ -147,7 +177,11 @@ r.patch('/notifications/:id/seen', ctrl.markNotificationSeen);
 r.get('/reports', reports.reports);
 r.post('/expenses', validate(expenseSchema), reports.createExpense);
 r.delete('/expenses/:id', reports.deleteExpense);
-r.patch('/support/:id/status', validate(z.object({ status: z.enum(['open', 'in_progress', 'resolved', 'closed']) })), reports.updateSupport);
+r.patch(
+  '/support/:id/status',
+  validate(z.object({ status: z.enum(['open', 'in_progress', 'resolved', 'closed']) })),
+  reports.updateSupport,
+);
 
 // Voucher, discount, flash sale va lich su gia niem yet
 r.get('/promotions/vouchers', promotion.listVouchers);
@@ -232,7 +266,11 @@ r.delete('/blog/:id', blog.deleteAdmin);
 // Noi dung trang
 r.get('/site-content', siteContent.adminList);
 r.put('/site-content', validate(siteContentSchema), siteContent.adminUpdate);
-r.post('/site-content/reset', validate(z.object({ key: z.string().trim().min(1) })), siteContent.adminReset);
+r.post(
+  '/site-content/reset',
+  validate(z.object({ key: z.string().trim().min(1) })),
+  siteContent.adminReset,
+);
 
 // Upload anh (tra ve URL de dinh kem san pham / bien the)
 r.post('/upload', upload.single('image'), uploadImage);
@@ -241,7 +279,7 @@ r.post(
   (req, res, next) =>
     isAdminMediaFolder(req.params.folder)
       ? next()
-      : res.status(400).json({ success: false, message: 'Thu muc anh khong hop le' }),
+      : res.status(400).json({ success: false, message: 'Thư mục ảnh không hợp lệ' }),
   scopedUpload.single('image'),
   uploadImage,
 );
@@ -255,11 +293,10 @@ r.post(
   (req, res, next) =>
     isAdminMediaFolder(req.params.folder)
       ? next()
-      : res.status(400).json({ success: false, message: 'Thu muc anh khong hop le' }),
+      : res.status(400).json({ success: false, message: 'Thư mục ảnh không hợp lệ' }),
   scopedUpload.array('images', 10),
   uploadImages,
 );
 r.post('/media/delete', media.remove);
-
 
 export default r;

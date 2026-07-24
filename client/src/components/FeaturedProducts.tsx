@@ -19,10 +19,10 @@ const tabParams: Record<ProductTab, Record<string, string | number | boolean>> =
 };
 
 const tabs: { label: string; value: ProductTab }[] = [
-  { label: "The Favorites", value: "favorites" },
-  { label: "Featured", value: "featured" },
-  { label: "New Arrivals", value: "new-arrivals" },
-  { label: "Bundle Deals", value: "bundle-deals" },
+  { label: "Được yêu thích", value: "favorites" },
+  { label: "Nổi bật", value: "featured" },
+  { label: "Hàng mới", value: "new-arrivals" },
+  { label: "Ưu đãi", value: "bundle-deals" },
 ];
 
 export default function FeaturedProducts() {
@@ -104,12 +104,12 @@ export default function FeaturedProducts() {
         <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <h2 className="font-serif text-4xl font-semibold text-[#1B1B18] md:text-5xl">
-              Featured Fragrances
+              Nước hoa nổi bật
             </h2>
 
             <p className="mt-3 max-w-[560px] text-sm leading-6 text-[#706D68]">
-              A curation of our most evocative compositions, crafted with rare
-              botanicals and artisanal precision.
+              Những sáng tạo mùi hương giàu cảm xúc, được tuyển chọn từ nguyên liệu quý và hoàn
+              thiện bằng kỹ nghệ thủ công tinh tế.
             </p>
           </div>
 
@@ -146,9 +146,7 @@ export default function FeaturedProducts() {
         </div>
 
         {!loading && displayedProducts.length === 0 && (
-          <p className="mt-12 text-center text-sm text-[#706D68]">
-            Chưa có sản phẩm để hiển thị.
-          </p>
+          <p className="mt-12 text-center text-sm text-[#706D68]">Chưa có sản phẩm để hiển thị.</p>
         )}
 
         <div className="mt-14 flex items-center justify-center gap-5 text-[9px] uppercase tracking-[0.15em] text-[#77736C]">
@@ -158,21 +156,19 @@ export default function FeaturedProducts() {
             disabled={page === 1}
             className="disabled:cursor-not-allowed disabled:opacity-40"
           >
-            Previous
+            Trước
           </button>
 
           {visiblePages.map((item) => (
-              <button
-                key={item}
-                type="button"
-                onClick={() => changePage(item)}
-                className={
-                  item === page ? "border-b border-[#817000] pb-1 text-[#817000]" : ""
-                }
-              >
-                {String(item).padStart(2, "0")}
-              </button>
-            ))}
+            <button
+              key={item}
+              type="button"
+              onClick={() => changePage(item)}
+              className={item === page ? "border-b border-[#817000] pb-1 text-[#817000]" : ""}
+            >
+              {String(item).padStart(2, "0")}
+            </button>
+          ))}
 
           <button
             type="button"
@@ -180,7 +176,7 @@ export default function FeaturedProducts() {
             disabled={page === totalPages}
             className="disabled:cursor-not-allowed disabled:opacity-40"
           >
-            Next
+            Sau
           </button>
         </div>
       </div>

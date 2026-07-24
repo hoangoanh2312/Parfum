@@ -3,49 +3,49 @@
 import { useState } from "react";
 
 /* ─────────────────────────────────────────────
-   Data
+   Dữ liệu
 ───────────────────────────────────────────── */
 const reasons = [
   {
     id: 1,
     index: "01",
-    tag: "Savoir-faire",
-    title: "Artisanal\nCraftsmanship",
+    tag: "Tay nghề thủ công",
+    title: "Chế tác\nthủ công",
     description:
-      "Every vessel is a masterpiece. Hand-poured bottles and traditional distillation methods passed down through generations of master perfumers — each drop a testimony to living craft.",
-    detail: "Est. 1978 · Paris",
+      "Mỗi chai là một tác phẩm. Từng mẻ hương được rót thủ công, chưng cất theo phương pháp truyền thống và hoàn thiện bởi kinh nghiệm của nhiều thế hệ nghệ nhân.",
+    detail: "Thành lập 1978 · Paris",
   },
   {
     id: 2,
     index: "02",
-    tag: "Matières premières",
-    title: "Rare\nIngredients",
+    tag: "Nguyên liệu quý",
+    title: "Nguyên liệu\nhiếm",
     description:
-      "We scour the globe for the impossible — uniting the finest natural absolutes with groundbreaking synthetics to create olfactory silhouettes that endure long after the moment passes.",
-    detail: "40+ Origins worldwide",
+      "Chúng tôi tìm kiếm những tinh chất đặc biệt trên khắp thế giới, kết hợp nguyên liệu tự nhiên tinh tuyển cùng kỹ thuật hiện đại để tạo nên dấu hương bền lâu.",
+    detail: "Hơn 40 vùng nguyên liệu",
   },
   {
     id: 3,
     index: "03",
-    tag: "Récit olfactif",
-    title: "Curated\nExperience",
+    tag: "Câu chuyện hương",
+    title: "Trải nghiệm\nđược tuyển chọn",
     description:
-      "Beyond a scent, we offer a narrative. Our editorial approach ensures a deeply personal journey in finding the fragrance that resonates with your unique identity.",
-    detail: "Personal consultations",
+      "Không chỉ là mùi hương, chúng tôi mang đến một hành trình cá nhân. Cách tuyển chọn giàu tính biên tập giúp bạn tìm được dấu hương đồng điệu với bản sắc riêng.",
+    detail: "Tư vấn cá nhân",
   },
   {
     id: 4,
     index: "04",
-    tag: "Éthique",
-    title: "Conscious\nLuxury",
+    tag: "Đạo đức",
+    title: "Xa xỉ\ncó trách nhiệm",
     description:
-      "Luxury with a conscience. Cruelty-free practices and ethically sourced materials — preserving the botanicals we cherish for every generation that follows.",
-    detail: "Carbon-neutral since 2021",
+      "Sự sang trọng phải đi cùng trách nhiệm. Nguyên liệu được khai thác có đạo đức, không thử nghiệm trên động vật và tôn trọng hệ sinh thái tạo nên chúng.",
+    detail: "Trung hòa carbon từ 2021",
   },
 ];
 
 /* ─────────────────────────────────────────────
-   Sub-row item (right column)
+   Mục phụ ở cột phải
 ───────────────────────────────────────────── */
 function SubItem({
   reason,
@@ -76,7 +76,7 @@ function SubItem({
       {/* Index */}
       <span
         style={{
-          fontFamily: "'Manrope', sans-serif",
+          fontFamily: "'Manrope', 'Be Vietnam Pro', sans-serif",
           fontSize: 9,
           letterSpacing: "0.18em",
           color: active ? "#735C00" : "rgba(115,92,0,0.4)",
@@ -92,7 +92,7 @@ function SubItem({
         {/* Tag */}
         <p
           style={{
-            fontFamily: "'Manrope', sans-serif",
+            fontFamily: "'Manrope', 'Be Vietnam Pro', sans-serif",
             fontSize: 9,
             letterSpacing: "0.22em",
             textTransform: "uppercase",
@@ -108,7 +108,7 @@ function SubItem({
         {/* Title */}
         <h3
           style={{
-            fontFamily: "'Spectral', Georgia, serif",
+            fontFamily: "'Noto Serif Display', 'Noto Serif', serif",
             fontSize: 17,
             fontWeight: 300,
             color: active ? "#1D1C19" : "#5A554F",
@@ -137,7 +137,7 @@ function SubItem({
 }
 
 /* ─────────────────────────────────────────────
-   Main component
+   Component chính
 ───────────────────────────────────────────── */
 export default function WhyChooseUs() {
   const [active, setActive] = useState(0);
@@ -149,11 +149,10 @@ export default function WhyChooseUs() {
       style={{
         background: "#FCF9F4",
         padding: "64px 32px 96px",
-        fontFamily: "'Manrope', 'Helvetica Neue', sans-serif",
+        fontFamily: "'Manrope', 'Be Vietnam Pro', sans-serif",
       }}
     >
       <div style={{ maxWidth: 1400, margin: "0 auto" }}>
-
         {/* ── Header ── */}
         <div
           style={{
@@ -176,18 +175,18 @@ export default function WhyChooseUs() {
                 marginBottom: 14,
               }}
             >
-              The editorial standard
+              Chuẩn mực tuyển chọn
             </p>
             <h2
               style={{
-                fontFamily: "'Spectral', Georgia, serif",
+                fontFamily: "'Noto Serif Display', 'Noto Serif', serif",
                 fontSize: "clamp(32px, 4vw, 48px)",
                 fontWeight: 300,
                 color: "#1D1C19",
                 lineHeight: 1.1,
               }}
             >
-              Why <em style={{ fontStyle: "italic" }}>Choose</em> Us
+              Vì sao <em style={{ fontStyle: "italic" }}>chọn</em> chúng tôi
             </h2>
           </div>
 
@@ -214,15 +213,14 @@ export default function WhyChooseUs() {
             alignItems: "start",
           }}
         >
-
-          {/* LEFT — Featured panel */}
+          {/* Bên trái — nội dung nổi bật */}
           <div
             style={{
               borderTop: "0.5px solid rgba(115,92,0,0.25)",
               paddingTop: 40,
             }}
           >
-            {/* Tag */}
+            {/* Nhãn */}
             <p
               key={`tag-${active}`}
               style={{
@@ -238,11 +236,11 @@ export default function WhyChooseUs() {
               {featured.tag}
             </p>
 
-            {/* Title */}
+            {/* Tiêu đề */}
             <h3
               key={`title-${active}`}
               style={{
-                fontFamily: "'Spectral', Georgia, serif",
+                fontFamily: "'Noto Serif Display', 'Noto Serif', serif",
                 fontSize: "clamp(36px, 5vw, 56px)",
                 fontWeight: 300,
                 color: "#1D1C19",
@@ -255,7 +253,7 @@ export default function WhyChooseUs() {
               {featured.title}
             </h3>
 
-            {/* Description */}
+            {/* Mô tả */}
             <p
               key={`desc-${active}`}
               style={{
@@ -270,7 +268,7 @@ export default function WhyChooseUs() {
               {featured.description}
             </p>
 
-            {/* Detail pill */}
+            {/* Chi tiết */}
             <div
               key={`detail-${active}`}
               style={{
@@ -302,21 +300,16 @@ export default function WhyChooseUs() {
             </div>
           </div>
 
-          {/* RIGHT — Sub-list */}
+          {/* Bên phải — danh sách phụ */}
           <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
             {reasons.map((r, i) => (
-              <SubItem
-                key={r.id}
-                reason={r}
-                active={i === active}
-                onClick={() => setActive(i)}
-              />
+              <SubItem key={r.id} reason={r} active={i === active} onClick={() => setActive(i)} />
             ))}
           </div>
         </div>
       </div>
 
-      {/* Keyframe */}
+      {/* Hiệu ứng */}
       <style>{`
         @keyframes fadeUp {
           from { opacity: 0; transform: translateY(14px); }

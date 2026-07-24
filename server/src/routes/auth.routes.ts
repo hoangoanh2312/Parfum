@@ -9,19 +9,19 @@ import { strongPasswordSchema } from '../validators/password.schema';
 
 const r = Router();
 
-// Limiter chat rieng cho cac endpoint nhay cam -> chong brute-force login/register/quen mat khau.
-// Luu y: rateLimit dang in-memory theo tien trinh; khi deploy nhieu instance nen dung Redis store.
+// Limiter chặt riêng cho các endpoint nhạy cảm để chống brute-force login/register/quên mật khẩu.
+// Lưu ý: rateLimit đang in-memory theo tiến trình; khi deploy nhiều instance nên dùng Redis store.
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 10,
-  message: 'Qua nhieu lan thu, vui long thu lai sau 15 phut',
+  message: 'Quá nhiều lần thử, vui lòng thử lại sau 15 phút',
 });
 
 const phoneSchema = z
   .string()
-  .regex(/^0\d{9}$/, 'Phone must start with 0 and contain exactly 10 digits');
+  .regex(/^0\d{9}$/, 'Số điện thoại phải bắt đầu bằng 0 và gồm đúng 10 chữ số');
 
-// Shape dia chi thong nhat. Chap nhan `detail` (client cu) va map sang `line` o service.
+// Shape địa chỉ thống nhất. Chấp nhận `detail` từ client cũ và map sang `line` ở service.
 const addressSchema = z
   .object({
     label: z.string().trim().min(1).optional(),
@@ -29,13 +29,13 @@ const addressSchema = z
     phone: phoneSchema,
     line: z.string().trim().min(1).optional(),
     detail: z.string().trim().min(1).optional(),
-    ward: z.string().trim().min(1, 'Ward is required'),
+    ward: z.string().trim().min(1, 'Vui lòng chọn phường/xã'),
     district: z.string().trim().optional(),
-    province: z.string().trim().min(1, 'Province is required'),
+    province: z.string().trim().min(1, 'Vui lòng chọn tỉnh/thành phố'),
     isDefault: z.boolean().optional(),
   })
   .refine((d) => !!(d.line || d.detail), {
-    message: 'Thieu dia chi chi tiet (line)',
+    message: 'Thiếu địa chỉ chi tiết',
     path: ['line'],
   });
 
@@ -61,7 +61,7 @@ r.post(
 r.post('/refresh', verifyCsrf, ctrl.refresh);
 r.post('/logout', verifyCsrf, authenticate, ctrl.logout);
 
-// Quen / dat lai mat khau qua email
+// Quên / đặt lại mật khẩu qua email.
 r.post(
   '/forgot-password',
   authLimiter,
@@ -74,7 +74,7 @@ r.post(
   validate(
     z.object({
       email: z.string().email(),
-      otp: z.string().regex(/^\d{6}$/, 'OTP must contain exactly 6 digits'),
+      otp: z.string().regex(/^\d{6}$/, 'OTP phải gồm đúng 6 chữ số'),
     }),
   ),
   ctrl.verifyEmailPasswordResetOtp,
@@ -91,7 +91,7 @@ r.post(
   validate(
     z.object({
       phone: phoneSchema,
-      otp: z.string().regex(/^\d{6}$/, 'OTP must contain exactly 6 digits'),
+      otp: z.string().regex(/^\d{6}$/, 'OTP phải gồm đúng 6 chữ số'),
     }),
   ),
   ctrl.verifyPasswordResetOtp,
@@ -103,7 +103,7 @@ r.post(
   ctrl.resetPassword,
 );
 
-// Xac thuc email
+// Xác thực email.
 r.post('/verify-email', validate(z.object({ token: z.string().min(10) })), ctrl.verifyEmail);
 r.post('/me/send-verification', authenticate, ctrl.sendVerification);
 

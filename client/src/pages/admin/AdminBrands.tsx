@@ -193,10 +193,10 @@ export default function AdminBrands() {
     <div>
       <PageHeader
         title="Quản lý thương hiệu"
-        subtitle="Thêm, sửa và ẩn/hiện các thương hiệu trên trang Brand"
+        subtitle="Thêm, sửa và ẩn/hiện các thương hiệu trên trang Thương hiệu"
         actions={
           <Button onClick={openCreate}>
-            <Plus className="h-4 w-4" /> Add Brand
+            <Plus className="h-4 w-4" /> Thêm thương hiệu
           </Button>
         }
       />
@@ -260,7 +260,7 @@ export default function AdminBrands() {
                             rel="noreferrer"
                             className="inline-flex items-center gap-1 text-[#75672F] hover:underline"
                           >
-                            View collection <ExternalLink className="h-3 w-3" />
+                            Xem bộ sưu tập <ExternalLink className="h-3 w-3" />
                           </a>
                         )}
                         {brand.journalUrl && (
@@ -270,7 +270,7 @@ export default function AdminBrands() {
                             rel="noreferrer"
                             className="block text-[#75672F] hover:underline"
                           >
-                            Read journal
+                            Đọc nhật ký
                           </a>
                         )}
                         {!brand.viewCollectionUrl && !brand.journalUrl && (
@@ -281,7 +281,7 @@ export default function AdminBrands() {
                     <td className="p-4">
                       <div className="flex flex-col items-start gap-2">
                         <Badge color={brand.isPublished ? "green" : "gray"}>
-                          {brand.isPublished ? "Published" : "Draft"}
+                          {brand.isPublished ? "Đã đăng" : "Bản nháp"}
                         </Badge>
                         {brand.isFeatured && (
                           <Badge color="yellow">
@@ -326,16 +326,16 @@ export default function AdminBrands() {
         footer={
           <>
             <Button variant="secondary" onClick={() => setModalOpen(false)}>
-              Cancel
+              Hủy
             </Button>
             <Button onClick={save} disabled={saving}>
-              {saving ? "Đang lưu..." : "Save"}
+              {saving ? "Đang lưu..." : "Lưu"}
             </Button>
           </>
         }
       >
         <div className="grid gap-4 md:grid-cols-2">
-          <Field label="Tên brand">
+          <Field label="Tên thương hiệu">
             <Input
               value={form.name}
               onChange={(event) => updateName(event.target.value)}
@@ -352,7 +352,7 @@ export default function AdminBrands() {
               placeholder="byredo"
             />
           </Field>
-          <Field label="View Collection URL">
+          <Field label="URL bộ sưu tập">
             <Input
               value={form.viewCollectionUrl}
               onChange={(event) => {
@@ -362,7 +362,7 @@ export default function AdminBrands() {
               placeholder="/shop?brand=Byredo"
             />
           </Field>
-          <Field label="Read Journal URL (optional)">
+          <Field label="URL nhật ký (tùy chọn)">
             <Input
               value={form.journalUrl}
               onChange={(event) => setForm({ ...form, journalUrl: event.target.value })}
@@ -373,7 +373,7 @@ export default function AdminBrands() {
             <Input
               value={form.country}
               onChange={(event) => setForm({ ...form, country: event.target.value })}
-              placeholder="France, Italy..."
+              placeholder="Pháp, Ý..."
             />
           </Field>
           <Field label="Năm thành lập">
@@ -402,7 +402,7 @@ export default function AdminBrands() {
               maxLength={320}
               onChange={(event) => setForm({ ...form, description: event.target.value })}
               className="min-h-28"
-              placeholder="Đoạn mô tả ngắn 2-3 câu cho thẻ brand..."
+              placeholder="Đoạn mô tả ngắn 2-3 câu cho thẻ thương hiệu..."
             />
           </Field>
         </div>
@@ -418,7 +418,7 @@ export default function AdminBrands() {
               <ImageUploader
                 multiple={false}
                 folder="brand"
-                label="Upload hero"
+                label="Tải ảnh hero"
                 onUploaded={(urls) =>
                   setForm((current) => ({ ...current, heroImage: urls[0] || current.heroImage }))
                 }
@@ -433,7 +433,7 @@ export default function AdminBrands() {
               )}
             </div>
           </Field>
-          <Field label="Logo (optional)">
+          <Field label="Logo (tùy chọn)">
             <div className="space-y-2">
               <Input
                 value={form.logo}
@@ -443,7 +443,7 @@ export default function AdminBrands() {
               <ImageUploader
                 multiple={false}
                 folder="brand"
-                label="Upload logo"
+                label="Tải logo"
                 onUploaded={(urls) =>
                   setForm((current) => ({ ...current, logo: urls[0] || current.logo }))
                 }
@@ -468,7 +468,7 @@ export default function AdminBrands() {
               onChange={(event) => setForm({ ...form, isPublished: event.target.checked })}
               className="h-4 w-4 accent-gray-900"
             />
-            Published trên trang Brand
+            Đăng trên trang Thương hiệu
           </label>
           <label className="flex items-center gap-3 border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700">
             <input
@@ -480,7 +480,7 @@ export default function AdminBrands() {
             <span>
               <span className="block font-medium text-gray-800">Nổi bật trên trang chủ</span>
               <span className="mt-1 block text-xs text-gray-500">
-                Brand sẽ hiện trong mục Thương hiệu nổi bật ở Home.
+                Thương hiệu sẽ hiện trong mục Thương hiệu nổi bật ở Trang chủ.
               </span>
             </span>
           </label>

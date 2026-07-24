@@ -43,7 +43,7 @@ function compactMoney(value: number) {
 function SectionHeading({ children, action }: { children: ReactNode; action?: ReactNode }) {
   return (
     <div className="mb-5 flex min-h-5 items-center justify-between gap-4">
-      <h2 className="font-['Montserrat'] text-[10px] font-semibold uppercase tracking-[0.17em] text-[#3E3D39]">
+      <h2 className="font-sans text-[10px] font-semibold uppercase tracking-[0.17em] text-[#3E3D39]">
         {children}
       </h2>
       {action}
@@ -67,7 +67,7 @@ function Metric({
   const content = (
     <div className="min-h-[132px] border-t border-[#C9C7C1] px-1 py-5 sm:px-3">
       <p
-        className={`font-['Montserrat'] text-[9px] font-semibold uppercase tracking-[0.16em] ${
+        className={`font-sans text-[9px] font-semibold uppercase tracking-[0.16em] ${
           tone === "danger" ? "text-[#C23E39]" : "text-[#5A5853]"
         }`}
       >
@@ -113,11 +113,14 @@ function RevenueChart({ data }: { data: Stats["revenueTrend"] }) {
   const padY = 20;
   const max = Math.max(...data.map((item) => item.revenue), 1);
   const points = data.map((item, index) => {
-    const x = data.length === 1 ? width / 2 : padX + (index / (data.length - 1)) * (width - padX * 2);
+    const x =
+      data.length === 1 ? width / 2 : padX + (index / (data.length - 1)) * (width - padX * 2);
     const y = height - padY - (item.revenue / max) * (height - padY * 2);
     return { x, y, ...item };
   });
-  const line = points.map((point, index) => `${index === 0 ? "M" : "L"}${point.x},${point.y}`).join(" ");
+  const line = points
+    .map((point, index) => `${index === 0 ? "M" : "L"}${point.x},${point.y}`)
+    .join(" ");
   const area = points.length
     ? `${line} L${points[points.length - 1].x},${height - padY} L${points[0].x},${height - padY} Z`
     : "";
@@ -173,7 +176,7 @@ function RevenueChart({ data }: { data: Stats["revenueTrend"] }) {
       <div className="grid grid-cols-3 gap-y-3 border-t border-[#E1DED8] pt-3 sm:grid-cols-6">
         {data.map((item) => (
           <div key={item.key} className="min-w-0 text-center">
-            <p className="font-['Montserrat'] text-[8px] uppercase text-[#77736B]">{item.label}</p>
+            <p className="font-sans text-[8px] uppercase text-[#77736B]">{item.label}</p>
             <p className="mt-1 truncate text-[8px] text-[#A09C94]">{compactMoney(item.revenue)}</p>
           </div>
         ))}
@@ -238,18 +241,20 @@ export default function AdminDashboard() {
   );
 
   return (
-    <div className="font-['Montserrat']">
+    <div className="font-sans">
       <section className="flex flex-col gap-7 border-b border-[#C9C7C1] pb-7 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-[9px] font-semibold uppercase tracking-[0.23em] text-[#77736B]">
-            Executive overview
+            Tổng quan điều hành
           </p>
           <h1 className="mt-3 font-title text-[38px] font-medium leading-none text-black sm:text-[48px]">
-            Performance Dashboard
+            Bảng hiệu suất
           </h1>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <label className="sr-only" htmlFor="dashboard-period">Khoảng thời gian</label>
+          <label className="sr-only" htmlFor="dashboard-period">
+            Khoảng thời gian
+          </label>
           <select
             id="dashboard-period"
             value={period}
@@ -269,7 +274,10 @@ export default function AdminDashboard() {
             title="Làm mới dữ liệu"
             aria-label="Làm mới dữ liệu"
           >
-            <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} strokeWidth={1.6} />
+            <RefreshCw
+              className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
+              strokeWidth={1.6}
+            />
           </button>
         </div>
       </section>
@@ -278,37 +286,61 @@ export default function AdminDashboard() {
         <Metric
           label="Tổng doanh thu"
           value={formatVnd(stats.revenue)}
-          detail={<><TrendingUp className="h-3 w-3" /> TB {formatVnd(aov)} / đơn</>}
+          detail={
+            <>
+              <TrendingUp className="h-3 w-3" /> TB {formatVnd(aov)} / đơn
+            </>
+          }
         />
         <Metric
           label="Tổng đơn hàng"
           value={stats.orderCount.toLocaleString("vi-VN")}
-          detail={<><TrendingUp className="h-3 w-3" /> {paidOrders} đơn ghi nhận</>}
+          detail={
+            <>
+              <TrendingUp className="h-3 w-3" /> {paidOrders} đơn ghi nhận
+            </>
+          }
           to="/admin/orders"
         />
         <Metric
           label="Sản phẩm đã bán"
           value={stats.productsSold.toLocaleString("vi-VN")}
-          detail={<><TrendingUp className="h-3 w-3" /> {stats.activeProductCount} sản phẩm đang bán</>}
+          detail={
+            <>
+              <TrendingUp className="h-3 w-3" /> {stats.activeProductCount} sản phẩm đang bán
+            </>
+          }
           to="/admin/products"
         />
         <Metric
           label="Khách hàng mới"
           value={stats.newCustomerCount.toLocaleString("vi-VN")}
-          detail={<><TrendingDown className="h-3 w-3" /> Trong 30 ngày qua</>}
+          detail={
+            <>
+              <TrendingDown className="h-3 w-3" /> Trong 30 ngày qua
+            </>
+          }
           to="/admin/users"
         />
         <Metric
           label="Đơn chờ xử lý"
           value={stats.ordersByStatus.pending || 0}
-          detail={<><Clock3 className="h-3 w-3" /> Cần kiểm tra trạng thái</>}
+          detail={
+            <>
+              <Clock3 className="h-3 w-3" /> Cần kiểm tra trạng thái
+            </>
+          }
           to="/admin/orders?status=pending"
         />
         <Metric
           label="Sắp hết hàng"
           value={stats.lowStockCount}
           tone="danger"
-          detail={<><TriangleAlert className="h-3 w-3" /> Cần bổ sung kho</>}
+          detail={
+            <>
+              <TriangleAlert className="h-3 w-3" /> Cần bổ sung kho
+            </>
+          }
           to="/admin/variants?lowStock=true"
         />
       </section>
@@ -337,8 +369,14 @@ export default function AdminDashboard() {
                 const count = stats.ordersByStatus[status] || 0;
                 const percent = totalStatus ? Math.round((count / totalStatus) * 100) : 0;
                 return (
-                  <div key={status} className="flex min-w-0 items-center gap-2 text-[8px] text-[#5D5A54]">
-                    <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: STATUS_COLORS[status] }} />
+                  <div
+                    key={status}
+                    className="flex min-w-0 items-center gap-2 text-[8px] text-[#5D5A54]"
+                  >
+                    <span
+                      className="h-2 w-2 shrink-0 rounded-full"
+                      style={{ background: STATUS_COLORS[status] }}
+                    />
                     <span className="truncate">{ORDER_STATUS_LABEL[status]}</span>
                     <span className="ml-auto text-[#8D8982]">{percent}%</span>
                   </div>
@@ -355,35 +393,58 @@ export default function AdminDashboard() {
           {stats.topProducts.length ? (
             <div className="space-y-5">
               {stats.topProducts.map((product) => (
-                <div key={product.name} className="grid grid-cols-[minmax(0,1fr)_88px_48px] items-center gap-3">
-                  <span className="truncate text-[9px] text-[#363430]" title={product.name}>{product.name}</span>
+                <div
+                  key={product.name}
+                  className="grid grid-cols-[minmax(0,1fr)_88px_48px] items-center gap-3"
+                >
+                  <span className="truncate text-[9px] text-[#363430]" title={product.name}>
+                    {product.name}
+                  </span>
                   <div className="h-[3px] bg-[#E1DED8]">
-                    <div className="h-full bg-[#22211F]" style={{ width: `${(product.quantity / topProductMax) * 100}%` }} />
+                    <div
+                      className="h-full bg-[#22211F]"
+                      style={{ width: `${(product.quantity / topProductMax) * 100}%` }}
+                    />
                   </div>
-                  <span className="text-right text-[8px] text-[#6E6A63]">{product.quantity} sp</span>
+                  <span className="text-right text-[8px] text-[#6E6A63]">
+                    {product.quantity} sp
+                  </span>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="py-12 text-center text-[10px] text-[#918D86]">Chưa có dữ liệu bán hàng.</p>
+            <p className="py-12 text-center text-[10px] text-[#918D86]">
+              Chưa có dữ liệu bán hàng.
+            </p>
           )}
         </div>
 
         <div className="border-t border-[#C9C7C1] pt-5">
           <SectionHeading>Doanh thu theo thương hiệu</SectionHeading>
           <div className="flex flex-col items-center">
-            <div className="relative mt-2 h-32 w-32 rounded-full" style={{ background: brandGradient }}>
+            <div
+              className="relative mt-2 h-32 w-32 rounded-full"
+              style={{ background: brandGradient }}
+            >
               <div className="absolute inset-[13px] flex flex-col items-center justify-center rounded-full bg-[#FCF9F5] text-center">
                 <span className="font-numeric text-xl text-black">
                   {brandTotal && topBrand ? Math.round((topBrand.value / brandTotal) * 100) : 0}%
                 </span>
-                <span className="max-w-20 truncate text-[8px] text-[#716D66]">{topBrand?.name || "Chưa có"}</span>
+                <span className="max-w-20 truncate text-[8px] text-[#716D66]">
+                  {topBrand?.name || "Chưa có"}
+                </span>
               </div>
             </div>
             <div className="mt-6 grid w-full grid-cols-2 gap-3">
               {stats.revenueByBrand.map((brand, index) => (
-                <div key={brand.name} className="flex min-w-0 items-center gap-2 text-[8px] text-[#5D5A54]">
-                  <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: BRAND_COLORS[index % BRAND_COLORS.length] }} />
+                <div
+                  key={brand.name}
+                  className="flex min-w-0 items-center gap-2 text-[8px] text-[#5D5A54]"
+                >
+                  <span
+                    className="h-2 w-2 shrink-0 rounded-full"
+                    style={{ background: BRAND_COLORS[index % BRAND_COLORS.length] }}
+                  />
                   <span className="truncate">{brand.name}</span>
                 </div>
               ))}
@@ -394,12 +455,23 @@ export default function AdminDashboard() {
         <div className="border-t border-[#C9C7C1] pt-5">
           <SectionHeading>Doanh thu theo danh mục</SectionHeading>
           <div>
-            {stats.revenueByCategory.length ? stats.revenueByCategory.map((category) => (
-              <div key={category.name} className="flex items-center justify-between gap-4 border-b border-[#E5E1DB] py-4 text-[9px] last:border-0">
-                <span className="truncate text-[#413F3A]">{category.name}</span>
-                <span className="shrink-0 font-medium text-black">{formatVnd(category.value)}</span>
-              </div>
-            )) : <p className="py-12 text-center text-[10px] text-[#918D86]">Chưa có dữ liệu danh mục.</p>}
+            {stats.revenueByCategory.length ? (
+              stats.revenueByCategory.map((category) => (
+                <div
+                  key={category.name}
+                  className="flex items-center justify-between gap-4 border-b border-[#E5E1DB] py-4 text-[9px] last:border-0"
+                >
+                  <span className="truncate text-[#413F3A]">{category.name}</span>
+                  <span className="shrink-0 font-medium text-black">
+                    {formatVnd(category.value)}
+                  </span>
+                </div>
+              ))
+            ) : (
+              <p className="py-12 text-center text-[10px] text-[#918D86]">
+                Chưa có dữ liệu danh mục.
+              </p>
+            )}
           </div>
         </div>
       </section>
@@ -407,7 +479,10 @@ export default function AdminDashboard() {
       <section className="mt-16 border-t border-[#C9C7C1] pt-5">
         <SectionHeading
           action={
-            <Link to="/admin/orders" className="flex items-center gap-1.5 text-[9px] font-medium text-[#75672F] hover:text-black">
+            <Link
+              to="/admin/orders"
+              className="flex items-center gap-1.5 text-[9px] font-medium text-[#75672F] hover:text-black"
+            >
               Xem tất cả <ArrowRight className="h-3 w-3" />
             </Link>
           }
@@ -428,15 +503,23 @@ export default function AdminDashboard() {
             </thead>
             <tbody>
               {stats.recentOrders.map((order) => (
-                <tr key={order.id} className="border-b border-[#E3E0DA] text-[9px] text-[#4A4843] transition hover:bg-[#F6F1EB]">
-                  <td className="px-3 py-4 font-medium text-black">#{order.id.slice(-6).toUpperCase()}</td>
+                <tr
+                  key={order.id}
+                  className="border-b border-[#E3E0DA] text-[9px] text-[#4A4843] transition hover:bg-[#F6F1EB]"
+                >
+                  <td className="px-3 py-4 font-medium text-black">
+                    #{order.id.slice(-6).toUpperCase()}
+                  </td>
                   <td className="px-3 py-4 text-[#77736B]">{formatDate(order.createdAt)}</td>
                   <td className="max-w-52 truncate px-3 py-4">{order.customer}</td>
                   <td className="px-3 py-4">{order.itemCount} sản phẩm</td>
                   <td className="px-3 py-4 font-medium text-black">{formatVnd(order.total)}</td>
                   <td className="px-3 py-4">
                     <span className="inline-flex items-center gap-2 whitespace-nowrap">
-                      <span className="h-1.5 w-1.5 rounded-full" style={{ background: STATUS_COLORS[order.status] || "#777" }} />
+                      <span
+                        className="h-1.5 w-1.5 rounded-full"
+                        style={{ background: STATUS_COLORS[order.status] || "#777" }}
+                      />
                       {ORDER_STATUS_LABEL[order.status] || order.status}
                     </span>
                   </td>
@@ -454,7 +537,11 @@ export default function AdminDashboard() {
         <div className="space-y-12">
           <div className="border-t border-[#C9C7C1] pt-5">
             <SectionHeading
-              action={<span className="bg-[#F7E8E5] px-2 py-1 text-[8px] text-[#C13C37]">{stats.lowStockCount} mặt hàng</span>}
+              action={
+                <span className="bg-[#F7E8E5] px-2 py-1 text-[8px] text-[#C13C37]">
+                  {stats.lowStockCount} mặt hàng
+                </span>
+              }
             >
               Cảnh báo tồn kho
             </SectionHeading>
@@ -465,19 +552,26 @@ export default function AdminDashboard() {
                 className="flex items-center justify-between gap-4 border-b border-[#E3E0DA] py-4 text-[9px] hover:bg-[#F6F1EB]"
               >
                 <span className="min-w-0 truncate text-[#3C3A36]">
-                  {item.name}{item.volume ? `, ${item.volume}` : ""}
+                  {item.name}
+                  {item.volume ? `, ${item.volume}` : ""}
                 </span>
                 <span className="shrink-0 font-medium text-[#C13C37]">
                   {item.stock === 0 ? "Hết hàng" : `Còn ${item.stock}`}
                 </span>
               </Link>
             ))}
-            {!stats.lowStockItems.length && <p className="py-8 text-[10px] text-[#77736B]">Tồn kho đang ở mức ổn định.</p>}
+            {!stats.lowStockItems.length && (
+              <p className="py-8 text-[10px] text-[#77736B]">Tồn kho đang ở mức ổn định.</p>
+            )}
           </div>
 
           <div className="border-t border-[#C9C7C1] pt-5">
             <SectionHeading
-              action={<Link to="/admin/users" className="text-[8px] text-[#75672F] hover:text-black">Xem tất cả</Link>}
+              action={
+                <Link to="/admin/users" className="text-[8px] text-[#75672F] hover:text-black">
+                  Xem tất cả
+                </Link>
+              }
             >
               Khách hàng mới
             </SectionHeading>
@@ -485,13 +579,24 @@ export default function AdminDashboard() {
               {stats.newCustomers.map((customer) => (
                 <div key={customer.id} className="flex items-center gap-3">
                   <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#E8E5DF] text-[9px] font-medium text-[#45423D]">
-                    {customer.name.split(/\s+/).map((part) => part[0]).slice(-2).join("").toUpperCase()}
+                    {customer.name
+                      .split(/\s+/)
+                      .map((part) => part[0])
+                      .slice(-2)
+                      .join("")
+                      .toUpperCase()}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-[10px] font-medium text-[#292824]">{customer.name}</p>
-                    <p className="mt-0.5 text-[8px] text-[#8A867F]">Tham gia {formatDate(customer.createdAt)}</p>
+                    <p className="truncate text-[10px] font-medium text-[#292824]">
+                      {customer.name}
+                    </p>
+                    <p className="mt-0.5 text-[8px] text-[#8A867F]">
+                      Tham gia {formatDate(customer.createdAt)}
+                    </p>
                   </div>
-                  <span className="shrink-0 text-[8px] text-[#77736B]">{customer.orderCount} đơn</span>
+                  <span className="shrink-0 text-[8px] text-[#77736B]">
+                    {customer.orderCount} đơn
+                  </span>
                 </div>
               ))}
             </div>
@@ -501,7 +606,11 @@ export default function AdminDashboard() {
         <div className="space-y-12">
           <div className="border-t border-[#C9C7C1] pt-5">
             <SectionHeading
-              action={<span className="flex items-center gap-1 text-[8px] text-[#75672F]"><Star className="h-3 w-3" /> Gần đây</span>}
+              action={
+                <span className="flex items-center gap-1 text-[8px] text-[#75672F]">
+                  <Star className="h-3 w-3" /> Gần đây
+                </span>
+              }
             >
               Đánh giá mới nhất
             </SectionHeading>
@@ -510,16 +619,30 @@ export default function AdminDashboard() {
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex gap-0.5 text-[#76682E]">
                     {Array.from({ length: 5 }, (_, index) => (
-                      <Star key={index} className="h-3 w-3" fill={index < review.rating ? "currentColor" : "none"} strokeWidth={1.4} />
+                      <Star
+                        key={index}
+                        className="h-3 w-3"
+                        fill={index < review.rating ? "currentColor" : "none"}
+                        strokeWidth={1.4}
+                      />
                     ))}
                   </div>
-                  <time className="shrink-0 text-[8px] text-[#99958E]">{formatDate(review.createdAt)}</time>
+                  <time className="shrink-0 text-[8px] text-[#99958E]">
+                    {formatDate(review.createdAt)}
+                  </time>
                 </div>
-                <p className="mt-3 line-clamp-2 text-[11px] leading-5 text-[#292824]">“{review.comment}”</p>
-                <p className="mt-2 text-[8px] text-[#77736B]">— {review.userName}{review.productName ? ` · ${review.productName}` : ""}</p>
+                <p className="mt-3 line-clamp-2 text-[11px] leading-5 text-[#292824]">
+                  “{review.comment}”
+                </p>
+                <p className="mt-2 text-[8px] text-[#77736B]">
+                  — {review.userName}
+                  {review.productName ? ` · ${review.productName}` : ""}
+                </p>
               </article>
             ))}
-            {!stats.recentReviews.length && <p className="py-8 text-[10px] text-[#77736B]">Chưa có đánh giá đã duyệt.</p>}
+            {!stats.recentReviews.length && (
+              <p className="py-8 text-[10px] text-[#77736B]">Chưa có đánh giá đã duyệt.</p>
+            )}
           </div>
 
           <div className="border-t border-[#C9C7C1] pt-5">
@@ -536,12 +659,17 @@ export default function AdminDashboard() {
                       <span className="ml-auto text-[#77736B]">{payment.percentage}%</span>
                     </div>
                     <div className="h-[3px] bg-[#E1DED8]">
-                      <div className="h-full bg-[#232220]" style={{ width: `${payment.percentage}%` }} />
+                      <div
+                        className="h-full bg-[#232220]"
+                        style={{ width: `${payment.percentage}%` }}
+                      />
                     </div>
                   </div>
                 );
               })}
-              {!stats.paymentMethods.length && <p className="py-6 text-[10px] text-[#77736B]">Chưa có dữ liệu thanh toán.</p>}
+              {!stats.paymentMethods.length && (
+                <p className="py-6 text-[10px] text-[#77736B]">Chưa có dữ liệu thanh toán.</p>
+              )}
             </div>
           </div>
         </div>
@@ -549,7 +677,9 @@ export default function AdminDashboard() {
 
       <footer className="mt-24 flex flex-col gap-5 border-t border-[#C9C7C1] py-10 sm:flex-row sm:items-center sm:justify-between">
         <p className="font-title text-2xl font-semibold text-black">{"L'Essence Noire"}</p>
-        <p className="text-[8px] uppercase tracking-[0.16em] text-[#8B8780]">Admin Console · Dữ liệu cập nhật theo thời gian thực</p>
+        <p className="text-[8px] uppercase tracking-[0.16em] text-[#8B8780]">
+          Bảng quản trị · Dữ liệu cập nhật theo thời gian thực
+        </p>
       </footer>
     </div>
   );

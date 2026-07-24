@@ -34,7 +34,9 @@ export async function create(input: any) {
   const image = String(input.image || '').trim();
   if (!name) throw httpError('Ten nhom huong la bat buoc');
   if (!image) throw httpError('Anh card nhom huong la bat buoc');
-  const exists = await ScentFamilyCard.findOne({ name: { $regex: `^${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, $options: 'i' } });
+  const exists = await ScentFamilyCard.findOne({
+    name: { $regex: `^${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, $options: 'i' },
+  });
   if (exists) throw httpError('Nhom huong nay da co card', 409);
   const item = await ScentFamilyCard.create({
     name,
@@ -67,13 +69,12 @@ export async function update(id: string, input: any) {
     },
     { new: true, runValidators: true },
   );
-  if (!item) throw httpError('Khong tim thay card nhom huong', 404);
+  if (!item) throw httpError('Không tìm thấy card nhóm hương', 404);
   return normalize(item);
 }
 
 export async function remove(id: string) {
   const item = await ScentFamilyCard.findByIdAndDelete(id);
-  if (!item) throw httpError('Khong tim thay card nhom huong', 404);
+  if (!item) throw httpError('Không tìm thấy card nhóm hương', 404);
   return { id, deleted: true };
 }
-

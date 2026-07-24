@@ -37,7 +37,7 @@ export const listProductReviews = async (req: Request, res: Response) => {
       })),
     );
   } catch (error: any) {
-    return res.status(500).json({ message: error.message || 'Khong tai duoc review' });
+    return res.status(500).json({ message: error.message || 'Không tải được đánh giá' });
   }
 };
 
@@ -86,6 +86,8 @@ export const createReview = async (req: Request, res: Response) => {
       message: 'Cam on ban da danh gia san pham',
     });
   } catch (error: any) {
-    return res.status(error.status || 500).json({ message: error.message || 'Khong gui duoc review' });
+    return res
+      .status(error.status || 500)
+      .json({ message: error.message || 'Không gửi được đánh giá' });
   }
 };

@@ -17,7 +17,7 @@ const FOOTER_LINKS = [
       { label: "Đăng ký", to: "/register" },
       { label: "Đơn hàng của tôi", to: "/account/orders" },
       { label: "Sổ địa chỉ", to: "/account/addresses" },
-      { label: "Wishlist", to: "/account/wishlist" },
+      { label: "Yêu thích", to: "/account/wishlist" },
     ],
   },
   {
@@ -27,7 +27,7 @@ const FOOTER_LINKS = [
       { label: "Liên hệ", to: "/contact" },
       { label: "Chính sách bảo mật", to: "/privacy-policy" },
       { label: "Giới thiệu", to: "/about" },
-      { label: "Journal", to: "/blog" },
+      { label: "Tin tức", to: "/blog" },
     ],
   },
 ];
@@ -39,74 +39,75 @@ export default function Footer() {
   return (
     <footer
       className="border-t border-white/[0.06] bg-[#161412] text-[#8A8580]"
-      style={{ fontFamily: "'Manrope', sans-serif" }}
+      style={{ fontFamily: "'Manrope', 'Be Vietnam Pro', sans-serif" }}
     >
       <div className="mx-auto w-full max-w-[1680px] px-5 sm:px-8 lg:px-10 2xl:px-2.5">
         <div className="grid gap-6 py-10 lg:grid-cols-lg:grid-cols-[365px_minmax(0,1fr)] lg:items-start lg:gap-6 lg:py-16 2xl:grid-cols-12 2xl:gap-x-2">
           <Link
-  to="/shop"
-   className="group relative hidden h-[420px] w-[320px] overflow-hidden border border-white/[0.08] lg:block 2xl:translate-x-[130px]">
-  <img
-    loading="lazy"
-    src={PROMO_IMAGE}
-    alt="L'Essence Noire fragrance collection"
-    className="absolute inset-0 h-full w-full object-cover opacity-65 transition duration-700 group-hover:scale-[1.03] group-hover:opacity-80"
-  />
+            to="/shop"
+            className="group relative hidden h-[420px] w-[320px] overflow-hidden border border-white/[0.08] lg:block 2xl:translate-x-[130px]"
+          >
+            <img
+              loading="lazy"
+              src={PROMO_IMAGE}
+              alt="Bộ sưu tập nước hoa L'Essence Noire"
+              className="absolute inset-0 h-full w-full object-cover opacity-65 transition duration-700 group-hover:scale-[1.03] group-hover:opacity-80"
+            />
 
-  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-black/45" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-black/45" />
 
-  <div className="absolute inset-x-0 top-0 p-7">
-    <span
-      className="text-[14px] font-semibold uppercase tracking-[0.22em] text-white"
-      style={{ fontFamily: "'Spectral', 'Noto Serif', serif" }}
-    >
-      L&apos;Essence Noire
-    </span>
+            <div className="absolute inset-x-0 top-0 p-7">
+              <span
+                className="text-[14px] font-semibold uppercase tracking-[0.22em] text-white"
+                style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
+              >
+                L&apos;Essence Noire
+              </span>
 
-    <span className="mt-3 block h-px w-10 bg-[#C9A84C]/70" />
+              <span className="mt-3 block h-px w-10 bg-[#C9A84C]/70" />
 
-    <p
-      className="mt-5 max-w-[240px] text-[12px] leading-6 text-white/80"
-      style={{ fontFamily: "'Manrope', sans-serif" }}
-    >
-      Discover a curated collection of authentic fragrances, where every scent
-      is carefully selected to express elegance, confidence, and individuality.
-    </p>
-  </div>
+              <p
+                className="mt-5 max-w-[240px] text-[12px] leading-6 text-white/80"
+                style={{ fontFamily: "'Manrope', 'Be Vietnam Pro', sans-serif" }}
+              >
+                Khám phá bộ sưu tập nước hoa chính hãng được tuyển chọn kỹ lưỡng, nơi mỗi mùi hương
+                thể hiện sự thanh lịch, tự tin và cá tính riêng.
+              </p>
+            </div>
 
-  <div className="absolute inset-x-0 bottom-0 p-7">
-    <p className="text-[9px] font-semibold uppercase tracking-[0.22em] text-[#D8CBB7]">
-      Signature Collection
-    </p>
+            <div className="absolute inset-x-0 bottom-0 p-7">
+              <p className="text-[9px] font-semibold uppercase tracking-[0.22em] text-[#D8CBB7]">
+                Bộ sưu tập đặc trưng
+              </p>
 
-    <h3
-      className="mt-3 text-[25px] font-bold leading-[1.12] text-white"
-      style={{ fontFamily: "'Spectral', 'Noto Serif', serif" }}
-    >
-      Find Your
-      <br />
-      Next Scent
-    </h3>
+              <h3
+                className="mt-3 text-[25px] font-bold leading-[1.12] text-white"
+                style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
+              >
+                Tìm mùi hương
+                <br />
+                tiếp theo
+              </h3>
 
-    <span className="mt-6 inline-flex w-full justify-center border border-[#D9D2C4] bg-[#EDE8DF] py-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#735C00] transition group-hover:bg-white">
-      Khám phá ngay
-    </span>
-  </div>
-</Link>
+              <span className="mt-6 inline-flex w-full justify-center border border-[#D9D2C4] bg-[#EDE8DF] py-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#735C00] transition group-hover:bg-white">
+                Khám phá ngay
+              </span>
+            </div>
+          </Link>
 
           <div className="lg:pt-7 2xl:col-span-7 2xl:col-start-5">
             <div className="mb-10 lg:mb-12">
               <Link
                 to="/"
                 className="inline-flex text-[15px] font-semibold uppercase tracking-[0.22em] text-white"
-                style={{ fontFamily: "'Spectral', 'Noto Serif', serif" }}
+                style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
               >
                 L&apos;Essence Noire
               </Link>
 
               <p className="mt-4 max-w-[380px] text-sm leading-7 text-[#8A8580]">
-                Nước hoa chính hãng, tuyển chọn theo cá tính mùi hương và trải
-                nghiệm mua sắm tinh gọn.
+                Nước hoa chính hãng, tuyển chọn theo cá tính mùi hương và trải nghiệm mua sắm tinh
+                gọn.
               </p>
             </div>
 
@@ -142,7 +143,7 @@ export default function Footer() {
       <div className="mx-auto w-full max-w-[1680px] px-5 sm:px-8 lg:px-10 2xl:px-2.5">
         <div className="flex flex-col items-center gap-2 py-6 sm:flex-row sm:justify-between">
           <p className="text-xs tracking-wide text-[#5C5650]">
-            © 2026 L&apos;Essence Noire. All rights reserved.
+            © 2026 L&apos;Essence Noire. Bảo lưu mọi quyền.
           </p>
 
           <p className="text-xs tracking-wide text-[#5C5650]">

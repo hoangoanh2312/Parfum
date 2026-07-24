@@ -44,7 +44,10 @@ function normalizeInput(input: any) {
         }))
         .filter((s: any) => s.body)
     : [];
-  const contentText = [input.description, ...sections.flatMap((section: any) => [section.heading, section.body])]
+  const contentText = [
+    input.description,
+    ...sections.flatMap((section: any) => [section.heading, section.body]),
+  ]
     .filter(Boolean)
     .join(' ');
 
@@ -135,37 +138,46 @@ async function notifyJournalSubscribers(article: any): Promise<JournalNotificati
   const url = absoluteUrl(`/blog/${article.slug}`);
   const title = escapeHtml(article.title);
   const description = escapeHtml(article.description || '');
-  const subject = `Journal mới từ L'Essence Noire: ${article.title}`;
+  const subject = `Nhật ký mới từ L'Essence Noire: ${article.title}`;
   const html = `
-    <div style="font-family:Arial,sans-serif;line-height:1.6;color:#1d1c19">
-      <p style="letter-spacing:2px;text-transform:uppercase;color:#75621e;font-size:11px">L'Essence Noire Journal</p>
-      <h1 style="font-family:Georgia,serif;font-size:28px;margin:12px 0">${title}</h1>
+    <div style="font-family:Manrope,'Be Vietnam Pro','Segoe UI',Arial,sans-serif;line-height:1.6;color:#1d1c19">
+      <p style="letter-spacing:2px;text-transform:uppercase;color:#75621e;font-size:11px">Nhật ký L'Essence Noire</p>
+      <h1 style="font-family:'Noto Serif Display','Noto Serif',Georgia,serif;font-size:28px;margin:12px 0">${title}</h1>
       <p style="color:#625b54">${description}</p>
       <p><a href="${url}" style="display:inline-block;background:#75621e;color:#fff;text-decoration:none;padding:12px 18px;margin-top:10px">Đọc bài viết</a></p>
       <p style="font-size:12px;color:#8a857d;margin-top:24px">Bạn nhận email này vì đã đăng ký nhận journal từ L'Essence Noire.</p>
     </div>
   `;
-  const text = `Journal mới từ L'Essence Noire: ${article.title}\n${article.description || ''}\n${url}`;
+  const text = `Nhật ký mới từ L'Essence Noire: ${article.title}\n${article.description || ''}\n${url}`;
 
   const results = await Promise.allSettled(
     subscribers.map((subscriber) => sendMail({ to: subscriber.email, subject, html, text })),
   );
   const sentEmails = subscribers
-    .filter((_subscriber, index) => results[index].status === 'fulfilled' && (results[index] as PromiseFulfilledResult<boolean>).value)
+    .filter(
+      (_subscriber, index) =>
+        results[index].status === 'fulfilled' &&
+        (results[index] as PromiseFulfilledResult<boolean>).value,
+    )
     .map((subscriber) => subscriber.email);
 
   if (sentEmails.length) {
-    await JournalSubscriber.updateMany({ email: { $in: sentEmails } }, { $set: { lastNotifiedAt: new Date() } });
+    await JournalSubscriber.updateMany(
+      { email: { $in: sentEmails } },
+      { $set: { lastNotifiedAt: new Date() } },
+    );
     await BlogArticle.updateOne({ _id: article._id }, { $set: { journalNotifiedAt: new Date() } });
   } else {
-    logger.warn(`[journal] Khong gui duoc thong bao bai viet "${article.slug}" toi subscriber nao`);
+    logger.warn(`[journal] Không gửi được thông báo bài viết "${article.slug}" tới subscriber nào`);
     return {
       subscriberCount: subscribers.length,
       sentCount: 0,
       failedCount: subscribers.length,
     };
   }
-  logger.info(`[journal] Da gui thong bao bai viet "${article.slug}" toi ${sentEmails.length}/${subscribers.length} subscriber`);
+  logger.info(
+    `[journal] Đã gửi thông báo bài viết "${article.slug}" tới ${sentEmails.length}/${subscribers.length} subscriber`,
+  );
   return {
     subscriberCount: subscribers.length,
     sentCount: sentEmails.length,
@@ -174,13 +186,15 @@ async function notifyJournalSubscribers(article: any): Promise<JournalNotificati
 }
 
 export async function listPublic() {
-  const docs = await BlogArticle.find({ status: 'published' }).sort({ publishedAt: -1, createdAt: -1 }).lean();
+  const docs = await BlogArticle.find({ status: 'published' })
+    .sort({ publishedAt: -1, createdAt: -1 })
+    .lean();
   return docs.map(serialize);
 }
 
 export async function getPublicBySlug(slug: string) {
   const doc = await BlogArticle.findOne({ slug: slugify(slug), status: 'published' }).lean();
-  if (!doc) throw httpError('Khong tim thay bai viet', 404);
+  if (!doc) throw httpError('Không tìm thấy bài viết', 404);
   return serialize(doc);
 }
 
@@ -199,11 +213,21 @@ export async function listAdmin(query: any) {
   }
 
   const [rows, total] = await Promise.all([
-    BlogArticle.find(filter).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).lean(),
+    BlogArticle.find(filter)
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean(),
     BlogArticle.countDocuments(filter),
   ]);
 
-  return { data: rows.map(serialize), total, page, limit, totalPages: Math.ceil(total / limit) || 1 };
+  return {
+    data: rows.map(serialize),
+    total,
+    page,
+    limit,
+    totalPages: Math.ceil(total / limit) || 1,
+  };
 }
 
 export async function createArticle(input: any) {
@@ -211,16 +235,17 @@ export async function createArticle(input: any) {
   const exists = await BlogArticle.findOne({ slug: data.slug });
   if (exists) throw httpError('Slug bai viet da ton tai', 409);
   const doc = await BlogArticle.create(data);
-  const journalNotification = doc.status === 'published'
-    ? await notifyJournalSubscribers(doc)
-    : undefined;
+  const journalNotification =
+    doc.status === 'published' ? await notifyJournalSubscribers(doc) : undefined;
   return { ...serialize(doc), journalNotification };
 }
 
 export async function subscribeJournal(emailInput: string) {
-  const email = String(emailInput || '').trim().toLowerCase();
+  const email = String(emailInput || '')
+    .trim()
+    .toLowerCase();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    throw httpError('Email khong hop le', 400);
+    throw httpError('Email không hợp lệ', 400);
   }
 
   const existing = await JournalSubscriber.findOne({ email });
@@ -255,14 +280,17 @@ export async function importDefaultArticles(articles: any[]) {
 
 export async function updateArticle(id: string, input: any) {
   const previous = await BlogArticle.findById(id).lean();
-  if (!previous) throw httpError('Khong tim thay bai viet', 404);
+  if (!previous) throw httpError('Không tìm thấy bài viết', 404);
   const data = normalizeInput(input);
   const exists = await BlogArticle.findOne({ slug: data.slug, _id: { $ne: id } });
   if (exists) throw httpError('Slug bai viet da ton tai', 409);
   const doc = await BlogArticle.findByIdAndUpdate(id, data, { new: true, runValidators: true });
-  if (!doc) throw httpError('Khong tim thay bai viet', 404);
+  if (!doc) throw httpError('Không tìm thấy bài viết', 404);
   let journalNotification: JournalNotificationResult | undefined;
-  if (doc.status === 'published' && (previous.status !== 'published' || !previous.journalNotifiedAt)) {
+  if (
+    doc.status === 'published' &&
+    (previous.status !== 'published' || !previous.journalNotifiedAt)
+  ) {
     journalNotification = await notifyJournalSubscribers(doc);
   }
   return { ...serialize(doc), journalNotification };
@@ -270,6 +298,6 @@ export async function updateArticle(id: string, input: any) {
 
 export async function deleteArticle(id: string) {
   const doc = await BlogArticle.findByIdAndDelete(id);
-  if (!doc) throw httpError('Khong tim thay bai viet', 404);
+  if (!doc) throw httpError('Không tìm thấy bài viết', 404);
   return { id };
 }

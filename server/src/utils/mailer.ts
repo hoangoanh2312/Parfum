@@ -13,7 +13,7 @@ export function isMailConfigured() {
 
 export function assertMailConfigured() {
   if (!isMailConfigured()) {
-    throw Object.assign(new Error('Dich vu email chua duoc cau hinh'), { status: 503 });
+    throw Object.assign(new Error('Dịch vụ email chưa được cấu hình'), { status: 503 });
   }
 }
 
@@ -44,16 +44,16 @@ function normalizeMailFrom(mailFrom: string | undefined, smtpUser: string) {
 }
 
 /**
- * Gui email qua SMTP neu da cau hinh (SMTP_HOST/SMTP_USER/SMTP_PASS).
- * - Neu chua cau hinh: khong nem loi, chi log ra de luong nghiep vu (dang ky, quen mat khau) khong bi chan.
- * - Dung dynamic import voi bien specifier de tsc khong bat buoc phai cai nodemailer luc build.
+ * Gửi email qua SMTP nếu đã cấu hình (SMTP_HOST/SMTP_USER/SMTP_PASS).
+ * - Nếu chưa cấu hình: không ném lỗi, chỉ log ra để luồng nghiệp vụ không bị chặn.
+ * - Dùng dynamic import với biến specifier để tsc không bắt buộc phải cài nodemailer lúc build.
  */
 export async function sendMail(input: MailInput): Promise<boolean> {
   const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, MAIL_FROM } = process.env;
 
   if (!isMailConfigured() || !SMTP_USER || !SMTP_PASS) {
     logger.warn(
-      `SMTP chua cau hinh - bo qua gui email toi ${input.to} (subject: ${input.subject})`,
+      `SMTP chưa cấu hình - bỏ qua gửi email tới ${input.to} (subject: ${input.subject})`,
     );
     return false;
   }
@@ -62,15 +62,13 @@ export async function sendMail(input: MailInput): Promise<boolean> {
     const moduleName = 'nodemailer';
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const imported: any = await import(moduleName);
-    // Ho tro ca CommonJS (module.exports) lan ESM (export default) cua nodemailer,
-    // vi tuy trinh chay (tsx/tsc) ma dynamic import tra ve namespace khac nhau.
-    const nodemailer: any = imported?.createTransport
-      ? imported
-      : imported?.default;
+    // Hỗ trợ cả CommonJS (module.exports) lẫn ESM (export default) của nodemailer,
+    // vì tùy trình chạy (tsx/tsc) mà dynamic import trả về namespace khác nhau.
+    const nodemailer: any = imported?.createTransport ? imported : imported?.default;
 
     if (!nodemailer?.createTransport) {
       logger.error(
-        'Khong nap duoc nodemailer.createTransport - kiem tra da cai dat nodemailer (phien ban hop le, vi du ^6.9.14) hay chua',
+        'Không nạp được nodemailer.createTransport - kiểm tra đã cài đặt nodemailer (phiên bản hợp lệ, ví dụ ^6.9.14) hay chưa',
       );
       return false;
     }
@@ -96,13 +94,13 @@ export async function sendMail(input: MailInput): Promise<boolean> {
     const accepted = Array.isArray(info.accepted) ? info.accepted.length : 0;
     const rejected = Array.isArray(info.rejected) ? info.rejected.length : 0;
     if (rejected > 0 && accepted === 0) {
-      logger.warn(`SMTP tu choi email toi ${input.to} (subject: ${input.subject})`);
+      logger.warn(`SMTP từ chối email tới ${input.to} (subject: ${input.subject})`);
       return false;
     }
-    logger.info(`Da gui email toi ${input.to} (messageId: ${info.messageId || 'unknown'})`);
+    logger.info(`Đã gửi email tới ${input.to} (messageId: ${info.messageId || 'không rõ'})`);
     return accepted > 0 || rejected === 0;
   } catch (error) {
-    logger.error('Gui email that bai', error);
+    logger.error('Gửi email thất bại', error);
     return false;
   }
 }

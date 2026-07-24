@@ -5,7 +5,7 @@ import { useCart } from "../store/cart.store";
 import { useWishlist } from "../store/wishlist.store";
 import { toast } from "../store/toast.store";
 
-const PLACEHOLDER = "https://placehold.co/500x600?text=No+Image";
+const PLACEHOLDER = "https://placehold.co/500x600?text=Chua+co+anh";
 
 export interface ProductVariantOption {
   variantId?: string | null;
@@ -80,13 +80,9 @@ export default function ProductCardBase({
       ? { fromShop: `${location.pathname}${location.search}` }
       : undefined;
   const image = product.images?.[0] || product.image || PLACEHOLDER;
-  const brand =
-    product.brand ||
-    product.fragranceFamily ||
-    product.category ||
-    "Eau De Parfum";
+  const brand = product.brand || product.fragranceFamily || product.category || "Eau De Parfum";
 
-  // Danh sach dung tich kem gia + bien the rieng (sap theo gia tang dan)
+  // Danh sách dung tích kèm giá và biến thể riêng, sắp theo giá tăng dần.
   const options = useMemo<ProductVariantOption[]>(() => {
     if (product.variants && product.variants.length) {
       return [...product.variants]
@@ -112,13 +108,12 @@ export default function ProductCardBase({
   }, [product]);
 
   const [selected, setSelected] = useState(0);
-  const current =
-    options[selected] ?? {
-      size: product.volume,
-      price: product.price ?? null,
-      variantId: product.variantId ?? null,
-      stock: product.stock,
-    };
+  const current = options[selected] ?? {
+    size: product.volume,
+    price: product.price ?? null,
+    variantId: product.variantId ?? null,
+    stock: product.stock,
+  };
 
   const activePrice = current.price ?? product.price ?? null;
   const activeBasePrice = current.basePrice ?? product.basePrice ?? activePrice;
@@ -127,9 +122,7 @@ export default function ProductCardBase({
   const currentVariantId = current.variantId ?? product.variantId ?? null;
   const currentStock = current.stock ?? product.stock;
   const currentSize = current.size || current.volume || product.volume || "";
-  const outOfStock =
-    !currentVariantId ||
-    (typeof currentStock === "number" && currentStock <= 0);
+  const outOfStock = !currentVariantId || (typeof currentStock === "number" && currentStock <= 0);
 
   async function handleAdd() {
     if (!currentVariantId) {
@@ -162,20 +155,14 @@ export default function ProductCardBase({
       );
       toast.success("Đã thêm vào giỏ");
     } catch (error: any) {
-      toast.error(
-        error?.response?.data?.message ||
-          error?.message ||
-          "Không thể thêm vào giỏ",
-      );
+      toast.error(error?.response?.data?.message || error?.message || "Không thể thêm vào giỏ");
     }
   }
 
   return (
     <article className="group flex h-full flex-col">
-      {/* Anh */}
-      <div
-        className={`relative overflow-hidden bg-[#F3EEE7] ${imageAspectClassName}`}
-      >
+      {/* Ảnh */}
+      <div className={`relative overflow-hidden bg-[#F3EEE7] ${imageAspectClassName}`}>
         <Link to={detailPath} state={detailState} className="block h-full w-full">
           <img
             src={image}
@@ -208,8 +195,8 @@ export default function ProductCardBase({
         <button
           type="button"
           onClick={() => toggleWishlist(productId)}
-          aria-label={wishlisted ? "Bỏ khỏi wishlist" : "Thêm vào wishlist"}
-          title={wishlisted ? "Bỏ khỏi wishlist" : "Thêm vào wishlist"}
+          aria-label={wishlisted ? "Bỏ khỏi danh sách yêu thích" : "Thêm vào danh sách yêu thích"}
+          title={wishlisted ? "Bỏ khỏi danh sách yêu thích" : "Thêm vào danh sách yêu thích"}
           className={
             "absolute top-3 right-3 rounded-full shadow flex items-center justify-center duration-300 " +
             (compact ? "w-8 h-8 " : "w-9 h-9 ") +
@@ -230,13 +217,13 @@ export default function ProductCardBase({
               className="w-full h-12 bg-[#1C1C19] text-white uppercase tracking-[2px] text-[11px] flex items-center justify-center gap-2 hover:bg-[#735C00] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <ShoppingBag size={15} />
-              {outOfStock ? "Hết hàng" : "Add to cart"}
+              {outOfStock ? "Hết hàng" : "Thêm vào giỏ"}
             </button>
           </div>
         )}
       </div>
 
-      {/* Thong tin */}
+      {/* Thông tin */}
       <div className={"flex flex-1 flex-col " + (compact ? "pt-3.5" : "pt-4")}>
         <p
           className={
@@ -262,7 +249,7 @@ export default function ProductCardBase({
 
         {showDescription && (
           <p className="mt-2 text-[13px] leading-6 text-[#5F5E5E] line-clamp-2">
-            {product.description || "No description available."}
+            {product.description || "Chưa có mô tả."}
           </p>
         )}
 
@@ -273,9 +260,19 @@ export default function ProductCardBase({
           }
         >
           <div className="min-w-0">
-            <span className={"block whitespace-nowrap font-semibold " + (activeDiscountPercent > 0 ? "text-[#8B1E1E] " : "text-[#1C1C19] ") + (compact ? "text-[14px]" : "text-[16px]")}>{priceLabel}</span>
+            <span
+              className={
+                "block whitespace-nowrap font-semibold " +
+                (activeDiscountPercent > 0 ? "text-[#8B1E1E] " : "text-[#1C1C19] ") +
+                (compact ? "text-[14px]" : "text-[16px]")
+              }
+            >
+              {priceLabel}
+            </span>
             {activeDiscountPercent > 0 && activeBasePrice != null && (
-              <span className="block text-[11px] text-[#817B73] line-through">{formatVnd(activeBasePrice)}</span>
+              <span className="block text-[11px] text-[#817B73] line-through">
+                {formatVnd(activeBasePrice)}
+              </span>
             )}
           </div>
 
@@ -303,9 +300,7 @@ export default function ProductCardBase({
             </div>
           ) : currentSize ? (
             <span
-              className={
-                "shrink-0 text-[#5F5E5E] " + (compact ? "text-[12px]" : "text-[13px]")
-              }
+              className={"shrink-0 text-[#5F5E5E] " + (compact ? "text-[12px]" : "text-[13px]")}
             >
               {currentSize}
             </span>
@@ -326,7 +321,7 @@ export default function ProductCardBase({
               }
             >
               <ShoppingBag size={compact ? 14 : 15} />
-              {outOfStock ? "Hết hàng" : "Add to cart"}
+              {outOfStock ? "Hết hàng" : "Thêm vào giỏ"}
             </button>
           </div>
         )}

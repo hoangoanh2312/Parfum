@@ -1,13 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  Bell,
-  Eye,
-  EyeOff,
-  LockKeyhole,
-  Mail,
-  Save,
-  User,
-} from "lucide-react";
+import { Bell, Eye, EyeOff, LockKeyhole, Mail, Save, User } from "lucide-react";
 import { PasswordRequirements } from "../../components/PasswordRequirements";
 import { api } from "../../lib/api";
 import { getPasswordError } from "../../lib/password";
@@ -87,15 +79,9 @@ export default function Settings() {
   };
 
   type NotificationPreferenceKey =
-    | "orderNotifications"
-    | "emailNotifications"
-    | "promotionNotifications"
-    | "journalNotifications";
+    "orderNotifications" | "emailNotifications" | "promotionNotifications" | "journalNotifications";
 
-  const handleNotificationChange = async (
-    name: NotificationPreferenceKey,
-    checked: boolean,
-  ) => {
+  const handleNotificationChange = async (name: NotificationPreferenceKey, checked: boolean) => {
     const previousPreferences = {
       orderNotifications: form.orderNotifications,
       emailNotifications: form.emailNotifications,
@@ -116,10 +102,7 @@ export default function Settings() {
     setForm((previous) => ({ ...previous, ...nextPreferences }));
     setSavingNotification(name);
     try {
-      const { data } = await api.put(
-        "/auth/me/notification-preferences",
-        nextPreferences,
-      );
+      const { data } = await api.put("/auth/me/notification-preferences", nextPreferences);
       setForm((previous) => ({
         ...previous,
         orderNotifications: data.orderNotifications,
@@ -141,9 +124,7 @@ export default function Settings() {
       toast.success(checked ? "Đã bật thông báo" : "Đã tắt thông báo");
     } catch (error: any) {
       setForm((previous) => ({ ...previous, ...previousPreferences }));
-      toast.error(
-        error?.response?.data?.message || "Không thể lưu tùy chọn thông báo",
-      );
+      toast.error(error?.response?.data?.message || "Không thể lưu tùy chọn thông báo");
     } finally {
       setSavingNotification(null);
     }
@@ -151,9 +132,7 @@ export default function Settings() {
 
   // Luu thong tin ca nhan - HOAN TOAN doc lap voi mat khau.
   // Cap nhat SDT/ten/email KHONG yeu cau nhap mat khau.
-  const handleSaveProfile = async (
-    event: React.FormEvent<HTMLFormElement>,
-  ) => {
+  const handleSaveProfile = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     const nextPhone = form.phone.trim();
@@ -176,12 +155,12 @@ export default function Settings() {
         email: data.email,
         phone: data.phone,
         role: data.role,
+        createdAt: data.createdAt || user?.createdAt,
         isEmailVerified: data.isEmailVerified,
         addresses: data.addresses || [],
         profileCompletedAt: data.profileCompletedAt,
         profileCompletionVoucherCode: data.profileCompletionVoucherCode,
-        notificationPreferences:
-          data.notificationPreferences || user?.notificationPreferences,
+        notificationPreferences: data.notificationPreferences || user?.notificationPreferences,
       });
 
       toast.success(
@@ -197,9 +176,7 @@ export default function Settings() {
   };
 
   // Doi mat khau - form rieng, chi chay khi nguoi dung chu dong doi mat khau.
-  const handleChangePassword = async (
-    event: React.FormEvent<HTMLFormElement>,
-  ) => {
+  const handleChangePassword = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     const passwordError = getPasswordError(form.newPassword, language);
@@ -242,14 +219,13 @@ export default function Settings() {
     <div className="min-h-screen bg-[#FCF9F4] text-[#2D2925]">
       <section className="border-b border-[#E7E0D7] px-6 pb-7 pt-12 lg:px-12">
         <p className="text-[10px] uppercase tracking-[0.28em] text-[#9B9288]">
-          Personal Portal
+          Cổng thông tin cá nhân
         </p>
 
-        <h1 className="mt-2 font-serif text-4xl lg:text-5xl">Settings</h1>
+        <h1 className="mt-2 font-serif text-4xl lg:text-5xl">Cài đặt</h1>
 
         <p className="mt-3 max-w-2xl text-sm leading-6 text-[#7C746C]">
-          Quản lý thông tin cá nhân, mật khẩu và tùy chọn thông báo của tài
-          khoản.
+          Quản lý thông tin cá nhân, mật khẩu và tùy chọn thông báo của tài khoản.
         </p>
       </section>
 
@@ -264,8 +240,8 @@ export default function Settings() {
                 <h2 className="font-serif text-2xl">Thông tin cá nhân</h2>
 
                 <p className="mt-1 text-xs text-[#877E74]">
-                  Cập nhật thông tin hiển thị trong tài khoản. Bạn có thể lưu mà
-                  không cần nhập mật khẩu.
+                  Cập nhật thông tin hiển thị trong tài khoản. Bạn có thể lưu mà không cần nhập mật
+                  khẩu.
                 </p>
               </div>
             </div>
@@ -381,7 +357,7 @@ export default function Settings() {
 
               <NotificationToggle
                 title="Thông báo bài viết mới"
-                description="Nhận Journal mới qua email ngay khi bài viết được xuất bản.
+                description="Nhận bài viết Nhật ký mới qua email ngay khi bài viết được xuất bản.
                 (Lưu ý: Bạn cần đăng ký nhận thông báo bài viết mới ở trang tin tức trước)."
                 name="journalNotifications"
                 checked={form.emailNotifications && form.journalNotifications}
@@ -402,8 +378,7 @@ export default function Settings() {
                 <h2 className="font-serif text-2xl">Đổi mật khẩu</h2>
 
                 <p className="mt-1 text-xs text-[#877E74]">
-                  Chỉ điền khi bạn muốn đổi mật khẩu. Không bắt buộc để lưu thông
-                  tin cá nhân.
+                  Chỉ điền khi bạn muốn đổi mật khẩu. Không bắt buộc để lưu thông tin cá nhân.
                 </p>
               </div>
             </div>
@@ -470,10 +445,7 @@ export default function Settings() {
                 </label>
               </div>
 
-              <PasswordRequirements
-                password={form.newPassword}
-                language={language}
-              />
+              <PasswordRequirements password={form.newPassword} language={language} />
 
               <div className="flex justify-end">
                 <button
@@ -497,15 +469,9 @@ interface NotificationToggleProps {
   title: string;
   description: string;
   name:
-    | "orderNotifications"
-    | "emailNotifications"
-    | "promotionNotifications"
-    | "journalNotifications";
+    "orderNotifications" | "emailNotifications" | "promotionNotifications" | "journalNotifications";
   checked: boolean;
-  onChange: (
-    name: NotificationToggleProps["name"],
-    checked: boolean,
-  ) => void;
+  onChange: (name: NotificationToggleProps["name"], checked: boolean) => void;
   disabled?: boolean;
 }
 
@@ -532,9 +498,7 @@ function NotificationToggle({
       <div>
         <p className="font-serif text-lg">{title}</p>
 
-        <p className="mt-1 max-w-xl text-xs leading-5 text-[#81786F]">
-          {description}
-        </p>
+        <p className="mt-1 max-w-xl text-xs leading-5 text-[#81786F]">{description}</p>
       </div>
 
       <div className="relative shrink-0">

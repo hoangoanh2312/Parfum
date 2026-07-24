@@ -1,5 +1,4 @@
 import { useEffect } from "react";
-import { useLanguage } from "../store/language.store";
 
 const ENGLISH: Record<string, string> = {
   "Trang chủ": "Home",
@@ -36,7 +35,8 @@ const ENGLISH: Record<string, string> = {
   "Tự động làm mới mỗi 15 giây": "Refreshes automatically every 15 seconds",
   "Không có công việc cần chú ý.": "There are no tasks requiring attention.",
   "Tìm đơn hàng, khách hàng, sản phẩm...": "Search orders, customers, products...",
-  "Nhập ít nhất 2 ký tự để tìm trong toàn bộ hệ thống.": "Enter at least 2 characters to search the entire system.",
+  "Nhập ít nhất 2 ký tự để tìm trong toàn bộ hệ thống.":
+    "Enter at least 2 characters to search the entire system.",
   "Đang tìm kiếm": "Searching",
   "Không tìm thấy kết quả phù hợp.": "No matching results found.",
   "Mở menu": "Open menu",
@@ -51,7 +51,8 @@ const ENGLISH: Record<string, string> = {
   "Nghệ thuật của": "The art of",
   "Hương thơm": "Fine fragrance",
   "tinh tế.": "refined.",
-  "Khám phá bộ sưu tập nước hoa cao cấp với nguyên liệu hiếm từ bốn châu lục. Mỗi chai là một tác phẩm — được chế tác bằng sự kiên nhẫn và nghệ thuật chưng cất thủ công.": "Discover a collection of fine fragrances made with rare ingredients from around the world. Each bottle is a work of patience and artisanal distillation.",
+  "Khám phá bộ sưu tập nước hoa cao cấp với nguyên liệu hiếm từ bốn châu lục. Mỗi chai là một tác phẩm — được chế tác bằng sự kiên nhẫn và nghệ thuật chưng cất thủ công.":
+    "Discover a collection of fine fragrances made with rare ingredients from around the world. Each bottle is a work of patience and artisanal distillation.",
   "Khám phá bộ sưu tập": "Explore collection",
   "Chưa có sản phẩm để hiển thị.": "No products to display yet.",
   "Tìm kiếm": "Search",
@@ -61,8 +62,8 @@ const ENGLISH: Record<string, string> = {
   "Giá tăng dần": "Price: low to high",
   "Giá giảm dần": "Price: high to low",
   "Tất cả": "All",
-  "Nam": "Men",
-  "Nữ": "Women",
+  Nam: "Men",
+  Nữ: "Women",
   "Nước hoa nam": "Men's fragrance",
   "Nước hoa nữ": "Women's fragrance",
   "Giới tính": "Gender",
@@ -95,7 +96,8 @@ const ENGLISH: Record<string, string> = {
   "Đóng form": "Close form",
   "Gửi đánh giá": "Submit review",
   "Chọn ảnh từ thư viện": "Choose an image",
-  "Chưa có đánh giá nào được duyệt cho sản phẩm này.": "There are no approved reviews for this product yet.",
+  "Chưa có đánh giá nào được duyệt cho sản phẩm này.":
+    "There are no approved reviews for this product yet.",
   "Giỏ hàng": "Shopping cart",
   "Thanh toán": "Checkout",
   "Tổng cộng": "Total",
@@ -109,7 +111,7 @@ const ENGLISH: Record<string, string> = {
   "Thông tin giao hàng": "Shipping information",
   "Họ và tên": "Full name",
   "Số điện thoại": "Phone number",
-  "Email": "Email",
+  Email: "Email",
   "Thành phố": "City",
   "Xã/Phường": "Ward",
   "Địa chỉ": "Address",
@@ -129,7 +131,8 @@ const ENGLISH: Record<string, string> = {
   "Hủy thanh toán QR": "Cancel QR payment",
   "Chưa tải được mã QR": "Could not load QR code",
   "Chưa cấu hình": "Not configured",
-  "SePay sẽ ghi nhận giao dịch. Trạng thái chỉ chuyển thành đã thanh toán sau khi admin đối soát và xác nhận.": "SePay will record the transaction. The payment status changes to paid only after an admin reconciles and confirms it.",
+  "SePay sẽ ghi nhận giao dịch. Trạng thái chỉ chuyển thành đã thanh toán sau khi admin đối soát và xác nhận.":
+    "SePay will record the transaction. The payment status changes to paid only after an admin reconciles and confirms it.",
   "Tôi đã thanh toán": "I have paid",
   "Đang hủy...": "Cancelling...",
   "Đã tạo mã QR thanh toán": "Payment QR code created",
@@ -148,12 +151,12 @@ const ENGLISH: Record<string, string> = {
   "Đã hủy": "Cancelled",
   "Chi tiết": "Details",
   "Chưa có đơn hàng nào": "No orders yet",
-  "Lưu": "Save",
-  "Hủy": "Cancel",
-  "Xóa": "Delete",
-  "Xoá": "Delete",
-  "Sửa": "Edit",
-  "Thêm": "Add",
+  Lưu: "Save",
+  Hủy: "Cancel",
+  Xóa: "Delete",
+  Xoá: "Delete",
+  Sửa: "Edit",
+  Thêm: "Add",
   "Cập nhật": "Update",
   "Thao tác": "Actions",
   "Trạng thái": "Status",
@@ -181,24 +184,28 @@ const ENGLISH: Record<string, string> = {
   "Đang tải...": "Loading...",
   "Tuyển tập theo mùa": "The Seasonal",
   "Tuyển tập": "Archives",
-  "Bộ sưu tập mùi hương được tuyển chọn, từ nhựa thơm phương Đông đầy khói đến những cánh hoa còn đẫm sương của buổi sáng Grasse.": "A curated selection of olfactory experiences, from the smoky resins of the Orient to the dew-kissed petals of a Grasse morning.",
+  "Bộ sưu tập mùi hương được tuyển chọn, từ nhựa thơm phương Đông đầy khói đến những cánh hoa còn đẫm sương của buổi sáng Grasse.":
+    "A curated selection of olfactory experiences, from the smoky resins of the Orient to the dew-kissed petals of a Grasse morning.",
   "Đang hiển thị": "Showing",
   "Chọn lọc theo nồng độ": "Concentration",
   "Kích thước": "Size",
   "Liên hệ cùng chuyên gia": "Contact the atelier",
   "Bắt đầu một": "Begin a",
   "Cuộc trò chuyện": "Dialogue",
-  "Dù bạn muốn hỏi về nguồn gốc sản phẩm, cần tư vấn riêng hay chỉ muốn gửi một lời nhắn, chúng tôi đều trân trọng đọc từng dòng.": "Whether it's a question about provenance, a private consultation, or simply a note — we read every letter.",
+  "Dù bạn muốn hỏi về nguồn gốc sản phẩm, cần tư vấn riêng hay chỉ muốn gửi một lời nhắn, chúng tôi đều trân trọng đọc từng dòng.":
+    "Whether it's a question about provenance, a private consultation, or simply a note — we read every letter.",
   "Góc nhìn biên tập": "The editorial voice",
-  "Một mùi hương không chỉ được lựa chọn, nó bộc lộ chính mình qua cuộc trò chuyện.": "\"A fragrance is not chosen — it reveals itself through conversation.\"",
+  "Một mùi hương không chỉ được lựa chọn, nó bộc lộ chính mình qua cuộc trò chuyện.":
+    '"A fragrance is not chosen — it reveals itself through conversation."',
   "Xưởng hương": "Atelier",
   "Điện thoại": "Phone",
   "Thư từ": "Correspondence",
   "Giờ làm việc": "Hours",
   "Gửi lời nhắn": "Send a message",
-  "Chúng tôi phản hồi trong một ngày làm việc. Với yêu cầu khẩn cấp, vui lòng gọi điện trực tiếp.": "We respond within one business day. For urgent enquiries, reach us by phone.",
-  "Tên": "First name",
-  "Họ": "Last name",
+  "Chúng tôi phản hồi trong một ngày làm việc. Với yêu cầu khẩn cấp, vui lòng gọi điện trực tiếp.":
+    "We respond within one business day. For urgent enquiries, reach us by phone.",
+  Tên: "First name",
+  Họ: "Last name",
   "Chủ đề": "Subject",
   "Chọn chủ đề": "Select a topic",
   "Tin nhắn": "Message",
@@ -219,7 +226,7 @@ const ENGLISH: Record<string, string> = {
   "Đăng ký thành viên": "Apply for Membership",
   "Tạo thông tin tài khoản của bạn": "Create your manuscript credentials",
   "Xác nhận mật khẩu": "Confirm Password",
-  "Hoặc": "Or",
+  Hoặc: "Or",
   "Những nhà hương": "Curated",
   "được tuyển chọn": "Houses",
   "Ghi chép về điều": "Notes on the",
@@ -237,6 +244,34 @@ VIETNAMESE["Phone Number"] = "Số điện thoại";
 VIETNAMESE["Add to bag"] = "Thêm vào giỏ";
 VIETNAMESE["Sold out"] = "Hết hàng";
 VIETNAMESE["Complimentary sample included"] = "Tặng kèm mẫu thử";
+VIETNAMESE["The Curator's Circle"] = "Vòng tròn nhà tuyển hương";
+VIETNAMESE["Access the"] = "Truy cập";
+VIETNAMESE["Join the"] = "Tham gia";
+VIETNAMESE["Editorial Club"] = "Câu lạc bộ Biên tập";
+VIETNAMESE["Welcome Back"] = "Chào mừng trở lại";
+VIETNAMESE["Enter your manuscript credentials"] = "Nhập thông tin tài khoản của bạn";
+VIETNAMESE["Create your manuscript credentials"] = "Tạo thông tin tài khoản của bạn";
+VIETNAMESE["Sign In to the Club"] = "Đăng nhập vào câu lạc bộ";
+VIETNAMESE["Apply for Membership"] = "Đăng ký thành viên";
+VIETNAMESE["Processing..."] = "Đang xử lý...";
+VIETNAMESE["Or"] = "Hoặc";
+VIETNAMESE["Email Address"] = "Địa chỉ email";
+VIETNAMESE["Password"] = "Mật khẩu";
+VIETNAMESE["Confirm Password"] = "Xác nhận mật khẩu";
+VIETNAMESE["Forgot?"] = "Quên mật khẩu?";
+VIETNAMESE["Keep me signed in to the archives"] = "Duy trì đăng nhập";
+VIETNAMESE["The Seasonal"] = "Tuyển tập theo mùa";
+VIETNAMESE["Archives"] = "Lưu hương";
+VIETNAMESE["Amber Oud"] = "Trầm hổ phách";
+VIETNAMESE["Rare Wood"] = "Gỗ quý";
+VIETNAMESE["Issue No. 04 — Autumn/Winter"] = "Số 04 - Thu Đông";
+VIETNAMESE["Featured Fragrances"] = "Nước hoa nổi bật";
+VIETNAMESE["The Favorites"] = "Được yêu thích";
+VIETNAMESE["Featured"] = "Nổi bật";
+VIETNAMESE["New Arrivals"] = "Hàng mới";
+VIETNAMESE["Bundle Deals"] = "Ưu đãi";
+VIETNAMESE["Previous"] = "Trước";
+VIETNAMESE["Next"] = "Sau";
 
 const TEXT_RULES: Array<[RegExp, (...matches: string[]) => string]> = [
   [/^(\d+) việc$/, (count) => `${count} open tasks`],
@@ -247,7 +282,10 @@ const TEXT_RULES: Array<[RegExp, (...matches: string[]) => string]> = [
   [/^(\d+) đánh giá cần kiểm duyệt$/, (count) => `${count} reviews need moderation`],
   [/^(\d+) bài đang ở trạng thái nháp$/, (count) => `${count} articles are drafts`],
   [/^(\d+) giao dịch đang chờ đối soát$/, (count) => `${count} transactions await reconciliation`],
-  [/^Hiển thị (\d+) trên (\d+) sản phẩm$/, (shown, total) => `Showing ${shown} of ${total} products`],
+  [
+    /^Hiển thị (\d+) trên (\d+) sản phẩm$/,
+    (shown, total) => `Showing ${shown} of ${total} products`,
+  ],
 ];
 
 function toEnglish(source: string) {
@@ -328,11 +366,9 @@ function translateTree(root: Node, english: boolean) {
 }
 
 export default function LanguageRuntime() {
-  const language = useLanguage((state) => state.language);
-
   useEffect(() => {
-    document.documentElement.lang = language;
-    const english = language === "en";
+    document.documentElement.lang = "vi";
+    const english = false;
     translateTree(document.body, english);
     const observer = new MutationObserver((mutations) => {
       for (const mutation of mutations) {
@@ -349,7 +385,7 @@ export default function LanguageRuntime() {
       attributeFilter: TRANSLATED_ATTRIBUTES,
     });
     return () => observer.disconnect();
-  }, [language]);
+  }, []);
 
   return null;
 }

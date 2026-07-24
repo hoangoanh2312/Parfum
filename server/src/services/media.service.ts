@@ -1,6 +1,6 @@
 // =============================================================================
-//  MEDIA SERVICE — quan ly toan bo anh he thong tren Cloudinary
-//  Cung cap: trang thai cau hinh, liet ke anh (co phan trang), xoa anh.
+//  MEDIA SERVICE - quản lý toàn bộ ảnh hệ thống trên Cloudinary
+//  Cung cấp: trạng thái cấu hình, liệt kê ảnh có phân trang và xóa ảnh.
 // =============================================================================
 import {
   cloudinary,
@@ -17,7 +17,7 @@ function httpError(message: string, status = 400) {
 function ensureConfigured() {
   if (!isCloudinaryConfigured) {
     throw httpError(
-      'Cloudinary chua duoc cau hinh. Hay them CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET vao file .env cua server roi khoi dong lai.',
+      'Cloudinary chưa được cấu hình. Hãy thêm CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET vào file .env của server rồi khởi động lại.',
       503,
     );
   }
@@ -46,14 +46,14 @@ export async function listImages(params: { nextCursor?: string; max?: number; fo
   const max = Math.min(Math.max(Number(params.max) || 30, 1), 100);
   const requestedFolder = String(params.folder || '').trim();
   if (requestedFolder && !isAdminMediaFolder(requestedFolder)) {
-    throw httpError('Thu muc anh khong hop le', 400);
+    throw httpError('Thư mục ảnh không hợp lệ', 400);
   }
   const assetFolder = requestedFolder
     ? `${CLOUDINARY_FOLDER}/${requestedFolder}`
     : CLOUDINARY_FOLDER;
   let res: any;
   try {
-    // Dynamic folder mode: asset_folder doc lap voi public_id, nen prefix se bo sot anh.
+    // Dynamic folder mode: asset_folder độc lập với public_id nên prefix sẽ bỏ sót ảnh.
     res = await cloudinary.api.resources_by_asset_folder(assetFolder, {
       resource_type: 'image',
       type: 'upload',
@@ -62,7 +62,7 @@ export async function listImages(params: { nextCursor?: string; max?: number; fo
       direction: 'desc',
     });
   } catch (error: any) {
-    // Tai khoan Cloudinary legacy fixed-folder khong ho tro asset_folder.
+    // Tài khoản Cloudinary legacy fixed-folder không hỗ trợ asset_folder.
     if (![400, 404].includes(Number(error?.error?.http_code || error?.http_code))) throw error;
     res = await cloudinary.api.resources({
       resource_type: 'image',

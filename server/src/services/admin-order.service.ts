@@ -68,7 +68,7 @@ export async function listOrders(query: AdminOrderQuery = {}) {
 
   return {
     // FIX: dung key `data` (dong bo voi Paginated<T> phia client va cac endpoint admin khac).
-    // Truoc day tra ve `items` khien client doc list.data = undefined -> crash "reading 'length'".
+    // Trước đây trả về `items` khiến client đọc list.data = undefined rồi crash "reading 'length'".
     data: items.map((o: any) => {
       const pay = pm.get(String(o._id));
       return {
@@ -101,9 +101,9 @@ export async function getOrder(id: string) {
   try {
     order = await Order.findById(id).populate('user', 'name email').lean();
   } catch {
-    throw Object.assign(new Error('Khong tim thay don hang'), { status: 404 });
+    throw Object.assign(new Error('Không tìm thấy đơn hàng'), { status: 404 });
   }
-  if (!order) throw Object.assign(new Error('Khong tim thay don hang'), { status: 404 });
+  if (!order) throw Object.assign(new Error('Không tìm thấy đơn hàng'), { status: 404 });
 
   const payment: any = await Payment.findOne({ order: order._id }).lean();
   return {
@@ -154,16 +154,23 @@ export async function getOrder(id: string) {
 /** Admin cap nhat trang thai don. Don COD hoan tat thi tu dong ghi nhan da thanh toan. */
 export async function updateStatus(id: string, next: OrderStatus) {
   const order: any = await Order.findById(id);
-  if (!order) throw Object.assign(new Error('Khong tim thay don hang'), { status: 404 });
+  if (!order) throw Object.assign(new Error('Không tìm thấy đơn hàng'), { status: 404 });
 
   const allowed = FLOW[order.status as OrderStatus] || [];
   if (!allowed.includes(next)) {
-    throw Object.assign(new Error(`Khong the chuyen tu ${order.status} sang ${next}`), { status: 400 });
+    throw Object.assign(new Error(`Không thể chuyển từ ${order.status} sang ${next}`), {
+      status: 400,
+    });
   }
 
   if (next === 'cancelled') {
     await releaseOrderPromotionReservations(order);
-    await restoreStock((order.items || []).map((it: any) => ({ variant: String(it.variant), quantity: it.quantity })));
+    await restoreStock(
+      (order.items || []).map((it: any) => ({
+        variant: String(it.variant),
+        quantity: it.quantity,
+      })),
+    );
     if (order.user && order.pointsEarned) {
       await User.updateOne({ _id: order.user }, { $inc: { loyaltyPoints: -order.pointsEarned } });
     }
@@ -173,7 +180,12 @@ export async function updateStatus(id: string, next: OrderStatus) {
     );
   }
   if (next === 'returned') {
-    await restoreStock((order.items || []).map((it: any) => ({ variant: String(it.variant), quantity: it.quantity })));
+    await restoreStock(
+      (order.items || []).map((it: any) => ({
+        variant: String(it.variant),
+        quantity: it.quantity,
+      })),
+    );
     await Payment.updateOne(
       { order: order._id, status: 'paid' },
       { $set: { status: 'refunded', refundedAt: new Date() } },
@@ -193,35 +205,39 @@ export async function updateStatus(id: string, next: OrderStatus) {
   order.status = next;
   const now = new Date();
   order.statusHistory.push({ status: next, at: now });
-  if (next === 'shipping') { order.processedAt ||= now; order.shippedAt ||= now; }
+  if (next === 'shipping') {
+    order.processedAt ||= now;
+    order.shippedAt ||= now;
+  }
   if (next === 'done') order.completedAt ||= now;
   if (next === 'cancelled') order.cancelledAt ||= now;
   if (next === 'returned') order.returnedAt ||= now;
   await order.save();
   const notificationDelivery = await sendOrderNotification(String(order._id), 'status');
   // FIX: tra ve DAY DU don hang (getOrder) thay vi chi { id, status }.
-  // Truoc day client setDetail(updated) -> detail.items = undefined -> modal crash "reading 'map'".
+  // Trước đây client setDetail(updated) -> detail.items = undefined rồi modal crash "reading 'map'".
   return {
     ...(await getOrder(String(order._id))),
     notificationDelivery,
   };
 }
 
-/** Admin xac nhan da nhan tien. Trang thai giao nhan cua don duoc giu nguyen. */
+/** Quản trị viên xác nhận đã nhận tiền. Trạng thái giao nhận của đơn được giữ nguyên. */
 export async function confirmPayment(id: string) {
   const payment: any = await Payment.findOneAndUpdate(
     { order: id },
     { $set: { status: 'paid', paidAt: new Date() } },
     { new: true },
   );
-  if (!payment) throw Object.assign(new Error('Khong tim thay thanh toan cho don nay'), { status: 404 });
+  if (!payment)
+    throw Object.assign(new Error('Không tìm thấy thanh toán cho đơn này'), { status: 404 });
   return getOrder(id);
 }
 
 /** Admin dat trang thai thanh toan doc lap voi trang thai giao nhan. */
 export async function setPaymentStatus(id: string, status: 'paid' | 'unpaid') {
   const order: any = await Order.findById(id);
-  if (!order) throw Object.assign(new Error('Khong tim thay don hang'), { status: 404 });
+  if (!order) throw Object.assign(new Error('Không tìm thấy đơn hàng'), { status: 404 });
   await Payment.updateOne(
     { order: order._id },
     status === 'paid'

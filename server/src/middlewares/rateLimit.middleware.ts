@@ -28,7 +28,7 @@ export function rateLimit(options: RateLimitOptions) {
       if (bucket.resetAt <= now) buckets.delete(key);
     }
   }, options.windowMs);
-  // Khong giu tien trinh song chi vi timer nay.
+  // Không giữ tiến trình sống chỉ vì timer này.
   if (typeof sweep.unref === 'function') sweep.unref();
 
   return (req: Request, res: Response, next: NextFunction) => {

@@ -1,6 +1,6 @@
 // =============================================================================
-//  IMAGE UPLOADER — nut tai anh len Cloudinary, tra ve mang URL.
-//  Dung trong form san pham / bien the va trang Thu vien anh.
+//  BỘ TẢI ẢNH - nút tải ảnh lên Cloudinary, trả về mảng URL.
+//  Dùng trong form sản phẩm / biến thể và trang Thư viện ảnh.
 // =============================================================================
 import { useRef, useState } from "react";
 import { LoaderCircle, Upload } from "lucide-react";
@@ -43,9 +43,7 @@ export default function ImageUploader({
       } else {
         const fd = new FormData();
         fd.append("image", files[0]);
-        const endpoint = folder
-          ? `/admin/upload/${encodeURIComponent(folder)}`
-          : "/admin/upload";
+        const endpoint = folder ? `/admin/upload/${encodeURIComponent(folder)}` : "/admin/upload";
         const { data } = await api.post(endpoint, fd, {
           headers: { "Content-Type": "multipart/form-data" },
         });

@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import { api } from "../lib/api";
 
 /* ---------------------------------------------
-   Types
+   Kiểu dữ liệu
 --------------------------------------------- */
 interface ProductItem {
   id: string;
@@ -30,14 +30,14 @@ interface SlideItem {
   position: "top" | "bottom";
 }
 
-/** Mot mua: nhan + danh sach cac trang (moi trang toi da PER_SLIDE san pham) */
+/** Một mùa: nhãn + danh sách các trang, mỗi trang tối đa PER_SLIDE sản phẩm. */
 interface SeasonGroup {
   label: string;
   slides: SlideItem[][];
 }
 
 /* ---------------------------------------------
-   Constants
+   Hằng số
 --------------------------------------------- */
 const FALLBACK: string[] = [
   "/images/season/winter-solstice.jpg",
@@ -47,11 +47,17 @@ const FALLBACK: string[] = [
 
 const PER_SLIDE = 3;
 const AUTO_MS = 5000;
-/** Thoi gian fade-out truoc khi doi slide (ms) */
+/** Thời gian fade-out trước khi đổi slide (ms). */
 const FADE_OUT_MS = 500;
 
-/* Chi hien 4 mua + tu khoa nhan dien tuong ung trong du lieu Mongo */
+/* Chỉ hiện 4 mùa và từ khóa nhận diện tương ứng trong dữ liệu Mongo. */
 const SEASON_LABELS = ["Spring", "Summer", "Autumn", "Winter"] as const;
+const SEASON_DISPLAY_LABELS: Record<(typeof SEASON_LABELS)[number], string> = {
+  Spring: "Xuân",
+  Summer: "Hạ",
+  Autumn: "Thu",
+  Winter: "Đông",
+};
 
 const SEASON_ALIASES: Record<string, string[]> = {
   Spring: ["spring", "xuan", "xu\u00e2n"],
@@ -61,7 +67,7 @@ const SEASON_ALIASES: Record<string, string[]> = {
 };
 
 /* ---------------------------------------------
-   Helpers
+   Hàm hỗ trợ
 --------------------------------------------- */
 function toSlideItem(product: ProductItem, index: number): SlideItem {
   const notes = [
@@ -75,19 +81,19 @@ function toSlideItem(product: ProductItem, index: number): SlideItem {
   return {
     id: product.id,
     name: product.name,
-    notes: notes || product.fragranceFamily || product.brand || "Signature scent",
+    notes: notes || product.fragranceFamily || product.brand || "Dấu hương đặc trưng",
     image: product.images?.[0] ?? product.image ?? FALLBACK[index % FALLBACK.length],
     to: `/products/${product.slug ?? product.id}`,
     position: index === 1 ? "bottom" : "top",
   };
 }
 
-/** Chuan hoa danh sach mua/dip cua 1 san pham */
+/** Chuẩn hóa danh sách mùa/dịp của một sản phẩm. */
 function productSeasons(product: ProductItem): string[] {
   return (product.season ?? []).map((value) => value.trim().toLowerCase()).filter(Boolean);
 }
 
-/** San pham co thuoc mua `label` hay khong (dua tren du lieu that) */
+/** Sản phẩm có thuộc mùa `label` hay không, dựa trên dữ liệu thật. */
 function matchesSeason(product: ProductItem, label: string): boolean {
   const seasons = productSeasons(product);
   if (!seasons.length) return false;
@@ -96,9 +102,9 @@ function matchesSeason(product: ProductItem, label: string): boolean {
 }
 
 /**
- * Gom san pham THEO DUNG mua (toi da 4 mua).
- * Moi mua chia thanh nhieu trang, moi trang PER_SLIDE san pham.
- * Mua nao khong co san pham se bi bo qua.
+ * Gom sản phẩm theo đúng mùa, tối đa 4 mùa.
+ * Mỗi mùa chia thành nhiều trang, mỗi trang PER_SLIDE sản phẩm.
+ * Mùa nào không có sản phẩm sẽ bị bỏ qua.
  */
 function buildSeasons(products: ProductItem[]): SeasonGroup[] {
   if (!products.length) return [];
@@ -122,7 +128,7 @@ function buildSeasons(products: ProductItem[]): SeasonGroup[] {
 }
 
 /* ---------------------------------------------
-   Arrow icons
+   Icon mũi tên
 --------------------------------------------- */
 function ArrowLeft() {
   return (
@@ -155,7 +161,7 @@ function ArrowRight() {
 }
 
 /* ---------------------------------------------
-   NavButton
+   Nút điều hướng
 --------------------------------------------- */
 function NavButton({
   onClick,
@@ -198,7 +204,7 @@ function NavButton({
 }
 
 /* ---------------------------------------------
-   Card - single product tile
+   Thẻ sản phẩm
 --------------------------------------------- */
 function ProductCard({
   item,
@@ -220,7 +226,7 @@ function ProductCard({
             : `opacity 0.45s ease ${delayMs}ms, transform 0.45s ease ${delayMs}ms`,
         }}
       >
-        {/* Image */}
+        {/* Ảnh */}
         <Link
           to={item.to}
           className="group mx-auto block overflow-hidden"
@@ -247,10 +253,10 @@ function ProductCard({
           />
         </Link>
 
-        {/* Text */}
+        {/* Nội dung */}
         <h3
           style={{
-            fontFamily: "'Spectral', Georgia, serif",
+            fontFamily: "'Noto Serif Display', 'Noto Serif', serif",
             fontSize: 21,
             fontWeight: 300,
             color: "#272521",
@@ -275,7 +281,7 @@ function ProductCard({
             marginTop: 6,
             minHeight: 24,
             lineHeight: 1.5,
-            fontFamily: "'Manrope', sans-serif",
+            fontFamily: "'Manrope', 'Be Vietnam Pro', sans-serif",
           }}
           className="line-clamp-2"
         >
@@ -295,10 +301,10 @@ function ProductCard({
             paddingBottom: 2,
             textDecoration: "none",
             fontWeight: 500,
-            fontFamily: "'Manrope', sans-serif",
+            fontFamily: "'Manrope', 'Be Vietnam Pro', sans-serif",
           }}
         >
-          Discover now
+          Khám phá ngay
         </Link>
       </div>
     </article>
@@ -306,24 +312,24 @@ function ProductCard({
 }
 
 /* ---------------------------------------------
-   SeasonSection - main export
+   SeasonSection - component chính
 --------------------------------------------- */
 export default function SeasonSection() {
   const [products, setProducts] = useState<ProductItem[]>([]);
-  const [seasonIndex, setSeasonIndex] = useState(0); // thanh tren: 4 mua
-  const [slideIndex, setSlideIndex] = useState(0); // mui ten duoi: san pham trong mua
+  const [seasonIndex, setSeasonIndex] = useState(0); // thanh trên: 4 mùa
+  const [slideIndex, setSlideIndex] = useState(0); // mũi tên dưới: sản phẩm trong mùa
   const [phase, setPhase] = useState<"in" | "out">("out");
 
   const autoRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const progressRef = useRef<HTMLDivElement | null>(null);
 
-  /* Ref luon giu gia tri moi nhat - tranh stale closure trong timer */
+  /* Ref luôn giữ giá trị mới nhất để tránh stale closure trong timer. */
   const seasonsRef = useRef<SeasonGroup[]>([]);
   const seasonRef = useRef(0);
   const slideRef = useRef(0);
   const isTransitioning = useRef(false);
 
-  /* Fetch - lay nhieu san pham de gom du cac mua */
+  /* Fetch nhiều sản phẩm để gom đủ các mùa. */
   useEffect(() => {
     let mounted = true;
     api
@@ -344,7 +350,7 @@ export default function SeasonSection() {
   const seasons = useMemo(() => buildSeasons(products), [products]);
   const totalSeasons = seasons.length;
 
-  /* Sync refs moi lan render */
+  /* Đồng bộ ref mỗi lần render. */
   seasonsRef.current = seasons;
   seasonRef.current = seasonIndex;
   slideRef.current = slideIndex;
@@ -364,7 +370,7 @@ export default function SeasonSection() {
     });
   }, []);
 
-  /* Auto: chay het cac trang cua mua hien tai roi sang mua ke tiep */
+  /* Auto: chạy hết các trang của mùa hiện tại rồi sang mùa kế tiếp. */
   const scheduleNext = useCallback(() => {
     if (autoRef.current) clearTimeout(autoRef.current);
     if (AUTO_MS <= 0) return;
@@ -384,7 +390,7 @@ export default function SeasonSection() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /* Transition: fade-out -> doi du lieu -> fade-in */
+  /* Transition: fade-out -> đổi dữ liệu -> fade-in. */
   const goTo = useCallback(
     (nextSeason: number, nextSlide: number, resetAuto = true) => {
       const list = seasonsRef.current;
@@ -400,7 +406,7 @@ export default function SeasonSection() {
       setPhase("out");
 
       setTimeout(() => {
-        /* 2. Doi du lieu */
+        /* 2. Đổi dữ liệu */
         seasonRef.current = s;
         slideRef.current = sl;
         setSeasonIndex(s);
@@ -413,7 +419,7 @@ export default function SeasonSection() {
             restartProgress();
             isTransitioning.current = false;
 
-            /* 4. Len lich ke tiep */
+            /* 4. Lên lịch kế tiếp */
             if (resetAuto || AUTO_MS > 0) scheduleNext();
           });
         });
@@ -427,7 +433,7 @@ export default function SeasonSection() {
   const goToRef = useRef(goTo);
   goToRef.current = goTo;
 
-  /* Auto khoi dong lan dau khi co data */
+  /* Auto khởi động lần đầu khi có data. */
   useEffect(() => {
     if (!totalSeasons || AUTO_MS <= 0) return;
     requestAnimationFrame(() => {
@@ -459,11 +465,11 @@ export default function SeasonSection() {
       style={{
         background: "#FCF9F4",
         padding: "64px 32px 72px",
-        fontFamily: "'Manrope', 'Helvetica Neue', sans-serif",
+        fontFamily: "'Manrope', 'Be Vietnam Pro', sans-serif",
       }}
     >
       <div style={{ maxWidth: 1400, margin: "0 auto" }}>
-        {/* Header */}
+        {/* Tiêu đề */}
         <div style={{ textAlign: "center", marginBottom: 4 }}>
           <p
             style={{
@@ -475,22 +481,22 @@ export default function SeasonSection() {
               marginBottom: 10,
             }}
           >
-            Curated collection
+            Tuyển chọn theo mùa
           </p>
           <h2
             style={{
-              fontFamily: "'Spectral', Georgia, serif",
+              fontFamily: "'Noto Serif Display', 'Noto Serif', serif",
               fontSize: "clamp(28px, 4vw, 42px)",
               fontWeight: 300,
               color: "#1D1C19",
               lineHeight: 1.15,
             }}
           >
-            Scents of the <em style={{ fontStyle: "italic" }}>Season</em>
+            Hương sắc <em style={{ fontStyle: "italic" }}>theo mùa</em>
           </h2>
         </div>
 
-        {/* ===== Thanh TREN: chuyen 4 MUA ===== */}
+        {/* ===== Thanh trên: chuyển 4 mùa ===== */}
         <div
           style={{
             display: "flex",
@@ -500,17 +506,17 @@ export default function SeasonSection() {
             margin: "28px 0 40px",
           }}
         >
-          <NavButton onClick={() => goTo(safeSeason - 1, 0, true)} label="Previous season">
+          <NavButton onClick={() => goTo(safeSeason - 1, 0, true)} label="Mùa trước">
             <ArrowLeft />
           </NavButton>
 
-          {/* Mot vach cho moi mua */}
+          {/* Một vạch cho mỗi mùa */}
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
             {seasons.map((group, i) => (
               <button
                 key={group.label}
                 onClick={() => goTo(i, 0, true)}
-                aria-label={`Go to ${group.label}`}
+                aria-label={`Chuyển đến mùa ${SEASON_DISPLAY_LABELS[group.label as keyof typeof SEASON_DISPLAY_LABELS] ?? group.label}`}
                 style={{
                   height: 1.5,
                   width: i === safeSeason ? 36 : 18,
@@ -524,7 +530,7 @@ export default function SeasonSection() {
             ))}
           </div>
 
-          {/* Ten mua hien tai */}
+          {/* Tên mùa hiện tại */}
           <span
             style={{
               fontSize: 10,
@@ -537,20 +543,21 @@ export default function SeasonSection() {
               transition: visible ? "opacity 0.8s ease 0.2s" : "opacity 0.4s ease",
             }}
           >
-            {season.label}
+            {SEASON_DISPLAY_LABELS[season.label as keyof typeof SEASON_DISPLAY_LABELS] ??
+              season.label}
           </span>
 
-          <NavButton onClick={() => goTo(safeSeason + 1, 0, true)} label="Next season">
+          <NavButton onClick={() => goTo(safeSeason + 1, 0, true)} label="Mùa sau">
             <ArrowRight />
           </NavButton>
         </div>
 
-        {/* ===== Mui ten DUOI (2 ben 3 anh): chuyen SAN PHAM cung mua ===== */}
+        {/* ===== Mũi tên dưới hai bên ba ảnh: chuyển sản phẩm cùng mùa ===== */}
         <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
           {hasMultipleSlides ? (
             <NavButton
               onClick={() => goTo(safeSeason, safeSlide - 1, true)}
-              label="Previous scents"
+              label="Nhóm hương trước"
             >
               <ArrowLeft />
             </NavButton>
@@ -577,7 +584,7 @@ export default function SeasonSection() {
           </div>
 
           {hasMultipleSlides ? (
-            <NavButton onClick={() => goTo(safeSeason, safeSlide + 1, true)} label="Next scents">
+            <NavButton onClick={() => goTo(safeSeason, safeSlide + 1, true)} label="Nhóm hương sau">
               <ArrowRight />
             </NavButton>
           ) : (
@@ -585,7 +592,7 @@ export default function SeasonSection() {
           )}
         </div>
 
-        {/* Progress bar */}
+        {/* Thanh tiến trình */}
         <div
           style={{
             height: 1,
@@ -600,7 +607,7 @@ export default function SeasonSection() {
           <div ref={progressRef} style={{ height: "100%", width: "0%", background: "#735C00" }} />
         </div>
 
-        {/* Counter - trang san pham trong mua hien tai */}
+        {/* Bộ đếm trang sản phẩm trong mùa hiện tại */}
         <p
           style={{
             textAlign: "center",
@@ -608,7 +615,7 @@ export default function SeasonSection() {
             fontSize: 10,
             letterSpacing: "0.1em",
             color: "#7D7870",
-            fontFamily: "'Manrope', sans-serif",
+            fontFamily: "'Manrope', 'Be Vietnam Pro', sans-serif",
           }}
         >
           {String(safeSlide + 1).padStart(2, "0")} / {String(slidesLen).padStart(2, "0")}

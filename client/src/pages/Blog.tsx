@@ -21,32 +21,32 @@ type BlogListResponse = {
 
 const fallbackArchetypes: Archetype[] = [
   {
-    name: "Smoked Vetiver",
+    name: "Cỏ hương bài khói",
     image: "https://images.unsplash.com/photo-1547826039-bfc35e0f1ea8?w=600&q=80",
     slug: "archetype-smoked-vetiver",
   },
   {
-    name: "Ancient Resin",
+    name: "Nhựa thơm cổ",
     image: "https://images.unsplash.com/photo-1541643600914-78b084683702?w=600&q=80",
     slug: "archetype-ancient-resin",
   },
   {
-    name: "Highland Lavender",
+    name: "Oải hương cao nguyên",
     image: "https://images.unsplash.com/photo-1490750967868-88df5691cc87?w=600&q=80",
     slug: "archetype-highland-lavender",
   },
   {
-    name: "Bitter Bergamot",
+    name: "Bergamot đắng",
     image: "https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=600&q=80",
     slug: "archetype-bitter-bergamot",
   },
   {
-    name: "Damask Rose",
+    name: "Hoa hồng Damask",
     image: "https://images.unsplash.com/photo-1490750967868-88df5691cc87?w=600&q=80",
     slug: "archetype-damask-rose",
   },
   {
-    name: "Sandalwood",
+    name: "Gỗ đàn hương",
     image: "https://images.unsplash.com/photo-1448375240586-882707db888b?w=600&q=80",
     slug: "archetype-sandalwood",
   },
@@ -133,10 +133,10 @@ export default function Blog() {
     try {
       setSubscribing(true);
       await api.post("/blog/subscribe", { email: normalizedEmail });
-      toast.success("Đã đăng ký nhận journal");
+      toast.success("Đã đăng ký nhận bản tin");
       setEmail("");
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Không thể đăng ký nhận journal lúc này");
+      toast.error(error?.response?.data?.message || "Không thể đăng ký nhận bản tin lúc này");
     } finally {
       setSubscribing(false);
     }
@@ -155,19 +155,19 @@ export default function Blog() {
           <div className="mx-auto grid max-w-[1180px] items-center gap-14 lg:grid-cols-[1.08fr_0.72fr]">
             <div>
               <p className="mb-6 text-[9px] font-semibold uppercase tracking-[0.28em] text-[#937B1D]">
-                The curator&apos;s journal
+                Nhật ký của người tuyển hương
               </p>
               <h1
                 className="max-w-[650px] text-[58px] leading-[1.02] tracking-[-0.04em] sm:text-[72px] lg:text-[86px]"
-                style={{ fontFamily: "'Cormorant Garamond', 'Spectral', serif" }}
+                style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
               >
-                Notes on the
+                Ghi chép về điều
                 <br />
-                Ephemeral.
+                phù du.
               </h1>
               <p className="mt-8 max-w-[590px] text-sm leading-7 text-[#6B6861]">
-                An editorial exploration into the architecture of scent, the poetry of raw
-                ingredients, and the invisible threads that bind memory to fragrance.
+                Một hành trình biên tập về kiến trúc của mùi hương, chất thơ của nguyên liệu thô và
+                những sợi dây vô hình nối ký ức với hương thơm.
               </p>
             </div>
 
@@ -175,7 +175,7 @@ export default function Blog() {
               <img
                 loading="lazy"
                 src="https://images.unsplash.com/photo-1608528577891-eb055944f2e7?w=800&q=80"
-                alt="Editorial perfume bottle"
+                alt="Chai nước hoa phong cách biên tập"
                 className="aspect-[0.78/1] h-full w-full object-cover grayscale"
               />
             </div>
@@ -192,26 +192,26 @@ export default function Blog() {
                   <img
                     loading="lazy"
                     src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS__htyuJgvZWWlJPkJTpMlgM6ej2uVAbxXjAnsUoiIEg&s=10"
-                    alt="Endangered florals"
+                    alt="Những loài hoa quý cần bảo tồn"
                     className="aspect-[1.45/1] w-full object-cover grayscale transition duration-700 group-hover:scale-[1.03]"
                   />
                 </div>
                 <div className="pt-5">
                   <p className="text-[8px] font-semibold uppercase tracking-[0.22em] text-[#997F20]">
-                    Sustainability
+                    Bền vững
                   </p>
                   <h2
                     className="mt-3 text-[30px] leading-tight tracking-[-0.025em] lg:text-[35px]"
-                    style={{ fontFamily: "'Cormorant Garamond', 'Spectral', serif" }}
+                    style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
                   >
-                    The Ethics of Extraction: Preserving Endangered Florals
+                    Đạo đức trong khai thác: bảo tồn những loài hoa quý hiếm
                   </h2>
                   <p className="mt-4 max-w-[720px] text-xs leading-5 text-[#706D66]">
-                    A deep dive into our partnership with local conservatories to protect rare
-                    botanical species through sustainable technology.
+                    Một góc nhìn sâu về cách chúng tôi hợp tác với các đơn vị bảo tồn địa phương để
+                    bảo vệ những loài thực vật quý bằng công nghệ bền vững.
                   </p>
                   <span className="mt-5 inline-flex border-b border-[#AB9851] pb-1 text-[8px] font-semibold uppercase tracking-[0.18em] text-[#675711]">
-                    Read manuscript
+                    Đọc bản thảo
                   </span>
                 </div>
               </Link>
@@ -220,23 +220,23 @@ export default function Blog() {
             {/* Featured right */}
             <article className="flex flex-col bg-[#F1EEE8] p-7 lg:p-8">
               <p className="text-[8px] font-semibold uppercase tracking-[0.22em] text-[#92791D]">
-                The process
+                Quy trình
               </p>
               <h2
                 className="mt-4 text-[25px] leading-tight tracking-[-0.02em]"
-                style={{ fontFamily: "'Cormorant Garamond', 'Spectral', serif" }}
+                style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
               >
-                In Conversation with our Master Nose: Jean-Pierre Volat
+                Trò chuyện cùng nghệ nhân điều hương Jean-Pierre Volat
               </h2>
               <p className="mt-5 text-xs leading-5 text-[#68655F]">
-                &ldquo;A fragrance is not a scent. It is a structure of time. I do not build top
-                notes; I build memories that refuse to fade.&rdquo;
+                &ldquo;Nước hoa không chỉ là mùi. Đó là cấu trúc của thời gian. Tôi không tạo tầng
+                hương đầu; tôi tạo nên những ký ức không chịu phai.&rdquo;
               </p>
               <div className="mt-8 overflow-hidden">
                 <img
                   loading="lazy"
                   src="https://images.unsplash.com/photo-1503435980610-a51f3ddfee50?w=800&q=80"
-                  alt="Perfume laboratory"
+                  alt="Phòng chế tác nước hoa"
                   className="aspect-[0.95/1] w-full object-cover grayscale"
                 />
               </div>
@@ -244,7 +244,7 @@ export default function Blog() {
                 to={`/blog/${articles[3]?.slug || BLOG_ARTICLES[3].slug}`}
                 className="mt-6 inline-flex w-max border-b border-[#AB9851] pb-1 text-[8px] font-semibold uppercase tracking-[0.18em] text-[#675711]"
               >
-                Read the science
+                Đọc câu chuyện kỹ nghệ
               </Link>
             </article>
           </div>
@@ -257,18 +257,18 @@ export default function Blog() {
               <div>
                 <h2
                   className="text-3xl tracking-[-0.02em] lg:text-[38px]"
-                  style={{ fontFamily: "'Cormorant Garamond', 'Spectral', serif" }}
+                  style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
                 >
-                  Olfactory Archetypes
+                  Nguyên mẫu mùi hương
                 </h2>
                 <p className="mt-1 text-[8px] uppercase tracking-[0.15em] text-[#A19D94]">
-                  Explore our palette of raw materials
+                  Khám phá bảng nguyên liệu của chúng tôi
                 </p>
               </div>
               <div className="flex gap-3">
                 <button
                   type="button"
-                  aria-label="Scroll left"
+                  aria-label="Cuộn sang trái"
                   onClick={() => scrollArchetypes("left")}
                   className="flex h-10 w-10 items-center justify-center border border-[#D4CDC0] transition hover:bg-[#201F1B] hover:text-white"
                 >
@@ -276,7 +276,7 @@ export default function Blog() {
                 </button>
                 <button
                   type="button"
-                  aria-label="Scroll right"
+                  aria-label="Cuộn sang phải"
                   onClick={() => scrollArchetypes("right")}
                   className="flex h-10 w-10 items-center justify-center border border-[#D4CDC0] transition hover:bg-[#201F1B] hover:text-white"
                 >
@@ -305,7 +305,7 @@ export default function Blog() {
                   <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/65 to-transparent px-5 pb-5 pt-20">
                     <h3
                       className="text-xl text-white"
-                      style={{ fontFamily: "'Cormorant Garamond', 'Spectral', serif" }}
+                      style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
                     >
                       {item.name}
                     </h3>
@@ -327,12 +327,12 @@ export default function Blog() {
           <div className="mx-auto max-w-[1060px]">
             <div className="mb-12 border-b border-[#DCD4C8] pb-7">
               <p className="text-[9px] font-semibold uppercase tracking-[0.24em] text-[#997F20]">
-                Journal archive
+                Lưu trữ bài viết
               </p>
               <div className="mt-3 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
                 <h2
                   className="text-4xl tracking-[-0.025em] lg:text-5xl"
-                  style={{ fontFamily: "'Cormorant Garamond', 'Spectral', serif" }}
+                  style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
                 >
                   Tất cả bài viết
                 </h2>
@@ -360,13 +360,13 @@ export default function Blog() {
                       </p>
                       <h2
                         className="mt-3 text-[25px] leading-[1.15] tracking-[-0.02em]"
-                        style={{ fontFamily: "'Cormorant Garamond', 'Spectral', serif" }}
+                        style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
                       >
                         {article.title}
                       </h2>
                       <p className="mt-4 text-xs leading-5 text-[#706D66]">{article.description}</p>
                       <span className="mt-5 inline-flex border-b border-[#AB9851] pb-1 text-[8px] font-semibold uppercase tracking-[0.18em] text-[#675711]">
-                        Read article
+                        Đọc bài viết
                       </span>
                     </div>
                   </Link>
@@ -377,22 +377,21 @@ export default function Blog() {
               <aside className="flex min-h-[410px] flex-col items-center justify-center bg-[#F0EDE8] p-9 text-center">
                 <p
                   className="text-[28px] leading-tight"
-                  style={{ fontFamily: "'Cormorant Garamond', 'Spectral', serif" }}
+                  style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
                 >
-                  Receive the Printed
+                  Nhận ấn phẩm
                   <br />
-                  Journal
+                  in định kỳ
                 </p>
                 <p className="mt-5 max-w-[250px] text-xs leading-5 text-[#706D66]">
-                  A quarterly publication delivered to your doorstep. Complimentary for our Inner
-                  Circle members.
+                  Ấn phẩm hằng quý được gửi đến tận nơi. Miễn phí cho thành viên thân thiết.
                 </p>
                 <form onSubmit={handleSubscribe} className="mt-8 w-full max-w-[260px]">
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="YOUR EMAIL ADDRESS"
+                    placeholder="ĐỊA CHỈ EMAIL CỦA BẠN"
                     className="w-full border-b border-[#D2C9B7] bg-transparent py-3 text-center text-[8px] uppercase tracking-[0.14em] outline-none placeholder:text-[#A9A59D]"
                   />
                   <button
@@ -400,7 +399,7 @@ export default function Blog() {
                     disabled={subscribing}
                     className="mt-5 w-full bg-[#8B7200] px-5 py-3 text-[8px] font-semibold uppercase tracking-[0.18em] text-white transition hover:bg-[#6F5C00]"
                   >
-                    {subscribing ? "Subscribing..." : "Subscribe"}
+                    {subscribing ? "Đang đăng ký..." : "Đăng ký"}
                   </button>
                 </form>
               </aside>
@@ -426,7 +425,7 @@ export default function Blog() {
                   }}
                   className="mt-8 border border-[#A88D2A] px-8 py-3 text-[9px] font-semibold uppercase tracking-[0.2em] text-[#675711] transition hover:bg-[#8B7200] hover:text-white"
                 >
-                  {showAllArticles ? "Thu gọn" : `Show all (${articles.length})`}
+                  {showAllArticles ? "Thu gọn" : `Xem tất cả (${articles.length})`}
                 </button>
               )}
             </div>

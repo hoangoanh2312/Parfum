@@ -8,6 +8,7 @@ interface User {
   email: string;
   phone?: string;
   role: string;
+  createdAt?: string;
   isEmailVerified?: boolean;
   addresses?: Address[];
   profileCompletedAt?: string;
@@ -77,6 +78,7 @@ export const useAuth = create<AuthState>((set) => ({
           email: data.email,
           phone: data.phone,
           role: data.role,
+          createdAt: data.createdAt,
           isEmailVerified: data.isEmailVerified,
           addresses: data.addresses || [],
           profileCompletedAt: data.profileCompletedAt,

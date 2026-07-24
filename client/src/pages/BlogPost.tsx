@@ -67,7 +67,7 @@ export default function BlogPost() {
               </p>
               <h1
                 className="text-[38px] leading-[1.05] tracking-[-0.03em] text-[#F4EFE6] sm:text-[52px] lg:text-[64px]"
-                style={{ fontFamily: "'Cormorant Garamond', 'Spectral', serif" }}
+                style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
               >
                 {article.title}
               </h1>
@@ -96,13 +96,13 @@ export default function BlogPost() {
             className="mt-10 inline-flex items-center gap-2 text-[9px] font-semibold uppercase tracking-[0.2em] text-[#6B6861] transition hover:text-[#211F1B]"
           >
             <ArrowLeft size={13} strokeWidth={1.5} />
-            Quay lại Journal
+            Quay lại Nhật ký
           </Link>
 
           {/* Lead / description */}
           <p
             className="mt-10 text-[17px] leading-[1.85] tracking-[-0.01em] text-[#44413C]"
-            style={{ fontFamily: "'Cormorant Garamond', 'Spectral', serif" }}
+            style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
           >
             {article.description}
           </p>
@@ -121,7 +121,7 @@ export default function BlogPost() {
                 {section.heading && (
                   <h2
                     className="mb-5 text-[26px] leading-tight tracking-[-0.025em] text-[#211F1B] sm:text-[30px]"
-                    style={{ fontFamily: "'Cormorant Garamond', 'Spectral', serif" }}
+                    style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
                   >
                     {section.heading}
                   </h2>
@@ -177,7 +177,7 @@ export default function BlogPost() {
                       </p>
                       <h3
                         className="mt-3 text-[22px] leading-tight tracking-[-0.02em]"
-                        style={{ fontFamily: "'Cormorant Garamond', 'Spectral', serif" }}
+                        style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
                       >
                         {rel.title}
                       </h3>

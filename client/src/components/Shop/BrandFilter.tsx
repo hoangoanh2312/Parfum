@@ -51,7 +51,7 @@ export default function BrandFilter({
         className="w-full flex items-center justify-between"
       >
         <span className="uppercase tracking-[2px] text-[11px] font-semibold text-[#735C00]">
-          Brand / Designer
+          THƯƠNG HIỆU
         </span>
         <ChevronDown
           size={16}
@@ -65,12 +65,15 @@ export default function BrandFilter({
             type="text"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search brands"
+            placeholder="Tìm thương hiệu"
             className="w-full rounded-md border border-[#e8deca] bg-white px-3 py-2 text-sm text-[#4F4942] placeholder:text-[#B4AD9F] outline-none transition focus:border-[#735C00]"
           />
 
           <div className="relative mt-3">
-            <div ref={listRef} className="brand-scroll max-h-[228px] overflow-y-auto pr-1 space-y-1">
+            <div
+              ref={listRef}
+              className="brand-scroll max-h-[228px] overflow-y-auto pr-1 space-y-1"
+            >
               {filtered.map((brand) => {
                 const active = selectedSet.has(norm(brand));
                 return (
@@ -92,18 +95,14 @@ export default function BrandFilter({
                       {brand}
                     </span>
                     {counts[brand] !== undefined && (
-                      <span className="text-xs tabular-nums text-[#B4AD9F]">
-                        {counts[brand]}
-                      </span>
+                      <span className="text-xs tabular-nums text-[#B4AD9F]">{counts[brand]}</span>
                     )}
                   </label>
                 );
               })}
 
               {filtered.length === 0 && (
-                <p className="px-1 py-2 text-xs text-[#A29D91]">
-                  Khong tim thay thuong hieu.
-                </p>
+                <p className="px-1 py-2 text-xs text-[#A29D91]">Không tìm thấy thương hiệu.</p>
               )}
             </div>
 

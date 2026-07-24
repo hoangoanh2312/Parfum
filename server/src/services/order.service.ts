@@ -9,7 +9,12 @@ import { computeLoyaltyPoints } from '../utils/pricing';
 import { FlashSale } from '../models/flashSale.model';
 import { FlashSaleUsage } from '../models/flashSaleUsage.model';
 import { VoucherCounter } from '../models/voucherCounter.model';
-import { pricingCustomerKey, PricingQuote, quoteOrder, resolveVariantPrices } from './pricing-engine.service';
+import {
+  pricingCustomerKey,
+  PricingQuote,
+  quoteOrder,
+  resolveVariantPrices,
+} from './pricing-engine.service';
 import { logger } from '../utils/logger';
 import { env } from '../config/env';
 import { assertValidContact, normalizeEmail, normalizePhone } from '../utils/contactValidation';
@@ -50,7 +55,10 @@ export async function checkStock(items: StockItem[]) {
 
   for (const it of items) {
     const qty = Number(it.quantity);
-    const v: any = await Variant.findById(it.variant).populate({ path: 'product', populate: { path: 'category' } });
+    const v: any = await Variant.findById(it.variant).populate({
+      path: 'product',
+      populate: { path: 'category' },
+    });
 
     if (!v) {
       problems.push({ variant: it.variant, reason: 'not_found' });
@@ -86,24 +94,44 @@ export async function checkStock(items: StockItem[]) {
   const prices = await resolveVariantPrices(detailed.map((item) => item._doc));
   const pricedItems = detailed.map(({ _doc, ...item }) => {
     const resolved = prices.get(item.variant)!;
-    const available = resolved.flashRemaining == null
-      ? item.available
-      : Math.min(item.available, resolved.flashRemaining);
-    if (available < item.quantity && !problems.some((problem) => problem.variant === item.variant)) {
-      problems.push({ variant: item.variant, reason: 'out_of_stock', available, requested: item.quantity });
+    const available =
+      resolved.flashRemaining == null
+        ? item.available
+        : Math.min(item.available, resolved.flashRemaining);
+    if (
+      available < item.quantity &&
+      !problems.some((problem) => problem.variant === item.variant)
+    ) {
+      problems.push({
+        variant: item.variant,
+        reason: 'out_of_stock',
+        available,
+        requested: item.quantity,
+      });
     }
     return {
-      ...item, available,
-      basePrice: resolved.basePrice, price: resolved.finalPrice,
-      finalPrice: resolved.finalPrice, discountAmount: resolved.discountAmount,
-      discountPercent: resolved.discountPercent, promotionType: resolved.promotionType,
+      ...item,
+      available,
+      basePrice: resolved.basePrice,
+      price: resolved.finalPrice,
+      finalPrice: resolved.finalPrice,
+      discountAmount: resolved.discountAmount,
+      discountPercent: resolved.discountPercent,
+      promotionType: resolved.promotionType,
       promotionName: resolved.promotionName,
       lineTotal: resolved.finalPrice * item.quantity,
     };
   });
   const total = pricedItems.reduce((sum, item) => sum + item.lineTotal, 0);
   const originalTotal = pricedItems.reduce((sum, item) => sum + item.basePrice * item.quantity, 0);
-  return { ok: problems.length === 0, problems, items: pricedItems, total, originalTotal, productLevelDiscount: originalTotal - total };
+  return {
+    ok: problems.length === 0,
+    problems,
+    items: pricedItems,
+    total,
+    originalTotal,
+    productLevelDiscount: originalTotal - total,
+  };
 }
 
 /**
@@ -122,7 +150,7 @@ export async function decrementStock(items: StockItem[]) {
 
     if (result.modifiedCount !== 1) {
       await restoreStock(done);
-      throw Object.assign(new Error('San pham khong du ton kho'), {
+      throw Object.assign(new Error('Sản phẩm không đủ tồn kho'), {
         status: 409,
         variant: it.variant,
       });
@@ -143,7 +171,7 @@ async function decrementStockSession(items: StockItem[], session: mongoose.Clien
       { session },
     );
     if (result.modifiedCount !== 1) {
-      throw Object.assign(new Error('San pham khong du ton kho'), {
+      throw Object.assign(new Error('Sản phẩm không đủ tồn kho'), {
         status: 409,
         variant: it.variant,
       });
@@ -216,72 +244,127 @@ async function resolveOrderUserId(
   return existingUser?._id ? String(existingUser._id) : undefined;
 }
 
-async function incrementCustomerCounter(Model: any, query: any, field: string, amount: number, limit: number, session?: mongoose.ClientSession) {
+async function incrementCustomerCounter(
+  Model: any,
+  query: any,
+  field: string,
+  amount: number,
+  limit: number,
+  session?: mongoose.ClientSession,
+) {
   const options: any = { new: true, session };
   if (limit <= 0) {
-    return Model.findOneAndUpdate(query, { $inc: { [field]: amount } }, { ...options, upsert: true, setDefaultsOnInsert: true });
+    return Model.findOneAndUpdate(
+      query,
+      { $inc: { [field]: amount } },
+      { ...options, upsert: true, setDefaultsOnInsert: true },
+    );
   }
-  let item = await Model.findOneAndUpdate({ ...query, [field]: { $lte: limit - amount } }, { $inc: { [field]: amount } }, options);
+  let item = await Model.findOneAndUpdate(
+    { ...query, [field]: { $lte: limit - amount } },
+    { $inc: { [field]: amount } },
+    options,
+  );
   if (item) return item;
   try {
-    const docs = await Model.create([{ ...query, [field]: amount }], session ? { session } : undefined);
+    const docs = await Model.create(
+      [{ ...query, [field]: amount }],
+      session ? { session } : undefined,
+    );
     return docs[0];
   } catch (cause: any) {
     if (cause?.code !== 11000) throw cause;
-    item = await Model.findOneAndUpdate({ ...query, [field]: { $lte: limit - amount } }, { $inc: { [field]: amount } }, options);
+    item = await Model.findOneAndUpdate(
+      { ...query, [field]: { $lte: limit - amount } },
+      { $inc: { [field]: amount } },
+      options,
+    );
     if (item) return item;
     throw Object.assign(new Error('Bạn đã sử dụng hết số lượng ưu đãi cho phép'), { status: 409 });
   }
 }
 
-async function reservePromotions(quote: PricingQuote, customerKey: string, session?: mongoose.ClientSession) {
+async function reservePromotions(
+  quote: PricingQuote,
+  customerKey: string,
+  session?: mongoose.ClientSession,
+) {
   const reservedFlash: Array<{ id: string; quantity: number }> = [];
   let voucherReserved = false;
   try {
-  if (quote.voucher) {
-    const voucher: any = await Voucher.findById(quote.voucher.id).session(session || null);
-    if (!voucher || !voucher.isActive) throw Object.assign(new Error('Voucher không còn khả dụng'), { status: 409 });
-    const filter: any = { _id: voucher._id, isActive: true };
-    if (Number(voucher.usageLimit || 0) > 0) filter.usedCount = { $lt: Number(voucher.usageLimit) };
-    const result = await Voucher.updateOne(filter, { $inc: { usedCount: 1 } }, { session });
-    if (result.modifiedCount !== 1) throw Object.assign(new Error('Voucher vừa hết lượt sử dụng'), { status: 409 });
-    voucherReserved = true;
-    await incrementCustomerCounter(
-      VoucherCounter,
-      { voucher: voucher._id, customerKey },
-      'count', 1, Number(voucher.usageLimitPerUser || 0), session,
-    );
-  }
+    if (quote.voucher) {
+      const voucher: any = await Voucher.findById(quote.voucher.id).session(session || null);
+      if (!voucher || !voucher.isActive)
+        throw Object.assign(new Error('Voucher không còn khả dụng'), { status: 409 });
+      const filter: any = { _id: voucher._id, isActive: true };
+      if (Number(voucher.usageLimit || 0) > 0)
+        filter.usedCount = { $lt: Number(voucher.usageLimit) };
+      const result = await Voucher.updateOne(filter, { $inc: { usedCount: 1 } }, { session });
+      if (result.modifiedCount !== 1)
+        throw Object.assign(new Error('Voucher vừa hết lượt sử dụng'), { status: 409 });
+      voucherReserved = true;
+      await incrementCustomerCounter(
+        VoucherCounter,
+        { voucher: voucher._id, customerKey },
+        'count',
+        1,
+        Number(voucher.usageLimitPerUser || 0),
+        session,
+      );
+    }
 
-  for (const item of quote.items) {
-    if (!item.flashSaleId) continue;
-    const flash: any = await FlashSale.findById(item.flashSaleId).session(session || null);
-    if (!flash) throw Object.assign(new Error('Flash sale không còn khả dụng'), { status: 409 });
-    const now = new Date();
-    const result = await FlashSale.updateOne({
-      _id: flash._id, isActive: true, startTime: { $lte: now }, endTime: { $gt: now },
-      $expr: { $lte: [{ $add: ['$soldCount', item.quantity] }, '$stockAllocated'] },
-    }, { $inc: { soldCount: item.quantity } }, { session });
-    if (result.modifiedCount !== 1) throw Object.assign(new Error('Số lượng flash sale vừa hết'), { status: 409 });
-    reservedFlash.push({ id: String(flash._id), quantity: item.quantity });
-    await incrementCustomerCounter(
-      FlashSaleUsage,
-      { flashSale: flash._id, customerKey },
-      'quantity', item.quantity, Number(flash.maxPerUser || 0), session,
-    );
-  }
-  return { reservedFlash, voucherReserved };
+    for (const item of quote.items) {
+      if (!item.flashSaleId) continue;
+      const flash: any = await FlashSale.findById(item.flashSaleId).session(session || null);
+      if (!flash) throw Object.assign(new Error('Flash sale không còn khả dụng'), { status: 409 });
+      const now = new Date();
+      const result = await FlashSale.updateOne(
+        {
+          _id: flash._id,
+          isActive: true,
+          startTime: { $lte: now },
+          endTime: { $gt: now },
+          $expr: { $lte: [{ $add: ['$soldCount', item.quantity] }, '$stockAllocated'] },
+        },
+        { $inc: { soldCount: item.quantity } },
+        { session },
+      );
+      if (result.modifiedCount !== 1)
+        throw Object.assign(new Error('Số lượng flash sale vừa hết'), { status: 409 });
+      reservedFlash.push({ id: String(flash._id), quantity: item.quantity });
+      await incrementCustomerCounter(
+        FlashSaleUsage,
+        { flashSale: flash._id, customerKey },
+        'quantity',
+        item.quantity,
+        Number(flash.maxPerUser || 0),
+        session,
+      );
+    }
+    return { reservedFlash, voucherReserved };
   } catch (cause) {
     // Mongo transaction tu rollback. Fallback khong co transaction nen phai tra lai
     // dung nhung quota da reserve thanh cong truoc khi gap loi.
     if (!session) {
       if (voucherReserved && quote.voucher) {
-        await Voucher.updateOne({ _id: quote.voucher.id, usedCount: { $gt: 0 } }, { $inc: { usedCount: -1 } });
-        await VoucherCounter.updateOne({ voucher: quote.voucher.id, customerKey, count: { $gt: 0 } }, { $inc: { count: -1 } });
+        await Voucher.updateOne(
+          { _id: quote.voucher.id, usedCount: { $gt: 0 } },
+          { $inc: { usedCount: -1 } },
+        );
+        await VoucherCounter.updateOne(
+          { voucher: quote.voucher.id, customerKey, count: { $gt: 0 } },
+          { $inc: { count: -1 } },
+        );
       }
       for (const reserved of reservedFlash) {
-        await FlashSale.updateOne({ _id: reserved.id, soldCount: { $gte: reserved.quantity } }, { $inc: { soldCount: -reserved.quantity } });
-        await FlashSaleUsage.updateOne({ flashSale: reserved.id, customerKey, quantity: { $gte: reserved.quantity } }, { $inc: { quantity: -reserved.quantity } });
+        await FlashSale.updateOne(
+          { _id: reserved.id, soldCount: { $gte: reserved.quantity } },
+          { $inc: { soldCount: -reserved.quantity } },
+        );
+        await FlashSaleUsage.updateOne(
+          { flashSale: reserved.id, customerKey, quantity: { $gte: reserved.quantity } },
+          { $inc: { quantity: -reserved.quantity } },
+        );
       }
     }
     throw cause;
@@ -290,13 +373,26 @@ async function reservePromotions(quote: PricingQuote, customerKey: string, sessi
 
 async function releasePromotions(quote: PricingQuote, customerKey: string) {
   if (quote.voucher) {
-    await Voucher.updateOne({ _id: quote.voucher.id, usedCount: { $gt: 0 } }, { $inc: { usedCount: -1 } });
-    await VoucherCounter.updateOne({ voucher: quote.voucher.id, customerKey, count: { $gt: 0 } }, { $inc: { count: -1 } });
+    await Voucher.updateOne(
+      { _id: quote.voucher.id, usedCount: { $gt: 0 } },
+      { $inc: { usedCount: -1 } },
+    );
+    await VoucherCounter.updateOne(
+      { voucher: quote.voucher.id, customerKey, count: { $gt: 0 } },
+      { $inc: { count: -1 } },
+    );
   }
-  for (const item of quote.items) if (item.flashSaleId) {
-    await FlashSale.updateOne({ _id: item.flashSaleId, soldCount: { $gte: item.quantity } }, { $inc: { soldCount: -item.quantity } });
-    await FlashSaleUsage.updateOne({ flashSale: item.flashSaleId, customerKey, quantity: { $gte: item.quantity } }, { $inc: { quantity: -item.quantity } });
-  }
+  for (const item of quote.items)
+    if (item.flashSaleId) {
+      await FlashSale.updateOne(
+        { _id: item.flashSaleId, soldCount: { $gte: item.quantity } },
+        { $inc: { soldCount: -item.quantity } },
+      );
+      await FlashSaleUsage.updateOne(
+        { flashSale: item.flashSaleId, customerKey, quantity: { $gte: item.quantity } },
+        { $inc: { quantity: -item.quantity } },
+      );
+    }
 }
 
 export async function releaseOrderPromotionReservations(order: any) {
@@ -304,14 +400,28 @@ export async function releaseOrderPromotionReservations(order: any) {
   if (order.voucherCode) {
     const voucher: any = await Voucher.findOne({ code: order.voucherCode });
     if (voucher) {
-      await Voucher.updateOne({ _id: voucher._id, usedCount: { $gt: 0 } }, { $inc: { usedCount: -1 } });
-      if (key) await VoucherCounter.updateOne({ voucher: voucher._id, customerKey: key, count: { $gt: 0 } }, { $inc: { count: -1 } });
+      await Voucher.updateOne(
+        { _id: voucher._id, usedCount: { $gt: 0 } },
+        { $inc: { usedCount: -1 } },
+      );
+      if (key)
+        await VoucherCounter.updateOne(
+          { voucher: voucher._id, customerKey: key, count: { $gt: 0 } },
+          { $inc: { count: -1 } },
+        );
     }
   }
   for (const item of order.items || []) {
     if (item.promotionType !== 'FLASH_SALE' || !item.promotionId) continue;
-    await FlashSale.updateOne({ _id: item.promotionId, soldCount: { $gte: item.quantity } }, { $inc: { soldCount: -Number(item.quantity) } });
-    if (key) await FlashSaleUsage.updateOne({ flashSale: item.promotionId, customerKey: key, quantity: { $gte: item.quantity } }, { $inc: { quantity: -Number(item.quantity) } });
+    await FlashSale.updateOne(
+      { _id: item.promotionId, soldCount: { $gte: item.quantity } },
+      { $inc: { soldCount: -Number(item.quantity) } },
+    );
+    if (key)
+      await FlashSaleUsage.updateOne(
+        { flashSale: item.promotionId, customerKey: key, quantity: { $gte: item.quantity } },
+        { $inc: { quantity: -Number(item.quantity) } },
+      );
   }
 }
 
@@ -326,7 +436,10 @@ export async function createOrder(userId: string | undefined, opts: CreateOrderO
   const explicitItems = Array.isArray(opts.items) && opts.items.length > 0;
 
   const stockItems: StockItem[] = explicitItems
-    ? (opts.items || []).map((item) => ({ variant: String(item.variant), quantity: Number(item.quantity) }))
+    ? (opts.items || []).map((item) => ({
+        variant: String(item.variant),
+        quantity: Number(item.quantity),
+      }))
     : (cart?.items || []).map((i: any) => ({ variant: String(i.variant), quantity: i.quantity }));
 
   if (!stockItems.length) {
@@ -337,8 +450,10 @@ export async function createOrder(userId: string | undefined, opts: CreateOrderO
   const orderUserId = await resolveOrderUserId(userId, address);
   // Server resolve lai tat ca gia tu DB. Khong doc gia/discount do client gui.
   const quote = await quoteOrder(stockItems, {
-    voucherCode: opts.voucherCode, shippingMethod: opts.shippingMethod,
-    userId: orderUserId, email: address.email,
+    voucherCode: opts.voucherCode,
+    shippingMethod: opts.shippingMethod,
+    userId: orderUserId,
+    email: address.email,
   });
   const totals = {
     subtotal: quote.subtotal,
@@ -382,11 +497,16 @@ export async function createOrder(userId: string | undefined, opts: CreateOrderO
     tax: totals.tax,
     total: totals.total,
     voucherCode: quote.voucher?.code,
-    voucherSnapshot: quote.voucher ? {
-      code: quote.voucher.code, name: quote.voucher.name, type: quote.voucher.type,
-      value: quote.voucher.value, stackable: quote.voucher.stackable,
-      userSegment: quote.voucher.userSegment,
-    } : undefined,
+    voucherSnapshot: quote.voucher
+      ? {
+          code: quote.voucher.code,
+          name: quote.voucher.name,
+          type: quote.voucher.type,
+          value: quote.voucher.value,
+          stackable: quote.voucher.stackable,
+          userSegment: quote.voucher.userSegment,
+        }
+      : undefined,
     pointsEarned: totals.pointsEarned,
     status: 'pending' as const,
     statusHistory: [{ status: 'pending', at: new Date() }],
@@ -402,9 +522,16 @@ export async function createOrder(userId: string | undefined, opts: CreateOrderO
       await reservePromotions(quote, customerKey, session);
       const docs = await Order.create([buildDoc()], { session });
       created = docs[0];
-      await Payment.create([{ order: created._id, method, status: 'unpaid', amount: totals.total }], { session });
+      await Payment.create(
+        [{ order: created._id, method, status: 'unpaid', amount: totals.total }],
+        { session },
+      );
       if (orderUserId && totals.pointsEarned) {
-        await User.updateOne({ _id: orderUserId }, { $inc: { loyaltyPoints: totals.pointsEarned } }, { session });
+        await User.updateOne(
+          { _id: orderUserId },
+          { $inc: { loyaltyPoints: totals.pointsEarned } },
+          { session },
+        );
       }
       if (cart && !explicitItems) {
         cart.items = [];
@@ -418,14 +545,24 @@ export async function createOrder(userId: string | undefined, opts: CreateOrderO
       txnErr?.codeName === 'IllegalOperation' ||
       /Transaction numbers|replica set|not support|Transactions are not/i.test(msg);
     if (!unsupported) throw txnErr;
-    logger.warn('[order] Mongo khong ho tro transaction -> dung fallback rollback thu cong');
-    created = await createOrderFallback({ userId: orderUserId, cart, stockItems, doc: buildDoc(), method, totals, quote, customerKey, explicitItems });
+    logger.warn('[order] Mongo không hỗ trợ transaction -> dùng fallback rollback thủ công');
+    created = await createOrderFallback({
+      userId: orderUserId,
+      cart,
+      stockItems,
+      doc: buildDoc(),
+      method,
+      totals,
+      quote,
+      customerKey,
+      explicitItems,
+    });
   } finally {
     await session.endSession();
   }
 
   void sendOrderNotification(String(created._id), 'created').catch((error) => {
-    logger.error('[order] Gui email xac nhan don hang that bai', error);
+    logger.error('[order] Gửi email xác nhận đơn hàng thất bại', error);
   });
 
   return {
@@ -454,7 +591,12 @@ async function createOrderFallback(p: {
     await reservePromotions(p.quote, p.customerKey);
     promotionsReserved = true;
     const order: any = await Order.create(p.doc);
-    await Payment.create({ order: order._id, method: p.method, status: 'unpaid', amount: p.totals.total });
+    await Payment.create({
+      order: order._id,
+      method: p.method,
+      status: 'unpaid',
+      amount: p.totals.total,
+    });
     if (p.userId && p.totals.pointsEarned) {
       await User.updateOne({ _id: p.userId }, { $inc: { loyaltyPoints: p.totals.pointsEarned } });
     }
@@ -476,15 +618,17 @@ export async function cancelOrder(userId: string, orderId: string) {
   try {
     order = await Order.findOne({ _id: orderId, user: userId });
   } catch {
-    throw Object.assign(new Error('Khong tim thay don hang'), { status: 404 });
+    throw Object.assign(new Error('Không tìm thấy đơn hàng'), { status: 404 });
   }
-  if (!order) throw Object.assign(new Error('Khong tim thay don hang'), { status: 404 });
+  if (!order) throw Object.assign(new Error('Không tìm thấy đơn hàng'), { status: 404 });
   if (!['pending', 'paid'].includes(order.status)) {
-    throw Object.assign(new Error('Khong the huy don o trang thai nay'), { status: 400 });
+    throw Object.assign(new Error('Không thể hủy đơn ở trạng thái này'), { status: 400 });
   }
 
   await releaseOrderPromotionReservations(order);
-  await restoreStock((order.items || []).map((it: any) => ({ variant: String(it.variant), quantity: it.quantity })));
+  await restoreStock(
+    (order.items || []).map((it: any) => ({ variant: String(it.variant), quantity: it.quantity })),
+  );
   order.status = 'cancelled';
   await order.save();
   void sendOrderNotification(String(order._id), 'status').catch(() => null);
@@ -502,17 +646,24 @@ export async function cancelPendingQrOrder(orderId: string, userId?: string) {
   try {
     order = await Order.findOne(userId ? { _id: orderId, user: userId } : { _id: orderId });
   } catch {
-    throw Object.assign(new Error('Khong tim thay don hang'), { status: 404 });
+    throw Object.assign(new Error('Không tìm thấy đơn hàng'), { status: 404 });
   }
-  if (!order) throw Object.assign(new Error('Khong tim thay don hang'), { status: 404 });
+  if (!order) throw Object.assign(new Error('Không tìm thấy đơn hàng'), { status: 404 });
 
   const payment: any = await Payment.findOne({ order: order._id });
-  if (!payment || payment.method !== 'bank_qr' || payment.status !== 'unpaid' || order.status !== 'pending') {
+  if (
+    !payment ||
+    payment.method !== 'bank_qr' ||
+    payment.status !== 'unpaid' ||
+    order.status !== 'pending'
+  ) {
     throw Object.assign(new Error('Chi co the huy giao dich QR chua thanh toan'), { status: 400 });
   }
 
   await releaseOrderPromotionReservations(order);
-  await restoreStock((order.items || []).map((it: any) => ({ variant: String(it.variant), quantity: it.quantity })));
+  await restoreStock(
+    (order.items || []).map((it: any) => ({ variant: String(it.variant), quantity: it.quantity })),
+  );
   order.status = 'cancelled';
   await order.save();
   void sendOrderNotification(String(order._id), 'status').catch(() => null);
@@ -547,7 +698,9 @@ export async function getMyOrders(userId: string) {
       status: normalizeOrderStatus(o.status),
       itemCount,
       firstItemName: o.items?.[0]?.name || '',
-      payment: pay ? { method: pay.method, status: pay.status } : { method: 'cod', status: 'unpaid' },
+      payment: pay
+        ? { method: pay.method, status: pay.status }
+        : { method: 'cod', status: 'unpaid' },
     };
   });
 }
@@ -604,7 +757,9 @@ export async function lookupOrders(rawQuery: string) {
 
   if (!orders.length) return [];
 
-  const payments: any[] = await Payment.find({ order: { $in: orders.map((order) => order._id) } }).lean();
+  const payments: any[] = await Payment.find({
+    order: { $in: orders.map((order) => order._id) },
+  }).lean();
   const paymentMap = new Map(payments.map((payment) => [String(payment.order), payment]));
 
   return orders.map((order) => {
@@ -637,9 +792,9 @@ export async function getOrderById(userId: string | undefined, orderId: string) 
   try {
     order = await Order.findOne(userId ? { _id: orderId, user: userId } : { _id: orderId }).lean();
   } catch {
-    throw Object.assign(new Error('Khong tim thay don hang'), { status: 404 });
+    throw Object.assign(new Error('Không tìm thấy đơn hàng'), { status: 404 });
   }
-  if (!order) throw Object.assign(new Error('Khong tim thay don hang'), { status: 404 });
+  if (!order) throw Object.assign(new Error('Không tìm thấy đơn hàng'), { status: 404 });
 
   const payment: any = await Payment.findOne({ order: order._id }).lean();
 
@@ -673,7 +828,9 @@ export async function getOrderById(userId: string | undefined, orderId: string) 
       quantity: it.quantity,
       lineTotal: (it.price || 0) * (it.quantity || 0),
     })),
-    payment: payment ? { method: payment.method, status: payment.status, amount: payment.amount } : null,
+    payment: payment
+      ? { method: payment.method, status: payment.status, amount: payment.amount }
+      : null,
   };
 }
 
@@ -683,9 +840,9 @@ export async function getPaymentInfo(userId: string | undefined, orderId: string
   try {
     order = await Order.findOne(userId ? { _id: orderId, user: userId } : { _id: orderId }).lean();
   } catch {
-    throw Object.assign(new Error('Khong tim thay don hang'), { status: 404 });
+    throw Object.assign(new Error('Không tìm thấy đơn hàng'), { status: 404 });
   }
-  if (!order) throw Object.assign(new Error('Khong tim thay don hang'), { status: 404 });
+  if (!order) throw Object.assign(new Error('Không tìm thấy đơn hàng'), { status: 404 });
 
   const payment: any = await Payment.findOne({ order: order._id }).lean();
   const method = payment?.method || 'cod';

@@ -10,7 +10,7 @@ function isDevSmsMode() {
 export function assertSmsConfigured() {
   if (isDevSmsMode()) return;
   if (!process.env.ESMS_API_KEY || !process.env.ESMS_SECRET_KEY || !process.env.ESMS_BRAND_NAME) {
-    throw Object.assign(new Error('Dich vu SMS chua duoc cau hinh'), { status: 503 });
+    throw Object.assign(new Error('Dịch vụ SMS chưa được cấu hình'), { status: 503 });
   }
 }
 
@@ -18,13 +18,15 @@ export async function sendPasswordResetOtp(phone: string, otp: string) {
   assertSmsConfigured();
 
   if (isDevSmsMode()) {
-    logger.info(`[SMS DEV] Ma dat lai mat khau cho ${phone}: ${otp}`);
+    logger.info(`[SMS DEV] Mã đặt lại mật khẩu cho ${phone}: ${otp}`);
     return;
   }
 
-  const template = process.env.ESMS_OTP_TEMPLATE || '{OTP} la ma dat lai mat khau L Essence Noire. Ma co hieu luc 5 phut.';
+  const template =
+    process.env.ESMS_OTP_TEMPLATE ||
+    '{OTP} là mã đặt lại mật khẩu L Essence Noire. Mã có hiệu lực 5 phút.';
   if (!template.includes('{OTP}')) {
-    throw Object.assign(new Error('ESMS_OTP_TEMPLATE phai chua {OTP}'), { status: 503 });
+    throw Object.assign(new Error('ESMS_OTP_TEMPLATE phải chứa {OTP}'), { status: 503 });
   }
 
   const response = await fetch(ESMS_ENDPOINT, {
@@ -45,12 +47,14 @@ export async function sendPasswordResetOtp(phone: string, otp: string) {
   });
 
   if (!response.ok) {
-    throw Object.assign(new Error('Khong the ket noi dich vu SMS'), { status: 502 });
+    throw Object.assign(new Error('Không thể kết nối dịch vụ SMS'), { status: 502 });
   }
 
   const result = (await response.json()) as { CodeResult?: string; ErrorMessage?: string };
   if (String(result.CodeResult) !== '100') {
-    logger.error(`eSMS error ${result.CodeResult || 'unknown'}: ${result.ErrorMessage || 'Unknown error'}`);
-    throw Object.assign(new Error('Khong the gui ma xac minh luc nay'), { status: 502 });
+    logger.error(
+      `Lỗi eSMS ${result.CodeResult || 'không rõ'}: ${result.ErrorMessage || 'Lỗi không xác định'}`,
+    );
+    throw Object.assign(new Error('Không thể gửi mã xác minh lúc này'), { status: 502 });
   }
 }

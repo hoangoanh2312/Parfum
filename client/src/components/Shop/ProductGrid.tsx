@@ -29,10 +29,7 @@ interface ProductGridProps {
   loading?: boolean;
 }
 
-export default function ProductGrid({
-  products,
-  loading = false,
-}: ProductGridProps) {
+export default function ProductGrid({ products, loading = false }: ProductGridProps) {
   if (loading) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 mt-10">
@@ -56,11 +53,9 @@ export default function ProductGrid({
   if (!products.length) {
     return (
       <div className="py-24 text-center">
-        <h2 className="text-3xl font-semibold">No products found</h2>
+        <h2 className="text-3xl font-semibold">Không tìm thấy sản phẩm</h2>
 
-        <p className="text-gray-500 mt-3">
-          Try changing your search or filters.
-        </p>
+        <p className="text-gray-500 mt-3">Thử thay đổi từ khóa tìm kiếm hoặc bộ lọc.</p>
       </div>
     );
   }

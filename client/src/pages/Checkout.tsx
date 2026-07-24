@@ -12,7 +12,7 @@ import Footer from "../components/Footer";
 import VietnamAddressFields from "../components/VietnamAddressFields";
 
 const vnd = (n: number) => (n || 0).toLocaleString("vi-VN") + "₫";
-const PLACEHOLDER = "https://placehold.co/120x150?text=No+Image";
+const PLACEHOLDER = "https://placehold.co/120x150?text=Chua+co+anh";
 
 type Method = "cod" | "bank_qr";
 type ShippingMethod = "standard" | "express";
@@ -351,6 +351,7 @@ export default function Checkout() {
         email: data.email,
         phone: data.phone,
         role: data.role,
+        createdAt: data.createdAt || user.createdAt,
         isEmailVerified: data.isEmailVerified,
         addresses: data.addresses || user.addresses || [],
       };
@@ -395,7 +396,7 @@ export default function Checkout() {
       } catch (saveError: any) {
         toast.error(
           saveError?.response?.data?.message ||
-            "Đơn đã tạo, nhưng chưa lưu được thông tin vào dashboard",
+            "Đơn đã tạo, nhưng chưa lưu được thông tin vào trang tài khoản",
         );
       }
 
@@ -452,20 +453,20 @@ export default function Checkout() {
   }
 
   const inputCls =
-    "w-full border border-[rgba(208,197,175,0.6)] bg-white px-4 py-3 font-['Manrope'] text-sm text-[#1C1C19] outline-none focus:border-[#735C00] duration-200";
-  const labelCls = "block font-['Manrope'] text-xs uppercase tracking-[1.5px] text-[#5F5E5E] mb-2";
+    "w-full border border-[rgba(208,197,175,0.6)] bg-white px-4 py-3 font-sans text-sm text-[#1C1C19] outline-none focus:border-[#735C00] duration-200";
+  const labelCls = "block font-sans text-xs uppercase tracking-[1.5px] text-[#5F5E5E] mb-2";
 
   if (!items.length) {
     return (
       <>
         <section className="min-h-[60vh] bg-[#FDF9F4] px-6 py-20 text-center">
-          <h1 className="font-['Noto_Serif'] text-4xl text-[#1C1C19]">Giỏ hàng trống</h1>
-          <p className="mt-3 font-['Manrope'] text-[#5F5E5E]">
+          <h1 className="font-serif text-4xl text-[#1C1C19]">Giỏ hàng trống</h1>
+          <p className="mt-3 font-sans text-[#5F5E5E]">
             Thêm sản phẩm vào giỏ trước khi thanh toán.
           </p>
           <Link
             to="/shop"
-            className="mt-8 inline-flex border border-[#735C00] px-8 py-3 font-['Manrope'] text-sm uppercase tracking-[2px] text-[#735C00] hover:bg-[#735C00] hover:text-white"
+            className="mt-8 inline-flex border border-[#735C00] px-8 py-3 font-sans text-sm uppercase tracking-[2px] text-[#735C00] hover:bg-[#735C00] hover:text-white"
           >
             Tiếp tục mua sắm
           </Link>
@@ -479,7 +480,7 @@ export default function Checkout() {
     <>
       <section className="mx-auto max-w-6xl bg-[#FDF9F4] px-4 py-10 sm:px-6 sm:py-12">
         <header className="mb-10">
-          <h1 className="font-['Noto_Serif'] text-4xl tracking-[-1.5px] text-[#1C1C19] md:text-5xl">
+          <h1 className="font-serif text-4xl tracking-[-1.5px] text-[#1C1C19] md:text-5xl">
             Thanh toán
           </h1>
           <div className="mt-6 grid gap-3 md:grid-cols-4">
@@ -493,7 +494,7 @@ export default function Checkout() {
                   type="button"
                   onClick={() => number < step && setStep(number)}
                   className={
-                    "flex items-center gap-3 border px-4 py-3 text-left font-['Manrope'] text-xs uppercase tracking-[1.5px] " +
+                    "flex items-center gap-3 border px-4 py-3 text-left font-sans text-xs uppercase tracking-[1.5px] " +
                     (active
                       ? "border-[#735C00] bg-[#F7F3EE] text-[#1C1C19]"
                       : "border-[rgba(208,197,175,0.45)] text-[#5F5E5E]")
@@ -523,7 +524,7 @@ export default function Checkout() {
                           type="button"
                           onClick={() => applySavedAddress(item)}
                           className={
-                            "border px-4 py-3 text-left font-['Manrope'] duration-200 " +
+                            "border px-4 py-3 text-left font-sans duration-200 " +
                             (selectedAddressId === item._id
                               ? "border-[#735C00] bg-[#F7F3EE]"
                               : "border-[rgba(208,197,175,0.6)] bg-white hover:border-[#735C00]/60")
@@ -561,7 +562,7 @@ export default function Checkout() {
                           setSaveCustomerInfo(true);
                         }}
                         className={
-                          "border px-4 py-3 text-left font-['Manrope'] text-sm duration-200 " +
+                          "border px-4 py-3 text-left font-sans text-sm duration-200 " +
                           (selectedAddressId === NEW_ADDRESS_ID
                             ? "border-[#735C00] bg-[#F7F3EE] text-[#1C1C19]"
                             : "border-dashed border-[rgba(208,197,175,0.8)] text-[#735C00] hover:border-[#735C00]")
@@ -653,7 +654,7 @@ export default function Checkout() {
                 </div>
 
                 {shouldAskToSaveInfo && (
-                  <label className="mt-5 flex items-start gap-3 border border-[#E6DCCF] bg-[#F7F3EE] p-4 font-['Manrope'] text-sm text-[#4E4842]">
+                  <label className="mt-5 flex items-start gap-3 border border-[#E6DCCF] bg-[#F7F3EE] p-4 font-sans text-sm text-[#4E4842]">
                     <input
                       type="checkbox"
                       checked={saveCustomerInfo}
@@ -716,7 +717,7 @@ export default function Checkout() {
 
             {step === 4 && (
               <Panel title="4. Xác nhận đơn hàng">
-                <div className="space-y-4 font-['Manrope'] text-sm text-[#1C1C19]">
+                <div className="space-y-4 font-sans text-sm text-[#1C1C19]">
                   <SummaryRow label="Người nhận" value={fullName} />
                   <SummaryRow label="Email" value={email} />
                   <SummaryRow label="Điện thoại" value={phone} />
@@ -737,7 +738,7 @@ export default function Checkout() {
               <button
                 type="button"
                 onClick={() => (step === 1 ? navigate("/cart") : setStep((current) => current - 1))}
-                className="border border-[#735C00] px-7 py-3 font-['Manrope'] text-xs uppercase tracking-[2px] text-[#735C00]"
+                className="border border-[#735C00] px-7 py-3 font-sans text-xs uppercase tracking-[2px] text-[#735C00]"
               >
                 {step === 1 ? "Quay lại giỏ" : "Quay lại"}
               </button>
@@ -746,7 +747,7 @@ export default function Checkout() {
                   type="button"
                   onClick={step === 3 && method === "bank_qr" ? placeOrder : nextStep}
                   disabled={submitting}
-                  className="bg-[#735C00] px-7 py-3 font-['Manrope'] text-xs uppercase tracking-[2px] text-white disabled:opacity-60"
+                  className="bg-[#735C00] px-7 py-3 font-sans text-xs uppercase tracking-[2px] text-white disabled:opacity-60"
                 >
                   {submitting
                     ? "Đang xử lý..."
@@ -758,7 +759,7 @@ export default function Checkout() {
                 <button
                   onClick={placeOrder}
                   disabled={submitting}
-                  className="flex items-center gap-2 bg-[#735C00] px-7 py-3 font-['Manrope'] text-xs uppercase tracking-[2px] text-white disabled:opacity-60"
+                  className="flex items-center gap-2 bg-[#735C00] px-7 py-3 font-sans text-xs uppercase tracking-[2px] text-white disabled:opacity-60"
                 >
                   <Lock size={15} />
                   {submitting ? "Đang xử lý..." : "Đặt hàng"}
@@ -769,7 +770,7 @@ export default function Checkout() {
 
           <aside className="min-w-0 lg:col-span-2">
             <div className="bg-[#F7F3EE] border border-[rgba(208,197,175,0.4)] p-6 lg:sticky lg:top-6">
-              <h2 className="font-['Noto_Serif'] text-2xl text-[#1C1C19] mb-6">Đơn hàng của bạn</h2>
+              <h2 className="font-serif text-2xl text-[#1C1C19] mb-6">Đơn hàng của bạn</h2>
 
               <div className="space-y-4 max-h-[320px] overflow-auto pr-1">
                 {items.map((it) => {
@@ -788,10 +789,8 @@ export default function Checkout() {
                         />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-['Noto_Serif'] text-base text-[#1C1C19] truncate">
-                          {it.name}
-                        </h3>
-                        <p className="font-['Manrope'] uppercase tracking-[1px] text-[11px] text-[#5F5E5E] mt-0.5">
+                        <h3 className="font-serif text-base text-[#1C1C19] truncate">{it.name}</h3>
+                        <p className="font-sans uppercase tracking-[1px] text-[11px] text-[#5F5E5E] mt-0.5">
                           {it.volume}
                         </p>
                         <div className="mt-2 inline-flex h-8 items-center border border-[#D8CBB7] bg-white">
@@ -803,7 +802,7 @@ export default function Checkout() {
                           >
                             -
                           </button>
-                          <span className="flex h-full min-w-9 items-center justify-center border-x border-[#E6DCCF] px-2 font-['Manrope'] text-xs text-[#1C1C19]">
+                          <span className="flex h-full min-w-9 items-center justify-center border-x border-[#E6DCCF] px-2 font-sans text-xs text-[#1C1C19]">
                             {it.quantity}
                           </span>
                           <button
@@ -820,7 +819,7 @@ export default function Checkout() {
                           <p className="mt-1 text-[10px] text-[#8B1E1E]">{priced.promotionName}</p>
                         )}
                       </div>
-                      <div className="text-right font-['Manrope'] text-sm whitespace-nowrap">
+                      <div className="text-right font-sans text-sm whitespace-nowrap">
                         <span
                           className={priced?.discountPercent ? "text-[#8B1E1E]" : "text-[#1C1C19]"}
                         >
@@ -845,7 +844,7 @@ export default function Checkout() {
                     onKeyDown={(e) => e.key === "Enter" && applyVoucher()}
                     disabled={!!voucherCode}
                     placeholder="Mã ưu đãi"
-                    className="min-w-0 flex-1 border border-[#D8CBB7] bg-white px-3 py-2.5 font-['Manrope'] text-xs uppercase outline-none focus:border-[#735C00]"
+                    className="min-w-0 flex-1 border border-[#D8CBB7] bg-white px-3 py-2.5 font-sans text-xs uppercase outline-none focus:border-[#735C00]"
                   />
                   {voucherCode ? (
                     <button
@@ -873,7 +872,7 @@ export default function Checkout() {
                 )}
               </div>
 
-              <div className="border-t border-[rgba(208,197,175,0.5)] mt-6 pt-5 space-y-3 font-['Manrope'] text-sm">
+              <div className="border-t border-[rgba(208,197,175,0.5)] mt-6 pt-5 space-y-3 font-sans text-sm">
                 <SummaryRow
                   label={`Giá niêm yết (${quote?.count ?? count} sản phẩm)`}
                   value={vnd(quote?.originalTotal ?? total)}
@@ -898,14 +897,12 @@ export default function Checkout() {
                   <SummaryRow label="Ưu đãi vận chuyển" value={`-${vnd(quote.shippingDiscount)}`} />
                 )}
                 <div className="flex justify-between items-center border-t border-[rgba(208,197,175,0.5)] pt-4 mt-1">
-                  <span className="font-['Noto_Serif'] text-lg text-[#1C1C19]">Tổng cộng</span>
-                  <span className="font-['Noto_Serif'] text-2xl text-[#1C1C19]">
-                    {vnd(grandTotal)}
-                  </span>
+                  <span className="font-serif text-lg text-[#1C1C19]">Tổng cộng</span>
+                  <span className="font-serif text-2xl text-[#1C1C19]">{vnd(grandTotal)}</span>
                 </div>
               </div>
 
-              <p className="flex items-center justify-center gap-2 font-['Manrope'] text-[11px] text-[#5F5E5E] mt-5">
+              <p className="flex items-center justify-center gap-2 font-sans text-[11px] text-[#5F5E5E] mt-5">
                 <ShieldCheck size={14} /> Thanh toán an toàn & bảo mật
               </p>
             </div>
@@ -917,12 +914,10 @@ export default function Checkout() {
           <div className="max-h-[92vh] w-full max-w-[520px] overflow-auto border border-[#D8CBB7] bg-[#FDF9F4] p-5 shadow-2xl sm:p-7">
             <div className="flex items-start justify-between gap-4 border-b border-[#E6DCCF] pb-4">
               <div>
-                <p className="font-['Manrope'] text-[10px] uppercase tracking-[2px] text-[#8B7200]">
+                <p className="font-sans text-[10px] uppercase tracking-[2px] text-[#8B7200]">
                   Bước 3 · Chuyển khoản QR
                 </p>
-                <h2 className="mt-2 font-['Noto_Serif'] text-2xl text-[#1C1C19]">
-                  Quét mã để thanh toán
-                </h2>
+                <h2 className="mt-2 font-serif text-2xl text-[#1C1C19]">Quét mã để thanh toán</h2>
               </div>
               <button
                 type="button"
@@ -951,7 +946,7 @@ export default function Checkout() {
                 )}
               </div>
 
-              <div className="space-y-3 font-['Manrope'] text-sm">
+              <div className="space-y-3 font-sans text-sm">
                 <QrRow label="Số tiền" value={vnd(pendingQr.amount)} strong />
                 <QrRow label="Số tài khoản" value={pendingQr.bank.accountNo || "Chưa cấu hình"} />
                 <QrRow
@@ -962,9 +957,9 @@ export default function Checkout() {
               </div>
             </div>
 
-            <p className="mt-5 bg-[#F3EEE8] px-4 py-3 font-['Manrope'] text-xs leading-5 text-[#675F57]">
-              SePay sẽ ghi nhận giao dịch. Trạng thái chỉ chuyển thành đã thanh toán sau khi admin
-              đối soát và xác nhận.
+            <p className="mt-5 bg-[#F3EEE8] px-4 py-3 font-sans text-xs leading-5 text-[#675F57]">
+              SePay sẽ ghi nhận giao dịch. Trạng thái chỉ chuyển thành đã thanh toán sau khi quản
+              trị viên đối soát và xác nhận.
             </p>
 
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -972,14 +967,14 @@ export default function Checkout() {
                 type="button"
                 onClick={cancelPendingQr}
                 disabled={cancellingQr}
-                className="border border-[#735C00] px-5 py-3 font-['Manrope'] text-xs uppercase tracking-[2px] text-[#735C00] disabled:opacity-60"
+                className="border border-[#735C00] px-5 py-3 font-sans text-xs uppercase tracking-[2px] text-[#735C00] disabled:opacity-60"
               >
                 {cancellingQr ? "Đang hủy..." : "Hủy"}
               </button>
               <button
                 type="button"
                 onClick={confirmQrPaid}
-                className="bg-[#735C00] px-5 py-3 font-['Manrope'] text-xs uppercase tracking-[2px] text-white"
+                className="bg-[#735C00] px-5 py-3 font-sans text-xs uppercase tracking-[2px] text-white"
               >
                 Tôi đã thanh toán
               </button>
@@ -995,7 +990,7 @@ export default function Checkout() {
 function Panel({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="min-w-0 border border-[rgba(208,197,175,0.4)] bg-white p-4 sm:p-6">
-      <h2 className="mb-6 font-['Noto_Serif'] text-2xl text-[#1C1C19]">{title}</h2>
+      <h2 className="mb-6 font-serif text-2xl text-[#1C1C19]">{title}</h2>
       {children}
     </section>
   );
@@ -1029,10 +1024,10 @@ function Choice({
     >
       <span className="text-[#735C00] shrink-0">{icon}</span>
       <span className="min-w-0 flex-1">
-        <span className="block font-['Manrope'] font-semibold text-[#1C1C19]">{title}</span>
-        <span className="block font-['Manrope'] text-xs text-[#5F5E5E] mt-0.5">{detail}</span>
+        <span className="block font-sans font-semibold text-[#1C1C19]">{title}</span>
+        <span className="block font-sans text-xs text-[#5F5E5E] mt-0.5">{detail}</span>
       </span>
-      {price && <span className="font-['Manrope'] text-sm text-[#735C00]">{price}</span>}
+      {price && <span className="font-sans text-sm text-[#735C00]">{price}</span>}
     </button>
   );
 }

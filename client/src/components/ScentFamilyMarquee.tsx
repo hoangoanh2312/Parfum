@@ -22,8 +22,7 @@ type ManagedScentFamilyCard = {
 };
 
 type ManagedScentFamilyResponse =
-  | { success?: boolean; data?: ManagedScentFamilyCard[] }
-  | ManagedScentFamilyCard[];
+  { success?: boolean; data?: ManagedScentFamilyCard[] } | ManagedScentFamilyCard[];
 
 function displayFamilyDescription(family: ScentFamily) {
   const genericCount = family.description.match(
@@ -35,9 +34,10 @@ function displayFamilyDescription(family: ScentFamily) {
   }
 
   if (
-    family.description.trim().toLocaleLowerCase("vi").startsWith(
-      `khám phá dấu ấn ${family.name}`.toLocaleLowerCase("vi"),
-    )
+    family.description
+      .trim()
+      .toLocaleLowerCase("vi")
+      .startsWith(`khám phá dấu ấn ${family.name}`.toLocaleLowerCase("vi"))
   ) {
     return "Một lát cắt khứu giác đặc trưng trong bộ sưu tập nước hoa của chúng tôi.";
   }
@@ -86,8 +86,7 @@ const FALLBACK_SCENT_FAMILIES: ScentFamily[] = [
     name: "Aromatic",
     image:
       "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT_zquUzhIzdUYO-j8PWlDrbSPjWBmZod1wdei_lV3Bzw&s=10?w=900&q=80",
-    description:
-      "Oải hương, hương thảo và xô thơm gợi nên nét phong trần, lịch lãm và cân bằng.",
+    description: "Oải hương, hương thảo và xô thơm gợi nên nét phong trần, lịch lãm và cân bằng.",
   },
   {
     name: "Leather",
@@ -110,17 +109,21 @@ const FAMILY_ALIASES: Record<string, string> = {
 };
 
 const FAMILY_DESCRIPTIONS: Record<string, string> = {
-  aldehydes: "Những phân tử aldehyde sáng, sạch và lấp lánh tạo hiệu ứng thanh lịch, cổ điển nhưng đầy hiện đại.",
+  aldehydes:
+    "Những phân tử aldehyde sáng, sạch và lấp lánh tạo hiệu ứng thanh lịch, cổ điển nhưng đầy hiện đại.",
   amber: "Hổ phách ấm, nhựa thơm và vanilla tạo nên chiều sâu bao bọc, gợi cảm và sang trọng.",
-  aquatic: "Hơi nước, khoáng chất và không khí biển mở ra cảm giác trong trẻo, mát lành và rộng thoáng.",
+  aquatic:
+    "Hơi nước, khoáng chất và không khí biển mở ra cảm giác trong trẻo, mát lành và rộng thoáng.",
   chypre: "Cam chanh, rêu sồi và patchouli cân bằng nét tươi sáng với chiều sâu khô, thanh lịch.",
-  fougere: "Oải hương, coumarin và gỗ tạo nên cấu trúc xanh mát, lịch lãm đặc trưng của nhóm Fougère.",
+  fougere:
+    "Oải hương, coumarin và gỗ tạo nên cấu trúc xanh mát, lịch lãm đặc trưng của nhóm Fougère.",
   fruity: "Trái cây chín mọng mang đến sắc thái tươi vui, mềm mại và ngọt ngào vừa đủ.",
   green: "Lá non, cỏ cắt và nhựa cây tái hiện hơi thở xanh, sắc nét và tự nhiên.",
   musky: "Xạ hương mềm như làn da, sạch sẽ và ấm áp, giúp tổng thể hương lưu lại đầy tinh tế.",
   powdery: "Phấn mịn, iris và violet tạo cảm giác mềm mại, thanh tao và hoài cổ.",
   spicy: "Tiêu, quế và các gia vị nóng tạo nhịp hương sống động, ấm áp và giàu cá tính.",
-  "đa dạng": "Tập hợp những sáng tạo giao thoa nhiều nhóm hương, khó giới hạn trong một cấu trúc duy nhất.",
+  "đa dạng":
+    "Tập hợp những sáng tạo giao thoa nhiều nhóm hương, khó giới hạn trong một cấu trúc duy nhất.",
 };
 
 const normalizeFamilyKey = (value: string) =>
@@ -135,7 +138,8 @@ const fallbackByFamily = new Map(
 );
 
 function hydrateFamilies(filters: ProductFilterResponse): ScentFamily[] {
-  const source: { name: string; image?: string; productCount?: number }[] = filters.fragranceFamilyCards?.length
+  const source: { name: string; image?: string; productCount?: number }[] = filters
+    .fragranceFamilyCards?.length
     ? filters.fragranceFamilyCards
     : (filters.fragranceFamilies || []).map((name) => ({ name }));
   const merged = new Map<string, { name: string; image: string; productCount: number }>();
@@ -191,11 +195,15 @@ export default function ScentFamilyMarquee() {
         const managedRows = Array.isArray(response) ? response : response.data || [];
         if (managedRows.length) {
           if (active) {
-            setFamilies(managedRows.map((item) => ({
-              name: item.name,
-              image: item.image,
-              description: item.description?.trim() || `Khám phá dấu ấn ${item.name} trong bộ sưu tập nước hoa của chúng tôi.`,
-            })));
+            setFamilies(
+              managedRows.map((item) => ({
+                name: item.name,
+                image: item.image,
+                description:
+                  item.description?.trim() ||
+                  `Khám phá dấu ấn ${item.name} trong bộ sưu tập nước hoa của chúng tôi.`,
+              })),
+            );
           }
           return;
         }
@@ -278,14 +286,13 @@ export default function ScentFamilyMarquee() {
         </div>
         <h2
           className="max-w-[620px] text-[38px] leading-[1.05] tracking-[-0.03em] sm:text-[48px]"
-          style={{ fontFamily: "'Spectral', serif" }}
+          style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
         >
           Khám phá các nhóm hương
         </h2>
         <p className="mt-4 max-w-[560px] text-sm leading-7 text-[#69665F]">
-          Mỗi nhóm hương mở ra một sắc thái riêng — từ thanh mát, trong trẻo
-          đến ấm áp, sâu lắng. Kéo hoặc lăn chuột trên dải thẻ để tìm dấu hương
-          phù hợp với bạn.
+          Mỗi nhóm hương mở ra một sắc thái riêng — từ thanh mát, trong trẻo đến ấm áp, sâu lắng.
+          Kéo hoặc lăn chuột trên dải thẻ để tìm dấu hương phù hợp với bạn.
         </p>
       </div>
 
@@ -333,12 +340,15 @@ export default function ScentFamilyMarquee() {
                       loading="lazy"
                       className="aspect-[0.82/1] w-full object-cover brightness-[0.88] transition duration-700 ease-out group-hover:scale-[1.05]"
                     />
-                    <span className="pointer-events-none absolute inset-0 bg-black/10" aria-hidden="true" />
+                    <span
+                      className="pointer-events-none absolute inset-0 bg-black/10"
+                      aria-hidden="true"
+                    />
                   </div>
                   <div className="flex-1 px-5 pb-6 pt-5">
                     <h3
                       className="text-[24px] leading-tight tracking-[-0.01em]"
-                      style={{ fontFamily: "'Spectral', serif" }}
+                      style={{ fontFamily: "'Noto Serif Display', 'Noto Serif', serif" }}
                     >
                       {family.name}
                     </h3>

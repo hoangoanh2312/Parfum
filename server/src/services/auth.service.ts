@@ -38,15 +38,21 @@ function voucherIsAvailable(voucher: any, now = new Date()) {
   const start = voucher?.startDate ? new Date(voucher.startDate) : null;
   const endValue = voucher?.endDate || voucher?.expiresAt;
   const end = endValue ? new Date(endValue) : null;
-  return voucher?.isActive !== false
-    && (!start || start <= now)
-    && (!end || end > now)
-    && !(Number(voucher?.usageLimit || 0) > 0 && Number(voucher?.usedCount || 0) >= Number(voucher.usageLimit));
+  return (
+    voucher?.isActive !== false &&
+    (!start || start <= now) &&
+    (!end || end > now) &&
+    !(
+      Number(voucher?.usageLimit || 0) > 0 &&
+      Number(voucher?.usedCount || 0) >= Number(voucher.usageLimit)
+    )
+  );
 }
 
 function voucherBenefit(voucher: any) {
   if (voucher.type === 'free_shipping') return 'miễn phí vận chuyển';
-  if (voucher.type === 'fixed') return `giảm ${Number(voucher.value || 0).toLocaleString('vi-VN')}đ`;
+  if (voucher.type === 'fixed')
+    return `giảm ${Number(voucher.value || 0).toLocaleString('vi-VN')}đ`;
   const percent = Number(voucher.value || 0);
   const cap = Number(voucher.maxDiscount || 0);
   return `giảm ${percent}%${cap > 0 ? `, tối đa ${cap.toLocaleString('vi-VN')}đ` : ''}`;
@@ -61,7 +67,7 @@ async function sendNewMemberVoucherEmail(user: any, voucher: any) {
     to: String(user.email),
     subject: `${code} - Voucher chào mừng thành viên mới`,
     html: `
-      <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;padding:32px;color:#27231f">
+      <div style="font-family:Manrope,'Be Vietnam Pro','Segoe UI',Arial,sans-serif;max-width:560px;margin:auto;padding:32px;color:#27231f">
         <p style="font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#806b3d">L'Essence Noire</p>
         <h1 style="font-size:28px;font-weight:500">Cảm ơn bạn đã cập nhật hồ sơ</h1>
         <p>Bạn vừa nhận voucher dành cho thành viên mới chưa có đơn hàng.</p>
@@ -78,7 +84,9 @@ export async function issueNewMemberVoucher(userId: string) {
   if (await Order.exists({ user: user._id })) return { user, voucherIssued: false };
 
   const now = new Date();
-  const assignedCode = String(user.profileCompletionVoucherCode || '').trim().toUpperCase();
+  const assignedCode = String(user.profileCompletionVoucherCode || '')
+    .trim()
+    .toUpperCase();
   if (assignedCode) {
     const assignedVoucher: any = await Voucher.findOne({
       code: assignedCode,
@@ -92,7 +100,9 @@ export async function issueNewMemberVoucher(userId: string) {
   const candidates: any[] = await Voucher.find({
     appliesToNewMembers: true,
     isActive: true,
-  }).sort({ updatedAt: -1 }).lean();
+  })
+    .sort({ updatedAt: -1 })
+    .lean();
   const voucher = candidates.find((item) => voucherIsAvailable(item, now));
   if (!voucher) return { user, voucherIssued: false };
 
@@ -135,8 +145,14 @@ export async function claimGuestOrdersForUser(user: any, email: string, phone: s
       {
         $or: [
           { 'address.email': normalizedEmail },
-          { 'address.email': { $exists: false }, note: { $regex: `Email:\\s*${escapeRegExp(normalizedEmail)}`, $options: 'i' } },
-          { 'address.email': '', note: { $regex: `Email:\\s*${escapeRegExp(normalizedEmail)}`, $options: 'i' } },
+          {
+            'address.email': { $exists: false },
+            note: { $regex: `Email:\\s*${escapeRegExp(normalizedEmail)}`, $options: 'i' },
+          },
+          {
+            'address.email': '',
+            note: { $regex: `Email:\\s*${escapeRegExp(normalizedEmail)}`, $options: 'i' },
+          },
         ],
       },
     ],
@@ -151,7 +167,8 @@ export async function claimGuestOrdersForUser(user: any, email: string, phone: s
   );
 
   const claimedPoints = guestOrders.reduce(
-    (sum: number, order: any) => sum + (order.status !== 'cancelled' ? Number(order.pointsEarned) || 0 : 0),
+    (sum: number, order: any) =>
+      sum + (order.status !== 'cancelled' ? Number(order.pointsEarned) || 0 : 0),
     0,
   );
   if (claimedPoints) {
@@ -162,13 +179,17 @@ export async function claimGuestOrdersForUser(user: any, email: string, phone: s
 }
 
 async function sendWelcomeEmail(user: any) {
-  const firstName = String(user.name || 'bạn').trim().split(/\s+/).slice(-1)[0] || 'bạn';
+  const firstName =
+    String(user.name || 'bạn')
+      .trim()
+      .split(/\s+/)
+      .slice(-1)[0] || 'bạn';
   const htmlFirstName = escapeHtml(firstName);
   return sendMail({
     to: String(user.email),
     subject: `Chào mừng ${user.name} đến với L'Essence Noire`,
     html: `
-      <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;padding:32px;color:#27231f;line-height:1.6">
+      <div style="font-family:Manrope,'Be Vietnam Pro','Segoe UI',Arial,sans-serif;max-width:560px;margin:auto;padding:32px;color:#27231f;line-height:1.6">
         <p style="font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#806b3d">L'Essence Noire</p>
         <h1 style="font-size:26px;font-weight:500;margin:8px 0 16px">Chào mừng bạn đã tham gia!</h1>
         <p>Xin chào ${htmlFirstName},</p>
@@ -185,9 +206,9 @@ export async function register(name: string, email: string, password: string, ph
   assertValidContact(normalizedEmail, normalizedPhone);
 
   const exists = await User.findOne({ email: normalizedEmail });
-  if (exists) throw Object.assign(new Error('Email da ton tai'), { status: 409 });
+  if (exists) throw Object.assign(new Error('Email đã tồn tại'), { status: 409 });
   const phoneExists = await User.findOne({ phone: normalizedPhone });
-  if (phoneExists) throw Object.assign(new Error('So dien thoai da duoc su dung'), { status: 409 });
+  if (phoneExists) throw Object.assign(new Error('Số điện thoại đã được sử dụng'), { status: 409 });
 
   const hash = await bcrypt.hash(password, 10);
   const user = await User.create({
@@ -204,18 +225,18 @@ export async function register(name: string, email: string, password: string, ph
   });
   await subscribeNewAccountToJournal(normalizedEmail);
   await claimGuestOrdersForUser(user, normalizedEmail, normalizedPhone);
-  // Email chao mung va email xac thuc deu khong chan luong dang ky.
+  // Email chào mừng và email xác thực đều không chặn luồng đăng ký.
   void sendWelcomeEmail(user).catch(() => null);
-  // Gui email xac thuc (khong chan luong dang ky neu SMTP chua cau hinh)
+  // Gửi email xác thực, không chặn luồng đăng ký nếu SMTP chưa cấu hình.
   void sendEmailVerification(String(user._id)).catch(() => null);
   return issueTokens(user);
 }
 
 export async function login(email: string, password: string) {
   const user = await User.findOne({ email }).select('+password');
-  if (!user) throw Object.assign(new Error('Sai thong tin dang nhap'), { status: 401 });
+  if (!user) throw Object.assign(new Error('Sai thông tin đăng nhập'), { status: 401 });
   const ok = await bcrypt.compare(password, user.password as string);
-  if (!ok) throw Object.assign(new Error('Sai thong tin dang nhap'), { status: 401 });
+  if (!ok) throw Object.assign(new Error('Sai thông tin đăng nhập'), { status: 401 });
   if (user.phone) await claimGuestOrdersForUser(user, user.email as string, user.phone as string);
   await User.updateOne({ _id: user._id }, { lastLoginAt: new Date() });
   return issueTokens(user);
@@ -227,12 +248,13 @@ export async function refreshAccessToken(refreshToken: string) {
     payload = verifyRefresh(refreshToken) as { id: string };
   } catch (e) {
     const err = e as JsonWebTokenError | TokenExpiredError;
-    throw Object.assign(new Error(err.message || 'Invalid refresh token'), { status: 401 });
+    throw Object.assign(new Error(err.message || 'Refresh token không hợp lệ'), { status: 401 });
   }
   const user = await User.findById(payload.id).select('+refreshToken');
-  if (!user?.refreshToken) throw Object.assign(new Error('Invalid refresh token'), { status: 401 });
+  if (!user?.refreshToken)
+    throw Object.assign(new Error('Refresh token không hợp lệ'), { status: 401 });
   const match = await bcrypt.compare(refreshToken, user.refreshToken as string);
-  if (!match) throw Object.assign(new Error('Invalid refresh token'), { status: 401 });
+  if (!match) throw Object.assign(new Error('Refresh token không hợp lệ'), { status: 401 });
   return {
     accessToken: signAccess({ id: user._id, role: user.role }),
     user: serializeUser(user),
@@ -245,23 +267,27 @@ export async function logout(userId: string) {
 
 export async function getMe(userId: string) {
   const user = await User.findById(userId);
-  if (!user) throw Object.assign(new Error('User not found'), { status: 404 });
+  if (!user) throw Object.assign(new Error('Không tìm thấy người dùng'), { status: 404 });
   return user;
 }
 
-export async function updateProfile(userId: string, input: { name: string; email: string; phone?: string }) {
+export async function updateProfile(
+  userId: string,
+  input: { name: string; email: string; phone?: string },
+) {
   const currentUser: any = await User.findById(userId)
     .select('email notificationPreferences')
     .lean();
-  if (!currentUser) throw Object.assign(new Error('User not found'), { status: 404 });
+  if (!currentUser) throw Object.assign(new Error('Không tìm thấy người dùng'), { status: 404 });
   const email = input.email.trim().toLowerCase();
   const exists = await User.findOne({ email, _id: { $ne: userId } });
-  if (exists) throw Object.assign(new Error('Email da ton tai'), { status: 409 });
+  if (exists) throw Object.assign(new Error('Email đã tồn tại'), { status: 409 });
   const phone = normalizePhone(input.phone || '');
   if (phone) {
     assertValidContact(email, phone);
     const phoneExists = await User.findOne({ phone, _id: { $ne: userId } });
-    if (phoneExists) throw Object.assign(new Error('So dien thoai da duoc su dung'), { status: 409 });
+    if (phoneExists)
+      throw Object.assign(new Error('Số điện thoại đã được sử dụng'), { status: 409 });
   }
 
   const user = await User.findByIdAndUpdate(
@@ -269,7 +295,7 @@ export async function updateProfile(userId: string, input: { name: string; email
     { name: input.name.trim(), email, ...(phone ? { phone } : {}) },
     { new: true, runValidators: true },
   );
-  if (!user) throw Object.assign(new Error('User not found'), { status: 404 });
+  if (!user) throw Object.assign(new Error('Không tìm thấy người dùng'), { status: 404 });
   await moveJournalSubscription(String(currentUser.email), email);
   if (phone) await claimGuestOrdersForUser(user, email, phone);
   const issuance = await issueNewMemberVoucher(String(user._id));
@@ -285,22 +311,22 @@ export async function changePassword(
   input: { currentPassword: string; newPassword: string },
 ) {
   const user = await User.findById(userId).select('+password');
-  if (!user) throw Object.assign(new Error('User not found'), { status: 404 });
+  if (!user) throw Object.assign(new Error('Không tìm thấy người dùng'), { status: 404 });
 
   const ok = await bcrypt.compare(input.currentPassword, user.password as string);
-  if (!ok) throw Object.assign(new Error('Mat khau hien tai khong dung'), { status: 400 });
+  if (!ok) throw Object.assign(new Error('Mật khẩu hiện tại không đúng'), { status: 400 });
 
   user.password = await bcrypt.hash(input.newPassword, 10);
   await user.save();
-  return { message: 'Password updated' };
+  return { message: 'Đã cập nhật mật khẩu' };
 }
 
-// ---- Dia chi: mot shape thong nhat (fullName, phone, line, ward, district, province) ----
-// Tuong thich nguoc: neu client cu gui { detail } -> map sang line.
+// ---- Địa chỉ: một shape thống nhất (fullName, phone, line, ward, district, province) ----
+// Tương thích ngược: nếu client cũ gửi { detail } thì map sang line.
 function normalizeAddress(input: AddressInput) {
   const line = (input.line ?? input.detail ?? '').trim();
   return {
-    label: (input.label || 'Nha').trim(),
+    label: (input.label || 'Nhà').trim(),
     fullName: (input.fullName || '').trim(),
     phone: (input.phone || '').trim(),
     line,
@@ -313,7 +339,7 @@ function normalizeAddress(input: AddressInput) {
 
 export async function addAddress(userId: string, input: AddressInput) {
   const user: any = await User.findById(userId);
-  if (!user) throw Object.assign(new Error('User not found'), { status: 404 });
+  if (!user) throw Object.assign(new Error('Không tìm thấy người dùng'), { status: 404 });
 
   const addr = normalizeAddress(input);
   if (addr.isDefault || user.addresses.length === 0) {
@@ -328,10 +354,10 @@ export async function addAddress(userId: string, input: AddressInput) {
 
 export async function updateAddress(userId: string, addressId: string, input: AddressInput) {
   const user: any = await User.findById(userId);
-  if (!user) throw Object.assign(new Error('User not found'), { status: 404 });
+  if (!user) throw Object.assign(new Error('Không tìm thấy người dùng'), { status: 404 });
 
   const address = user.addresses.id(addressId);
-  if (!address) throw Object.assign(new Error('Address not found'), { status: 404 });
+  if (!address) throw Object.assign(new Error('Không tìm thấy địa chỉ'), { status: 404 });
 
   const addr = normalizeAddress(input);
   if (addr.isDefault) {
@@ -345,10 +371,10 @@ export async function updateAddress(userId: string, addressId: string, input: Ad
 
 export async function deleteAddress(userId: string, addressId: string) {
   const user: any = await User.findById(userId);
-  if (!user) throw Object.assign(new Error('User not found'), { status: 404 });
+  if (!user) throw Object.assign(new Error('Không tìm thấy người dùng'), { status: 404 });
 
   const address = user.addresses.id(addressId);
-  if (!address) throw Object.assign(new Error('Address not found'), { status: 404 });
+  if (!address) throw Object.assign(new Error('Không tìm thấy địa chỉ'), { status: 404 });
 
   address.deleteOne();
   await user.save();
@@ -357,7 +383,7 @@ export async function deleteAddress(userId: string, addressId: string) {
 
 export async function setDefaultAddress(userId: string, addressId: string) {
   const user: any = await User.findById(userId);
-  if (!user) throw Object.assign(new Error('User not found'), { status: 404 });
+  if (!user) throw Object.assign(new Error('Không tìm thấy người dùng'), { status: 404 });
 
   let found = false;
   user.addresses.forEach((a: any) => {
@@ -365,7 +391,7 @@ export async function setDefaultAddress(userId: string, addressId: string) {
     a.isDefault = isTarget;
     if (isTarget) found = true;
   });
-  if (!found) throw Object.assign(new Error('Address not found'), { status: 404 });
+  if (!found) throw Object.assign(new Error('Không tìm thấy địa chỉ'), { status: 404 });
   await user.save();
   await issueNewMemberVoucher(userId);
   return user.addresses;
@@ -381,12 +407,12 @@ function hashEmailOtp(email: string, otp: string) {
   return hashToken(`${email}:${otp}:${secret}`);
 }
 
-// ---- Quen / dat lai mat khau qua email OTP ----
+// ---- Quên / đặt lại mật khẩu qua email OTP ----
 export async function requestPasswordReset(email: string) {
   assertMailConfigured();
   const normalizedEmail = normalizeEmail(email);
   const genericResult = {
-    message: 'Neu email ton tai, ma xac minh se duoc gui trong it phut.',
+    message: 'Nếu email tồn tại, mã xác minh sẽ được gửi trong ít phút.',
     expiresIn: Math.floor(EMAIL_RESET_OTP_TTL_MS / 1000),
   };
   const user = await User.findOne({ email: normalizedEmail }).select(
@@ -400,9 +426,9 @@ export async function requestPasswordReset(email: string) {
   const otp = crypto.randomInt(100000, 1000000).toString();
   const sent = await sendMail({
     to: normalizedEmail,
-    subject: `${otp} - Ma xac minh dat lai mat khau`,
+    subject: `${otp} - Mã xác minh đặt lại mật khẩu`,
     html: `
-      <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;padding:32px;color:#27231f">
+      <div style="font-family:Manrope,'Be Vietnam Pro','Segoe UI',Arial,sans-serif;max-width:560px;margin:auto;padding:32px;color:#27231f">
         <p style="font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#806b3d">L'Essence Noire</p>
         <h1 style="font-size:28px;font-weight:500">Khôi phục mật khẩu</h1>
         <p>Mã xác minh của bạn là:</p>
@@ -410,9 +436,10 @@ export async function requestPasswordReset(email: string) {
         <p>Mã có hiệu lực trong 5 phút. Không chia sẻ mã này với bất kỳ ai.</p>
         <p style="color:#777;font-size:12px">Nếu bạn không yêu cầu đặt lại mật khẩu, hãy bỏ qua email này.</p>
       </div>`,
-    text: `Ma xac minh dat lai mat khau cua ban la ${otp}. Ma co hieu luc trong 5 phut.`,
+    text: `Mã xác minh đặt lại mật khẩu của bạn là ${otp}. Mã có hiệu lực trong 5 phút.`,
   });
-  if (!sent) throw Object.assign(new Error('Khong the gui email xac minh luc nay'), { status: 502 });
+  if (!sent)
+    throw Object.assign(new Error('Không thể gửi email xác minh lúc này'), { status: 502 });
 
   user.set({
     passwordResetOtpHash: hashEmailOtp(normalizedEmail, otp),
@@ -429,18 +456,27 @@ export async function verifyEmailPasswordResetOtp(email: string, otp: string) {
   const user = await User.findOne({ email: normalizedEmail }).select(
     '+passwordResetOtpHash +passwordResetOtpExpires +passwordResetOtpAttempts',
   );
-  const invalidOtp = () => Object.assign(new Error('Ma xac minh khong dung hoac da het han'), { status: 400 });
+  const invalidOtp = () =>
+    Object.assign(new Error('Mã xác minh không đúng hoặc đã hết hạn'), { status: 400 });
 
   if (!user?.passwordResetOtpHash || !user.passwordResetOtpExpires) throw invalidOtp();
   if (user.passwordResetOtpExpires.getTime() <= Date.now()) {
-    user.set({ passwordResetOtpHash: undefined, passwordResetOtpExpires: undefined, passwordResetOtpAttempts: undefined });
+    user.set({
+      passwordResetOtpHash: undefined,
+      passwordResetOtpExpires: undefined,
+      passwordResetOtpAttempts: undefined,
+    });
     await user.save();
     throw invalidOtp();
   }
 
   const attempts = Number(user.passwordResetOtpAttempts || 0);
   if (attempts >= EMAIL_RESET_MAX_ATTEMPTS) {
-    user.set({ passwordResetOtpHash: undefined, passwordResetOtpExpires: undefined, passwordResetOtpAttempts: undefined });
+    user.set({
+      passwordResetOtpHash: undefined,
+      passwordResetOtpExpires: undefined,
+      passwordResetOtpAttempts: undefined,
+    });
     await user.save();
     throw invalidOtp();
   }
@@ -481,7 +517,7 @@ export async function requestPhonePasswordReset(inputPhone: string) {
   assertSmsConfigured();
   const phone = normalizePhone(inputPhone);
   const genericResult = {
-    message: 'Neu so dien thoai ton tai, ma xac minh se duoc gui trong it phut.',
+    message: 'Nếu số điện thoại tồn tại, mã xác minh sẽ được gửi trong ít phút.',
     expiresIn: Math.floor(PHONE_RESET_OTP_TTL_MS / 1000),
   };
 
@@ -510,18 +546,27 @@ export async function verifyPhonePasswordResetOtp(inputPhone: string, otp: strin
   const user = await User.findOne({ phone }).select(
     '+passwordResetOtpHash +passwordResetOtpExpires +passwordResetOtpAttempts',
   );
-  const invalidOtp = () => Object.assign(new Error('Ma xac minh khong dung hoac da het han'), { status: 400 });
+  const invalidOtp = () =>
+    Object.assign(new Error('Mã xác minh không đúng hoặc đã hết hạn'), { status: 400 });
 
   if (!user?.passwordResetOtpHash || !user.passwordResetOtpExpires) throw invalidOtp();
   if (user.passwordResetOtpExpires.getTime() <= Date.now()) {
-    user.set({ passwordResetOtpHash: undefined, passwordResetOtpExpires: undefined, passwordResetOtpAttempts: undefined });
+    user.set({
+      passwordResetOtpHash: undefined,
+      passwordResetOtpExpires: undefined,
+      passwordResetOtpAttempts: undefined,
+    });
     await user.save();
     throw invalidOtp();
   }
 
   const attempts = Number(user.passwordResetOtpAttempts || 0);
   if (attempts >= PHONE_RESET_MAX_ATTEMPTS) {
-    user.set({ passwordResetOtpHash: undefined, passwordResetOtpExpires: undefined, passwordResetOtpAttempts: undefined });
+    user.set({
+      passwordResetOtpHash: undefined,
+      passwordResetOtpExpires: undefined,
+      passwordResetOtpAttempts: undefined,
+    });
     await user.save();
     throw invalidOtp();
   }
@@ -553,7 +598,7 @@ export async function resetPassword(token: string, newPassword: string) {
     passwordResetToken: hashToken(token),
     passwordResetExpires: { $gt: new Date() },
   }).select('+password');
-  if (!user) throw Object.assign(new Error('Token khong hop le hoac da het han'), { status: 400 });
+  if (!user) throw Object.assign(new Error('Token không hợp lệ hoặc đã hết hạn'), { status: 400 });
 
   user.password = await bcrypt.hash(newPassword, 10);
   user.set({
@@ -566,14 +611,14 @@ export async function resetPassword(token: string, newPassword: string) {
     refreshToken: undefined,
   });
   await user.save();
-  return { message: 'Dat lai mat khau thanh cong' };
+  return { message: 'Đặt lại mật khẩu thành công' };
 }
 
-// ---- Xac thuc email ----
+// ---- Xác thực email ----
 export async function sendEmailVerification(userId: string) {
   const user = await User.findById(userId);
-  if (!user) throw Object.assign(new Error('User not found'), { status: 404 });
-  if (user.isEmailVerified) return { message: 'Email da duoc xac thuc' };
+  if (!user) throw Object.assign(new Error('Không tìm thấy người dùng'), { status: 404 });
+  if (user.isEmailVerified) return { message: 'Email đã được xác thực' };
 
   const raw = crypto.randomBytes(32).toString('hex');
   user.set({
@@ -584,11 +629,11 @@ export async function sendEmailVerification(userId: string) {
   const link = `${CLIENT_URL}/verify-email?token=${raw}`;
   await sendMail({
     to: user.email as string,
-    subject: 'Xac thuc email - LEssence Noire',
-    html: `<p>Nhan vao lien ket sau de xac thuc email (het han sau 24 gio):</p><p><a href="${link}">${link}</a></p>`,
-    text: `Xac thuc email: ${link}`,
+    subject: 'Xác thực email - L Essence Noire',
+    html: `<p>Nhấn vào liên kết sau để xác thực email (hết hạn sau 24 giờ):</p><p><a href="${link}">${link}</a></p>`,
+    text: `Xác thực email: ${link}`,
   });
-  return { message: 'Da gui email xac thuc' };
+  return { message: 'Đã gửi email xác thực' };
 }
 
 export async function verifyEmail(token: string) {
@@ -596,11 +641,11 @@ export async function verifyEmail(token: string) {
     emailVerifyToken: hashToken(token),
     emailVerifyExpires: { $gt: new Date() },
   });
-  if (!user) throw Object.assign(new Error('Token khong hop le hoac da het han'), { status: 400 });
+  if (!user) throw Object.assign(new Error('Token không hợp lệ hoặc đã hết hạn'), { status: 400 });
 
   user.set({ isEmailVerified: true, emailVerifyToken: undefined, emailVerifyExpires: undefined });
   await user.save();
-  return { message: 'Xac thuc email thanh cong' };
+  return { message: 'Xác thực email thành công' };
 }
 
 async function issueTokens(user: any) {
@@ -622,6 +667,7 @@ function serializeUser(user: any) {
     email: user.email,
     phone: user.phone,
     role: user.role,
+    createdAt: user.createdAt,
     isEmailVerified: user.isEmailVerified,
     addresses: user.addresses || [],
     profileCompletedAt: user.profileCompletedAt,

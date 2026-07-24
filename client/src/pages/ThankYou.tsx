@@ -34,8 +34,7 @@ export default function ThankYou() {
           paymentStatus: data.data.payment?.status || "unpaid",
         });
       } catch (e: any) {
-        if (active)
-          setError(e?.response?.data?.message || "Không tìm thấy đơn hàng");
+        if (active) setError(e?.response?.data?.message || "Không tìm thấy đơn hàng");
       } finally {
         if (active) setLoading(false);
       }
@@ -48,33 +47,23 @@ export default function ThankYou() {
   return (
     <>
       <section className="mx-auto min-h-[70vh] max-w-3xl bg-[#FDF9F4] px-6 py-16 text-center">
-        {loading && (
-          <p className="font-['Manrope'] text-[#5F5E5E]">Đang tải…</p>
-        )}
-        {!loading && error && (
-          <p className="font-['Manrope'] text-red-600">{error}</p>
-        )}
+        {loading && <p className="font-sans text-[#5F5E5E]">Đang tải…</p>}
+        {!loading && error && <p className="font-sans text-red-600">{error}</p>}
 
         {!loading && order && (
           <>
-            <CheckCircle2
-              size={64}
-              className="mx-auto mb-6 text-[#637144]"
-              strokeWidth={1.5}
-            />
-            <h1 className="font-['Noto_Serif'] text-4xl text-[#1C1C19] md:text-5xl">
+            <CheckCircle2 size={64} className="mx-auto mb-6 text-[#637144]" strokeWidth={1.5} />
+            <h1 className="font-serif text-4xl text-[#1C1C19] md:text-5xl">
               Đơn hàng đã được ghi nhận
             </h1>
-            <p className="mx-auto mt-4 max-w-xl font-['Manrope'] text-sm leading-6 text-[#5F5E5E]">
-              Cảm ơn bạn đã tin chọn L'Essence Noire. Chúng tôi đã nhận thông tin đặt hàng và sẽ chuẩn bị đơn trong thời gian sớm nhất.
+            <p className="mx-auto mt-4 max-w-xl font-sans text-sm leading-6 text-[#5F5E5E]">
+              Cảm ơn bạn đã tin chọn L'Essence Noire. Chúng tôi đã nhận thông tin đặt hàng và sẽ
+              chuẩn bị đơn trong thời gian sớm nhất.
             </p>
 
-            <div className="mt-8 border border-[rgba(208,197,175,0.5)] bg-white p-6 text-left font-['Manrope']">
+            <div className="mt-8 border border-[rgba(208,197,175,0.5)] bg-white p-6 text-left font-sans">
               <div className="grid gap-4 sm:grid-cols-2">
-                <InfoRow
-                  label="Mã đơn"
-                  value={`#${order.id.slice(-6).toUpperCase()}`}
-                />
+                <InfoRow label="Mã đơn" value={`#${order.id.slice(-6).toUpperCase()}`} />
                 <InfoRow label="Tổng thanh toán" value={vnd(order.total)} />
                 <InfoRow
                   label="Phương thức"
@@ -93,12 +82,12 @@ export default function ThankYou() {
                   <Clock3 size={18} strokeWidth={1.6} />
                 </span>
                 <div>
-                  <h2 className="font-['Noto_Serif'] text-xl text-[#1C1C19]">
+                  <h2 className="font-serif text-xl text-[#1C1C19]">
                     {order.paymentMethod === "bank_qr"
                       ? "Thanh toán đang chờ đối soát"
                       : "Thanh toán khi nhận hàng"}
                   </h2>
-                  <p className="mt-2 font-['Manrope'] text-sm leading-6 text-[#5F5E5E]">
+                  <p className="mt-2 font-sans text-sm leading-6 text-[#5F5E5E]">
                     {order.paymentMethod === "bank_qr"
                       ? "Nếu bạn đã chuyển khoản, admin sẽ kiểm tra giao dịch và cập nhật trạng thái thanh toán sau khi nhận tiền."
                       : "Bạn sẽ thanh toán trực tiếp cho nhân viên giao hàng khi đơn được giao đến địa chỉ đã cung cấp."}
@@ -107,24 +96,24 @@ export default function ThankYou() {
               </div>
             </div>
 
-            <p className="mt-6 font-['Manrope'] text-sm text-[#5F5E5E]">
+            <p className="mt-6 font-sans text-sm text-[#5F5E5E]">
               Bạn có thể tra cứu lại đơn bằng mã{" "}
               <span className="font-semibold text-[#735C00]">
                 #{order.id.slice(-6).toUpperCase()}
-              </span>
-              {" "}hoặc số điện thoại/email đã đặt hàng.
+              </span>{" "}
+              hoặc số điện thoại/email đã đặt hàng.
             </p>
 
             <div className="flex flex-wrap gap-4 justify-center mt-10">
               <Link
                 to={"/orders/" + order.id}
-                className="inline-flex items-center gap-2 bg-[#735C00] text-white px-8 py-3 font-['Manrope'] uppercase tracking-[2px] text-sm hover:bg-[#5c4a00] duration-300"
+                className="inline-flex items-center gap-2 bg-[#735C00] text-white px-8 py-3 font-sans uppercase tracking-[2px] text-sm hover:bg-[#5c4a00] duration-300"
               >
                 <Package size={16} /> Xem chi tiết đơn
               </Link>
               <Link
                 to="/shop"
-                className="border border-[#735C00] text-[#735C00] px-8 py-3 font-['Manrope'] uppercase tracking-[2px] text-sm hover:bg-[#735C00] hover:text-white duration-300"
+                className="border border-[#735C00] text-[#735C00] px-8 py-3 font-sans uppercase tracking-[2px] text-sm hover:bg-[#735C00] hover:text-white duration-300"
               >
                 <span className="inline-flex items-center gap-2">
                   <ShoppingBag size={16} /> Tiếp tục mua sắm
@@ -139,13 +128,7 @@ export default function ThankYou() {
   );
 }
 
-function InfoRow({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
+function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <p className="text-[10px] uppercase tracking-[1.5px] text-[#8A8178]">{label}</p>

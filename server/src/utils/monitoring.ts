@@ -4,10 +4,10 @@ import { env } from '../config/env';
 // Sentry la OPTIONAL dependency. Chi hoat dong khi:
 //   1) da cai @sentry/node, VA
 //   2) da set SENTRY_DSN trong .env
-// Neu khong, cac ham nay tro thanh no-op an toan (khong lam vo build/runtime).
+// Nếu không, các hàm này trở thành no-op an toàn, không làm vỡ build/runtime.
 let sentry: any = null;
 
-// Nap dong de tsc KHONG can resolve module luc build (tranh loi "Cannot find module").
+// Nạp động để tsc không cần resolve module lúc build, tránh lỗi "Cannot find module".
 const dynamicImport = (moduleName: string): Promise<any> =>
   // eslint-disable-next-line no-new-func
   Function('m', 'return import(m)')(moduleName);
@@ -20,7 +20,7 @@ export async function initMonitoring() {
     sentry = mod;
     logger.info('[monitoring] Sentry initialized');
   } catch {
-    logger.warn('[monitoring] SENTRY_DSN da set nhung @sentry/node chua duoc cai -> bo qua');
+    logger.warn('[monitoring] SENTRY_DSN đã set nhưng @sentry/node chưa được cài -> bỏ qua');
   }
 }
 

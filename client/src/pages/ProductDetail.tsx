@@ -11,7 +11,7 @@ import { optimizeCloudinaryImage } from "../lib/image";
 import { Skeleton } from "../components/Skeleton";
 import Footer from "../components/Footer";
 
-const PLACEHOLDER = "https://placehold.co/900x1100?text=No+Image";
+const PLACEHOLDER = "https://placehold.co/900x1100?text=Chua+co+anh";
 const BUY_NOW_KEY = "buy_now_checkout_item";
 
 type ProductVariant = {
@@ -114,7 +114,7 @@ export default function ProductDetail() {
   const [reviewMessage, setReviewMessage] = useState("");
   const [submittingReview, setSubmittingReview] = useState(false);
 
-  // Trang thai thanh "Add to cart" dinh khi cuon.
+  // Trạng thái thanh "Thêm vào giỏ" dính khi cuộn.
   const [showStickyBar, setShowStickyBar] = useState(false);
   const addToCartRef = useRef<HTMLDivElement | null>(null);
 
@@ -217,19 +217,19 @@ export default function ProductDetail() {
   const notes = [
     {
       icon: <Sun size={18} strokeWidth={1.4} />,
-      title: "TOP NOTES",
+      title: "HƯƠNG ĐẦU",
       description: "Ấn tượng đầu tiên — tươi mát, bay bổng và đầy cuốn hút.",
       items: product?.notes.top || [],
     },
     {
       icon: <Heart size={17} strokeWidth={1.4} />,
-      title: "HEART NOTES",
+      title: "HƯƠNG GIỮA",
       description: "Trái tim của mùi hương — nồng nàn, tròn đầy và rạng rỡ.",
       items: product?.notes.middle || [],
     },
     {
       icon: <Moon size={17} strokeWidth={1.4} />,
-      title: "BASE NOTES",
+      title: "HƯƠNG CUỐI",
       description: "Dư hương lưu lại — sâu lắng, ấm áp và quyến rũ.",
       items: product?.notes.base || [],
     },
@@ -430,7 +430,7 @@ export default function ProductDetail() {
     };
   }, [product, gallery, selectedVariant, availableStock, reviews, averageRating, metaDescription]);
 
-  // Thanh "Add to cart" dinh: hien khi nut chinh da cuon qua khoi man hinh (nhat la mobile).
+  // Thanh "Thêm vào giỏ" dính: hiện khi nút chính đã cuộn qua khỏi màn hình, nhất là mobile.
   useEffect(() => {
     const el = addToCartRef.current;
     if (!el || typeof IntersectionObserver === "undefined") return;
@@ -522,12 +522,12 @@ export default function ProductDetail() {
   return (
     <div className="min-h-screen w-full max-w-[100vw] overflow-x-hidden bg-[#fbf8f2] text-[#292824]">
       <main>
-        {/* Breadcrumb: Home > Shop > Brand > Gender > Product */}
-        <nav aria-label="Breadcrumb" className="mx-auto max-w-[1240px] px-6 pt-8 md:px-10 lg:px-14">
+        {/* Breadcrumb: Trang chủ > Shop > Thương hiệu > Giới tính > Sản phẩm */}
+        <nav aria-label="Đường dẫn" className="mx-auto max-w-[1240px] px-6 pt-8 md:px-10 lg:px-14">
           <ol className="flex flex-wrap items-center gap-1.5 text-[10px] uppercase tracking-[1.5px] text-[#aaa69e]">
             <li>
               <Link to="/" className="transition hover:text-[#8b7100]">
-                Home
+                Trang chủ
               </Link>
             </li>
             <li aria-hidden="true" className="flex items-center">
@@ -535,7 +535,7 @@ export default function ProductDetail() {
             </li>
             <li>
               <Link to={shopReturnPath} className="transition hover:text-[#8b7100]">
-                Shop
+                Sản phẩm
               </Link>
             </li>
             <li aria-hidden="true" className="flex items-center">
@@ -607,7 +607,7 @@ export default function ProductDetail() {
                 >
                   <img
                     src={optimizeCloudinaryImage(insetImage, 400)}
-                    alt={`${product.name} detail`}
+                    alt={`Ảnh chi tiết ${product.name}`}
                     loading="lazy"
                     decoding="async"
                     className="h-full w-full object-cover"
@@ -746,7 +746,7 @@ export default function ProductDetail() {
                 }`}
               >
                 <Heart size={14} strokeWidth={1.6} fill={wishlisted ? "currentColor" : "none"} />
-                {wishlisted ? "Đã lưu vào wishlist" : "Thêm vào wishlist"}
+                {wishlisted ? "Đã lưu vào danh sách yêu thích" : "Thêm vào yêu thích"}
               </button>
 
               <button
@@ -766,16 +766,16 @@ export default function ProductDetail() {
           <div className="mx-auto max-w-[1240px] px-6 md:px-10 lg:px-14">
             <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
               <div>
-                <h2 className="font-serif text-[31px]">The Olfactory Pyramid</h2>
+                <h2 className="font-serif text-[31px]">Tháp hương</h2>
 
                 <p className="mt-4 max-w-[480px] text-[11px] leading-[1.65] text-[#77736b]">
-                  The architecture of the scent evolves over eight hours, shifting from crystalline
-                  brightness to a deep, resonant warmth.
+                  Cấu trúc mùi hương biến chuyển nhiều giờ, từ tầng mở đầu trong trẻo đến phần nền
+                  sâu, ấm và lưu luyến.
                 </p>
               </div>
 
               <p className="text-[8px] font-semibold uppercase tracking-[3px] text-[#8b7100]">
-                Notes composition
+                Cấu trúc nốt hương
               </p>
             </div>
 
@@ -824,7 +824,7 @@ export default function ProductDetail() {
         {/* Related products */}
         <section className="bg-[#fbf8f2] py-24">
           <div className="mx-auto max-w-[1240px] px-6 md:px-10 lg:px-14">
-            <h2 className="text-center font-serif text-[25px] italic">Complete the Ritual</h2>
+            <h2 className="text-center font-serif text-[25px] italic">Có thể bạn sẽ thích</h2>
 
             <div className="mt-14 grid gap-x-7 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">
               {relatedProducts.map((item) => (
@@ -846,7 +846,7 @@ export default function ProductDetail() {
                   </div>
 
                   <p className="mt-5 text-[8px] uppercase text-[#969189]">
-                    {item.category || item.brand || "Parfum"}
+                    {item.category || item.brand || "Nước hoa"}
                   </p>
 
                   <h3 className="mt-2 font-serif text-[14px]">{item.name}</h3>
@@ -864,7 +864,7 @@ export default function ProductDetail() {
         <section className="bg-[#e9e5df] py-28">
           <div className="mx-auto max-w-[1240px] px-6 md:px-10 lg:px-14">
             <div className="text-center">
-              <h2 className="font-serif text-[34px] md:text-[42px]">Voices of the Evening</h2>
+              <h2 className="font-serif text-[34px] md:text-[42px]">Cảm nhận từ khách hàng</h2>
 
               <div className="mt-7 flex items-center justify-center gap-3">
                 <span className="text-[17px] tracking-[3px] text-[#8b7100]">
@@ -908,7 +908,7 @@ export default function ProductDetail() {
                           >
                             <img
                               src={image}
-                              alt="Review"
+                              alt="Ảnh đánh giá"
                               loading="lazy"
                               decoding="async"
                               className="h-full w-full object-cover"
@@ -919,7 +919,7 @@ export default function ProductDetail() {
                     )}
 
                     <p className="mt-10 text-[9px] font-semibold uppercase tracking-[2.4px]">
-                      — {featuredReview.userName}, Verified Collector
+                      — {featuredReview.userName}, Khách hàng đã xác thực
                     </p>
                   </>
                 ) : (
@@ -929,7 +929,7 @@ export default function ProductDetail() {
                     </p>
 
                     <p className="mt-10 text-[9px] font-semibold uppercase tracking-[2.4px]">
-                      — Be the first voice
+                      — Hãy là người đầu tiên chia sẻ
                     </p>
                   </>
                 )}
@@ -943,7 +943,7 @@ export default function ProductDetail() {
                       className="border-b border-[#d8d2c8] pb-10 last:border-b-0"
                     >
                       <h3 className="font-serif text-[22px]">
-                        {review.comment.split(".")[0] || "A beautiful impression"}.
+                        {review.comment.split(".")[0] || "Một cảm nhận đẹp"}.
                       </h3>
 
                       <p className="mt-7 max-w-[520px] text-[11px] leading-[1.8] text-[#625e57]">
@@ -962,7 +962,7 @@ export default function ProductDetail() {
                             >
                               <img
                                 src={image}
-                                alt="Review"
+                                alt="Ảnh đánh giá"
                                 loading="lazy"
                                 decoding="async"
                                 className="h-full w-full object-cover"
@@ -979,7 +979,7 @@ export default function ProductDetail() {
                   ))
                 ) : (
                   <article className="border-b border-[#d8d2c8] pb-10">
-                    <h3 className="font-serif text-[22px]">Share your impression.</h3>
+                    <h3 className="font-serif text-[22px]">Chia sẻ cảm nhận của bạn.</h3>
 
                     <p className="mt-7 max-w-[520px] text-[11px] leading-[1.8] text-[#625e57]">
                       Những đánh giá sau khi admin duyệt sẽ xuất hiện tại đây.
@@ -991,7 +991,7 @@ export default function ProductDetail() {
 
             <div className="mt-24 flex flex-col items-center justify-center gap-5 sm:flex-row">
               <button className="border-b border-[#8b7100] pb-2 text-[9px] font-semibold uppercase tracking-[2.4px]">
-                Read all {reviews.length} reviews
+                Xem tất cả {reviews.length} đánh giá
               </button>
 
               <button
@@ -1008,18 +1008,18 @@ export default function ProductDetail() {
                 onSubmit={handleSubmitReview}
                 className="mx-auto mt-12 max-w-2xl border border-[#d9d4cb] bg-[#fbf8f2] p-8"
               >
-                <h3 className="font-serif text-[26px]">Write a review</h3>
+                <h3 className="font-serif text-[26px]">Viết đánh giá</h3>
                 <p className="mt-3 text-[11px] leading-[1.7] text-[#6e6a63]">
                   {user
-                    ? `Đang gửi bằng tài khoản ${user.name || user.email || "của bạn"}. Review sẽ được hiển thị sau khi admin duyệt.`
-                    : "Bạn chưa đăng nhập, vui lòng nhập tên/email. Review sẽ được hiển thị sau khi admin duyệt."}
+                    ? `Đang gửi bằng tài khoản ${user.name || user.email || "của bạn"}. Đánh giá sẽ được hiển thị sau khi admin duyệt.`
+                    : "Bạn chưa đăng nhập, vui lòng nhập tên/email. Đánh giá sẽ được hiển thị sau khi admin duyệt."}
                 </p>
 
                 {!user && (
                   <div className="mt-7 grid gap-5 md:grid-cols-2">
                     <label className="block">
                       <span className="text-[8px] uppercase tracking-[1.5px] text-[#8b7100]">
-                        Name
+                        Tên
                       </span>
                       <input
                         value={reviewForm.guestName}
@@ -1050,7 +1050,7 @@ export default function ProductDetail() {
 
                 <label className="mt-5 block">
                   <span className="text-[8px] uppercase tracking-[1.5px] text-[#8b7100]">
-                    Rating
+                    Điểm đánh giá
                   </span>
                   <select
                     value={reviewForm.rating}
@@ -1069,7 +1069,7 @@ export default function ProductDetail() {
 
                 <label className="mt-5 block">
                   <span className="text-[8px] uppercase tracking-[1.5px] text-[#8b7100]">
-                    Comment
+                    Bình luận
                   </span>
                   <textarea
                     value={reviewForm.comment}
@@ -1083,7 +1083,7 @@ export default function ProductDetail() {
 
                 <div className="mt-5">
                   <p className="text-[8px] uppercase tracking-[1.5px] text-[#8b7100]">
-                    Review image
+                    Ảnh đánh giá
                   </p>
 
                   {reviewImagePreview ? (
@@ -1091,7 +1091,7 @@ export default function ProductDetail() {
                       <img
                         loading="lazy"
                         src={reviewImagePreview}
-                        alt="Review preview"
+                        alt="Xem trước ảnh đánh giá"
                         className="h-52 w-full object-cover"
                       />
 
@@ -1133,7 +1133,7 @@ export default function ProductDetail() {
                   disabled={submittingReview}
                   className="mt-6 h-12 w-full bg-[#8b7100] text-[9px] font-semibold uppercase tracking-[2px] text-white transition hover:bg-[#715c00] disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {submittingReview ? "Đang gửi..." : "Submit review"}
+                  {submittingReview ? "Đang gửi..." : "Gửi đánh giá"}
                 </button>
               </form>
             )}
@@ -1141,7 +1141,7 @@ export default function ProductDetail() {
         </section>
       </main>
 
-      {/* Sticky "Add to cart" khi cuon xuong (dac biet tren mobile) */}
+      {/* Thanh "Thêm vào giỏ" dính khi cuộn xuống, đặc biệt trên mobile */}
       <div
         className={`fixed inset-x-0 bottom-0 z-40 border-t border-[#e7dfd1] bg-[#fbf8f2]/95 px-4 py-3 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] backdrop-blur transition-transform duration-300 ${
           showStickyBar ? "translate-y-0" : "translate-y-full"
@@ -1170,8 +1170,8 @@ export default function ProductDetail() {
             <button
               type="button"
               onClick={() => product && toggleWishlist(product.id)}
-              aria-label={wishlisted ? "Đã lưu vào wishlist" : "Thêm vào wishlist"}
-              title={wishlisted ? "Đã lưu vào wishlist" : "Thêm vào wishlist"}
+              aria-label={wishlisted ? "Đã lưu vào danh sách yêu thích" : "Thêm vào yêu thích"}
+              title={wishlisted ? "Đã lưu vào danh sách yêu thích" : "Thêm vào yêu thích"}
               className={`flex h-11 w-11 shrink-0 items-center justify-center border transition ${
                 wishlisted
                   ? "border-[#8b7100] bg-[#8b7100]/5 text-[#8b7100]"

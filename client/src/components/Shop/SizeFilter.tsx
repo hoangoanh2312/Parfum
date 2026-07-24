@@ -7,24 +7,15 @@ interface SizeFilterProps {
   onToggle: (size: string) => void;
 }
 
-export default function SizeFilter({
-  sizes,
-  selected,
-  onToggle,
-}: SizeFilterProps) {
+export default function SizeFilter({ sizes, selected, onToggle }: SizeFilterProps) {
   const [showAll, setShowAll] = useState(false);
   const initialVisible = 4;
   const orderedCompact = useMemo(() => {
     const chosen = sizes.filter((size) => selected.includes(size));
     const remaining = sizes.filter((size) => !selected.includes(size));
-    return [
-      ...chosen,
-      ...remaining.slice(0, Math.max(0, initialVisible - chosen.length)),
-    ];
+    return [...chosen, ...remaining.slice(0, Math.max(0, initialVisible - chosen.length))];
   }, [selected, sizes]);
-  const visibleSizes = showAll
-    ? sizes
-    : orderedCompact;
+  const visibleSizes = showAll ? sizes : orderedCompact;
 
   const handleToggle = (size: string) => {
     onToggle(size);
@@ -32,7 +23,7 @@ export default function SizeFilter({
   };
 
   return (
-    <FilterSection title="Size">
+    <FilterSection title="Dung tích">
       <div className="flex flex-wrap gap-3">
         {visibleSizes.map((size) => {
           const active = selected.includes(size);
@@ -60,7 +51,7 @@ export default function SizeFilter({
           onClick={() => setShowAll((current) => !current)}
           className="mt-4 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#735C00] transition hover:text-[#4D410F]"
         >
-          {showAll ? "Thu gọn" : `Show all (${sizes.length})`}
+          {showAll ? "Thu gọn" : `Xem tất cả (${sizes.length})`}
         </button>
       )}
     </FilterSection>

@@ -17,7 +17,7 @@ export default function ScentFilter({
   selected,
   onToggle,
   initialVisible = 8,
-  title = "Scent Profile",
+  title = "Hồ sơ mùi hương",
   emptyMessage = "Chưa có nhóm mùi hương.",
 }: ScentFilterProps) {
   const [showAll, setShowAll] = useState(false);
@@ -50,9 +50,7 @@ export default function ScentFilter({
           </label>
         ))}
 
-        {visible.length === 0 && (
-          <p className="text-xs text-[#A29D91]">{emptyMessage}</p>
-        )}
+        {visible.length === 0 && <p className="text-xs text-[#A29D91]">{emptyMessage}</p>}
       </div>
 
       {canToggle && (
@@ -61,7 +59,7 @@ export default function ScentFilter({
           onClick={() => setShowAll((prev) => !prev)}
           className="mt-4 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#735C00] transition hover:text-[#4D410F]"
         >
-          {showAll ? "Thu gọn" : `Show all (${scents.length})`}
+          {showAll ? "Thu gọn" : `Xem tất cả (${scents.length})`}
         </button>
       )}
     </FilterSection>

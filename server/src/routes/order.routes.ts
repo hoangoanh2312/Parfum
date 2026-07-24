@@ -27,8 +27,11 @@ const lookupLimiter = rateLimit({
 // Dia chi giao hang BAT BUOC co line + phone; cac truong khac tuy chon.
 const orderAddressSchema = z.object({
   fullName: z.string().trim().min(1).optional(),
-  email: z.string().trim().email('Email khong hop le'),
-  phone: z.string().trim().regex(/^0\d{9}$/, 'So dien thoai khong hop le'),
+  email: z.string().trim().email('Email không hợp lệ'),
+  phone: z
+    .string()
+    .trim()
+    .regex(/^0\d{9}$/, 'Số điện thoại không hợp lệ'),
   line: z.string().trim().min(1, 'Thieu dia chi giao hang'),
   ward: z.string().trim().min(1, 'Thieu xa hoac phuong'),
   district: z.string().trim().optional(),
@@ -48,7 +51,9 @@ const createOrderSchema = z.object({
 });
 
 const pricePreviewSchema = z.object({
-  items: z.array(z.object({ variant: z.string().trim().min(1), quantity: z.number().int().positive() })).min(1),
+  items: z
+    .array(z.object({ variant: z.string().trim().min(1), quantity: z.number().int().positive() }))
+    .min(1),
   voucherCode: z.string().trim().optional(),
   shippingMethod: z.enum(['standard', 'express']).optional(),
   email: z.string().trim().email().optional(),
@@ -70,7 +75,7 @@ router.post('/', optionalAuthenticate, validate(createOrderSchema), createOrder)
 router.post(
   '/:id/cancel-pending-qr',
   optionalAuthenticate,
-  validateParams(z.object({ id: z.string().regex(/^[a-f\d]{24}$/i, 'Ma don khong hop le') })),
+  validateParams(z.object({ id: z.string().regex(/^[a-f\d]{24}$/i, 'Mã đơn không hợp lệ') })),
   cancelPendingQrOrder,
 );
 // Huy don + hoan kho (chi user so huu, phai dang nhap)

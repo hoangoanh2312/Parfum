@@ -1,10 +1,7 @@
 import { Check, Info, X } from "lucide-react";
 import { useToast, ToastType } from "../store/toast.store";
 
-const STYLE: Record<
-  ToastType,
-  { accent: string; icon: string; label: string }
-> = {
+const STYLE: Record<ToastType, { accent: string; icon: string; label: string }> = {
   success: {
     accent: "bg-[#6F7651]",
     icon: "bg-[#EEF0E7] text-[#59613D]",
@@ -57,13 +54,11 @@ export default function Toaster() {
           className="toast-item pointer-events-auto relative flex min-h-[72px] items-center gap-3 overflow-hidden rounded-md border border-[#DED7CD] bg-[#FFFDF9] px-4 py-3 pr-11 shadow-[0_12px_32px_rgba(42,36,29,0.16)]"
         >
           <ToastIcon type={t.type} />
-          <div className="min-w-0 flex-1 font-['Manrope']">
+          <div className="min-w-0 flex-1 font-sans">
             <p className="text-[10px] font-semibold uppercase tracking-[1.4px] text-[#8A8178]">
               {STYLE[t.type].label}
             </p>
-            <p className="mt-1 whitespace-pre-line text-sm leading-5 text-[#2D2925]">
-              {t.message}
-            </p>
+            <p className="mt-1 whitespace-pre-line text-sm leading-5 text-[#2D2925]">{t.message}</p>
           </div>
           <button
             type="button"

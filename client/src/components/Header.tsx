@@ -1,14 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
-import {
-  Heart,
-  LayoutDashboard,
-  Menu,
-  Search,
-  ShoppingBag,
-  User,
-  X,
-} from "lucide-react";
+import { Heart, LayoutDashboard, Menu, Search, ShoppingBag, User, X } from "lucide-react";
 import { useCart } from "../store/cart.store";
 import { useAuth } from "../store/auth.store";
 
@@ -107,7 +99,7 @@ export default function Header() {
 
         {/* Menu desktop bên trái */}
         <nav
-  className="
+          className="
 absolute inset-y-0 hidden grid-cols-3 items-center
 2xl:grid
 2xl:left-[200px]
@@ -117,13 +109,13 @@ min-[1600px]:w-[520px]
 min-[1800px]:left-[280px]
 min-[1800px]:w-[540px]
 "
->
-  {menuItems.slice(0, 3).map((item) => (
-    <NavLink key={item.link} to={item.link} className={navClass}>
-      {label(item.vi, item.en)}
-    </NavLink>
-  ))}
-</nav>
+        >
+          {menuItems.slice(0, 3).map((item) => (
+            <NavLink key={item.link} to={item.link} className={navClass}>
+              {label(item.vi, item.en)}
+            </NavLink>
+          ))}
+        </nav>
 
         {/* Logo luôn đúng giữa màn hình */}
         <Link
@@ -149,7 +141,7 @@ min-[1800px]:w-[540px]
           w-[calc(50%-405px)] grid-cols-3 items-center pl-10 2xl:grid
           min-[1600px]:pl-14
           min-[1800px]:pl-20"
-          aria-label="Secondary"
+          aria-label="Menu phụ"
         >
           {menuItems.slice(3).map((item) => (
             <NavLink key={item.link} to={item.link} className={navClass}>
@@ -180,8 +172,8 @@ min-[1800px]:w-[540px]
           <Link
             to="/account/wishlist"
             className="header-icon-button hidden md:flex"
-            title="Wishlist"
-            aria-label="Wishlist"
+            title="Danh sách yêu thích"
+            aria-label="Danh sách yêu thích"
           >
             <Heart size={17} />
           </Link>
@@ -234,16 +226,14 @@ min-[1800px]:w-[540px]
           border-t border-[#E4DACE] bg-[#F5ECE3]
           px-5 pb-6 pt-3 shadow-lg 2xl:hidden"
         >
-          <nav className="mx-auto grid max-w-xl" aria-label="Mobile">
+          <nav className="mx-auto grid max-w-xl" aria-label="Menu di động">
             {menuItems.map((item) => (
               <NavLink
                 key={item.link}
                 to={item.link}
                 className={({ isActive }) =>
                   `border-b border-[#E6DDD2] py-4 text-[11px]
-                  uppercase tracking-[2px] ${
-                    isActive ? "text-[#5F554A]" : "text-[#907C4D]"
-                  }`
+                  uppercase tracking-[2px] ${isActive ? "text-[#5F554A]" : "text-[#907C4D]"}`
                 }
               >
                 {label(item.vi, item.en)}
@@ -256,22 +246,14 @@ min-[1800px]:w-[540px]
                 {label("Tra cứu đơn", "Order lookup")}
               </Link>
 
-              <Link
-                to="/account/wishlist"
-                className="mobile-header-command"
-              >
+              <Link to="/account/wishlist" className="mobile-header-command">
                 <Heart size={16} />
-                Wishlist
+                Danh sách yêu thích
               </Link>
 
-              <Link
-                to={user ? "/account" : "/login"}
-                className="mobile-header-command"
-              >
+              <Link to={user ? "/account" : "/login"} className="mobile-header-command">
                 <User size={16} />
-                {user
-                  ? label("Tài khoản", "Account")
-                  : label("Đăng nhập", "Sign in")}
+                {user ? label("Tài khoản", "Account") : label("Đăng nhập", "Sign in")}
               </Link>
 
               {user?.role === "admin" && (

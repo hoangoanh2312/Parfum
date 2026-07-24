@@ -30,6 +30,13 @@ interface ScentProfileData {
   dislikedNotes?: string[];
 }
 
+function formatMemberSince(value?: string | null): string {
+  if (!value) return "Thành viên từ khi tạo tài khoản";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Thành viên từ khi tạo tài khoản";
+  return `Thành viên của L'Essence Noire từ ngày ${date.toLocaleDateString("vi-VN")}`;
+}
+
 export default function AccountOverview() {
   const user = useAuth((state) => state.user);
   const [orders, setOrders] = useState<OrderItem[]>([]);
@@ -92,11 +99,11 @@ export default function AccountOverview() {
         const products: RecommendationItem[] = data.data.map((product) => ({
           id: product.id,
           slug: product.slug,
-          category: product.category || product.brand || "Parfum",
+          category: product.category || product.brand || "Nước hoa",
           name: product.name,
           description: product.description || "Mùi hương tinh tế, sang trọng.",
           image:
-            product.images?.[0] || product.image || "https://placehold.co/800x600?text=No+Image",
+            product.images?.[0] || product.image || "https://placehold.co/800x600?text=Chua+co+anh",
           stock: product.stock || 0,
           soldCount: product.soldCount || 0,
         }));
@@ -124,6 +131,7 @@ export default function AccountOverview() {
   }, []);
 
   const defaultAddress = user?.addresses?.[0];
+  const memberSince = formatMemberSince(user?.createdAt);
   // Xac dinh cac muc con thieu trong ho so (KHONG tinh mat khau).
   const missingProfile: string[] = [];
   if (!user?.name) missingProfile.push("Họ và tên");
@@ -183,11 +191,7 @@ export default function AccountOverview() {
           </h1>
 
           <div className="md:text-right">
-            <p className="text-[10px] italic text-[#8B837A]">Thành viên từ tháng 11 năm 2023</p>
-
-            <p className="mt-1 text-[10px] uppercase tracking-[0.15em] text-[#8C7200]">
-              Thành viên Noir Elite
-            </p>
+            <p className="text-[10px] italic text-[#8B837A]">{memberSince}</p>
           </div>
         </div>
       </section>

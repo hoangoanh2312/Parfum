@@ -7,24 +7,15 @@ interface OccasionFilterProps {
   onToggle: (item: string) => void;
 }
 
-export default function OccasionFilter({
-  occasions,
-  selected,
-  onToggle,
-}: OccasionFilterProps) {
+export default function OccasionFilter({ occasions, selected, onToggle }: OccasionFilterProps) {
   const [showAll, setShowAll] = useState(false);
   const initialVisible = 4;
   const orderedCompact = useMemo(() => {
     const chosen = occasions.filter((item) => selected.includes(item));
     const remaining = occasions.filter((item) => !selected.includes(item));
-    return [
-      ...chosen,
-      ...remaining.slice(0, Math.max(0, initialVisible - chosen.length)),
-    ];
+    return [...chosen, ...remaining.slice(0, Math.max(0, initialVisible - chosen.length))];
   }, [occasions, selected]);
-  const visibleOccasions = showAll
-    ? occasions
-    : orderedCompact;
+  const visibleOccasions = showAll ? occasions : orderedCompact;
 
   const handleToggle = (item: string) => {
     onToggle(item);
@@ -32,7 +23,7 @@ export default function OccasionFilter({
   };
 
   return (
-    <FilterSection title="Occasion">
+    <FilterSection title="Dịp sử dụng">
       <div className="flex flex-wrap gap-3">
         {visibleOccasions.map((item) => {
           const active = selected.includes(item);
@@ -60,7 +51,7 @@ export default function OccasionFilter({
           onClick={() => setShowAll((current) => !current)}
           className="mt-4 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#735C00] transition hover:text-[#4D410F]"
         >
-          {showAll ? "Thu gọn" : `Show all (${occasions.length})`}
+          {showAll ? "Thu gọn" : `Xem tất cả (${occasions.length})`}
         </button>
       )}
     </FilterSection>

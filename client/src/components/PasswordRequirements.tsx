@@ -1,8 +1,5 @@
 import { Check, X } from "lucide-react";
-import {
-  getPasswordCriteria,
-  type PasswordLanguage,
-} from "../lib/password";
+import { getPasswordCriteria, type PasswordLanguage } from "../lib/password";
 
 type PasswordRequirementsProps = {
   password: string;
@@ -19,18 +16,15 @@ export function PasswordRequirements({
   const missingCount = criteria.filter((criterion) => !criterion.valid).length;
 
   return (
-    <div
-      className={`border border-[#DED5CA] bg-[#F7F2EC] p-4 ${className}`}
-      aria-live="polite"
-    >
+    <div className={`border border-[#DED5CA] bg-[#F7F2EC] p-4 ${className}`} aria-live="polite">
       <p className="text-[10px] uppercase tracking-[0.14em] text-[#746C64]">
         {missingCount === 0
           ? language === "vi"
             ? "Mật khẩu đã đủ tiêu chí"
-            : "Password meets all requirements"
+            : "Mật khẩu đã đủ tiêu chí"
           : language === "vi"
             ? `Còn thiếu ${missingCount} tiêu chí`
-            : `${missingCount} requirements remaining`}
+            : `Còn thiếu ${missingCount} tiêu chí`}
       </p>
       <ul className="mt-3 grid gap-2 sm:grid-cols-2">
         {criteria.map((criterion) => (

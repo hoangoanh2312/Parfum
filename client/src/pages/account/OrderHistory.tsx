@@ -3,16 +3,9 @@ import { Package, ShoppingBag } from "lucide-react";
 import { Link } from "react-router-dom";
 import { api } from "../../lib/api";
 
-const vnd = (value: number) =>
-  `${(value || 0).toLocaleString("vi-VN")}đ`;
+const vnd = (value: number) => `${(value || 0).toLocaleString("vi-VN")}đ`;
 
-type OrderStatus =
-  | "pending"
-  | "paid"
-  | "shipping"
-  | "done"
-  | "cancelled"
-  | "returned";
+type OrderStatus = "pending" | "paid" | "shipping" | "done" | "cancelled" | "returned";
 type OrderStatusFilter = "all" | OrderStatus;
 
 type Order = {
@@ -37,10 +30,7 @@ type Order = {
   }>;
 };
 
-const STATUS_META: Record<
-  OrderStatus,
-  { label: string; dot: string; text: string }
-> = {
+const STATUS_META: Record<OrderStatus, { label: string; dot: string; text: string }> = {
   pending: {
     label: "Chờ xác nhận",
     dot: "bg-[#A18400]",
@@ -83,9 +73,7 @@ const TABS: Array<{ id: OrderStatusFilter; label: string }> = [
 ];
 
 const normalizeStatus = (status: string): OrderStatus =>
-  status === "paid"
-    ? "pending"
-    : (status as OrderStatus);
+  status === "paid" ? "pending" : (status as OrderStatus);
 
 const formatDate = (value?: string) =>
   value
@@ -138,9 +126,7 @@ export default function OrderHistory() {
     () =>
       activeTab === "all"
         ? orders
-        : orders.filter(
-            (order) => normalizeStatus(order.status) === activeTab,
-          ),
+        : orders.filter((order) => normalizeStatus(order.status) === activeTab),
     [activeTab, orders],
   );
 
@@ -148,10 +134,10 @@ export default function OrderHistory() {
     <div className="min-h-screen bg-[#FCF9F4] text-[#2D2925]">
       <section className="border-b border-[#E7E0D7] px-6 pb-7 pt-12 lg:px-12">
         <p className="text-[10px] uppercase tracking-[0.28em] text-[#9B9288]">
-          Personal Portal
+          Cổng thông tin cá nhân
         </p>
         <div className="mt-2 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
-          <h1 className="font-serif text-4xl lg:text-5xl">Order History</h1>
+          <h1 className="font-serif text-4xl lg:text-5xl">Lịch sử đơn hàng</h1>
           {!loading && (
             <p className="text-[10px] uppercase tracking-[0.18em] text-[#8B8177]">
               {orders.length} đơn hàng
@@ -183,9 +169,7 @@ export default function OrderHistory() {
                   {tab.label}
                   <span
                     className={`min-w-5 rounded-full px-1.5 py-0.5 text-center text-[8px] ${
-                      selected
-                        ? "bg-[#877000] text-white"
-                        : "bg-[#EDE7DF] text-[#82796F]"
+                      selected ? "bg-[#877000] text-white" : "bg-[#EDE7DF] text-[#82796F]"
                     }`}
                   >
                     {statusCounts[tab.id] || 0}
@@ -199,10 +183,7 @@ export default function OrderHistory() {
         {loading ? (
           <div className="space-y-5">
             {[0, 1].map((item) => (
-              <div
-                key={item}
-                className="h-[300px] animate-pulse bg-[#F0EBE4]"
-              />
+              <div key={item} className="h-[300px] animate-pulse bg-[#F0EBE4]" />
             ))}
           </div>
         ) : orders.length === 0 ? (
@@ -222,9 +203,7 @@ export default function OrderHistory() {
         ) : visibleOrders.length === 0 ? (
           <div className="flex min-h-[260px] flex-col items-center justify-center border border-[#E2DBD2] bg-[#FFFDF9] px-6 text-center">
             <Package size={30} strokeWidth={1.3} className="text-[#9A8974]" />
-            <h2 className="mt-4 font-serif text-2xl">
-              Không có đơn ở trạng thái này
-            </h2>
+            <h2 className="mt-4 font-serif text-2xl">Không có đơn ở trạng thái này</h2>
             <button
               type="button"
               onClick={() => setActiveTab("all")}
@@ -237,8 +216,7 @@ export default function OrderHistory() {
           <div className="space-y-7">
             {visibleOrders.map((order) => {
               const status = normalizeStatus(order.status);
-              const statusMeta =
-                STATUS_META[status] || STATUS_META.pending;
+              const statusMeta = STATUS_META[status] || STATUS_META.pending;
 
               return (
                 <article
@@ -250,27 +228,21 @@ export default function OrderHistory() {
                       <p className="text-[8px] uppercase tracking-[0.16em] text-[#8E867E]">
                         Mã đơn hàng
                       </p>
-                      <p className="mt-2 font-serif text-lg">
-                        #{order.id.slice(-8).toUpperCase()}
-                      </p>
+                      <p className="mt-2 font-serif text-lg">#{order.id.slice(-8).toUpperCase()}</p>
                     </div>
 
                     <div>
                       <p className="text-[8px] uppercase tracking-[0.16em] text-[#8E867E]">
                         Ngày đặt
                       </p>
-                      <p className="mt-2 font-serif text-lg">
-                        {formatDate(order.createdAt)}
-                      </p>
+                      <p className="mt-2 font-serif text-lg">{formatDate(order.createdAt)}</p>
                     </div>
 
                     <div>
                       <p className="text-[8px] uppercase tracking-[0.16em] text-[#8E867E]">
                         Tổng tiền
                       </p>
-                      <p className="mt-2 font-serif text-lg">
-                        {vnd(order.total)}
-                      </p>
+                      <p className="mt-2 font-serif text-lg">{vnd(order.total)}</p>
                     </div>
 
                     <div>
@@ -280,9 +252,7 @@ export default function OrderHistory() {
                       <p
                         className={`mt-2 flex items-center gap-2 font-serif text-lg italic ${statusMeta.text}`}
                       >
-                        <span
-                          className={`h-1.5 w-1.5 rounded-full ${statusMeta.dot}`}
-                        />
+                        <span className={`h-1.5 w-1.5 rounded-full ${statusMeta.dot}`} />
                         {statusMeta.label}
                       </p>
                     </div>

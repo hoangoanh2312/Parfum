@@ -17,25 +17,25 @@ import { toast } from "../../store/toast.store";
 const fallbackScentFamilies = [
   {
     id: "woody",
-    name: "Woody",
+    name: "Hương gỗ",
     description: "Gỗ đàn hương, tuyết tùng, trầm hương",
     icon: Trees,
   },
   {
     id: "floral",
-    name: "Floral",
+    name: "Hương hoa",
     description: "Hoa hồng, hoa nhài, dành dành",
     icon: Flower2,
   },
   {
     id: "fresh",
-    name: "Fresh",
+    name: "Hương tươi mát",
     description: "Cam bergamot, chanh, hương biển",
     icon: Leaf,
   },
   {
     id: "oriental",
-    name: "Oriental",
+    name: "Hương phương Đông",
     description: "Hổ phách, vanilla, gia vị ấm",
     icon: Sparkles,
   },
@@ -293,7 +293,9 @@ export default function ScentProfile() {
   return (
     <div className="min-h-screen bg-[#FCF9F4] text-[#2D2925]">
       <section className="border-b border-[#E7E0D7] px-6 pb-7 pt-12 lg:px-12">
-        <p className="text-[10px] uppercase tracking-[0.28em] text-[#9B9288]">Personal Portal</p>
+        <p className="text-[10px] uppercase tracking-[0.28em] text-[#9B9288]">
+          Cổng thông tin cá nhân
+        </p>
 
         <h1 className="mt-2 font-serif text-4xl lg:text-5xl">Hồ sơ mùi hương</h1>
 
@@ -313,7 +315,9 @@ export default function ScentProfile() {
 
         <section className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
           <div className="bg-[#F2EEE9] p-7 lg:p-9">
-            <p className="text-[9px] uppercase tracking-[0.24em] text-[#978D82]">Your Scent DNA</p>
+            <p className="text-[9px] uppercase tracking-[0.24em] text-[#978D82]">
+              Dấu ấn mùi hương của bạn
+            </p>
 
             <h2 className="mt-3 font-serif text-3xl">
               {selectedFamilyNames || "Chưa chọn nhóm hương"}
@@ -508,7 +512,7 @@ export default function ScentProfile() {
           <div className="border border-[#E0D9D0] bg-[#FFFDF9] p-7">
             <div className="mb-5">
               <p className="text-[9px] uppercase tracking-[0.22em] text-[#8A7000]">
-                Preferred notes
+                Note yêu thích
               </p>
               <h2 className="mt-2 font-serif text-2xl">Note hương yêu thích</h2>
               <p className="mt-2 text-sm leading-6 text-[#81786F]">
@@ -540,7 +544,7 @@ export default function ScentProfile() {
           <div className="border border-[#E0D9D0] bg-[#FFFDF9] p-7">
             <div className="mb-5">
               <p className="text-[9px] uppercase tracking-[0.22em] text-[#9A665C]">
-                Notes to avoid
+                Note muốn tránh
               </p>
               <h2 className="mt-2 font-serif text-2xl">Note hương không thích</h2>
               <p className="mt-2 text-sm leading-6 text-[#81786F]">
