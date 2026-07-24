@@ -1,17 +1,53 @@
+# Stack chay local/prod: MongoDB + Redis + API (server) + web tinh (client qua nginx).
+# Su dung: sao chep server/.env.example -> server/.env, dien gia tri, roi: docker compose up -d --build
 services:
   mongo:
     image: mongo:7
     restart: unless-stopped
-    ports: ["27017:27017"]
-    volumes: ["mongo_data:/data/db"]
+    volumes:
+      - mongo-data:/data/db
+    ports:
+      - "27017:27017"
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+
   server:
-    build: ./server
-    env_file: ./server/.env
-    ports: ["5000:5000"]
-    depends_on: [mongo]
+    build:
+      context: ./server
+    restart: unless-stopped
+    env_file:
+      - ./server/.env
+    environment:
+      # Ghi de de tro toi service trong mang compose.
+      - MONGO_URI=mongodb://mongo:27017/lessence
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    ports:
+      - "5000:5000"
+
   client:
-    build: ./client
-    ports: ["5173:80"]
-    depends_on: [server]
+    build:
+      context: ./client
+      args:
+        VITE_API_URL: http://localhost:5000/api
+    restart: unless-stopped
+    depends_on:
+      - server
+    ports:
+      - "8080:80"
+
 volumes:
-  mongo_data:
+  mongo-data:

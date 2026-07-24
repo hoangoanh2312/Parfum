@@ -1,87 +1,154 @@
-import { Phone, Mail, MapPin } from "lucide-react";
+import { Link } from "react-router-dom";
 
-import { FaFacebookF, FaInstagram, FaYoutube } from "react-icons/fa";
+const FOOTER_LINKS = [
+  {
+    heading: "Mua sắm",
+    links: [
+      { label: "Trang chủ", to: "/" },
+      { label: "Sản phẩm", to: "/shop" },
+      { label: "Thương hiệu", to: "/brand" },
+      { label: "Giỏ hàng", to: "/cart" },
+    ],
+  },
+  {
+    heading: "Tài khoản",
+    links: [
+      { label: "Đăng nhập", to: "/login" },
+      { label: "Đăng ký", to: "/register" },
+      { label: "Đơn hàng của tôi", to: "/account/orders" },
+      { label: "Sổ địa chỉ", to: "/account/addresses" },
+      { label: "Yêu thích", to: "/account/wishlist" },
+    ],
+  },
+  {
+    heading: "Hỗ trợ",
+    links: [
+      { label: "Tra cứu đơn hàng", to: "/order-lookup" },
+      { label: "Liên hệ", to: "/contact" },
+      { label: "Chính sách bảo mật", to: "/privacy-policy" },
+      { label: "Giới thiệu", to: "/about" },
+      { label: "Tin tức", to: "/blog" },
+    ],
+  },
+];
+
+const PROMO_IMAGE =
+  "https://res.cloudinary.com/dwj2trmn0/image/upload/v1784435350/view-all-fragrances-banner-mobile_3884d600-2ada-4144-a0f8-18bd647896a9_nxmh16.webp";
 
 export default function Footer() {
   return (
-    <footer className="bg-[#F5F5F4] pt-20 font-['Manrope']">
-      <div className="max-w-7xl mx-auto grid md:grid-cols-4 gap-12 pb-20">
-        <div>
-          <div className="w-16 h-16 rounded-full bg-black border-4 border-white shadow-lg text-white flex items-center justify-center font-['Noto_Serif'] font-bold tracking-[1.8px] mb-6">
-            LOGO
-          </div>
+    <footer
+      className="border-t border-white/[0.06] bg-[#161412] text-[#8A8580]"
+      style={{ fontFamily: "'Be Vietnam Pro', 'Manrope', sans-serif" }}
+    >
+      <div className="mx-auto w-full max-w-[1680px] px-5 sm:px-8 lg:px-10 2xl:px-2.5">
+        <div className="grid gap-6 py-10 lg:grid-cols-lg:grid-cols-[365px_minmax(0,1fr)] lg:items-start lg:gap-6 lg:py-16 2xl:grid-cols-12 2xl:gap-x-2">
+          <Link
+            to="/shop"
+            className="group relative hidden h-[420px] w-[320px] overflow-hidden border border-white/[0.08] lg:block 2xl:translate-x-[130px]"
+          >
+            <img
+              loading="lazy"
+              src={PROMO_IMAGE}
+              alt="Bộ sưu tập nước hoa L'Essence Noire"
+              className="absolute inset-0 h-full w-full object-cover opacity-65 transition duration-700 group-hover:scale-[1.03] group-hover:opacity-80"
+            />
 
-          <h3 className="font-['Noto_Serif'] font-bold text-xl text-[#1C1917] mb-5">
-            Perfume Store
-          </h3>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-black/45" />
 
-          <p className="text-[#78716C] text-xs leading-5 tracking-[0.3px]">
-            Chuyên cung cấp nước hoa chính hãng, đa dạng thương hiệu nổi tiếng
-            trên thế giới.
-          </p>
+            <div className="absolute inset-x-0 top-0 p-7">
+              <span
+                className="text-[14px] font-semibold uppercase tracking-[0.22em] text-white"
+                style={{ fontFamily: "'Noto Serif', 'Noto Serif Display', serif" }}
+              >
+                L&apos;Essence Noire
+              </span>
 
-          <div className="flex gap-4 mt-8 text-[#A8A29E]">
-            <FaFacebookF size={18} />
-            <FaInstagram size={18} />
-            <FaYoutube size={18} />
-          </div>
-        </div>
+              <span className="mt-3 block h-px w-10 bg-[#C9A84C]/70" />
 
-        <div>
-          <h3 className="font-['Noto_Serif'] font-bold text-sm uppercase tracking-[1.4px] text-[#1C1917] mb-6">
-            Danh mục
-          </h3>
-
-          <ul className="space-y-4 text-[#78716C] text-xs tracking-[0.3px]">
-            <li>Trang chủ</li>
-            <li>Sản phẩm</li>
-            <li>Thương hiệu</li>
-            <li>Tin tức</li>
-            <li>Giới thiệu</li>
-          </ul>
-        </div>
-
-        <div>
-          <h3 className="font-['Noto_Serif'] font-bold text-sm uppercase tracking-[1.4px] text-[#1C1917] mb-6">
-            Hỗ trợ
-          </h3>
-
-          <ul className="space-y-4 text-[#78716C] text-xs tracking-[0.3px]">
-            <li>Chính sách đổi trả</li>
-            <li>Thanh toán</li>
-            <li>Vận chuyển</li>
-            <li>Bảo hành</li>
-            <li>Liên hệ</li>
-          </ul>
-        </div>
-
-        <div>
-          <h3 className="font-['Noto_Serif'] font-bold text-sm uppercase tracking-[1.4px] text-[#1C1917] mb-6">
-            Liên hệ
-          </h3>
-
-          <div className="space-y-5 text-[#78716C] text-xs tracking-[0.3px]">
-            <div className="flex gap-3">
-              <MapPin size={16} className="text-[#735C00] shrink-0" />
-              <span>Vĩnh Long</span>
+              <p
+                className="mt-5 max-w-[240px] text-[12px] leading-6 text-white/80"
+                style={{ fontFamily: "'Be Vietnam Pro', 'Manrope', sans-serif" }}
+              >
+                Khám phá bộ sưu tập nước hoa chính hãng được tuyển chọn kỹ lưỡng, nơi mỗi mùi hương
+                thể hiện sự thanh lịch, tự tin và cá tính riêng.
+              </p>
             </div>
 
-            <div className="flex gap-3">
-              <Phone size={16} className="text-[#735C00] shrink-0" />
-              <span>0328 779 845</span>
+            <div className="absolute inset-x-0 bottom-0 p-7">
+              <p className="text-[9px] font-semibold uppercase tracking-[0.22em] text-[#D8CBB7]">
+                Bộ sưu tập đặc trưng
+              </p>
+
+              <h3
+                className="mt-3 text-[25px] font-bold leading-[1.12] text-white"
+                style={{ fontFamily: "'Noto Serif', 'Noto Serif Display', serif" }}
+              >
+                Tìm mùi hương
+                <br />
+                tiếp theo
+              </h3>
+
+              <span className="mt-6 inline-flex w-full justify-center border border-[#D9D2C4] bg-[#EDE8DF] py-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#735C00] transition group-hover:bg-white">
+                Khám phá ngay
+              </span>
+            </div>
+          </Link>
+
+          <div className="lg:pt-7 2xl:col-span-7 2xl:col-start-5">
+            <div className="mb-10 lg:mb-12">
+              <Link
+                to="/"
+                className="inline-flex text-[15px] font-semibold uppercase tracking-[0.22em] text-white"
+                style={{ fontFamily: "'Noto Serif', 'Noto Serif Display', serif" }}
+              >
+                L&apos;Essence Noire
+              </Link>
+
+              <p className="mt-4 max-w-[380px] text-sm leading-7 text-[#8A8580]">
+                Nước hoa chính hãng, tuyển chọn theo cá tính mùi hương và trải nghiệm mua sắm tinh
+                gọn.
+              </p>
             </div>
 
-            <div className="flex gap-3">
-              <Mail size={16} className="text-[#735C00] shrink-0" />
-              <span>contact4w@perfume.vn</span>
-            </div>
+            <nav className="grid grid-cols-2 gap-x-10 gap-y-10 sm:grid-cols-3 sm:gap-x-12">
+              {FOOTER_LINKS.map((col) => (
+                <div key={col.heading}>
+                  <p className="mb-6 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/85">
+                    <span className="h-1 w-1 rounded-full bg-[#C9A84C]" />
+                    {col.heading}
+                  </p>
+
+                  <ul className="space-y-3.5">
+                    {col.links.map((link) => (
+                      <li key={link.to}>
+                        <Link
+                          to={link.to}
+                          className="group/link inline-flex items-center gap-2 text-sm leading-none text-[#8A8580] transition duration-200 hover:translate-x-1 hover:text-white"
+                        >
+                          {link.label}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </nav>
           </div>
         </div>
       </div>
 
-      <div className="border-t border-[#E7E5E4]">
-        <div className="max-w-7xl mx-auto py-8 text-center text-xs text-[#78716C] tracking-[0.3px]">
-          <p>© 2026 Perfume Store. All Rights Reserved.</p>
+      <div className="border-t border-white/[0.06]" />
+
+      <div className="mx-auto w-full max-w-[1680px] px-5 sm:px-8 lg:px-10 2xl:px-2.5">
+        <div className="flex flex-col items-center gap-2 py-6 sm:flex-row sm:justify-between">
+          <p className="text-xs tracking-wide text-[#5C5650]">
+            © 2026 L&apos;Essence Noire. Bảo lưu mọi quyền.
+          </p>
+
+          <p className="text-xs tracking-wide text-[#5C5650]">
+            Thiết kế cho những mùi hương không thể nhầm lẫn.
+          </p>
         </div>
       </div>
     </footer>
