@@ -10,7 +10,7 @@ import Footer from "../components/Footer";
 
 export default function Home() {
   useSeo({
-    title: "Nước hoa cao cấp chính hãng",
+    title: "L'Essence Noire | Nước hoa cao cấp chính hãng",
     description:
       "Khám phá bộ sưu tập nước hoa cao cấp chính hãng tại L'Essence Noire — mùi hương niệm, thiết kế và các thương hiệu tuyển chọn.",
   });
