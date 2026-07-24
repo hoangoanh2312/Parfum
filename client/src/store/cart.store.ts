@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { api } from "../lib/api";
+import { getAccessToken } from "../lib/token";
 
 export interface CartItem {
   variant: string; // id của Variant (khóa định danh item trong giỏ)
@@ -38,7 +39,7 @@ const GUEST_KEY = "guest_cart";
 // Trước đây chỉ kiểm tra key tồn tại nên giỏ guest bị gửi nhầm lên API /cart
 // rồi không được lưu vào localStorage.
 function isAuthed() {
-  const token = localStorage.getItem("accessToken");
+  const token = getAccessToken();
   if (!token) return false;
   try {
     const payload = token.split(".")[1];
@@ -59,11 +60,11 @@ function readGuest(): CartItem[] {
     return parsed
       .filter(
         (item): item is CartItem =>
-          !!item
-          && typeof item.variant === "string"
-          && item.variant.length > 0
-          && Number.isFinite(Number(item.quantity))
-          && Number(item.quantity) > 0,
+          !!item &&
+          typeof item.variant === "string" &&
+          item.variant.length > 0 &&
+          Number.isFinite(Number(item.quantity)) &&
+          Number(item.quantity) > 0,
       )
       .map((item) => ({
         ...item,
@@ -125,8 +126,7 @@ export const useCart = create<CartState>((set, get) => ({
       }
       const items = readGuest();
       const line = items.find((i) => i.variant === item.variant);
-      const cap =
-        typeof item.stock === "number" ? item.stock : Number.MAX_SAFE_INTEGER;
+      const cap = typeof item.stock === "number" ? item.stock : Number.MAX_SAFE_INTEGER;
       if (line) line.quantity = Math.min(line.quantity + quantity, cap);
       else items.push({ ...item, quantity: Math.min(quantity, cap) });
       writeGuest(items);
@@ -151,10 +151,7 @@ export const useCart = create<CartState>((set, get) => ({
           i.variant === variantId
             ? {
                 ...i,
-                quantity: Math.min(
-                  quantity,
-                  i.stock ?? Number.MAX_SAFE_INTEGER,
-                ),
+                quantity: Math.min(quantity, i.stock ?? Number.MAX_SAFE_INTEGER),
               }
             : i,
         );

@@ -1,4 +1,5 @@
 import { ArrowRight, Droplets, Leaf } from "lucide-react";
+import { useSeo } from "../hooks/useSeo";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../lib/api";
@@ -71,11 +72,15 @@ const policySections = [
     id: "contact",
     title: "Liên hệ",
     label: "Contact",
-    text: "Cần tư vấn mùi hương, hỗ trợ đơn hàng hoặc chính sách sau mua? Liên hệ qua hotline 0328 779 845 hoặc email tranvungochuynh136@gmail.com."
+    text: "Cần tư vấn mùi hương, hỗ trợ đơn hàng hoặc chính sách sau mua? Liên hệ qua hotline 0328 779 845 hoặc email tranvungochuynh136@gmail.com.",
   },
 ];
 
 export default function About() {
+  useSeo({
+    title: "Về chúng tôi",
+    description: "Câu chuyện thương hiệu, triết lý và cam kết chính hãng của L'Essence Noire.",
+  });
   const [products, setProducts] = useState<ProductDetailItem[]>([]);
   const [email, setEmail] = useState("");
   const [subscribing, setSubscribing] = useState(false);
@@ -163,14 +168,14 @@ export default function About() {
               </h1>
 
               <p className="mt-7 max-w-[455px] text-sm leading-6 text-[#69665F]">
-                We curate scents not as products, but as silent chronicles. Each
-                bottle is a liquid library of memory, crafted for the discerning
-                soul.
+                We curate scents not as products, but as silent chronicles. Each bottle is a liquid
+                library of memory, crafted for the discerning soul.
               </p>
             </div>
 
             <div className="h-[420px] overflow-hidden bg-[#363636] sm:h-[520px] lg:h-[600px]">
               <img
+                loading="lazy"
                 src="https://res.cloudinary.com/dwj2trmn0/image/upload/v1784434420/perfume-bottle-green-plant-and-open-book-royalty-free-image-1760057187_x0ps86.avif"
                 alt="Luxury perfume bottle"
                 className="h-full w-full object-cover grayscale"
@@ -192,15 +197,15 @@ export default function About() {
 
               <div className="mt-7 space-y-5 text-sm leading-6 text-[#67645D]">
                 <p>
-                  Our journey began a century ago in the quiet hills of Grasse.
-                  Before perfumery became an industry, it was a ritual of
-                  patience—a delicate dialogue between the earth and the glass.
+                  Our journey began a century ago in the quiet hills of Grasse. Before perfumery
+                  became an industry, it was a ritual of patience—a delicate dialogue between the
+                  earth and the glass.
                 </p>
 
                 <p>
-                  We preserve the ancient maceration techniques passed down
-                  through four generations of the Valmont family, ensuring every
-                  botanical essence retains its primal character.
+                  We preserve the ancient maceration techniques passed down through four generations
+                  of the Valmont family, ensuring every botanical essence retains its primal
+                  character.
                 </p>
               </div>
 
@@ -215,6 +220,7 @@ export default function About() {
             <div className="relative mx-auto min-h-[470px] w-full max-w-[650px]">
               <div className="absolute right-0 top-0 h-[420px] w-[72%] overflow-hidden shadow-[0_22px_45px_rgba(0,0,0,0.13)]">
                 <img
+                  loading="lazy"
                   src="https://res.cloudinary.com/dwj2trmn0/image/upload/v1784433419/Screenshot_2026-07-19_105646_sbbhq0.png"
                   alt="Perfume laboratory"
                   className="h-full w-full object-cover grayscale"
@@ -223,6 +229,7 @@ export default function About() {
 
               <div className="absolute bottom-0 left-0 z-10 w-[48%] border-[10px] border-[#F7F4EF] bg-[#F7F4EF] shadow-sm">
                 <img
+                  loading="lazy"
                   src="https://res.cloudinary.com/dwj2trmn0/image/upload/t_j/images_3_ypjabi.jpg"
                   alt="Hands holding a flower"
                   className="aspect-[4/5] w-full object-cover grayscale"
@@ -237,12 +244,11 @@ export default function About() {
           <div className="mx-auto grid max-w-[1080px] items-center gap-12 lg:grid-cols-2">
             <div className="relative">
               <img
+                loading="lazy"
                 src="https://res.cloudinary.com/dwj2trmn0/image/upload/v1784433506/Senza_titolo-14_1024x1024_gkqyw6.webp"
                 alt="Master perfumer"
                 className="aspect-[1.05/1] w-full object-cover grayscale"
               />
-
-              
             </div>
 
             <div>
@@ -260,22 +266,20 @@ export default function About() {
               </h2>
 
               <blockquote className="mt-7 max-w-[570px] text-lg leading-7 text-[#55524D]">
-                “I do not create smells. I compose ghosts of memories that
-                haven&apos;t happened yet.”
+                “I do not create smells. I compose ghosts of memories that haven&apos;t happened
+                yet.”
                 <span className="ml-2 text-sm">— Elias Thorne</span>
               </blockquote>
 
               <div className="mt-7 max-w-[570px] space-y-5 text-sm leading-6 text-[#706D66]">
                 <p>
-                  Elias Thorne, our lead composer, treats scent as architecture.
-                  His method involves “The Void” — a period of sensory
-                  deprivation before beginning any new composition.
+                  Elias Thorne, our lead composer, treats scent as architecture. His method involves
+                  “The Void” — a period of sensory deprivation before beginning any new composition.
                 </p>
 
                 <p>
-                  With a portfolio spanning three decades, Thorne has redefined
-                  modern luxury by reintroducing forgotten resins and rare
-                  florals into the editorial palette.
+                  With a portfolio spanning three decades, Thorne has redefined modern luxury by
+                  reintroducing forgotten resins and rare florals into the editorial palette.
                 </p>
               </div>
             </div>
@@ -298,6 +302,7 @@ export default function About() {
                 >
                   <div className="aspect-[3/4] overflow-hidden">
                     <img
+                      loading="lazy"
                       src={ingredient.image}
                       alt={ingredient.name}
                       className="h-full w-full object-cover grayscale transition duration-700 group-hover:scale-105 group-hover:grayscale-0"
@@ -335,44 +340,33 @@ export default function About() {
               </h2>
 
               <p className="mt-5 max-w-[470px] text-sm leading-6 text-[#66635C]">
-                True luxury is sustainable by nature. It demands excellence, and
-                excellence requires the preservation of the ecosystems that
-                provide our rare ingredients.
+                True luxury is sustainable by nature. It demands excellence, and excellence requires
+                the preservation of the ecosystems that provide our rare ingredients.
               </p>
 
               <div className="mt-8 space-y-7">
                 <div className="flex gap-4">
-                  <Leaf
-                    size={18}
-                    strokeWidth={1.5}
-                    className="mt-1 shrink-0 text-[#8A731A]"
-                  />
+                  <Leaf size={18} strokeWidth={1.5} className="mt-1 shrink-0 text-[#8A731A]" />
 
                   <div>
                     <h3 className="text-[10px] font-semibold uppercase tracking-[0.15em]">
                       Zero plastic policy
                     </h3>
                     <p className="mt-1 text-xs leading-5 text-[#6A675F]">
-                      Every component of our packaging is biodegradable or
-                      infinitely recyclable.
+                      Every component of our packaging is biodegradable or infinitely recyclable.
                     </p>
                   </div>
                 </div>
 
                 <div className="flex gap-4">
-                  <Droplets
-                    size={18}
-                    strokeWidth={1.5}
-                    className="mt-1 shrink-0 text-[#8A731A]"
-                  />
+                  <Droplets size={18} strokeWidth={1.5} className="mt-1 shrink-0 text-[#8A731A]" />
 
                   <div>
                     <h3 className="text-[10px] font-semibold uppercase tracking-[0.15em]">
                       Ethical harvesting
                     </h3>
                     <p className="mt-1 text-xs leading-5 text-[#6A675F]">
-                      We work directly with local farmers to ensure biodiversity
-                      and fair wages.
+                      We work directly with local farmers to ensure biodiversity and fair wages.
                     </p>
                   </div>
                 </div>
@@ -381,6 +375,7 @@ export default function About() {
 
             <div className="grid min-h-[390px] grid-cols-2 gap-3">
               <img
+                loading="lazy"
                 src="https://res.cloudinary.com/dwj2trmn0/image/upload/v1784434666/images_6_okorl3.jpg"
                 alt="Perfume drop"
                 className="h-full w-full object-cover grayscale"
@@ -388,12 +383,14 @@ export default function About() {
 
               <div className="grid grid-rows-2 gap-3">
                 <img
+                  loading="lazy"
                   src="https://res.cloudinary.com/dwj2trmn0/image/upload/v1784434665/images_7_mcvnoy.jpg"
                   alt="Minimal white surface"
                   className="h-full w-full object-cover grayscale"
                 />
 
                 <img
+                  loading="lazy"
                   src="https://res.cloudinary.com/dwj2trmn0/image/upload/v1784434665/images_8_su7gzr.jpg"
                   alt="Natural landscape"
                   className="h-full w-full object-cover grayscale"
@@ -422,8 +419,8 @@ export default function About() {
               </h2>
 
               <p className="mt-5 text-sm leading-6 text-[#69665F]">
-                Những thông tin cần thiết trước và sau khi mua hàng, được trình
-                bày ngắn gọn để khách hàng dễ tra cứu.
+                Những thông tin cần thiết trước và sau khi mua hàng, được trình bày ngắn gọn để
+                khách hàng dễ tra cứu.
               </p>
             </div>
 
@@ -445,9 +442,7 @@ export default function About() {
                     {item.title}
                   </h3>
 
-                  <p className="mt-4 text-xs leading-6 text-[#6B6861]">
-                    {item.text}
-                  </p>
+                  <p className="mt-4 text-xs leading-6 text-[#6B6861]">{item.text}</p>
                 </article>
               ))}
             </div>
@@ -456,10 +451,7 @@ export default function About() {
 
         {/* NEWSLETTER */}
         <section className="px-6 pb-28 pt-10 text-center sm:px-10 lg:pb-36">
-          <h2
-            className="text-4xl tracking-[-0.025em]"
-            style={{ fontFamily: "'Spectral', serif" }}
-          >
+          <h2 className="text-4xl tracking-[-0.025em]" style={{ fontFamily: "'Spectral', serif" }}>
             Join the Editorial
           </h2>
 

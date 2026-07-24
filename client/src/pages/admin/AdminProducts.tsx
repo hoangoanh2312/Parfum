@@ -62,9 +62,15 @@ const emptyForm: FormState = {
 };
 
 const splitList = (s: string) =>
-  s.split(",").map((x) => x.trim()).filter(Boolean);
+  s
+    .split(",")
+    .map((x) => x.trim())
+    .filter(Boolean);
 const splitLines = (s: string) =>
-  s.split(/[,\n]/).map((x) => x.trim()).filter(Boolean);
+  s
+    .split(/[,\n]/)
+    .map((x) => x.trim())
+    .filter(Boolean);
 
 export default function AdminProducts() {
   const [list, setList] = useState<Paginated<AdminProduct> | null>(null);
@@ -260,6 +266,7 @@ export default function AdminProducts() {
                       <div className="flex items-center gap-3">
                         {p.images?.[0] ? (
                           <img
+                            loading="lazy"
                             src={p.images[0]}
                             alt={p.name}
                             className="h-10 w-10 rounded object-cover"
@@ -308,9 +315,7 @@ export default function AdminProducts() {
         )}
       </Card>
 
-      {list && (
-        <Pagination page={list.page} totalPages={list.totalPages} onChange={setPage} />
-      )}
+      {list && <Pagination page={list.page} totalPages={list.totalPages} onChange={setPage} />}
 
       <Modal
         open={modalOpen}
@@ -399,9 +404,7 @@ export default function AdminProducts() {
               <ImageUploader
                 onUploaded={(urls) =>
                   set({
-                    images: [form.images.trim(), ...urls]
-                      .filter(Boolean)
-                      .join("\n"),
+                    images: [form.images.trim(), ...urls].filter(Boolean).join("\n"),
                   })
                 }
               />

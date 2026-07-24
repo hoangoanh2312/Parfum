@@ -1,28 +1,10 @@
-# Dependencies
 node_modules/
-
-# Build output
 dist/
-build/
-
-# Env & secrets
+dist-*/
+coverage/
+*.log
 .env
 .env.*
 !.env.example
-
-# Uploads (anh nguoi dung tai len)
-uploads/
-
-# Logs
-logs/
-*.log
-npm-debug.log*
-
-# Test / coverage
-coverage/
-
-# Editor / OS
 .DS_Store
-.idea/
-.vscode/
-*.local
+.vite/

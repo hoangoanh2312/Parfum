@@ -1,13 +1,4 @@
-import {
-  Heart,
-  ShoppingBag,
-  Sun,
-  Moon,
-  Quote,
-  ImagePlus,
-  X,
-  ChevronRight,
-} from "lucide-react";
+import { Heart, ShoppingBag, Sun, Moon, Quote, ImagePlus, X, ChevronRight } from "lucide-react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../lib/api";
@@ -96,8 +87,7 @@ export default function ProductDetail() {
   const locationState = location.state as { fromShop?: unknown } | null;
   const shopReturnPath =
     typeof locationState?.fromShop === "string" &&
-    (locationState.fromShop === "/shop" ||
-      locationState.fromShop.startsWith("/shop?"))
+    (locationState.fromShop === "/shop" || locationState.fromShop.startsWith("/shop?"))
       ? locationState.fromShop
       : "/shop";
   const addItem = useCart((state) => state.addItem);
@@ -105,9 +95,7 @@ export default function ProductDetail() {
   const [product, setProduct] = useState<ProductDetailData | null>(null);
   const toggleWishlist = useWishlist((state) => state.toggle);
   const ensureWishlist = useWishlist((state) => state.ensureLoaded);
-  const wishlisted = useWishlist((state) =>
-    product ? state.ids.includes(product.id) : false,
-  );
+  const wishlisted = useWishlist((state) => (product ? state.ids.includes(product.id) : false));
   const [relatedProducts, setRelatedProducts] = useState<ProductListItem[]>([]);
   const [reviews, setReviews] = useState<ReviewItem[]>([]);
   const [selectedVariantId, setSelectedVariantId] = useState("");
@@ -140,27 +128,20 @@ export default function ProductDetail() {
     async function loadProduct() {
       try {
         setLoading(true);
-        const { data } = await api.get<ProductDetailData>(
-          `/products/${idOrSlug}`,
-        );
+        const { data } = await api.get<ProductDetailData>(`/products/${idOrSlug}`);
         if (!active) return;
 
         const firstVariant =
-          data.variants.find(
-            (variant) => variant.isActive !== false && variant.stock > 0,
-          ) || data.variants[0];
+          data.variants.find((variant) => variant.isActive !== false && variant.stock > 0) ||
+          data.variants[0];
 
         setProduct(data);
         setSelectedVariantId(firstVariant?.id || "");
-        setSelectedImage(
-          data.gallery?.[0] || firstVariant?.images?.[0] || PLACEHOLDER,
-        );
+        setSelectedImage(data.gallery?.[0] || firstVariant?.images?.[0] || PLACEHOLDER);
         setError("");
       } catch (e: any) {
         if (!active) return;
-        setError(
-          e?.response?.data?.message || "Không tải được chi tiết sản phẩm",
-        );
+        setError(e?.response?.data?.message || "Không tải được chi tiết sản phẩm");
       } finally {
         if (active) setLoading(false);
       }
@@ -214,21 +195,17 @@ export default function ProductDetail() {
 
   const selectedVariant = useMemo(
     () =>
-      product?.variants.find((variant) => variant.id === selectedVariantId) ||
-      product?.variants[0],
+      product?.variants.find((variant) => variant.id === selectedVariantId) || product?.variants[0],
     [product, selectedVariantId],
   );
 
   const gallery = useMemo(() => {
     const variantImages = selectedVariant?.images || [];
-    return Array.from(
-      new Set([...(product?.gallery || []), ...variantImages]),
-    ).filter(Boolean);
+    return Array.from(new Set([...(product?.gallery || []), ...variantImages])).filter(Boolean);
   }, [product, selectedVariant]);
 
   const currentImage = selectedImage || gallery[0] || PLACEHOLDER;
-  const insetImage =
-    gallery.find((image) => image !== currentImage) || currentImage;
+  const insetImage = gallery.find((image) => image !== currentImage) || currentImage;
   const availableStock = selectedVariant?.stock ?? 0;
   const soldCount = product?.soldCount ?? 0;
   const canAdd =
@@ -293,9 +270,7 @@ export default function ProductDetail() {
       );
       toast.success("Đã thêm vào giỏ");
     } catch (e: any) {
-      toast.error(
-        e?.response?.data?.message || e?.message || "Không thể thêm vào giỏ",
-      );
+      toast.error(e?.response?.data?.message || e?.message || "Không thể thêm vào giỏ");
     }
   }
 
@@ -397,10 +372,7 @@ export default function ProductDetail() {
     if (!product) return "";
     const brand = product.brand ? `${product.brand} — ` : "";
     const base = product.description?.trim() || storytelling;
-    return `${brand}${product.name}. ${base}`
-      .replace(/\s+/g, " ")
-      .trim()
-      .slice(0, 160);
+    return `${brand}${product.name}. ${base}`.replace(/\s+/g, " ").trim().slice(0, 160);
   }, [product, storytelling]);
 
   // SEO: title + meta description + Open Graph theo tung san pham.
@@ -422,9 +394,7 @@ export default function ProductDetail() {
       image: gallery.length ? gallery : undefined,
       description: metaDescription,
       sku: selectedVariant?.sku || selectedVariant?.id,
-      brand: product.brand
-        ? { "@type": "Brand", name: product.brand }
-        : undefined,
+      brand: product.brand ? { "@type": "Brand", name: product.brand } : undefined,
       category: product.category || undefined,
       offers: selectedVariant
         ? {
@@ -432,9 +402,7 @@ export default function ProductDetail() {
             priceCurrency: "VND",
             price: selectedVariant.price,
             availability:
-              availableStock > 0
-                ? "https://schema.org/InStock"
-                : "https://schema.org/OutOfStock",
+              availableStock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
             url: window.location.href,
           }
         : undefined,
@@ -448,9 +416,7 @@ export default function ProductDetail() {
           : undefined,
     };
 
-    let script = document.getElementById(
-      "product-jsonld",
-    ) as HTMLScriptElement | null;
+    let script = document.getElementById("product-jsonld") as HTMLScriptElement | null;
     if (!script) {
       script = document.createElement("script");
       script.type = "application/ld+json";
@@ -471,9 +437,7 @@ export default function ProductDetail() {
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        setShowStickyBar(
-          !entry.isIntersecting && entry.boundingClientRect.top < 0,
-        );
+        setShowStickyBar(!entry.isIntersecting && entry.boundingClientRect.top < 0);
       },
       { threshold: 0 },
     );
@@ -520,9 +484,7 @@ export default function ProductDetail() {
           <Link to={shopReturnPath} className="text-[#8b7100] underline">
             Quay lại Shop
           </Link>
-          <p className="mt-6 text-red-600">
-            {error || "Không tìm thấy sản phẩm"}
-          </p>
+          <p className="mt-6 text-red-600">{error || "Không tìm thấy sản phẩm"}</p>
         </div>
       </div>
     );
@@ -561,10 +523,7 @@ export default function ProductDetail() {
     <div className="min-h-screen w-full max-w-[100vw] overflow-x-hidden bg-[#fbf8f2] text-[#292824]">
       <main>
         {/* Breadcrumb: Home > Shop > Brand > Gender > Product */}
-        <nav
-          aria-label="Breadcrumb"
-          className="mx-auto max-w-[1240px] px-6 pt-8 md:px-10 lg:px-14"
-        >
+        <nav aria-label="Breadcrumb" className="mx-auto max-w-[1240px] px-6 pt-8 md:px-10 lg:px-14">
           <ol className="flex flex-wrap items-center gap-1.5 text-[10px] uppercase tracking-[1.5px] text-[#aaa69e]">
             <li>
               <Link to="/" className="transition hover:text-[#8b7100]">
@@ -575,10 +534,7 @@ export default function ProductDetail() {
               <ChevronRight size={12} />
             </li>
             <li>
-              <Link
-                to={shopReturnPath}
-                className="transition hover:text-[#8b7100]"
-              >
+              <Link to={shopReturnPath} className="transition hover:text-[#8b7100]">
                 Shop
               </Link>
             </li>
@@ -618,10 +574,7 @@ export default function ProductDetail() {
                 </li>
               </>
             )}
-            <li
-              aria-current="page"
-              className="max-w-[220px] truncate text-[#615e57]"
-            >
+            <li aria-current="page" className="max-w-[220px] truncate text-[#615e57]">
               {product.name}
             </li>
           </ol>
@@ -633,6 +586,7 @@ export default function ProductDetail() {
             {/* Hai anh san pham tinh, khong zoom khi hover. */}
             <div className="relative min-h-[570px] overflow-hidden bg-[#f5f1eb]">
               <img
+                loading="lazy"
                 src={optimizeCloudinaryImage(currentImage, 900)}
                 alt={product.name}
                 width={900}
@@ -673,12 +627,8 @@ export default function ProductDetail() {
               <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 text-[11px] text-[#615e57]">
                 {product.brand && (
                   <span className="flex items-center gap-1.5">
-                    <span className="uppercase tracking-[1.5px] text-[#aaa69e]">
-                      Thương hiệu:
-                    </span>
-                    <span className="font-semibold text-[#292824]">
-                      {product.brand}
-                    </span>
+                    <span className="uppercase tracking-[1.5px] text-[#aaa69e]">Thương hiệu:</span>
+                    <span className="font-semibold text-[#292824]">{product.brand}</span>
                   </span>
                 )}
 
@@ -693,16 +643,12 @@ export default function ProductDetail() {
                       Còn hàng · {availableStock.toLocaleString("vi-VN")} sản phẩm
                     </span>
                   ) : (
-                    <span className="font-semibold text-red-600">
-                      Tạm hết hàng
-                    </span>
+                    <span className="font-semibold text-red-600">Tạm hết hàng</span>
                   )}
                 </span>
 
                 {soldCount > 0 && (
-                  <span className="text-[#8e8980]">
-                    Đã bán {soldCount.toLocaleString("vi-VN")}
-                  </span>
+                  <span className="text-[#8e8980]">Đã bán {soldCount.toLocaleString("vi-VN")}</span>
                 )}
               </div>
 
@@ -721,9 +667,7 @@ export default function ProductDetail() {
                       <p className="text-[8px] uppercase tracking-[1.6px] text-[#9b958c]">
                         {item.label}
                       </p>
-                      <p className="mt-1 text-[12px] font-semibold text-[#292824]">
-                        {item.value}
-                      </p>
+                      <p className="mt-1 text-[12px] font-semibold text-[#292824]">{item.value}</p>
                     </div>
                   ))}
                 </div>
@@ -731,12 +675,18 @@ export default function ProductDetail() {
 
               <div className="mt-7 flex flex-wrap items-center gap-3">
                 <p className="font-serif text-[23px] font-semibold text-[#927600]">
-                  {selectedVariant ? selectedVariant.priceText || vnd(selectedVariant.price) : "Liên hệ"}
+                  {selectedVariant
+                    ? selectedVariant.priceText || vnd(selectedVariant.price)
+                    : "Liên hệ"}
                 </p>
                 {!!selectedVariant?.discountPercent && selectedVariant.basePrice != null && (
                   <>
-                    <span className="text-sm text-[#8D887F] line-through">{vnd(selectedVariant.basePrice)}</span>
-                    <span className="bg-[#8B1E1E] px-2 py-1 text-[10px] font-semibold text-white">-{selectedVariant.discountPercent}%</span>
+                    <span className="text-sm text-[#8D887F] line-through">
+                      {vnd(selectedVariant.basePrice)}
+                    </span>
+                    <span className="bg-[#8B1E1E] px-2 py-1 text-[10px] font-semibold text-white">
+                      -{selectedVariant.discountPercent}%
+                    </span>
                   </>
                 )}
               </div>
@@ -748,8 +698,7 @@ export default function ProductDetail() {
                   <div className="flex flex-wrap gap-2">
                     {product.variants.map((variant) => {
                       const active = variant.id === selectedVariant?.id;
-                      const disabled =
-                        variant.stock <= 0 || variant.isActive === false;
+                      const disabled = variant.stock <= 0 || variant.isActive === false;
 
                       return (
                         <button
@@ -758,8 +707,7 @@ export default function ProductDetail() {
                           disabled={disabled}
                           onClick={() => {
                             setSelectedVariantId(variant.id);
-                            if (variant.images?.[0])
-                              setSelectedImage(variant.images[0]);
+                            if (variant.images?.[0]) setSelectedImage(variant.images[0]);
                           }}
                           className={`min-w-16 border px-4 py-2 text-[9px] font-semibold uppercase tracking-[1.4px] transition ${
                             active
@@ -795,11 +743,7 @@ export default function ProductDetail() {
                     : "border-[#e7dfd1] bg-transparent text-[#615e57] hover:border-[#8b7100] hover:text-[#8b7100]"
                 }`}
               >
-                <Heart
-                  size={14}
-                  strokeWidth={1.6}
-                  fill={wishlisted ? "currentColor" : "none"}
-                />
+                <Heart size={14} strokeWidth={1.6} fill={wishlisted ? "currentColor" : "none"} />
                 {wishlisted ? "Đã lưu vào wishlist" : "Thêm vào wishlist"}
               </button>
 
@@ -811,7 +755,6 @@ export default function ProductDetail() {
               >
                 Mua ngay
               </button>
-
             </div>
           </div>
         </section>
@@ -821,14 +764,11 @@ export default function ProductDetail() {
           <div className="mx-auto max-w-[1240px] px-6 md:px-10 lg:px-14">
             <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
               <div>
-                <h2 className="font-serif text-[31px]">
-                  The Olfactory Pyramid
-                </h2>
+                <h2 className="font-serif text-[31px]">The Olfactory Pyramid</h2>
 
                 <p className="mt-4 max-w-[480px] text-[11px] leading-[1.65] text-[#77736b]">
-                  The architecture of the scent evolves over eight hours,
-                  shifting from crystalline brightness to a deep, resonant
-                  warmth.
+                  The architecture of the scent evolves over eight hours, shifting from crystalline
+                  brightness to a deep, resonant warmth.
                 </p>
               </div>
 
@@ -851,9 +791,7 @@ export default function ProductDetail() {
                     {note.icon}
                   </div>
 
-                  <h3 className="mt-7 font-serif text-[16px] tracking-[1px]">
-                    {note.title}
-                  </h3>
+                  <h3 className="mt-7 font-serif text-[16px] tracking-[1px]">{note.title}</h3>
 
                   <p className="mt-4 max-w-[225px] text-[10px] leading-[1.6] text-[#77736d]">
                     {note.description}
@@ -884,17 +822,11 @@ export default function ProductDetail() {
         {/* Related products */}
         <section className="bg-[#fbf8f2] py-24">
           <div className="mx-auto max-w-[1240px] px-6 md:px-10 lg:px-14">
-            <h2 className="text-center font-serif text-[25px] italic">
-              Complete the Ritual
-            </h2>
+            <h2 className="text-center font-serif text-[25px] italic">Complete the Ritual</h2>
 
             <div className="mt-14 grid gap-x-7 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">
               {relatedProducts.map((item) => (
-                <Link
-                  key={item.id}
-                  to={`/products/${item.slug || item.id}`}
-                  className="group"
-                >
+                <Link key={item.id} to={`/products/${item.slug || item.id}`} className="group">
                   <div className="aspect-square overflow-hidden bg-[#f2eee7]">
                     <img
                       src={optimizeCloudinaryImage(
@@ -918,8 +850,7 @@ export default function ProductDetail() {
                   <h3 className="mt-2 font-serif text-[14px]">{item.name}</h3>
 
                   <p className="mt-2 text-[11px] text-[#8b7100]">
-                    {item.priceText ||
-                      (item.price ? vnd(item.price) : "Liên hệ")}
+                    {item.priceText || (item.price ? vnd(item.price) : "Liên hệ")}
                   </p>
                 </Link>
               ))}
@@ -931,9 +862,7 @@ export default function ProductDetail() {
         <section className="bg-[#e9e5df] py-28">
           <div className="mx-auto max-w-[1240px] px-6 md:px-10 lg:px-14">
             <div className="text-center">
-              <h2 className="font-serif text-[34px] md:text-[42px]">
-                Voices of the Evening
-              </h2>
+              <h2 className="font-serif text-[34px] md:text-[42px]">Voices of the Evening</h2>
 
               <div className="mt-7 flex items-center justify-center gap-3">
                 <span className="text-[17px] tracking-[3px] text-[#8b7100]">
@@ -1048,9 +977,7 @@ export default function ProductDetail() {
                   ))
                 ) : (
                   <article className="border-b border-[#d8d2c8] pb-10">
-                    <h3 className="font-serif text-[22px]">
-                      Share your impression.
-                    </h3>
+                    <h3 className="font-serif text-[22px]">Share your impression.</h3>
 
                     <p className="mt-7 max-w-[520px] text-[11px] leading-[1.8] text-[#625e57]">
                       Những đánh giá sau khi admin duyệt sẽ xuất hiện tại đây.
@@ -1087,36 +1014,36 @@ export default function ProductDetail() {
                 </p>
 
                 {!user && (
-                <div className="mt-7 grid gap-5 md:grid-cols-2">
-                  <label className="block">
-                    <span className="text-[8px] uppercase tracking-[1.5px] text-[#8b7100]">
-                      Name
-                    </span>
-                    <input
-                      value={reviewForm.guestName}
-                      onChange={(e) =>
-                        setReviewForm((prev) => ({ ...prev, guestName: e.target.value }))
-                      }
-                      className="mt-2 h-11 w-full border border-[#d9d4cb] bg-transparent px-3 text-sm outline-none focus:border-[#8b7100]"
-                      required
-                    />
-                  </label>
+                  <div className="mt-7 grid gap-5 md:grid-cols-2">
+                    <label className="block">
+                      <span className="text-[8px] uppercase tracking-[1.5px] text-[#8b7100]">
+                        Name
+                      </span>
+                      <input
+                        value={reviewForm.guestName}
+                        onChange={(e) =>
+                          setReviewForm((prev) => ({ ...prev, guestName: e.target.value }))
+                        }
+                        className="mt-2 h-11 w-full border border-[#d9d4cb] bg-transparent px-3 text-sm outline-none focus:border-[#8b7100]"
+                        required
+                      />
+                    </label>
 
-                  <label className="block">
-                    <span className="text-[8px] uppercase tracking-[1.5px] text-[#8b7100]">
-                      Email
-                    </span>
-                    <input
-                      type="email"
-                      value={reviewForm.guestEmail}
-                      onChange={(e) =>
-                        setReviewForm((prev) => ({ ...prev, guestEmail: e.target.value }))
-                      }
-                      className="mt-2 h-11 w-full border border-[#d9d4cb] bg-transparent px-3 text-sm outline-none focus:border-[#8b7100]"
-                      required
-                    />
-                  </label>
-                </div>
+                    <label className="block">
+                      <span className="text-[8px] uppercase tracking-[1.5px] text-[#8b7100]">
+                        Email
+                      </span>
+                      <input
+                        type="email"
+                        value={reviewForm.guestEmail}
+                        onChange={(e) =>
+                          setReviewForm((prev) => ({ ...prev, guestEmail: e.target.value }))
+                        }
+                        className="mt-2 h-11 w-full border border-[#d9d4cb] bg-transparent px-3 text-sm outline-none focus:border-[#8b7100]"
+                        required
+                      />
+                    </label>
+                  </div>
                 )}
 
                 <label className="mt-5 block">
@@ -1160,6 +1087,7 @@ export default function ProductDetail() {
                   {reviewImagePreview ? (
                     <div className="relative mt-2 overflow-hidden border border-[#d9d4cb] bg-[#f4f0e8]">
                       <img
+                        loading="lazy"
                         src={reviewImagePreview}
                         alt="Review preview"
                         className="h-52 w-full object-cover"
@@ -1219,6 +1147,7 @@ export default function ProductDetail() {
       >
         <div className="mx-auto flex max-w-[1240px] items-center gap-3">
           <img
+            loading="lazy"
             src={optimizeCloudinaryImage(currentImage, 120)}
             alt={product.name}
             className="hidden h-12 w-12 shrink-0 bg-[#f5f1eb] object-contain sm:block"
@@ -1227,9 +1156,7 @@ export default function ProductDetail() {
             }}
           />
           <div className="min-w-0 flex-1">
-            <p className="truncate font-serif text-[14px] text-[#292824]">
-              {product.name}
-            </p>
+            <p className="truncate font-serif text-[14px] text-[#292824]">{product.name}</p>
             <p className="text-[13px] font-semibold text-[#927600]">
               {selectedVariant
                 ? selectedVariant.priceText || vnd(selectedVariant.price)

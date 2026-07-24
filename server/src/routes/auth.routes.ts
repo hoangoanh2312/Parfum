@@ -3,6 +3,7 @@ import { z } from 'zod';
 import * as ctrl from '../controllers/auth.controller';
 import { validate } from '../middlewares/validate.middleware';
 import { authenticate } from '../middlewares/auth.middleware';
+import { verifyCsrf } from '../middlewares/csrf.middleware';
 import { rateLimit } from '../middlewares/rateLimit.middleware';
 import { strongPasswordSchema } from '../validators/password.schema';
 
@@ -57,25 +58,50 @@ r.post(
   validate(z.object({ email: z.string().email(), password: z.string() })),
   ctrl.login,
 );
-r.post('/refresh', ctrl.refresh);
-r.post('/logout', authenticate, ctrl.logout);
+r.post('/refresh', verifyCsrf, ctrl.refresh);
+r.post('/logout', verifyCsrf, authenticate, ctrl.logout);
 
 // Quen / dat lai mat khau qua email
-r.post('/forgot-password', authLimiter, validate(z.object({ email: z.string().email() })), ctrl.forgotPassword);
+r.post(
+  '/forgot-password',
+  authLimiter,
+  validate(z.object({ email: z.string().email() })),
+  ctrl.forgotPassword,
+);
 r.post(
   '/verify-password-reset-email-otp',
   authLimiter,
-  validate(z.object({ email: z.string().email(), otp: z.string().regex(/^\d{6}$/, 'OTP must contain exactly 6 digits') })),
+  validate(
+    z.object({
+      email: z.string().email(),
+      otp: z.string().regex(/^\d{6}$/, 'OTP must contain exactly 6 digits'),
+    }),
+  ),
   ctrl.verifyEmailPasswordResetOtp,
 );
-r.post('/forgot-password-phone', authLimiter, validate(z.object({ phone: phoneSchema })), ctrl.forgotPasswordByPhone);
+r.post(
+  '/forgot-password-phone',
+  authLimiter,
+  validate(z.object({ phone: phoneSchema })),
+  ctrl.forgotPasswordByPhone,
+);
 r.post(
   '/verify-password-reset-otp',
   authLimiter,
-  validate(z.object({ phone: phoneSchema, otp: z.string().regex(/^\d{6}$/, 'OTP must contain exactly 6 digits') })),
+  validate(
+    z.object({
+      phone: phoneSchema,
+      otp: z.string().regex(/^\d{6}$/, 'OTP must contain exactly 6 digits'),
+    }),
+  ),
   ctrl.verifyPasswordResetOtp,
 );
-r.post('/reset-password', authLimiter, validate(z.object({ token: z.string().min(10), password: strongPasswordSchema })), ctrl.resetPassword);
+r.post(
+  '/reset-password',
+  authLimiter,
+  validate(z.object({ token: z.string().min(10), password: strongPasswordSchema })),
+  ctrl.resetPassword,
+);
 
 // Xac thuc email
 r.post('/verify-email', validate(z.object({ token: z.string().min(10) })), ctrl.verifyEmail);
@@ -87,21 +113,25 @@ r.put(
   '/me/notification-preferences',
   authenticate,
   validate(
-    z.object({
-      orderNotifications: z.boolean().optional(),
-      emailNotifications: z.boolean().optional(),
-      promotionNotifications: z.boolean().optional(),
-      journalNotifications: z.boolean().optional(),
-    }).refine((value) => Object.values(value).some((item) => typeof item === 'boolean'), {
-      message: 'Can it nhat mot tuy chon thong bao',
-    }),
+    z
+      .object({
+        orderNotifications: z.boolean().optional(),
+        emailNotifications: z.boolean().optional(),
+        promotionNotifications: z.boolean().optional(),
+        journalNotifications: z.boolean().optional(),
+      })
+      .refine((value) => Object.values(value).some((item) => typeof item === 'boolean'), {
+        message: 'Can it nhat mot tuy chon thong bao',
+      }),
   ),
   ctrl.updateNotificationPreferences,
 );
 r.put(
   '/me',
   authenticate,
-  validate(z.object({ name: z.string().min(1), email: z.string().email(), phone: phoneSchema.optional() })),
+  validate(
+    z.object({ name: z.string().min(1), email: z.string().email(), phone: phoneSchema.optional() }),
+  ),
   ctrl.updateProfile,
 );
 r.put(

@@ -1,11 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  ExternalLink,
-  Pencil,
-  Plus,
-  Star,
-  Trash2,
-} from "lucide-react";
+import { ExternalLink, Pencil, Plus, Star, Trash2 } from "lucide-react";
 import { adminApi, apiMessage, type AdminBrand } from "../../lib/adminApi";
 import { toast } from "../../store/toast.store";
 import ImageUploader from "../../components/admin/ImageUploader";
@@ -143,7 +137,8 @@ export default function AdminBrands() {
     if (!form.slug.trim()) return toast.error("Nhập slug thương hiệu");
     if (!form.heroImage.trim()) return toast.error("Chọn hoặc nhập ảnh hero");
     if (!form.description.trim()) return toast.error("Nhập mô tả thương hiệu");
-    if (form.description.trim().length > 260) return toast.error("Mô tả nên dưới 260 ký tự để không vỡ layout");
+    if (form.description.trim().length > 260)
+      return toast.error("Mô tả nên dưới 260 ký tự để không vỡ layout");
 
     const foundedYear = form.foundedYear ? Number(form.foundedYear) : null;
     if (foundedYear && (foundedYear < 1000 || foundedYear > new Date().getFullYear())) {
@@ -226,10 +221,14 @@ export default function AdminBrands() {
               </thead>
               <tbody>
                 {brands.map((brand) => (
-                  <tr key={brand.id} className="border-b border-gray-50 align-middle hover:bg-gray-50">
+                  <tr
+                    key={brand.id}
+                    className="border-b border-gray-50 align-middle hover:bg-gray-50"
+                  >
                     <td className="p-4">
                       {brand.heroImage || brand.logo ? (
                         <img
+                          loading="lazy"
                           src={brand.heroImage || brand.logo}
                           alt={brand.name}
                           className="h-16 w-24 border border-gray-100 bg-white object-cover"
@@ -243,24 +242,40 @@ export default function AdminBrands() {
                     <td className="p-4">
                       <p className="font-medium text-gray-900">{brand.name}</p>
                       <p className="mt-1 max-w-44 truncate text-xs text-gray-400">/{brand.slug}</p>
-                      <p className="mt-1 text-xs text-gray-400">{[brand.country, brand.foundedYear].filter(Boolean).join(" · ")}</p>
+                      <p className="mt-1 text-xs text-gray-400">
+                        {[brand.country, brand.foundedYear].filter(Boolean).join(" · ")}
+                      </p>
                     </td>
                     <td className="p-4">
-                      <p className="line-clamp-3 max-w-xs text-gray-600">{brand.description || "Chưa cập nhật"}</p>
+                      <p className="line-clamp-3 max-w-xs text-gray-600">
+                        {brand.description || "Chưa cập nhật"}
+                      </p>
                     </td>
                     <td className="p-4">
                       <div className="space-y-1 text-xs">
                         {brand.viewCollectionUrl && (
-                          <a href={brand.viewCollectionUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[#75672F] hover:underline">
+                          <a
+                            href={brand.viewCollectionUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1 text-[#75672F] hover:underline"
+                          >
                             View collection <ExternalLink className="h-3 w-3" />
                           </a>
                         )}
                         {brand.journalUrl && (
-                          <a href={brand.journalUrl} target="_blank" rel="noreferrer" className="block text-[#75672F] hover:underline">
+                          <a
+                            href={brand.journalUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="block text-[#75672F] hover:underline"
+                          >
                             Read journal
                           </a>
                         )}
-                        {!brand.viewCollectionUrl && !brand.journalUrl && <span className="text-gray-400">Chưa có link</span>}
+                        {!brand.viewCollectionUrl && !brand.journalUrl && (
+                          <span className="text-gray-400">Chưa có link</span>
+                        )}
                       </div>
                     </td>
                     <td className="p-4">
@@ -277,10 +292,18 @@ export default function AdminBrands() {
                     </td>
                     <td className="p-4">
                       <div className="flex justify-end gap-2">
-                        <Button variant="secondary" onClick={() => openEdit(brand)} title="Sửa thương hiệu">
+                        <Button
+                          variant="secondary"
+                          onClick={() => openEdit(brand)}
+                          title="Sửa thương hiệu"
+                        >
                           <Pencil className="h-4 w-4" />
                         </Button>
-                        <Button variant="danger" onClick={() => setDeleteTarget(brand)} title="Xóa thương hiệu">
+                        <Button
+                          variant="danger"
+                          onClick={() => setDeleteTarget(brand)}
+                          title="Xóa thương hiệu"
+                        >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
@@ -313,7 +336,11 @@ export default function AdminBrands() {
       >
         <div className="grid gap-4 md:grid-cols-2">
           <Field label="Tên brand">
-            <Input value={form.name} onChange={(event) => updateName(event.target.value)} placeholder="Byredo" />
+            <Input
+              value={form.name}
+              onChange={(event) => updateName(event.target.value)}
+              placeholder="Byredo"
+            />
           </Field>
           <Field label="Slug">
             <Input
@@ -336,16 +363,35 @@ export default function AdminBrands() {
             />
           </Field>
           <Field label="Read Journal URL (optional)">
-            <Input value={form.journalUrl} onChange={(event) => setForm({ ...form, journalUrl: event.target.value })} placeholder="/blog?brand=Byredo" />
+            <Input
+              value={form.journalUrl}
+              onChange={(event) => setForm({ ...form, journalUrl: event.target.value })}
+              placeholder="/blog?brand=Byredo"
+            />
           </Field>
           <Field label="Quốc gia">
-            <Input value={form.country} onChange={(event) => setForm({ ...form, country: event.target.value })} placeholder="France, Italy..." />
+            <Input
+              value={form.country}
+              onChange={(event) => setForm({ ...form, country: event.target.value })}
+              placeholder="France, Italy..."
+            />
           </Field>
           <Field label="Năm thành lập">
-            <Input type="number" min="1000" max={new Date().getFullYear()} value={form.foundedYear} onChange={(event) => setForm({ ...form, foundedYear: event.target.value })} />
+            <Input
+              type="number"
+              min="1000"
+              max={new Date().getFullYear()}
+              value={form.foundedYear}
+              onChange={(event) => setForm({ ...form, foundedYear: event.target.value })}
+            />
           </Field>
           <Field label="Website">
-            <Input type="url" value={form.website} onChange={(event) => setForm({ ...form, website: event.target.value })} placeholder="https://..." />
+            <Input
+              type="url"
+              value={form.website}
+              onChange={(event) => setForm({ ...form, website: event.target.value })}
+              placeholder="https://..."
+            />
           </Field>
         </div>
 
@@ -364,30 +410,78 @@ export default function AdminBrands() {
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           <Field label="Ảnh hero">
             <div className="space-y-2">
-              <Input value={form.heroImage} onChange={(event) => setForm({ ...form, heroImage: event.target.value })} placeholder="URL ảnh hero" />
-              <ImageUploader multiple={false} folder="brand" label="Upload hero" onUploaded={(urls) => setForm((current) => ({ ...current, heroImage: urls[0] || current.heroImage }))} />
-              {form.heroImage && <img src={form.heroImage} alt="Xem trước ảnh hero" className="h-32 w-full border border-gray-200 object-cover" />}
+              <Input
+                value={form.heroImage}
+                onChange={(event) => setForm({ ...form, heroImage: event.target.value })}
+                placeholder="URL ảnh hero"
+              />
+              <ImageUploader
+                multiple={false}
+                folder="brand"
+                label="Upload hero"
+                onUploaded={(urls) =>
+                  setForm((current) => ({ ...current, heroImage: urls[0] || current.heroImage }))
+                }
+              />
+              {form.heroImage && (
+                <img
+                  loading="lazy"
+                  src={form.heroImage}
+                  alt="Xem trước ảnh hero"
+                  className="h-32 w-full border border-gray-200 object-cover"
+                />
+              )}
             </div>
           </Field>
           <Field label="Logo (optional)">
             <div className="space-y-2">
-              <Input value={form.logo} onChange={(event) => setForm({ ...form, logo: event.target.value })} placeholder="URL logo" />
-              <ImageUploader multiple={false} folder="brand" label="Upload logo" onUploaded={(urls) => setForm((current) => ({ ...current, logo: urls[0] || current.logo }))} />
-              {form.logo && <img src={form.logo} alt="Xem trước logo" className="h-32 w-full border border-gray-200 bg-white object-contain p-2" />}
+              <Input
+                value={form.logo}
+                onChange={(event) => setForm({ ...form, logo: event.target.value })}
+                placeholder="URL logo"
+              />
+              <ImageUploader
+                multiple={false}
+                folder="brand"
+                label="Upload logo"
+                onUploaded={(urls) =>
+                  setForm((current) => ({ ...current, logo: urls[0] || current.logo }))
+                }
+              />
+              {form.logo && (
+                <img
+                  loading="lazy"
+                  src={form.logo}
+                  alt="Xem trước logo"
+                  className="h-32 w-full border border-gray-200 bg-white object-contain p-2"
+                />
+              )}
             </div>
           </Field>
         </div>
 
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
           <label className="flex items-center gap-3 border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700">
-            <input type="checkbox" checked={form.isPublished} onChange={(event) => setForm({ ...form, isPublished: event.target.checked })} className="h-4 w-4 accent-gray-900" />
+            <input
+              type="checkbox"
+              checked={form.isPublished}
+              onChange={(event) => setForm({ ...form, isPublished: event.target.checked })}
+              className="h-4 w-4 accent-gray-900"
+            />
             Published trên trang Brand
           </label>
           <label className="flex items-center gap-3 border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700">
-            <input type="checkbox" checked={form.isFeatured} onChange={(event) => setForm({ ...form, isFeatured: event.target.checked })} className="h-4 w-4 accent-gray-900" />
+            <input
+              type="checkbox"
+              checked={form.isFeatured}
+              onChange={(event) => setForm({ ...form, isFeatured: event.target.checked })}
+              className="h-4 w-4 accent-gray-900"
+            />
             <span>
               <span className="block font-medium text-gray-800">Nổi bật trên trang chủ</span>
-              <span className="mt-1 block text-xs text-gray-500">Brand sẽ hiện trong mục Thương hiệu nổi bật ở Home.</span>
+              <span className="mt-1 block text-xs text-gray-500">
+                Brand sẽ hiện trong mục Thương hiệu nổi bật ở Home.
+              </span>
             </span>
           </label>
         </div>

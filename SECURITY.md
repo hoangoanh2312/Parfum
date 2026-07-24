@@ -1,55 +1,37 @@
-# Security Notes / Ghi chu bao mat
+# Security
 
-Tai lieu nay ghi lai cac van de bao mat da xu ly trong code va **cac buoc BAT BUOC phai lam thu cong** ngoai repo (khong the tu dong hoa tu day).
+## 🔴 Bắt buộc: xoay (rotate) toàn bộ secret đã từng nằm trong `server/.env`
 
-## 1. Secrets da bi lo (PHAI xu ly ngay)
+File `server/.env` từng được đóng gói kèm mã nguồn ⇒ **coi như đã lộ**. Đã xóa khỏi repo/gói,
+nhưng bạn PHẢI tạo lại giá trị mới cho tất cả secret dưới đây (giá trị cũ vô hiệu hóa):
 
-File `server/.env` truoc day bi commit kem repo, coi nhu TAT CA secret sau da lo va **phai doi ngay**:
+- [ ] `MONGO_URI` — đổi mật khẩu user MongoDB (Atlas: rotate password / tạo user mới).
+- [ ] `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET` — sinh chuỗi ngẫu nhiên mới:
+      `node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"`
+      (đổi 2 secret này sẽ đăng xuất mọi phiên hiện tại — chấp nhận được).
+- [ ] `CLOUDINARY_API_SECRET` — rotate trong Cloudinary Console.
+- [ ] `SMTP_PASS` — thu hồi App Password Gmail cũ, tạo cái mới.
+- [ ] `ESMS_API_KEY`, `ESMS_SECRET_KEY` — rotate với eSMS.
+- [ ] `SEPAY_WEBHOOK_SECRET` — tạo secret webhook mới trong SePay.
+- [ ] `ADMIN_BOOTSTRAP_PASSWORD` / mật khẩu admin — đổi mật khẩu admin.
 
-| Secret | Hanh dong |
-| --- | --- |
-| `MONGO_URI` (user/password Atlas) | Vao MongoDB Atlas -> Database Access -> doi mat khau DB user (hoac tao user moi + xoa user cu). Cap nhat lai connection string. |
-| `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET` | Da tu dong sinh gia tri ngau nhien moi trong `server/.env`. Khi deploy, dat gia tri rieng cho tung moi truong. |
-| `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | Vao Cloudinary Console -> Settings -> Security -> **Regenerate API secret**. Cap nhat lai `.env`. |
+## Quản lý secret
 
-> JWT secret da duoc rotate. Mongo va Cloudinary **phai rotate trong dashboard tuong ung** (khong the lam tu code).
+- KHÔNG commit/đóng gói `.env` (đã có trong `.gitignore` + `.dockerignore`).
+- Production: dùng secret manager của nền tảng (Render/Railway env vars, Doppler, Vault…).
+- `.env.example` chỉ chứa KEY, không chứa giá trị.
 
-## 2. Xoa `.env` khoi git history (chay thu cong)
+## Các biện pháp đã áp dụng trong code
 
-Da them `.gitignore` (root + server + client) de khong commit `.env`, `dist/`, `node_modules/`, `uploads/` nua. Nhung file `.env` cu van con trong **lich su git**, can xoa han:
+- Access token giữ in-memory ở client (không localStorage) + silent refresh qua refresh cookie.
+- Admin bootstrap: chỉ tạo khi CHƯA có admin và có đủ env; không reset mật khẩu tài khoản đã tồn tại; không log credential.
+- Rate limiter: dọn bucket hết hạn định kỳ (hết rò rỉ bộ nhớ). Đa instance nên chuyển sang Redis (xem `REDIS_URL`).
+- CSRF double-submit cho endpoint dùng cookie.
+- Helmet CSP + HSTS, `trust proxy`, CORS allowlist.
+- Docker chạy user `node` (server), có `HEALTHCHECK`, dùng `npm ci` khi có lockfile.
 
-```bash
-# Cach 1: git filter-repo (khuyen nghi)
-pip install git-filter-repo
-git filter-repo --path server/.env --invert-paths
+## Việc cần làm thủ công còn lại
 
-# Cach 2: BFG Repo-Cleaner
-bfg --delete-files .env
-git reflog expire --expire=now --all && git gc --prune=now --aggressive
-
-# Sau do force-push (canh bao: viet lai lich su, bao dong doi)
-git push origin --force --all
-```
-
-Sau khi xoa lich su, go bo file cache neu con theo doi:
-
-```bash
-git rm --cached server/.env
-git commit -m "chore: remove committed .env"
-```
-
-## 3. Da xu ly trong code
-
-- Them `.gitignore` cho root/server/client.
-- Don sach dau xung dot merge trong `.env` / `.env.example` va rotate JWT secret.
-- Refresh token chuyen sang **httpOnly cookie** (`utils/cookies.ts` + `api.ts` withCredentials); client chi giu access token.
-- Siet **CSP + helmet** trong `app.ts`, them `express-mongo-sanitize` (middleware noi bo `sanitize.middleware.ts`).
-- **Escape regex** cho tim kiem san pham (`utils/regex.ts`) chong ReDoS.
-- **Rate limit chat** rieng cho `/auth/login`, `/auth/register`, `/auth/forgot-password`, `/auth/reset-password` (10 req / 15 phut).
-- **Error handler** an chi tiet loi 500 o production + logger tap trung (`utils/logger.ts`).
-
-## 4. Luu y khi deploy that
-
-- `rateLimit` hien luu in-memory theo tien trinh -> khi chay nhieu instance can chuyen sang **Redis store**.
-- Cau hinh SMTP that (`SMTP_HOST`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM`) de luong quen mat khau / xac thuc email gui duoc email.
-- Cai them devDependencies moi (`vitest`, `@types/nodemailer`) roi chay `npm test`; CI (`.github/workflows/ci.yml`) se chay lint + build + test.
+- [ ] Chạy `npm install` trong `server/` rồi commit `server/package-lock.json` (để CI/Docker dùng `npm ci`).
+- [ ] (Tùy chọn) `npm i @sentry/node` trong `server/` + set `SENTRY_DSN` để bật error tracking.
+- [ ] Chạy `npm install` ở gốc để kích hoạt husky pre-commit (lint-staged).

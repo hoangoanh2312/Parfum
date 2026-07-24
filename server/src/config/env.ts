@@ -31,7 +31,6 @@ export const env = {
   cloudinaryName: process.env.CLOUDINARY_CLOUD_NAME || '',
   cloudinaryKey: process.env.CLOUDINARY_API_KEY || '',
   cloudinarySecret: process.env.CLOUDINARY_API_SECRET || '',
-  // Thu muc tren Cloudinary dung lam thu vien anh cho web (doi tuy y qua .env)
   cloudinaryFolder: process.env.CLOUDINARY_FOLDER || 'parfum',
   // VietQR va webhook xac nhan giao dich ngan hang.
   vietqr: {
@@ -46,4 +45,13 @@ export const env = {
   defaultAdminEmail: process.env.DEFAULT_ADMIN_EMAIL || '',
   legacyAdminPassword: process.env.LEGACY_ADMIN_PASSWORD || 'admin123456',
   adminBootstrapPassword: process.env.ADMIN_BOOTSTRAP_PASSWORD || '',
+  // --- Bo sung: ha tang & bao mat ---
+  // Redis dung cho rate limit phan tan khi chay nhieu instance (tuy chon).
+  redisUrl: process.env.REDIS_URL || '',
+  // Sentry error tracking (tuy chon). Chi bat khi da cai @sentry/node + set DSN.
+  sentryDsn: process.env.SENTRY_DSN || '',
+  // Bat/tat bao ve CSRF double-submit (mac dinh BAT). Chi tat khi that su can.
+  csrfEnabled: process.env.CSRF_ENABLED !== 'false',
+  // So proxy tin cay dung truoc app (nginx / load balancer) -> req.ip chinh xac + secure cookie.
+  trustProxy: Number(process.env.TRUST_PROXY ?? 1),
 };

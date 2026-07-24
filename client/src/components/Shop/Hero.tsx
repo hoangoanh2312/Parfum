@@ -23,7 +23,7 @@ export default function Hero({
         </div>
 
         <div className="overflow-hidden bg-[#F3EEE7] aspect-[16/9]">
-          <img src={image} alt={title} className="w-full h-full object-cover" />
+          <img loading="lazy" src={image} alt={title} className="w-full h-full object-cover" />
         </div>
       </div>
     </section>

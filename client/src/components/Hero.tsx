@@ -4,6 +4,7 @@ export default function HeroSection() {
     <section className="relative min-h-[680px] overflow-hidden bg-[#0e0b08] sm:h-[92vh] sm:min-h-[600px]">
       {/* Background image */}
       <img
+        loading="lazy"
         src="https://images.unsplash.com/photo-1594035910387-fea47794261f?w=1800&q=80"
         alt=""
         aria-hidden="true"
@@ -38,11 +39,7 @@ export default function HeroSection() {
           >
             Nghệ thuật của
             <br />
-            <em
-              style={{ fontStyle: "italic", color: "#C9A84C" }}
-            >
-              Hương thơm
-            </em>
+            <em style={{ fontStyle: "italic", color: "#C9A84C" }}>Hương thơm</em>
             <br />
             tinh tế.
           </h1>
@@ -57,9 +54,8 @@ export default function HeroSection() {
               letterSpacing: "0",
             }}
           >
-            Khám phá bộ sưu tập nước hoa cao cấp với nguyên liệu hiếm từ bốn
-            châu lục. Mỗi chai là một tác phẩm — được chế tác bằng sự kiên nhẫn
-            và nghệ thuật chưng cất thủ công.
+            Khám phá bộ sưu tập nước hoa cao cấp với nguyên liệu hiếm từ bốn châu lục. Mỗi chai là
+            một tác phẩm — được chế tác bằng sự kiên nhẫn và nghệ thuật chưng cất thủ công.
           </p>
 
           {/* Gold divider */}

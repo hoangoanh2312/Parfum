@@ -177,10 +177,14 @@ export default function AdminBlog() {
       return;
     }
     if (journal.sentCount > 0) {
-      toast.success(`Đã xuất bản và gửi email cho ${journal.sentCount}/${journal.subscriberCount} khách đăng ký journal`);
+      toast.success(
+        `Đã xuất bản và gửi email cho ${journal.sentCount}/${journal.subscriberCount} khách đăng ký journal`,
+      );
       return;
     }
-    toast.error("Đã xuất bản bài viết nhưng chưa gửi được email. Kiểm tra SMTP hoặc email subscriber.");
+    toast.error(
+      "Đã xuất bản bài viết nhưng chưa gửi được email. Kiểm tra SMTP hoặc email subscriber.",
+    );
   }
 
   async function load() {
@@ -211,11 +215,7 @@ export default function AdminBlog() {
 
   function openForm(article?: BlogArticle) {
     setEditing(article ?? null);
-    setForm(
-      article
-        ? articleToForm(article)
-        : { ...emptyForm, sections: [{ ...emptySection }] },
-    );
+    setForm(article ? articleToForm(article) : { ...emptyForm, sections: [{ ...emptySection }] });
   }
 
   function updateSection(index: number, patch: Partial<BlogSectionForm>) {
@@ -242,7 +242,11 @@ export default function AdminBlog() {
         : await adminApi.post<BlogArticle>("/blog", payload);
       showJournalToast(
         status,
-        status === "published" ? "Đã xuất bản bài viết" : editing ? "Đã cập nhật bài viết" : "Đã lưu bản nháp",
+        status === "published"
+          ? "Đã xuất bản bài viết"
+          : editing
+            ? "Đã cập nhật bài viết"
+            : "Đã lưu bản nháp",
         saved,
       );
       setEditing(undefined);
@@ -261,7 +265,11 @@ export default function AdminBlog() {
         ...formToPayload(articleToForm(article)),
         status,
       });
-      showJournalToast(status, status === "published" ? "Đã xuất bản bài viết" : "Đã chuyển về bản nháp", saved);
+      showJournalToast(
+        status,
+        status === "published" ? "Đã xuất bản bài viết" : "Đã chuyển về bản nháp",
+        saved,
+      );
       await load();
     } catch (e) {
       toast.error(apiMessage(e, "Không cập nhật trạng thái bài viết"));
@@ -333,6 +341,7 @@ export default function AdminBlog() {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <img
+                          loading="lazy"
                           src={article.image}
                           alt={article.title}
                           className="h-12 w-16 rounded bg-gray-100 object-cover"
@@ -349,15 +358,24 @@ export default function AdminBlog() {
                         {(article as any).status === "published" ? "Đã xuất bản" : "Bản nháp"}
                       </Badge>
                     </td>
-                    <td className="px-4 py-3 text-gray-500">{formatDate((article as any).updatedAt)}</td>
+                    <td className="px-4 py-3 text-gray-500">
+                      {formatDate((article as any).updatedAt)}
+                    </td>
                     <td className="px-4 py-3">
                       <div className="flex justify-end gap-2">
                         {((article as any).status || "draft") === "published" ? (
-                          <Button variant="secondary" disabled={saving} onClick={() => changeStatus(article, "draft")}>
+                          <Button
+                            variant="secondary"
+                            disabled={saving}
+                            onClick={() => changeStatus(article, "draft")}
+                          >
                             Gỡ xuất bản
                           </Button>
                         ) : (
-                          <Button disabled={saving} onClick={() => changeStatus(article, "published")}>
+                          <Button
+                            disabled={saving}
+                            onClick={() => changeStatus(article, "published")}
+                          >
                             Xuất bản
                           </Button>
                         )}
@@ -396,14 +414,21 @@ export default function AdminBlog() {
               {saving ? "Đang lưu..." : "Lưu nháp"}
             </Button>
             <Button onClick={() => saveWithStatus("published")} disabled={saving}>
-              {saving ? "Đang xuất bản..." : form.status === "published" ? "Cập nhật xuất bản" : "Xuất bản"}
+              {saving
+                ? "Đang xuất bản..."
+                : form.status === "published"
+                  ? "Cập nhật xuất bản"
+                  : "Xuất bản"}
             </Button>
           </>
         }
       >
         <div className="grid gap-4 md:grid-cols-2">
           <Field label="Tiêu đề">
-            <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+            <Input
+              value={form.title}
+              onChange={(e) => setForm({ ...form, title: e.target.value })}
+            />
           </Field>
           <Field label="Slug">
             <Input
@@ -413,13 +438,23 @@ export default function AdminBlog() {
             />
           </Field>
           <Field label="Danh mục">
-            <Input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} />
+            <Input
+              value={form.category}
+              onChange={(e) => setForm({ ...form, category: e.target.value })}
+            />
           </Field>
           <Field label="Tác giả">
-            <Input value={form.author} onChange={(e) => setForm({ ...form, author: e.target.value })} />
+            <Input
+              value={form.author}
+              onChange={(e) => setForm({ ...form, author: e.target.value })}
+            />
           </Field>
           <Field label="Ngày hiển thị">
-            <Input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
+            <Input
+              type="date"
+              value={form.date}
+              onChange={(e) => setForm({ ...form, date: e.target.value })}
+            />
           </Field>
           <Field label="Bài viết liên quan" hint="Chọn từ các bài đã xuất bản trước đó.">
             <div className="space-y-2">
@@ -455,26 +490,52 @@ export default function AdminBlog() {
           </Field>
           <Field label="Ảnh thumbnail">
             <div className="space-y-2">
-              <Input value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} placeholder="https://..." />
+              <Input
+                value={form.image}
+                onChange={(e) => setForm({ ...form, image: e.target.value })}
+                placeholder="https://..."
+              />
               <ImageUploader
                 multiple={false}
                 folder="news"
                 label="Chọn ảnh thumbnail"
-                onUploaded={(urls) => setForm((current) => ({ ...current, image: urls[0] || current.image }))}
+                onUploaded={(urls) =>
+                  setForm((current) => ({ ...current, image: urls[0] || current.image }))
+                }
               />
-              {form.image && <img src={form.image} alt="Xem trước thumbnail" className="h-28 w-full border border-gray-200 object-cover" />}
+              {form.image && (
+                <img
+                  loading="lazy"
+                  src={form.image}
+                  alt="Xem trước thumbnail"
+                  className="h-28 w-full border border-gray-200 object-cover"
+                />
+              )}
             </div>
           </Field>
           <Field label="Ảnh hero">
             <div className="space-y-2">
-              <Input value={form.heroImage} onChange={(e) => setForm({ ...form, heroImage: e.target.value })} placeholder="Mặc định dùng thumbnail" />
+              <Input
+                value={form.heroImage}
+                onChange={(e) => setForm({ ...form, heroImage: e.target.value })}
+                placeholder="Mặc định dùng thumbnail"
+              />
               <ImageUploader
                 multiple={false}
                 folder="news"
                 label="Chọn ảnh hero"
-                onUploaded={(urls) => setForm((current) => ({ ...current, heroImage: urls[0] || current.heroImage }))}
+                onUploaded={(urls) =>
+                  setForm((current) => ({ ...current, heroImage: urls[0] || current.heroImage }))
+                }
               />
-              {form.heroImage && <img src={form.heroImage} alt="Xem trước ảnh hero" className="h-28 w-full border border-gray-200 object-cover" />}
+              {form.heroImage && (
+                <img
+                  loading="lazy"
+                  src={form.heroImage}
+                  alt="Xem trước ảnh hero"
+                  className="h-28 w-full border border-gray-200 object-cover"
+                />
+              )}
             </div>
           </Field>
         </div>
@@ -489,7 +550,9 @@ export default function AdminBlog() {
           <div className="flex items-center justify-between gap-4 border-b border-gray-200 pb-3">
             <div>
               <p className="text-sm font-medium text-gray-900">Nội dung bài viết</p>
-              <p className="mt-1 text-xs text-gray-500">Quản lý tiêu đề, nội dung và ảnh của từng phần.</p>
+              <p className="mt-1 text-xs text-gray-500">
+                Quản lý tiêu đề, nội dung và ảnh của từng phần.
+              </p>
             </div>
             <Button
               type="button"
@@ -520,7 +583,9 @@ export default function AdminBlog() {
                     onClick={() =>
                       setForm((current) => ({
                         ...current,
-                        sections: current.sections.filter((_, sectionIndex) => sectionIndex !== index),
+                        sections: current.sections.filter(
+                          (_, sectionIndex) => sectionIndex !== index,
+                        ),
                       }))
                     }
                   >
@@ -555,17 +620,26 @@ export default function AdminBlog() {
                           multiple={false}
                           folder="news"
                           label="Chọn ảnh"
-                          onUploaded={(urls) => updateSection(index, { image: urls[0] || section.image })}
+                          onUploaded={(urls) =>
+                            updateSection(index, { image: urls[0] || section.image })
+                          }
                         />
                         {section.image && (
-                          <img src={section.image} alt="Xem trước" className="h-28 w-full border border-gray-200 object-cover" />
+                          <img
+                            loading="lazy"
+                            src={section.image}
+                            alt="Xem trước"
+                            className="h-28 w-full border border-gray-200 object-cover"
+                          />
                         )}
                       </div>
                     </Field>
                     <Field label="Chú thích ảnh">
                       <Textarea
                         value={section.imageCaption}
-                        onChange={(event) => updateSection(index, { imageCaption: event.target.value })}
+                        onChange={(event) =>
+                          updateSection(index, { imageCaption: event.target.value })
+                        }
                         className="min-h-[100px]"
                       />
                     </Field>

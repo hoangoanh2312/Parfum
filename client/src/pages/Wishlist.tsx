@@ -2,7 +2,8 @@ import { create } from "zustand";
 import { api } from "../lib/api";
 import { toast } from "../store/toast.store";
 
-const getToken = () => localStorage.getItem("accessToken");
+import { getAccessToken } from "../lib/token";
+const getToken = () => getAccessToken();
 
 export interface WishlistProduct {
   _id: string;
@@ -45,10 +46,10 @@ export const useWishlist = create<WishlistState>((set, get) => ({
       const { data } = await api.get<WishlistProduct[]>("/account/wishlist");
       set({ products: data, loaded: true, authToken: token });
     } catch (err: any) {
-      set({ 
-        error: err?.response?.data?.message || "Không thể tải danh sách yêu thích", 
-        loaded: true, 
-        authToken: token 
+      set({
+        error: err?.response?.data?.message || "Không thể tải danh sách yêu thích",
+        loaded: true,
+        authToken: token,
       });
     } finally {
       set({ loading: false });
@@ -63,7 +64,8 @@ export const useWishlist = create<WishlistState>((set, get) => ({
     await get().loadWishlist();
   },
 
-  has: (productId) => get().products.some((p) => p._id === productId || (p as any).id === productId),
+  has: (productId) =>
+    get().products.some((p) => p._id === productId || (p as any).id === productId),
 
   toggle: async (productId) => {
     if (!productId) return;
@@ -81,15 +83,11 @@ export const useWishlist = create<WishlistState>((set, get) => ({
       return;
     }
     try {
-      const { data } = await api.post<WishlistProduct[]>(
-        `/account/wishlist/${productId}`
-      );
+      const { data } = await api.post<WishlistProduct[]>(`/account/wishlist/${productId}`);
       set({ products: data });
       toast.success("Đã thêm vào wishlist");
     } catch (error: any) {
-      toast.error(
-        error?.response?.data?.message || "Không thể thêm vào wishlist"
-      );
+      toast.error(error?.response?.data?.message || "Không thể thêm vào wishlist");
     }
   },
 
@@ -100,11 +98,11 @@ export const useWishlist = create<WishlistState>((set, get) => ({
     }
     const prev = get().products;
     // Optimistic update
-    set((s) => ({ products: s.products.filter((p) => p._id !== productId && (p as any).id !== productId) }));
+    set((s) => ({
+      products: s.products.filter((p) => p._id !== productId && (p as any).id !== productId),
+    }));
     try {
-      const { data } = await api.delete<WishlistProduct[]>(
-        `/account/wishlist/${productId}`
-      );
+      const { data } = await api.delete<WishlistProduct[]>(`/account/wishlist/${productId}`);
       set({ products: data });
       toast.success("Đã xóa khỏi wishlist");
     } catch (error: any) {

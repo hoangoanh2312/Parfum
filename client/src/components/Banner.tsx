@@ -115,16 +115,17 @@ export default function BannerSection() {
     };
   }, [activeIndex, paused, changeCollection]);
 
-  useEffect(() => () => {
-    if (transitionTimerRef.current) window.clearTimeout(transitionTimerRef.current);
-  }, []);
+  useEffect(
+    () => () => {
+      if (transitionTimerRef.current) window.clearTimeout(transitionTimerRef.current);
+    },
+    [],
+  );
 
   const active = COLLECTIONS[activeIndex];
 
   return (
-    <section
-      className="relative isolate min-h-[92vh] w-full overflow-hidden bg-[#111]"
-    >
+    <section className="relative isolate min-h-[92vh] w-full overflow-hidden bg-[#111]">
       <style>{`
         @keyframes bannerDust {
           0% { transform: translateY(0) translateX(0); opacity: 0; }
@@ -140,7 +141,12 @@ export default function BannerSection() {
           className="absolute inset-0 transition-opacity duration-[1200ms] ease-in-out"
           style={{ opacity: index === activeIndex ? 1 : 0 }}
         >
-          <img src={item.image} alt={item.title} className="h-full w-full object-cover" />
+          <img
+            loading="lazy"
+            src={item.image}
+            alt={item.title}
+            className="h-full w-full object-cover"
+          />
         </div>
       ))}
 
@@ -198,7 +204,9 @@ export default function BannerSection() {
             {active.columns.map((col) => (
               <div key={col.label}>
                 <p className="text-[10px] uppercase tracking-[1.5px] text-white/45">{col.label}</p>
-                <p className="mt-2 text-[13px] font-medium text-white md:text-[14px]">{col.value}</p>
+                <p className="mt-2 text-[13px] font-medium text-white md:text-[14px]">
+                  {col.value}
+                </p>
               </div>
             ))}
           </div>

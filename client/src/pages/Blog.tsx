@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useSeo } from "../hooks/useSeo";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import { api } from "../lib/api";
@@ -54,6 +55,10 @@ const fallbackArchetypes: Archetype[] = [
 const ARTICLES_PER_PAGE = 6;
 
 export default function Blog() {
+  useSeo({
+    title: "Tạp chí hương thơm",
+    description: "Bài viết, cẩm nang và câu chuyện về nghệ thuật nước hoa từ L'Essence Noire.",
+  });
   const [searchParams] = useSearchParams();
   const brandParam = searchParams.get("brand");
   const sliderRef = useRef<HTMLDivElement>(null);
@@ -83,16 +88,10 @@ export default function Blog() {
 
   // Grid chỉ chứa bài báo thật; sản phẩm không được trộn vào Journal.
   const articles = managedArticles?.length ? managedArticles : BLOG_ARTICLES;
-  const articleTotalPages = Math.max(
-    1,
-    Math.ceil(articles.length / ARTICLES_PER_PAGE),
-  );
+  const articleTotalPages = Math.max(1, Math.ceil(articles.length / ARTICLES_PER_PAGE));
   const visibleArticles = showAllArticles
     ? articles
-    : articles.slice(
-        (articlePage - 1) * ARTICLES_PER_PAGE,
-        articlePage * ARTICLES_PER_PAGE,
-      );
+    : articles.slice((articlePage - 1) * ARTICLES_PER_PAGE, articlePage * ARTICLES_PER_PAGE);
 
   useEffect(() => {
     setArticlePage((current) => Math.min(current, articleTotalPages));
@@ -167,14 +166,14 @@ export default function Blog() {
                 Ephemeral.
               </h1>
               <p className="mt-8 max-w-[590px] text-sm leading-7 text-[#6B6861]">
-                An editorial exploration into the architecture of scent, the
-                poetry of raw ingredients, and the invisible threads that bind
-                memory to fragrance.
+                An editorial exploration into the architecture of scent, the poetry of raw
+                ingredients, and the invisible threads that bind memory to fragrance.
               </p>
             </div>
 
             <div className="mx-auto w-full max-w-[390px] overflow-hidden bg-[#2D2D2D]">
               <img
+                loading="lazy"
                 src="https://images.unsplash.com/photo-1608528577891-eb055944f2e7?w=800&q=80"
                 alt="Editorial perfume bottle"
                 className="aspect-[0.78/1] h-full w-full object-cover grayscale"
@@ -191,6 +190,7 @@ export default function Blog() {
               <Link to={`/blog/${articles[2]?.slug || BLOG_ARTICLES[2].slug}`}>
                 <div className="overflow-hidden bg-[#272727]">
                   <img
+                    loading="lazy"
                     src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS__htyuJgvZWWlJPkJTpMlgM6ej2uVAbxXjAnsUoiIEg&s=10"
                     alt="Endangered florals"
                     className="aspect-[1.45/1] w-full object-cover grayscale transition duration-700 group-hover:scale-[1.03]"
@@ -207,8 +207,8 @@ export default function Blog() {
                     The Ethics of Extraction: Preserving Endangered Florals
                   </h2>
                   <p className="mt-4 max-w-[720px] text-xs leading-5 text-[#706D66]">
-                    A deep dive into our partnership with local conservatories to protect
-                    rare botanical species through sustainable technology.
+                    A deep dive into our partnership with local conservatories to protect rare
+                    botanical species through sustainable technology.
                   </p>
                   <span className="mt-5 inline-flex border-b border-[#AB9851] pb-1 text-[8px] font-semibold uppercase tracking-[0.18em] text-[#675711]">
                     Read manuscript
@@ -229,11 +229,12 @@ export default function Blog() {
                 In Conversation with our Master Nose: Jean-Pierre Volat
               </h2>
               <p className="mt-5 text-xs leading-5 text-[#68655F]">
-                &ldquo;A fragrance is not a scent. It is a structure of time. I do not
-                build top notes; I build memories that refuse to fade.&rdquo;
+                &ldquo;A fragrance is not a scent. It is a structure of time. I do not build top
+                notes; I build memories that refuse to fade.&rdquo;
               </p>
               <div className="mt-8 overflow-hidden">
                 <img
+                  loading="lazy"
                   src="https://images.unsplash.com/photo-1503435980610-a51f3ddfee50?w=800&q=80"
                   alt="Perfume laboratory"
                   className="aspect-[0.95/1] w-full object-cover grayscale"
@@ -296,6 +297,7 @@ export default function Blog() {
                   className="group relative min-w-[230px] snap-start overflow-hidden sm:min-w-[260px]"
                 >
                   <img
+                    loading="lazy"
                     src={item.image}
                     alt={item.name}
                     className="aspect-[0.75/1] w-full object-cover grayscale transition duration-700 group-hover:scale-105"
@@ -318,7 +320,10 @@ export default function Blog() {
         </section>
 
         {/* ARTICLE GRID — tất cả link tới /blog/:slug */}
-        <section id="journal-articles" className="scroll-mt-24 px-6 py-20 sm:px-10 lg:px-16 lg:py-28">
+        <section
+          id="journal-articles"
+          className="scroll-mt-24 px-6 py-20 sm:px-10 lg:px-16 lg:py-28"
+        >
           <div className="mx-auto max-w-[1060px]">
             <div className="mb-12 border-b border-[#DCD4C8] pb-7">
               <p className="text-[9px] font-semibold uppercase tracking-[0.24em] text-[#997F20]">
@@ -338,68 +343,67 @@ export default function Blog() {
             </div>
 
             <div className="grid gap-x-10 gap-y-16 md:grid-cols-2 xl:grid-cols-3">
-            {visibleArticles.map((article) => {
-              return (
-                <Link key={article.id} to={`/blog/${article.slug}`} className="group block">
-                  <div className="overflow-hidden bg-[#EEEAE4]">
-                    <img
-                      src={article.image}
-                      alt={article.title}
-                      className="aspect-[1/1.05] w-full object-cover grayscale transition duration-700 group-hover:scale-[1.04]"
-                    />
-                  </div>
-                  <div className="pt-5">
-                    <p className="text-[8px] font-semibold uppercase tracking-[0.18em] text-[#9B8125]">
-                      {article.category}
-                    </p>
-                    <h2
-                      className="mt-3 text-[25px] leading-[1.15] tracking-[-0.02em]"
-                      style={{ fontFamily: "'Cormorant Garamond', 'Spectral', serif" }}
-                    >
-                      {article.title}
-                    </h2>
-                    <p className="mt-4 text-xs leading-5 text-[#706D66]">
-                      {article.description}
-                    </p>
-                    <span className="mt-5 inline-flex border-b border-[#AB9851] pb-1 text-[8px] font-semibold uppercase tracking-[0.18em] text-[#675711]">
-                      Read article
-                    </span>
-                  </div>
-                </Link>
-              );
-            })}
+              {visibleArticles.map((article) => {
+                return (
+                  <Link key={article.id} to={`/blog/${article.slug}`} className="group block">
+                    <div className="overflow-hidden bg-[#EEEAE4]">
+                      <img
+                        loading="lazy"
+                        src={article.image}
+                        alt={article.title}
+                        className="aspect-[1/1.05] w-full object-cover grayscale transition duration-700 group-hover:scale-[1.04]"
+                      />
+                    </div>
+                    <div className="pt-5">
+                      <p className="text-[8px] font-semibold uppercase tracking-[0.18em] text-[#9B8125]">
+                        {article.category}
+                      </p>
+                      <h2
+                        className="mt-3 text-[25px] leading-[1.15] tracking-[-0.02em]"
+                        style={{ fontFamily: "'Cormorant Garamond', 'Spectral', serif" }}
+                      >
+                        {article.title}
+                      </h2>
+                      <p className="mt-4 text-xs leading-5 text-[#706D66]">{article.description}</p>
+                      <span className="mt-5 inline-flex border-b border-[#AB9851] pb-1 text-[8px] font-semibold uppercase tracking-[0.18em] text-[#675711]">
+                        Read article
+                      </span>
+                    </div>
+                  </Link>
+                );
+              })}
 
-            {/* SUBSCRIBE CARD */}
-            <aside className="flex min-h-[410px] flex-col items-center justify-center bg-[#F0EDE8] p-9 text-center">
-              <p
-                className="text-[28px] leading-tight"
-                style={{ fontFamily: "'Cormorant Garamond', 'Spectral', serif" }}
-              >
-                Receive the Printed
-                <br />
-                Journal
-              </p>
-              <p className="mt-5 max-w-[250px] text-xs leading-5 text-[#706D66]">
-                A quarterly publication delivered to your doorstep.
-                Complimentary for our Inner Circle members.
-              </p>
-              <form onSubmit={handleSubscribe} className="mt-8 w-full max-w-[260px]">
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="YOUR EMAIL ADDRESS"
-                  className="w-full border-b border-[#D2C9B7] bg-transparent py-3 text-center text-[8px] uppercase tracking-[0.14em] outline-none placeholder:text-[#A9A59D]"
-                />
-                <button
-                  type="submit"
-                  disabled={subscribing}
-                  className="mt-5 w-full bg-[#8B7200] px-5 py-3 text-[8px] font-semibold uppercase tracking-[0.18em] text-white transition hover:bg-[#6F5C00]"
+              {/* SUBSCRIBE CARD */}
+              <aside className="flex min-h-[410px] flex-col items-center justify-center bg-[#F0EDE8] p-9 text-center">
+                <p
+                  className="text-[28px] leading-tight"
+                  style={{ fontFamily: "'Cormorant Garamond', 'Spectral', serif" }}
                 >
-                  {subscribing ? "Subscribing..." : "Subscribe"}
-                </button>
-              </form>
-            </aside>
+                  Receive the Printed
+                  <br />
+                  Journal
+                </p>
+                <p className="mt-5 max-w-[250px] text-xs leading-5 text-[#706D66]">
+                  A quarterly publication delivered to your doorstep. Complimentary for our Inner
+                  Circle members.
+                </p>
+                <form onSubmit={handleSubscribe} className="mt-8 w-full max-w-[260px]">
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="YOUR EMAIL ADDRESS"
+                    className="w-full border-b border-[#D2C9B7] bg-transparent py-3 text-center text-[8px] uppercase tracking-[0.14em] outline-none placeholder:text-[#A9A59D]"
+                  />
+                  <button
+                    type="submit"
+                    disabled={subscribing}
+                    className="mt-5 w-full bg-[#8B7200] px-5 py-3 text-[8px] font-semibold uppercase tracking-[0.18em] text-white transition hover:bg-[#6F5C00]"
+                  >
+                    {subscribing ? "Subscribing..." : "Subscribe"}
+                  </button>
+                </form>
+              </aside>
             </div>
 
             <div className="mt-4 flex flex-col items-center">

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useSeo } from "../hooks/useSeo";
 import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { api } from "../lib/api";
@@ -65,6 +66,10 @@ function hydrateBrand(brand: MongoBrand, index: number): BrandItem {
 }
 
 export default function Brand() {
+  useSeo({
+    title: "Thương hiệu nước hoa",
+    description: "Khám phá các thương hiệu nước hoa tuyển chọn tại L'Essence Noire.",
+  });
   const [currentPage, setCurrentPage] = useState(1);
   const [brands, setBrands] = useState<BrandItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -162,9 +167,9 @@ export default function Brand() {
             </h1>
 
             <p className="mt-8 max-w-[720px] text-sm leading-7 text-[#69665F] lg:mt-10">
-              Từ những nhà chế tác giàu di sản tại Paris đến các phòng hương
-              đương đại ở Stockholm, mỗi thương hiệu được lựa chọn bởi bản sắc
-              riêng, kỹ nghệ tinh xảo và cách kể chuyện độc đáo qua mùi hương.
+              Từ những nhà chế tác giàu di sản tại Paris đến các phòng hương đương đại ở Stockholm,
+              mỗi thương hiệu được lựa chọn bởi bản sắc riêng, kỹ nghệ tinh xảo và cách kể chuyện
+              độc đáo qua mùi hương.
             </p>
 
             {loading && (
@@ -183,6 +188,7 @@ export default function Brand() {
                 <div key={brand.id} className="group block">
                   <div className="overflow-hidden bg-[#EFECE7]">
                     <img
+                      loading="lazy"
                       src={brand.image}
                       alt={brand.name}
                       className="aspect-[1.35/1] w-full object-cover transition duration-700 ease-out group-hover:scale-[1.045]"
@@ -230,48 +236,48 @@ export default function Brand() {
 
         {/* PAGINATION */}
         {totalPages > 1 && (
-        <section className="px-6 pb-16 sm:px-10 lg:px-16 lg:pb-20">
-          <div className="mx-auto flex max-w-[800px] items-center justify-center border-t border-[#E1DDD5] pt-7">
-            <button
-              type="button"
-              onClick={() => changePage(currentPage - 1)}
-              disabled={currentPage === 1}
-              className="mr-7 text-[8px] uppercase tracking-[0.18em] text-[#A29D91] transition hover:text-[#756000] disabled:cursor-not-allowed disabled:opacity-35"
-            >
-              Previous
-            </button>
+          <section className="px-6 pb-16 sm:px-10 lg:px-16 lg:pb-20">
+            <div className="mx-auto flex max-w-[800px] items-center justify-center border-t border-[#E1DDD5] pt-7">
+              <button
+                type="button"
+                onClick={() => changePage(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="mr-7 text-[8px] uppercase tracking-[0.18em] text-[#A29D91] transition hover:text-[#756000] disabled:cursor-not-allowed disabled:opacity-35"
+              >
+                Previous
+              </button>
 
-            <div className="flex items-center gap-5">
-              {paginationPages.map((page) => {
-                const active = currentPage === page;
+              <div className="flex items-center gap-5">
+                {paginationPages.map((page) => {
+                  const active = currentPage === page;
 
-                return (
-                  <button
-                    key={page}
-                    type="button"
-                    onClick={() => changePage(page)}
-                    className={`border-b pb-1 text-[9px] transition ${
-                      active
-                        ? "border-[#8B7419] text-[#8B7419]"
-                        : "border-transparent text-[#817D75] hover:text-[#8B7419]"
-                    }`}
-                  >
-                    {String(page).padStart(2, "0")}
-                  </button>
-                );
-              })}
+                  return (
+                    <button
+                      key={page}
+                      type="button"
+                      onClick={() => changePage(page)}
+                      className={`border-b pb-1 text-[9px] transition ${
+                        active
+                          ? "border-[#8B7419] text-[#8B7419]"
+                          : "border-transparent text-[#817D75] hover:text-[#8B7419]"
+                      }`}
+                    >
+                      {String(page).padStart(2, "0")}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => changePage(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="ml-7 text-[8px] uppercase tracking-[0.18em] text-[#8B7419] transition hover:text-[#4D410F] disabled:cursor-not-allowed disabled:opacity-35"
+              >
+                Next
+              </button>
             </div>
-
-            <button
-              type="button"
-              onClick={() => changePage(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              className="ml-7 text-[8px] uppercase tracking-[0.18em] text-[#8B7419] transition hover:text-[#4D410F] disabled:cursor-not-allowed disabled:opacity-35"
-            >
-              Next
-            </button>
-          </div>
-        </section>
+          </section>
         )}
 
         {/* Tất cả nhóm mùi hương */}
@@ -321,9 +327,9 @@ export default function Brand() {
             </h2>
 
             <p className="sig-reveal sig-d2 mt-7 max-w-xl text-[15px] leading-[1.9] text-white/80">
-              Mỗi mùi hương là một chữ ký vô hình. Hãy để các chuyên gia hương của
-              L'Essence Noire dẫn lối bạn tìm ra dấu ấn khứu giác của riêng mình —
-              tinh tế, bền lâu và không thể nhầm lẫn.
+              Mỗi mùi hương là một chữ ký vô hình. Hãy để các chuyên gia hương của L'Essence Noire
+              dẫn lối bạn tìm ra dấu ấn khứu giác của riêng mình — tinh tế, bền lâu và không thể
+              nhầm lẫn.
             </p>
 
             <div className="sig-reveal sig-d3 mt-10 flex w-full max-w-[460px] flex-col justify-center gap-3 sm:flex-row sm:gap-4">
@@ -332,7 +338,9 @@ export default function Brand() {
                 className="group inline-flex min-h-12 flex-1 items-center justify-center gap-2 bg-[#FCF9F4] px-7 text-[10px] font-semibold uppercase tracking-[0.22em] text-[#28251F] transition hover:bg-white hover:shadow-[0_10px_30px_rgba(200,164,77,0.35)]"
               >
                 Find your scent
-                <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
+                <span className="transition-transform duration-300 group-hover:translate-x-1">
+                  →
+                </span>
               </Link>
 
               <Link

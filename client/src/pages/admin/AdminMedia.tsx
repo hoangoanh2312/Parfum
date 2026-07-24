@@ -78,8 +78,7 @@ export default function AdminMedia() {
   const [selectedProduct, setSelectedProduct] = useState<AdminProduct | null>(null);
   const [scentFamilies, setScentFamilies] = useState<AdminScentFamilyCard[]>([]);
   const [unconfiguredScentFamilies, setUnconfiguredScentFamilies] = useState<string[]>([]);
-  const [selectedScentFamily, setSelectedScentFamily] =
-    useState<AdminScentFamilyCard | null>(null);
+  const [selectedScentFamily, setSelectedScentFamily] = useState<AdminScentFamilyCard | null>(null);
   const [newScentFamilyName, setNewScentFamilyName] = useState("");
   const [imageAction, setImageAction] = useState<ImageAction>("cover");
   const [assigning, setAssigning] = useState(false);
@@ -141,15 +140,9 @@ export default function AdminMedia() {
             );
             setUnconfiguredScentFamilies(
               Array.from(
-                new Set(
-                  (data.fragranceFamilies || [])
-                    .map((name) => name.trim())
-                    .filter(Boolean),
-                ),
+                new Set((data.fragranceFamilies || []).map((name) => name.trim()).filter(Boolean)),
               )
-                .filter(
-                  (name) => !configuredNames.has(name.toLocaleLowerCase("vi")),
-                )
+                .filter((name) => !configuredNames.has(name.toLocaleLowerCase("vi")))
                 .sort((left, right) => left.localeCompare(right, "vi")),
             );
           } catch {
@@ -357,14 +350,12 @@ export default function AdminMedia() {
       {/* Trang thai cau hinh Cloudinary */}
       {status && !status.configured && (
         <Card className="mb-6 border-yellow-200 bg-yellow-50 p-5">
-          <h3 className="font-semibold text-yellow-800">
-            ⚠️ Cloudinary chưa được cấu hình
-          </h3>
+          <h3 className="font-semibold text-yellow-800">⚠️ Cloudinary chưa được cấu hình</h3>
           <p className="mt-1 text-sm text-yellow-700">
             Thêm 3 biến sau vào file <code>server/.env</code> rồi khởi động lại server:
           </p>
           <pre className="mt-2 overflow-x-auto rounded-lg bg-yellow-100 p-3 text-xs text-yellow-900">
-{`CLOUDINARY_CLOUD_NAME=
+            {`CLOUDINARY_CLOUD_NAME=
 CLOUDINARY_API_KEY=
 CLOUDINARY_API_SECRET=
 CLOUDINARY_FOLDER=perfumeshop`}
@@ -388,19 +379,17 @@ CLOUDINARY_FOLDER=perfumeshop`}
       {status?.configured && (
         <Card className="mb-6 border-[#E4DACE] bg-[#FBF7F0] p-4">
           <p className="text-sm text-gray-700">
-            <span className="font-semibold">
-              Phạm vi thư mục “{folder || "gốc"}”:
-            </span>{" "}
-            ảnh trong thư mục này phục vụ {FOLDER_USAGE[folder] || "khu vực tương ứng"}.
+            <span className="font-semibold">Phạm vi thư mục “{folder || "gốc"}”:</span> ảnh trong
+            thư mục này phục vụ {FOLDER_USAGE[folder] || "khu vực tương ứng"}.
           </p>
           <p className="mt-1 text-xs text-gray-500">
             {folder === "products"
               ? "Ảnh ở đây có thể gán trực tiếp cho sản phẩm. "
               : folder === "brand"
                 ? "Ảnh ở đây có thể gán trực tiếp cho nhóm hương trên trang /brand. "
-              : "Ảnh ở đây chỉ dùng trong khu vực này (copy URL để sử dụng). "}
-            Admin được thêm/sửa/xoá (CRUD) ảnh trong thư mục này, nhưng ảnh KHÔNG được
-            dùng để gán hoặc CRUD cho thư mục khác — mỗi thư mục quản lý độc lập.
+                : "Ảnh ở đây chỉ dùng trong khu vực này (copy URL để sử dụng). "}
+            Admin được thêm/sửa/xoá (CRUD) ảnh trong thư mục này, nhưng ảnh KHÔNG được dùng để gán
+            hoặc CRUD cho thư mục khác — mỗi thư mục quản lý độc lập.
           </p>
         </Card>
       )}
@@ -472,11 +461,7 @@ CLOUDINARY_FOLDER=perfumeshop`}
 
           {cursor && (
             <div className="mt-6 flex justify-center">
-              <Button
-                variant="secondary"
-                disabled={loadingMore}
-                onClick={() => loadImages(false)}
-              >
+              <Button variant="secondary" disabled={loadingMore} onClick={() => loadImages(false)}>
                 {loadingMore ? "Đang tải..." : "Tải thêm"}
               </Button>
             </div>
@@ -506,13 +491,17 @@ CLOUDINARY_FOLDER=perfumeshop`}
             <Button
               onClick={folder === "brand" ? updateScentFamilyImage : updateProductImage}
               disabled={
-                assigning
-                || (folder === "brand"
+                assigning ||
+                (folder === "brand"
                   ? !selectedScentFamily && !newScentFamilyName.trim()
                   : !selectedProduct)
               }
             >
-              {assigning ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
+              {assigning ? (
+                <LoaderCircle className="h-4 w-4 animate-spin" />
+              ) : (
+                <ImagePlus className="h-4 w-4" />
+              )}
               {assigning
                 ? "Đang cập nhật..."
                 : folder === "brand"
@@ -526,7 +515,12 @@ CLOUDINARY_FOLDER=perfumeshop`}
           <div>
             <div className="aspect-square overflow-hidden border border-gray-200 bg-gray-50">
               {assignImage && (
-                <img src={assignImage.url} alt={assignImage.publicId} className="h-full w-full object-cover" />
+                <img
+                  loading="lazy"
+                  src={assignImage.url}
+                  alt={assignImage.publicId}
+                  className="h-full w-full object-cover"
+                />
               )}
             </div>
             <p className="mt-2 truncate text-xs text-gray-500" title={assignImage?.publicId}>
@@ -562,7 +556,12 @@ CLOUDINARY_FOLDER=perfumeshop`}
                             className={`flex w-full items-center gap-3 border-b border-gray-100 px-2 py-3 text-left transition last:border-0 ${selected ? "bg-[#F1ECE5]" : "hover:bg-gray-50"}`}
                           >
                             <span className="h-14 w-11 shrink-0 overflow-hidden bg-gray-100">
-                              <img src={family.image} alt="" className="h-full w-full object-cover" />
+                              <img
+                                loading="lazy"
+                                src={family.image}
+                                alt=""
+                                className="h-full w-full object-cover"
+                              />
                             </span>
                             <span className="min-w-0 flex-1">
                               <span className="block truncate text-sm font-medium text-gray-900">
@@ -583,8 +582,7 @@ CLOUDINARY_FOLDER=perfumeshop`}
                         </p>
                       )}
                       {unconfiguredScentFamilies.map((name) => {
-                        const selected =
-                          !selectedScentFamily && newScentFamilyName === name;
+                        const selected = !selectedScentFamily && newScentFamilyName === name;
                         return (
                           <button
                             key={name}
@@ -637,73 +635,91 @@ CLOUDINARY_FOLDER=perfumeshop`}
               </Field>
 
               <p className="text-xs leading-5 text-gray-600">
-                Chọn nhóm hiện có để thay ảnh, hoặc nhập tên mới để tạo card mới.
-                Thay đổi sẽ xuất hiện trên trang /brand sau khi lưu.
+                Chọn nhóm hiện có để thay ảnh, hoặc nhập tên mới để tạo card mới. Thay đổi sẽ xuất
+                hiện trên trang /brand sau khi lưu.
               </p>
             </div>
           ) : (
-          <div className="min-w-0 space-y-4">
-            <Field label="Cách cập nhật">
-              <Select value={imageAction} onChange={(event) => setImageAction(event.target.value as ImageAction)}>
-                <option value="cover">Đặt làm ảnh chính, giữ các ảnh cũ</option>
-                <option value="append">Thêm vào cuối thư viện sản phẩm</option>
-                <option value="replace">Thay toàn bộ ảnh hiện tại</option>
-              </Select>
-            </Field>
+            <div className="min-w-0 space-y-4">
+              <Field label="Cách cập nhật">
+                <Select
+                  value={imageAction}
+                  onChange={(event) => setImageAction(event.target.value as ImageAction)}
+                >
+                  <option value="cover">Đặt làm ảnh chính, giữ các ảnh cũ</option>
+                  <option value="append">Thêm vào cuối thư viện sản phẩm</option>
+                  <option value="replace">Thay toàn bộ ảnh hiện tại</option>
+                </Select>
+              </Field>
 
-            <Field label="Tìm và chọn sản phẩm">
-              <div className="relative">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                <Input
-                  value={productSearch}
-                  onChange={(event) => setProductSearch(event.target.value)}
-                  placeholder="Tên hoặc slug sản phẩm..."
-                  className="pl-10"
-                />
-              </div>
-            </Field>
-
-            <div className="max-h-64 overflow-y-auto border-y border-gray-100">
-              {productsLoading ? (
-                <div className="flex items-center justify-center gap-2 py-10 text-sm text-gray-500">
-                  <LoaderCircle className="h-4 w-4 animate-spin" /> Đang tìm sản phẩm
+              <Field label="Tìm và chọn sản phẩm">
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                  <Input
+                    value={productSearch}
+                    onChange={(event) => setProductSearch(event.target.value)}
+                    placeholder="Tên hoặc slug sản phẩm..."
+                    className="pl-10"
+                  />
                 </div>
-              ) : productResults.length ? (
-                productResults.map((product) => {
-                  const selected = selectedProduct?.id === product.id;
-                  return (
-                    <button
-                      key={product.id}
-                      type="button"
-                      onClick={() => setSelectedProduct(product)}
-                      className={`flex w-full items-center gap-3 border-b border-gray-100 px-2 py-3 text-left transition last:border-0 ${selected ? "bg-[#F1ECE5]" : "hover:bg-gray-50"}`}
-                    >
-                      <span className="h-11 w-11 shrink-0 overflow-hidden bg-gray-100">
-                        {product.images?.[0] ? (
-                          <img src={product.images[0]} alt="" className="h-full w-full object-cover" />
-                        ) : (
-                          <span className="flex h-full items-center justify-center"><ImagePlus className="h-4 w-4 text-gray-400" /></span>
-                        )}
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm font-medium text-gray-900">{product.name}</span>
-                        <span className="mt-0.5 block truncate text-xs text-gray-500">{product.brand?.name || "Chưa có thương hiệu"} · {product.images?.length || 0} ảnh</span>
-                      </span>
-                      {selected && <Check className="h-5 w-5 shrink-0 text-green-700" />}
-                    </button>
-                  );
-                })
-              ) : (
-                <p className="py-10 text-center text-sm text-gray-400">Không tìm thấy sản phẩm.</p>
+              </Field>
+
+              <div className="max-h-64 overflow-y-auto border-y border-gray-100">
+                {productsLoading ? (
+                  <div className="flex items-center justify-center gap-2 py-10 text-sm text-gray-500">
+                    <LoaderCircle className="h-4 w-4 animate-spin" /> Đang tìm sản phẩm
+                  </div>
+                ) : productResults.length ? (
+                  productResults.map((product) => {
+                    const selected = selectedProduct?.id === product.id;
+                    return (
+                      <button
+                        key={product.id}
+                        type="button"
+                        onClick={() => setSelectedProduct(product)}
+                        className={`flex w-full items-center gap-3 border-b border-gray-100 px-2 py-3 text-left transition last:border-0 ${selected ? "bg-[#F1ECE5]" : "hover:bg-gray-50"}`}
+                      >
+                        <span className="h-11 w-11 shrink-0 overflow-hidden bg-gray-100">
+                          {product.images?.[0] ? (
+                            <img
+                              loading="lazy"
+                              src={product.images[0]}
+                              alt=""
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <span className="flex h-full items-center justify-center">
+                              <ImagePlus className="h-4 w-4 text-gray-400" />
+                            </span>
+                          )}
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-sm font-medium text-gray-900">
+                            {product.name}
+                          </span>
+                          <span className="mt-0.5 block truncate text-xs text-gray-500">
+                            {product.brand?.name || "Chưa có thương hiệu"} ·{" "}
+                            {product.images?.length || 0} ảnh
+                          </span>
+                        </span>
+                        {selected && <Check className="h-5 w-5 shrink-0 text-green-700" />}
+                      </button>
+                    );
+                  })
+                ) : (
+                  <p className="py-10 text-center text-sm text-gray-400">
+                    Không tìm thấy sản phẩm.
+                  </p>
+                )}
+              </div>
+
+              {selectedProduct && (
+                <p className="text-xs text-gray-600">
+                  Đã chọn <strong>{selectedProduct.name}</strong>. Thay đổi sẽ được lưu ngay vào
+                  MongoDB.
+                </p>
               )}
             </div>
-
-            {selectedProduct && (
-              <p className="text-xs text-gray-600">
-                Đã chọn <strong>{selectedProduct.name}</strong>. Thay đổi sẽ được lưu ngay vào MongoDB.
-              </p>
-            )}
-          </div>
           )}
         </div>
       </Modal>

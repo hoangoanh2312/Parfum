@@ -1,4 +1,5 @@
 import axios from "axios";
+import { getAccessToken, setAccessToken, clearAccessToken, getCsrfToken } from "./token";
 
 // withCredentials: true de gui/nhan httpOnly cookie chua refresh token
 export const api = axios.create({
@@ -18,8 +19,15 @@ function processQueue(token: string | null, err?: any) {
 }
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("accessToken");
+  // Access token lay tu BO NHO (khong con doc localStorage).
+  const token = getAccessToken();
   if (token) config.headers.Authorization = `Bearer ${token}`;
+  // Dinh kem CSRF header cho cac request thay doi trang thai (double-submit cookie).
+  const method = (config.method || "get").toLowerCase();
+  if (method !== "get" && method !== "head") {
+    const csrf = getCsrfToken();
+    if (csrf) config.headers["X-CSRF-Token"] = csrf;
+  }
   return config;
 });
 
@@ -27,7 +35,11 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const original = error.config;
-    if (error.response?.status !== 401 || original._retry || original.url?.includes("/auth/refresh"))
+    if (
+      error.response?.status !== 401 ||
+      original._retry ||
+      original.url?.includes("/auth/refresh")
+    )
       return Promise.reject(error);
 
     original._retry = true;
@@ -35,16 +47,16 @@ api.interceptors.response.use(
     if (!isRefreshing) {
       isRefreshing = true;
       try {
-        // Refresh token nam trong httpOnly cookie -> khong can gui trong body
+        // Refresh token nam trong httpOnly cookie -> khong can gui trong body.
+        // CSRF header duoc gan tu dong o request interceptor.
         const { data } = await api.post("/auth/refresh", {});
-        localStorage.setItem("accessToken", data.accessToken);
+        setAccessToken(data.accessToken);
         original.headers.Authorization = `Bearer ${data.accessToken}`;
         processQueue(data.accessToken);
         return api(original);
       } catch (e) {
         processQueue(null, e);
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
+        clearAccessToken();
         return Promise.reject(error);
       } finally {
         isRefreshing = false;

@@ -43,9 +43,7 @@ export default function Wishlist() {
 
   async function remove(productId: string) {
     try {
-      const { data } = await api.delete<WishlistProduct[]>(
-        `/account/wishlist/${productId}`,
-      );
+      const { data } = await api.delete<WishlistProduct[]>(`/account/wishlist/${productId}`);
       setProducts(data);
       toast.success("Đã xóa khỏi wishlist");
     } catch (error: any) {
@@ -56,9 +54,7 @@ export default function Wishlist() {
   return (
     <div className="min-h-screen bg-[#FCF9F4] text-[#2D2925]">
       <section className="border-b border-[#E7E0D7] px-6 pb-7 pt-12 lg:px-12">
-        <p className="text-[10px] uppercase tracking-[0.28em] text-[#9B9288]">
-          Personal Portal
-        </p>
+        <p className="text-[10px] uppercase tracking-[0.28em] text-[#9B9288]">Personal Portal</p>
 
         <h1 className="mt-2 font-serif text-4xl lg:text-5xl">Wishlist</h1>
       </section>
@@ -93,6 +89,7 @@ export default function Wishlist() {
                 >
                   <Link to={href} className="block overflow-hidden">
                     <img
+                      loading="lazy"
                       src={image}
                       alt={product.name}
                       className="aspect-[4/5] w-full bg-[#F0ECE7] object-cover transition duration-700 group-hover:scale-[1.04]"
