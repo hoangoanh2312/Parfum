@@ -1,13 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  Clock,
-  MapPin,
-  Navigation,
-  Phone,
-  Search,
-  Store,
-  X,
-} from "lucide-react";
+import { Clock, MapPin, Navigation, Phone, Search, Store, X } from "lucide-react";
 
 type StoreLocation = {
   id: string;
@@ -46,7 +38,7 @@ const STORES: StoreLocation[] = [
     hours: "09:00 – 21:30",
     plusCode: "W8FW+9J Hoa Thuan, Tra Vinh, Vietnam",
     image:
-      "https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&w=640&q=80",
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSN7Wv7cTR1XT0C1UB79EEgOIzypyTLP_gMEVydaytFkA&s=10?auto=format&fit=crop&w=640&q=80",
     lat: 9.9209375,
     lng: 106.3463125,
   },
@@ -157,10 +149,9 @@ async function administrativeCenter(city: City, signal: AbortSignal) {
     "accept-language": "vi",
     q: `${placeName}, Việt Nam`,
   });
-  const response = await fetch(
-    `https://nominatim.openstreetmap.org/search?${params.toString()}`,
-    { signal },
-  );
+  const response = await fetch(`https://nominatim.openstreetmap.org/search?${params.toString()}`, {
+    signal,
+  });
   if (!response.ok) throw new Error("geocode");
 
   const rows = (await response.json()) as Array<{
@@ -196,8 +187,7 @@ async function administrativeCenter(city: City, signal: AbortSignal) {
 
   const lat = Number(row.lat);
   const lng = Number(row.lon);
-  if (!Number.isFinite(lat) || !Number.isFinite(lng))
-    throw new Error("geocode");
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) throw new Error("geocode");
   return { lat, lng };
 }
 
@@ -213,10 +203,7 @@ function haversine(a: GeoPoint, b: GeoPoint) {
 }
 
 function directionsUrl(store: StoreLocation) {
-  return (
-    "https://www.google.com/maps/search/?api=1&query=" +
-    encodeURIComponent(store.plusCode)
-  );
+  return "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(store.plusCode);
 }
 
 function vietnamOnlyWaypoints(origin: GeoPoint, store: StoreLocation) {
@@ -252,21 +239,16 @@ function routePoints(coordinates: number[][], maxPoints = 500) {
   const [lastLng, lastLat] = coordinates[coordinates.length - 1];
   const last = pct(lastLat, lastLng);
   const currentLast = sampled[sampled.length - 1];
-  if (!currentLast || currentLast.x !== last.x || currentLast.y !== last.y)
-    sampled.push(last);
+  if (!currentLast || currentLast.x !== last.x || currentLast.y !== last.y) sampled.push(last);
   return sampled;
 }
 
 // Tuyen duong du phong (dung ngay lap tuc, khong can mang). Noi origin -> store
 // qua hanh lang noi dia va lam min bang noi suy tuyen tinh de ve duong cong dep.
-function buildFallbackRoute(
-  origin: GeoPoint,
-  store: StoreLocation,
-): DrivingRoute {
+function buildFallbackRoute(origin: GeoPoint, store: StoreLocation): DrivingRoute {
   const anchors = [origin, ...vietnamOnlyWaypoints(origin, store), store];
   let distanceKm = 0;
-  for (let i = 1; i < anchors.length; i += 1)
-    distanceKm += haversine(anchors[i - 1], anchors[i]);
+  for (let i = 1; i < anchors.length; i += 1) distanceKm += haversine(anchors[i - 1], anchors[i]);
   distanceKm *= 1.28; // he so duong bo so voi duong chim bay
   const points: Array<{ x: number; y: number }> = [];
   const segments = 26;
@@ -275,9 +257,7 @@ function buildFallbackRoute(
     const b = anchors[i];
     for (let s = 0; s < segments; s += 1) {
       const t = s / segments;
-      points.push(
-        pct(a.lat + (b.lat - a.lat) * t, a.lng + (b.lng - a.lng) * t),
-      );
+      points.push(pct(a.lat + (b.lat - a.lat) * t, a.lng + (b.lng - a.lng) * t));
     }
   }
   points.push(pct(store.lat, store.lng));
@@ -347,9 +327,7 @@ export default function AboutStoreMap() {
     const q = normalize(query);
     if (!q) return [] as City[];
     return CITIES.filter(
-      (city) =>
-        normalize(city.name).includes(q) ||
-        normalize(city.geocodeName || "").includes(q),
+      (city) => normalize(city.name).includes(q) || normalize(city.geocodeName || "").includes(q),
     ).slice(0, 6);
   }, [query]);
 
@@ -378,11 +356,7 @@ export default function AboutStoreMap() {
       .then((data: any) => {
         const route = data?.routes?.[0];
         const coordinates = route?.geometry?.coordinates;
-        if (
-          data?.code !== "Ok" ||
-          !Array.isArray(coordinates) ||
-          !coordinates.length
-        )
+        if (data?.code !== "Ok" || !Array.isArray(coordinates) || !coordinates.length)
           throw new Error("route");
         setDrivingRoute({
           distanceKm: Math.round(Number(route.distance || 0) / 1000),
@@ -499,18 +473,14 @@ export default function AboutStoreMap() {
     geocodeAbortRef.current = null;
     setOrigin({
       ...center,
-      label: city.name.startsWith("Khu vực")
-        ? city.name
-        : `Trung tâm ${city.name}`,
+      label: city.name.startsWith("Khu vực") ? city.name : `Trung tâm ${city.name}`,
     });
     setSearching(false);
   }
 
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
-    const match =
-      suggestions[0] ||
-      CITIES.find((c) => normalize(c.name) === normalize(query));
+    const match = suggestions[0] || CITIES.find((c) => normalize(c.name) === normalize(query));
     if (match) void selectCity(match.name);
   }
 
@@ -575,17 +545,14 @@ export default function AboutStoreMap() {
           Tìm cửa hàng gần bạn nhất
         </h2>
         <p className="ln-fadeup mt-4 max-w-xl text-[15px] leading-[1.9] text-[#5c564b]">
-          Nhập tỉnh/thành để bắt đầu từ trung tâm địa giới mà không cần GPS,
-          hoặc chủ động chia sẻ vị trí để tìm boutique L'Essence Noire gần bạn.
+          Nhập tỉnh/thành để bắt đầu từ trung tâm địa giới mà không cần GPS, hoặc chủ động chia sẻ
+          vị trí để tìm boutique L'Essence Noire gần bạn.
         </p>
 
         <div className="mt-10 grid gap-8 lg:grid-cols-[minmax(300px,380px)_minmax(0,1fr)]">
           {/* ===================== MAP STAGE ===================== */}
           <div className="relative overflow-hidden rounded-[16px] border border-[#d8d1c0] bg-[linear-gradient(180deg,#f7f2e7,#efe7d3_55%,#e6dabf)] shadow-[0_30px_80px_-40px_rgba(60,50,25,0.6)]">
-            <div
-              className="relative w-full"
-              style={{ aspectRatio: String(MAP_ASPECT) }}
-            >
+            <div className="relative w-full" style={{ aspectRatio: String(MAP_ASPECT) }}>
               {/* Lop camera duoc phong to / bay */}
               <div
                 className="absolute inset-0"
@@ -606,13 +573,7 @@ export default function AboutStoreMap() {
                       <stop offset="0%" stopColor="#efe8d6" />
                       <stop offset="100%" stopColor="#e3d8bd" />
                     </linearGradient>
-                    <filter
-                      id="lnSoft"
-                      x="-20%"
-                      y="-20%"
-                      width="140%"
-                      height="140%"
-                    >
+                    <filter id="lnSoft" x="-20%" y="-20%" width="140%" height="140%">
                       <feDropShadow
                         dx="0"
                         dy="0.6"
@@ -666,6 +627,7 @@ export default function AboutStoreMap() {
                 {/* Anh raster chinh thuc (phu len khi tai xong) */}
                 {!mapError && (
                   <img
+                    loading="lazy"
                     src={MAP_IMAGE}
                     alt="Bản đồ Việt Nam"
                     referrerPolicy="no-referrer"
@@ -690,9 +652,7 @@ export default function AboutStoreMap() {
                   >
                     {effectiveRoute && (
                       <polyline
-                        points={effectiveRoute.points
-                          .map((p) => `${p.x},${p.y}`)
-                          .join(" ")}
+                        points={effectiveRoute.points.map((p) => `${p.x},${p.y}`).join(" ")}
                         fill="none"
                         stroke="#927A20"
                         strokeWidth={0.35 * k}
@@ -813,16 +773,9 @@ export default function AboutStoreMap() {
           <div className="relative isolate flex flex-col gap-5 overflow-visible">
             {/* ===== Ô TÌM KIẾM (đưa ra cột phải) ===== */}
             <div className="ln-fadeup relative z-30 overflow-visible rounded-[12px] border border-[#e2dccf] bg-white p-5 shadow-[0_18px_50px_-30px_rgba(40,32,16,0.55)]">
-              <p className="text-[10px] uppercase tracking-[0.28em] text-[#927A20]">
-                Tìm cửa hàng
-              </p>
-              <h3 className="mt-1 text-[19px] leading-snug text-[#242018]">
-                Nhập vị trí của bạn
-              </h3>
-              <form
-                onSubmit={handleSubmit}
-                className="relative z-40 mt-4 flex items-center gap-2"
-              >
+              <p className="text-[10px] uppercase tracking-[0.28em] text-[#927A20]">Tìm cửa hàng</p>
+              <h3 className="mt-1 text-[19px] leading-snug text-[#242018]">Nhập vị trí của bạn</h3>
+              <form onSubmit={handleSubmit} className="relative z-40 mt-4 flex items-center gap-2">
                 <div className="relative z-40 flex flex-1 items-center">
                   <Search
                     size={16}
@@ -855,10 +808,7 @@ export default function AboutStoreMap() {
                           onClick={() => void selectCity(city.name)}
                           className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-[13px] text-[#3a352b] transition hover:bg-[#fbf7ec]"
                         >
-                          <MapPin
-                            size={13}
-                            className="shrink-0 text-[#927A20]"
-                          />
+                          <MapPin size={13} className="shrink-0 text-[#927A20]" />
                           {city.name}
                         </button>
                       ))}
@@ -898,14 +848,15 @@ export default function AboutStoreMap() {
             {highlight ? (
               <div
                 key={highlight.id}
-                className="relative z-10 overflow-hidden rounded-[12px] border border-[#927A20]/35 bg-white/95 shadow-[0_24px_60px_-30px_rgba(40,32,16,0.6)] backdrop-blur"
+                className="relative z-10 overflow-hidden rounded-[12px] border border-[#927360]/35 bg-white/95 shadow-[0_24px_60px_-30px_rgba(40,32,16,0.6)] backdrop-blur"
                 style={{
                   animation: "ln-cardIn .55s cubic-bezier(.22,1,.36,1) both",
                 }}
               >
-                <div className="relative h-40 w-full overflow-hidden bg-[linear-gradient(120deg,#2c2620,#4a4133_55%,#927A20)]">
+                <div className="relative h-56 w-full overflow-hidden bg-[linear-gradient(120deg,#2c2620,#4a4133_55%,#927A20)]">
                   {!imageError && (
                     <img
+                      loading="lazy"
                       src={highlight.image}
                       alt={highlight.name}
                       referrerPolicy="no-referrer"
@@ -915,20 +866,13 @@ export default function AboutStoreMap() {
                   )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/55 to-transparent" />
                   <div className="absolute bottom-3 left-4 right-4">
-                    <p className="text-[9px] uppercase tracking-[0.2em] text-white/70">
-                      Boutique
-                    </p>
-                    <h3 className="text-[19px] leading-tight text-white">
-                      {highlight.name}
-                    </h3>
+                    <p className="text-[9px] uppercase tracking-[0.2em] text-white/70">Boutique</p>
+                    <h3 className="text-[19px] leading-tight text-white">{highlight.name}</h3>
                   </div>
                 </div>
                 <div className="space-y-2 px-4 py-4">
                   <p className="flex items-start gap-2 text-[13px] text-[#5c564b]">
-                    <MapPin
-                      size={13}
-                      className="mt-0.5 shrink-0 text-[#927A20]"
-                    />
+                    <MapPin size={13} className="mt-0.5 shrink-0 text-[#927A20]" />
                     {highlight.address}, {highlight.city}
                   </p>
                   <p className="flex items-center gap-2 text-[13px] text-[#5c564b]">
@@ -977,14 +921,12 @@ export default function AboutStoreMap() {
                       ) : null}
                     </div>
                   )}
-                  {origin &&
-                    effectiveRoute &&
-                    effectiveRoute.distanceKm > 250 && (
-                      <p className="rounded-[8px] bg-[#f4efe1] px-3 py-2 text-[11px] leading-relaxed text-[#8a6d1f]">
-                        Cửa hàng ở khá xa vị trí của bạn. Bạn có thể đặt hàng
-                        online để được giao tận nơi.
-                      </p>
-                    )}
+                  {origin && effectiveRoute && effectiveRoute.distanceKm > 250 && (
+                    <p className="rounded-[8px] bg-[#f4efe1] px-3 py-2 text-[11px] leading-relaxed text-[#8a6d1f]">
+                      Cửa hàng ở khá xa vị trí của bạn. Bạn có thể đặt hàng online để được giao tận
+                      nơi.
+                    </p>
+                  )}
                   <a
                     href={directionsUrl(highlight)}
                     target="_blank"
@@ -998,8 +940,7 @@ export default function AboutStoreMap() {
             ) : (
               <div className="ln-fadeup relative z-0 flex items-center gap-3 rounded-[10px] border border-[#e2dccf] bg-white/60 p-6 text-[14px] text-[#6b6558]">
                 <Store size={20} className="shrink-0 text-[#927A20]" />
-                Nhập tỉnh/thành ở ô tìm kiếm hoặc chọn cửa hàng bên dưới để xem
-                chi tiết.
+                Nhập tỉnh/thành ở ô tìm kiếm hoặc chọn cửa hàng bên dưới để xem chi tiết.
               </div>
             )}
 
@@ -1019,15 +960,10 @@ export default function AboutStoreMap() {
                       : "border-[#e6e0d3] bg-white/40")
                   }
                 >
-                  <MapPin
-                    size={14}
-                    className="mt-0.5 shrink-0 text-[#927A20]"
-                  />
+                  <MapPin size={14} className="mt-0.5 shrink-0 text-[#927A20]" />
                   <span className="min-w-0">
                     <span className="text-[#3a352b]">{store.city}</span>
-                    <span className="block text-[12px] text-[#8a8373]">
-                      {store.address}
-                    </span>
+                    <span className="block text-[12px] text-[#8a8373]">{store.address}</span>
                     <span className="mt-0.5 flex items-center gap-2 text-[11px] text-[#a79f8b]">
                       <Clock size={11} /> {store.hours}
                     </span>

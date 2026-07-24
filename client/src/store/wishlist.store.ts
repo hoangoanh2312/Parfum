@@ -3,7 +3,8 @@ import { api } from "../lib/api";
 import { toast } from "./toast.store";
 
 // Wishlist lưu theo user trong MongoDB nên bắt buộc phải đăng nhập.
-const getToken = () => localStorage.getItem("accessToken");
+import { getAccessToken } from "../lib/token";
+const getToken = () => getAccessToken();
 
 type WishlistApiProduct = { id: string };
 
@@ -76,17 +77,13 @@ export const useWishlist = create<WishlistState>((set, get) => ({
       ids: s.ids.includes(productId) ? s.ids : [...s.ids, productId],
     }));
     try {
-      const { data } = await api.post<WishlistApiProduct[]>(
-        `/account/wishlist/${productId}`,
-      );
+      const { data } = await api.post<WishlistApiProduct[]>(`/account/wishlist/${productId}`);
       set({ ids: data.map((p) => p.id) });
       toast.success("Đã thêm vào wishlist");
     } catch (error: any) {
       // Rollback nếu lỗi.
       set((s) => ({ ids: s.ids.filter((id) => id !== productId) }));
-      toast.error(
-        error?.response?.data?.message || "Không thể thêm vào wishlist",
-      );
+      toast.error(error?.response?.data?.message || "Không thể thêm vào wishlist");
     }
   },
 
@@ -98,9 +95,7 @@ export const useWishlist = create<WishlistState>((set, get) => ({
     const prev = get().ids;
     set((s) => ({ ids: s.ids.filter((id) => id !== productId) }));
     try {
-      const { data } = await api.delete<WishlistApiProduct[]>(
-        `/account/wishlist/${productId}`,
-      );
+      const { data } = await api.delete<WishlistApiProduct[]>(`/account/wishlist/${productId}`);
       set({ ids: data.map((p) => p.id) });
       toast.success("Đã xóa khỏi wishlist");
     } catch (error: any) {

@@ -1,14 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
-import {
-  Heart,
-  LayoutDashboard,
-  Menu,
-  Search,
-  ShoppingBag,
-  User,
-  X,
-} from "lucide-react";
+import { Heart, LayoutDashboard, Menu, Search, ShoppingBag, User, X } from "lucide-react";
 import { useCart } from "../store/cart.store";
 import { useAuth } from "../store/auth.store";
 
@@ -51,56 +43,50 @@ export default function Header() {
 
   const label = (vi: string, _en?: string) => vi;
   const navClass = ({ isActive }: { isActive: boolean }) =>
-    `flex h-20 w-full items-center justify-center whitespace-nowrap text-[10px] uppercase tracking-[2px] transition-colors duration-300 ${
-      isActive ? "text-[#746A5F]" : "text-[#A18D5D] hover:text-[#746A5F]"
+    `relative flex h-20 w-full items-center justify-center whitespace-nowrap text-[10px] font-medium uppercase tracking-[0.2em] transition-colors duration-300 after:absolute after:bottom-0 after:left-1/2 after:h-px after:-translate-x-1/2 after:bg-[#8B784B] after:transition-all after:duration-300 ${
+      isActive
+        ? "text-[#5F554A] after:w-8"
+        : "text-[#9A824C] after:w-0 hover:text-[#5F554A] hover:after:w-5"
     }`;
-  const desktopGroupPadding =
-    user?.role === "admin" ? "2xl:px-[270px]" : "2xl:px-[220px]";
 
   return (
     <header
-      className={`fixed inset-x-0 top-0 z-50 border-b border-[#E4DACE] bg-[#F5ECE3]/95 backdrop-blur-sm transition-transform duration-300 ease-out ${
+      className={`fixed inset-x-0 top-0 z-50 border-b border-[#DED3C7] bg-[#F7EFE7]/95 shadow-[0_8px_28px_rgba(70,54,35,0.04)] backdrop-blur-md transition-transform duration-300 ease-out ${
         isVisible ? "translate-y-0" : "-translate-y-full"
       }`}
     >
-      <div
-        className={`relative mx-auto grid h-20 w-full max-w-[1680px] grid-cols-[44px_1fr_auto] items-center gap-2 px-6 sm:px-8 lg:px-12 2xl:grid-cols-[minmax(0,1fr)_190px_minmax(0,1fr)] 2xl:gap-0 ${desktopGroupPadding}`}
-      >
+      <div className="relative mx-auto grid h-20 w-full max-w-[1680px] grid-cols-[44px_1fr_auto] items-center gap-2 px-5 sm:px-8 lg:px-10 2xl:block 2xl:px-2.5">
         <button
           type="button"
           onClick={() => setMenuOpen((open) => !open)}
           className="flex h-11 w-11 items-center justify-center text-[#8B784B] 2xl:hidden"
-          aria-label={label(menuOpen ? "Đóng menu" : "Mở menu", menuOpen ? "Close menu" : "Open menu")}
+          aria-label={label(
+            menuOpen ? "Đóng menu" : "Mở menu",
+            menuOpen ? "Close menu" : "Open menu",
+          )}
           aria-expanded={menuOpen}
         >
           {menuOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
 
         <nav
-          className="hidden h-full w-full grid-cols-3 items-center 2xl:grid"
+          className="absolute inset-y-0 left-2.5 hidden w-[660px] grid-cols-3 items-center min-[1680px]:w-[720px] 2xl:grid"
           aria-label="Primary"
         >
-          {menuItems.slice(0, 3).map((item, index) => (
-            <NavLink
-              key={item.link}
-              to={item.link}
-              className={(state) =>
-                `${navClass(state)} ${
-                  index === 0
-                    ? "2xl:-translate-x-[200px]"
-                    : index === 1
-                      ? "2xl:-translate-x-[133px]"
-                      : "2xl:-translate-x-[67px]"
-                }`
-              }
-            >
+          {menuItems.slice(0, 3).map((item) => (
+            <NavLink key={item.link} to={item.link} className={navClass}>
               {label(item.vi, item.en)}
             </NavLink>
           ))}
         </nav>
 
-        <Link to="/" className="absolute left-1/2 -translate-x-1/2 2xl:static 2xl:justify-self-center 2xl:translate-x-0" aria-label="L'Essence Noire">
+        <Link
+          to="/"
+          className="absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2"
+          aria-label="L'Essence Noire"
+        >
           <img
+            loading="lazy"
             src="https://res.cloudinary.com/dwj2trmn0/image/upload/v1784798994/1784798990705-226061.png"
             alt="L'Essence Noire"
             className="h-11 w-auto max-w-[112px] object-contain transition-transform duration-300 hover:scale-105 sm:h-14 sm:max-w-[170px] 2xl:max-w-[190px]"
@@ -108,7 +94,7 @@ export default function Header() {
         </Link>
 
         <nav
-          className="hidden h-full w-full grid-cols-3 items-center 2xl:grid"
+          className="absolute inset-y-0 left-[calc(50%+120px)] right-[260px] hidden grid-cols-3 items-center 2xl:grid"
           aria-label="Secondary"
         >
           {menuItems.slice(3).map((item) => (
@@ -118,14 +104,26 @@ export default function Header() {
           ))}
         </nav>
 
-        <div className="col-start-3 flex min-w-0 items-center justify-end gap-2 sm:gap-3 2xl:absolute 2xl:right-2.5 2xl:top-5">
-          <Link to="/order-lookup" className="header-icon-button hidden sm:flex" title={label("Tra cứu đơn hàng", "Order lookup")}>
+        <div className="col-start-3 flex min-w-0 items-center justify-end gap-1.5 sm:gap-2.5 2xl:absolute 2xl:right-2.5 2xl:top-1/2 2xl:-translate-y-1/2">
+          <Link
+            to="/order-lookup"
+            className="header-icon-button hidden sm:flex"
+            title={label("Tra cứu đơn hàng", "Order lookup")}
+          >
             <Search size={17} />
           </Link>
-          <Link to="/account/wishlist" className="header-icon-button hidden md:flex" title="Wishlist">
+          <Link
+            to="/account/wishlist"
+            className="header-icon-button hidden md:flex"
+            title="Wishlist"
+          >
             <Heart size={17} />
           </Link>
-          <Link to="/cart" className="header-icon-button relative" title={label("Giỏ hàng", "Cart")}>
+          <Link
+            to="/cart"
+            className="header-icon-button relative"
+            title={label("Giỏ hàng", "Cart")}
+          >
             <ShoppingBag size={17} />
             {count > 0 && (
               <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#746A5F] px-1 text-[8px] text-white">
@@ -133,7 +131,11 @@ export default function Header() {
               </span>
             )}
           </Link>
-          <Link to={user ? "/account" : "/login"} className="header-icon-button hidden xl:flex" title={user?.name || label("Đăng nhập", "Sign in")}>
+          <Link
+            to={user ? "/account" : "/login"}
+            className="header-icon-button hidden xl:flex"
+            title={user?.name || label("Đăng nhập", "Sign in")}
+          >
             <User size={17} />
           </Link>
           {user?.role === "admin" && (
@@ -153,15 +155,35 @@ export default function Header() {
         <div className="max-h-[calc(100dvh-80px)] overflow-y-auto border-t border-[#E4DACE] bg-[#F5ECE3] px-5 pb-6 pt-3 shadow-lg 2xl:hidden">
           <nav className="mx-auto grid max-w-xl" aria-label="Mobile">
             {menuItems.map((item) => (
-              <NavLink key={item.link} to={item.link} className={({ isActive }) => `border-b border-[#E6DDD2] py-4 text-[11px] uppercase tracking-[2px] ${isActive ? "text-[#5F554A]" : "text-[#907C4D]"}`}>
+              <NavLink
+                key={item.link}
+                to={item.link}
+                className={({ isActive }) =>
+                  `border-b border-[#E6DDD2] py-4 text-[11px] uppercase tracking-[2px] ${isActive ? "text-[#5F554A]" : "text-[#907C4D]"}`
+                }
+              >
                 {label(item.vi, item.en)}
               </NavLink>
             ))}
             <div className="grid grid-cols-2 gap-3 pt-5">
-              <Link to="/order-lookup" className="mobile-header-command"><Search size={16} />{label("Tra cứu đơn", "Order lookup")}</Link>
-              <Link to="/account/wishlist" className="mobile-header-command"><Heart size={16} />Wishlist</Link>
-              <Link to={user ? "/account" : "/login"} className="mobile-header-command"><User size={16} />{user ? label("Tài khoản", "Account") : label("Đăng nhập", "Sign in")}</Link>
-              {user?.role === "admin" && <Link to="/admin" className="mobile-header-command"><LayoutDashboard size={16} />{label("Quản trị", "Admin")}</Link>}
+              <Link to="/order-lookup" className="mobile-header-command">
+                <Search size={16} />
+                {label("Tra cứu đơn", "Order lookup")}
+              </Link>
+              <Link to="/account/wishlist" className="mobile-header-command">
+                <Heart size={16} />
+                Wishlist
+              </Link>
+              <Link to={user ? "/account" : "/login"} className="mobile-header-command">
+                <User size={16} />
+                {user ? label("Tài khoản", "Account") : label("Đăng nhập", "Sign in")}
+              </Link>
+              {user?.role === "admin" && (
+                <Link to="/admin" className="mobile-header-command">
+                  <LayoutDashboard size={16} />
+                  {label("Quản trị", "Admin")}
+                </Link>
+              )}
             </div>
           </nav>
         </div>

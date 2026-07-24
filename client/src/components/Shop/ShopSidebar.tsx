@@ -125,7 +125,7 @@ export default function ShopSidebar(props: Props) {
         </h3>
         <div className="relative overflow-hidden rounded-sm bg-[#EFECE7]">
           <video
-            src="https://res.cloudinary.com/dwj2trmn0/video/upload/v1784437000/Video_Project_4_fmziee.mp4"
+            src="https://res.cloudinary.com/dwj2trmn0/video/upload/v1784863574/video_kh%C3%A1c_li%C3%AAn_quan_%C4%91%E1%BA%BFn_ch%E1%BB%A7_y95cmx.mp4"
             autoPlay
             loop
             muted

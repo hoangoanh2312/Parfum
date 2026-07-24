@@ -1,15 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import {
-  Banknote,
-  CheckCircle2,
-  CreditCard,
-  Lock,
-  ShieldCheck,
-  Truck,
-  X,
-} from "lucide-react";
+import { Banknote, CheckCircle2, CreditCard, Lock, ShieldCheck, Truck, X } from "lucide-react";
 import { useCart } from "../store/cart.store";
 import type { CartItem } from "../store/cart.store";
 import { useAuth } from "../store/auth.store";
@@ -34,13 +26,26 @@ type PayInfo = {
   qrUrl: string;
 };
 type QuoteItem = {
-  variant: string; basePrice: number; finalPrice: number; discountPercent: number;
-  promotionName: string; quantity: number; lineOriginal: number; lineTotal: number;
+  variant: string;
+  basePrice: number;
+  finalPrice: number;
+  discountPercent: number;
+  promotionName: string;
+  quantity: number;
+  lineOriginal: number;
+  lineTotal: number;
 };
 type PricingQuote = {
-  items: QuoteItem[]; count: number; originalTotal: number; productLevelDiscount: number;
-  subtotal: number; voucherDiscount: number; shippingFeeBeforeDiscount: number;
-  shippingDiscount: number; shippingFee: number; finalTotal: number;
+  items: QuoteItem[];
+  count: number;
+  originalTotal: number;
+  productLevelDiscount: number;
+  subtotal: number;
+  voucherDiscount: number;
+  shippingFeeBeforeDiscount: number;
+  shippingDiscount: number;
+  shippingFee: number;
+  finalTotal: number;
   voucher: { code: string; name: string } | null;
 };
 
@@ -66,9 +71,7 @@ function normalizeText(value?: string) {
 }
 
 function formatSavedAddress(item: Address) {
-  return [item.line || item.detail, item.ward, item.province]
-    .filter(Boolean)
-    .join(", ");
+  return [item.line || item.detail, item.ward, item.province].filter(Boolean).join(", ");
 }
 
 export default function Checkout() {
@@ -140,8 +143,7 @@ export default function Checkout() {
   useEffect(() => {
     if (!user) return;
 
-    const defaultAddress =
-      user.addresses?.find((item) => item.isDefault) || user.addresses?.[0];
+    const defaultAddress = user.addresses?.find((item) => item.isDefault) || user.addresses?.[0];
     const fallbackName = splitName(defaultAddress?.fullName || user.name || "");
 
     setEmail(user.email || "");
@@ -159,12 +161,13 @@ export default function Checkout() {
   const grandTotal = quote?.finalTotal ?? total + shippingFee;
   const fullName = (firstName.trim() + " " + lastName.trim()).trim();
   const addressLine = address.trim();
-  const addressCity = [ward.trim(), city.trim()]
-    .filter(Boolean)
-    .join(", ");
+  const addressCity = [ward.trim(), city.trim()].filter(Boolean).join(", ");
   const emailValue = email.trim().toLowerCase();
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue);
-  const quotedByVariant = useMemo(() => new Map((quote?.items || []).map((item) => [item.variant, item])), [quote]);
+  const quotedByVariant = useMemo(
+    () => new Map((quote?.items || []).map((item) => [item.variant, item])),
+    [quote],
+  );
   const savedAddresses = user?.addresses || [];
   const currentAddressIsSaved = useMemo(
     () =>
@@ -179,54 +182,72 @@ export default function Checkout() {
     [savedAddresses, fullName, phone, addressLine, ward, city],
   );
 
-  const loadQuote = useCallback(async (code = voucherCode, showError = false) => {
-    if (!items.length) return;
-    try {
-      setQuoteLoading(true);
-      const { data } = await api.post<{ success: boolean; data: PricingQuote }>("/orders/price-preview", {
-        items: items.map((item) => ({ variant: item.variant, quantity: item.quantity })),
-        shippingMethod: shipping,
-        voucherCode: code || undefined,
-        email: emailValid ? emailValue : undefined,
-      });
-      setQuote(data.data);
-      return data.data;
-    } catch (error: any) {
-      if (showError) toast.error(error?.response?.data?.message || "Không áp dụng được mã ưu đãi");
-      else if (code) {
-        setVoucherCode("");
-        setVoucherInput("");
-        setQuote(null);
-        toast.error(error?.response?.data?.message || "Mã ưu đãi không còn phù hợp với giỏ hàng");
+  const loadQuote = useCallback(
+    async (code = voucherCode, showError = false) => {
+      if (!items.length) return;
+      try {
+        setQuoteLoading(true);
+        const { data } = await api.post<{ success: boolean; data: PricingQuote }>(
+          "/orders/price-preview",
+          {
+            items: items.map((item) => ({ variant: item.variant, quantity: item.quantity })),
+            shippingMethod: shipping,
+            voucherCode: code || undefined,
+            email: emailValid ? emailValue : undefined,
+          },
+        );
+        setQuote(data.data);
+        return data.data;
+      } catch (error: any) {
+        if (showError)
+          toast.error(error?.response?.data?.message || "Không áp dụng được mã ưu đãi");
+        else if (code) {
+          setVoucherCode("");
+          setVoucherInput("");
+          setQuote(null);
+          toast.error(error?.response?.data?.message || "Mã ưu đãi không còn phù hợp với giỏ hàng");
+        }
+        if (code) throw error;
+      } finally {
+        setQuoteLoading(false);
       }
-      if (code) throw error;
-    } finally {
-      setQuoteLoading(false);
-    }
-  }, [items, shipping, voucherCode, emailValid, emailValue]);
+    },
+    [items, shipping, voucherCode, emailValid, emailValue],
+  );
 
-  useEffect(() => { loadQuote(voucherCode).catch(() => undefined); }, [loadQuote, voucherCode]);
+  useEffect(() => {
+    loadQuote(voucherCode).catch(() => undefined);
+  }, [loadQuote, voucherCode]);
 
   async function applyVoucher() {
     const code = voucherInput.trim().toUpperCase();
     if (!code) return toast.error("Nhập mã ưu đãi");
     try {
       const next = await loadQuote(code, true);
-      if (next) { setVoucherCode(code); toast.success("Đã áp dụng mã ưu đãi"); }
-    } catch { /* thong bao tai loadQuote */ }
+      if (next) {
+        setVoucherCode(code);
+        toast.success("Đã áp dụng mã ưu đãi");
+      }
+    } catch {
+      /* thong bao tai loadQuote */
+    }
   }
 
   function removeVoucher() {
-    setVoucherCode(""); setVoucherInput("");
+    setVoucherCode("");
+    setVoucherInput("");
   }
 
   async function updateCheckoutQuantity(item: CartItem, nextQuantity: number) {
     const quantity = Math.max(0, Math.min(nextQuantity, item.stock ?? Number.MAX_SAFE_INTEGER));
     try {
       if (isBuyNow) {
-        const nextItems = quantity <= 0
-          ? buyNowItems.filter((line) => line.variant !== item.variant)
-          : buyNowItems.map((line) => line.variant === item.variant ? { ...line, quantity } : line);
+        const nextItems =
+          quantity <= 0
+            ? buyNowItems.filter((line) => line.variant !== item.variant)
+            : buyNowItems.map((line) =>
+                line.variant === item.variant ? { ...line, quantity } : line,
+              );
         setBuyNowItems(nextItems);
         if (nextItems[0]) sessionStorage.setItem(BUY_NOW_KEY, JSON.stringify(nextItems[0]));
         else sessionStorage.removeItem(BUY_NOW_KEY);
@@ -234,7 +255,9 @@ export default function Checkout() {
       }
       await updateItem(item.variant, quantity);
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || error?.message || "Không cập nhật được số lượng");
+      toast.error(
+        error?.response?.data?.message || error?.message || "Không cập nhật được số lượng",
+      );
     }
   }
 
@@ -266,13 +289,12 @@ export default function Checkout() {
       items.length > 0,
     [email, emailValid, firstName, address, city, ward, phone, items.length],
   );
-  const shouldAskToSaveInfo = !!user && addressValid && (!user.phone || !savedAddresses.length || !currentAddressIsSaved);
+  const shouldAskToSaveInfo =
+    !!user && addressValid && (!user.phone || !savedAddresses.length || !currentAddressIsSaved);
 
   function nextStep() {
     if (step === 1 && !addressValid) {
-      toast.error(
-        "Vui lòng nhập đủ email, địa chỉ và số điện thoại 10 số bắt đầu bằng 0.",
-      );
+      toast.error("Vui lòng nhập đủ email, địa chỉ và số điện thoại 10 số bắt đầu bằng 0.");
       return;
     }
     setStep((current) => Math.min(4, current + 1));
@@ -303,12 +325,13 @@ export default function Checkout() {
       },
       note: fullNote,
       voucherCode: voucherCode || undefined,
-      items: isBuyNow || !user
-        ? items.map((item) => ({
-            variant: item.variant,
-            quantity: item.quantity,
-          }))
-        : undefined,
+      items:
+        isBuyNow || !user
+          ? items.map((item) => ({
+              variant: item.variant,
+              quantity: item.quantity,
+            }))
+          : undefined,
     };
   }
 
@@ -370,7 +393,10 @@ export default function Checkout() {
       try {
         await saveCheckoutInfoToDashboard();
       } catch (saveError: any) {
-        toast.error(saveError?.response?.data?.message || "Đơn đã tạo, nhưng chưa lưu được thông tin vào dashboard");
+        toast.error(
+          saveError?.response?.data?.message ||
+            "Đơn đã tạo, nhưng chưa lưu được thông tin vào dashboard",
+        );
       }
 
       if (method === "bank_qr") {
@@ -389,9 +415,7 @@ export default function Checkout() {
       toast.success("Đặt hàng thành công!");
       navigate("/thank-you/" + data.data.orderId);
     } catch (e: any) {
-      toast.error(
-        e?.response?.data?.message || "Không thể tạo đơn, vui lòng thử lại.",
-      );
+      toast.error(e?.response?.data?.message || "Không thể tạo đơn, vui lòng thử lại.");
     } finally {
       setSubmitting(false);
     }
@@ -429,16 +453,13 @@ export default function Checkout() {
 
   const inputCls =
     "w-full border border-[rgba(208,197,175,0.6)] bg-white px-4 py-3 font-['Manrope'] text-sm text-[#1C1C19] outline-none focus:border-[#735C00] duration-200";
-  const labelCls =
-    "block font-['Manrope'] text-xs uppercase tracking-[1.5px] text-[#5F5E5E] mb-2";
+  const labelCls = "block font-['Manrope'] text-xs uppercase tracking-[1.5px] text-[#5F5E5E] mb-2";
 
   if (!items.length) {
     return (
       <>
         <section className="min-h-[60vh] bg-[#FDF9F4] px-6 py-20 text-center">
-          <h1 className="font-['Noto_Serif'] text-4xl text-[#1C1C19]">
-            Giỏ hàng trống
-          </h1>
+          <h1 className="font-['Noto_Serif'] text-4xl text-[#1C1C19]">Giỏ hàng trống</h1>
           <p className="mt-3 font-['Manrope'] text-[#5F5E5E]">
             Thêm sản phẩm vào giỏ trước khi thanh toán.
           </p>
@@ -639,9 +660,7 @@ export default function Checkout() {
                       onChange={(event) => setSaveCustomerInfo(event.target.checked)}
                       className="mt-1"
                     />
-                    <span>
-                      Lưu thông tin giao hàng.
-                    </span>
+                    <span>Lưu thông tin giao hàng.</span>
                   </label>
                 )}
               </Panel>
@@ -685,9 +704,7 @@ export default function Checkout() {
                   onClick={() => setMethod("bank_qr")}
                 />
                 <div className="mt-6">
-                  <label className={labelCls}>
-                    Ghi chú đơn hàng (tùy chọn)
-                  </label>
+                  <label className={labelCls}>Ghi chú đơn hàng (tùy chọn)</label>
                   <textarea
                     className={inputCls + " min-h-[90px] resize-y"}
                     value={note}
@@ -705,20 +722,13 @@ export default function Checkout() {
                   <SummaryRow label="Điện thoại" value={phone} />
                   <SummaryRow
                     label="Địa chỉ"
-                    value={[addressLine, addressCity]
-                      .filter(Boolean)
-                      .join(" - ")}
+                    value={[addressLine, addressCity].filter(Boolean).join(" - ")}
                   />
                   <SummaryRow
                     label="Vận chuyển"
-                    value={
-                      shipping === "standard" ? "Tiêu chuẩn" : "Giao nhanh"
-                    }
+                    value={shipping === "standard" ? "Tiêu chuẩn" : "Giao nhanh"}
                   />
-                  <SummaryRow
-                    label="Thanh toán"
-                    value={method === "cod" ? "COD" : "VietQR"}
-                  />
+                  <SummaryRow label="Thanh toán" value={method === "cod" ? "COD" : "VietQR"} />
                 </div>
               </Panel>
             )}
@@ -726,11 +736,7 @@ export default function Checkout() {
             <div className="mt-8 flex flex-wrap justify-between gap-3">
               <button
                 type="button"
-                onClick={() =>
-                  step === 1
-                    ? navigate("/cart")
-                    : setStep((current) => current - 1)
-                }
+                onClick={() => (step === 1 ? navigate("/cart") : setStep((current) => current - 1))}
                 className="border border-[#735C00] px-7 py-3 font-['Manrope'] text-xs uppercase tracking-[2px] text-[#735C00]"
               >
                 {step === 1 ? "Quay lại giỏ" : "Quay lại"}
@@ -763,72 +769,108 @@ export default function Checkout() {
 
           <aside className="min-w-0 lg:col-span-2">
             <div className="bg-[#F7F3EE] border border-[rgba(208,197,175,0.4)] p-6 lg:sticky lg:top-6">
-              <h2 className="font-['Noto_Serif'] text-2xl text-[#1C1C19] mb-6">
-                Đơn hàng của bạn
-              </h2>
+              <h2 className="font-['Noto_Serif'] text-2xl text-[#1C1C19] mb-6">Đơn hàng của bạn</h2>
 
               <div className="space-y-4 max-h-[320px] overflow-auto pr-1">
                 {items.map((it) => {
                   const priced = quotedByVariant.get(it.variant);
                   return (
-                  <div key={it.variant} className="flex gap-4">
-                    <div className="w-16 h-20 bg-white flex items-center justify-center shrink-0">
-                      <img
-                        src={it.image || PLACEHOLDER}
-                        alt={it.name}
-                        onError={(e) => {
-                          (e.currentTarget as HTMLImageElement).src =
-                            PLACEHOLDER;
-                        }}
-                        className="w-full h-full object-cover mix-blend-multiply"
-                      />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-['Noto_Serif'] text-base text-[#1C1C19] truncate">
-                        {it.name}
-                      </h3>
-                      <p className="font-['Manrope'] uppercase tracking-[1px] text-[11px] text-[#5F5E5E] mt-0.5">
-                        {it.volume}
-                      </p>
-                      <div className="mt-2 inline-flex h-8 items-center border border-[#D8CBB7] bg-white">
-                        <button
-                          type="button"
-                          onClick={() => void updateCheckoutQuantity(it, it.quantity - 1)}
-                          className="flex h-full w-8 items-center justify-center text-[#735C00] transition hover:bg-[#F7F3EE]"
-                          aria-label="Giảm số lượng"
-                        >
-                          -
-                        </button>
-                        <span className="flex h-full min-w-9 items-center justify-center border-x border-[#E6DCCF] px-2 font-['Manrope'] text-xs text-[#1C1C19]">
-                          {it.quantity}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => void updateCheckoutQuantity(it, it.quantity + 1)}
-                          disabled={typeof it.stock === "number" && it.quantity >= it.stock}
-                          className="flex h-full w-8 items-center justify-center text-[#735C00] transition hover:bg-[#F7F3EE] disabled:cursor-not-allowed disabled:text-[#C7BCA9]"
-                          aria-label="Tăng số lượng"
-                        >
-                          +
-                        </button>
+                    <div key={it.variant} className="flex gap-4">
+                      <div className="w-16 h-20 bg-white flex items-center justify-center shrink-0">
+                        <img
+                          loading="lazy"
+                          src={it.image || PLACEHOLDER}
+                          alt={it.name}
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).src = PLACEHOLDER;
+                          }}
+                          className="w-full h-full object-cover mix-blend-multiply"
+                        />
                       </div>
-                      {priced?.promotionName && <p className="mt-1 text-[10px] text-[#8B1E1E]">{priced.promotionName}</p>}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-['Noto_Serif'] text-base text-[#1C1C19] truncate">
+                          {it.name}
+                        </h3>
+                        <p className="font-['Manrope'] uppercase tracking-[1px] text-[11px] text-[#5F5E5E] mt-0.5">
+                          {it.volume}
+                        </p>
+                        <div className="mt-2 inline-flex h-8 items-center border border-[#D8CBB7] bg-white">
+                          <button
+                            type="button"
+                            onClick={() => void updateCheckoutQuantity(it, it.quantity - 1)}
+                            className="flex h-full w-8 items-center justify-center text-[#735C00] transition hover:bg-[#F7F3EE]"
+                            aria-label="Giảm số lượng"
+                          >
+                            -
+                          </button>
+                          <span className="flex h-full min-w-9 items-center justify-center border-x border-[#E6DCCF] px-2 font-['Manrope'] text-xs text-[#1C1C19]">
+                            {it.quantity}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => void updateCheckoutQuantity(it, it.quantity + 1)}
+                            disabled={typeof it.stock === "number" && it.quantity >= it.stock}
+                            className="flex h-full w-8 items-center justify-center text-[#735C00] transition hover:bg-[#F7F3EE] disabled:cursor-not-allowed disabled:text-[#C7BCA9]"
+                            aria-label="Tăng số lượng"
+                          >
+                            +
+                          </button>
+                        </div>
+                        {priced?.promotionName && (
+                          <p className="mt-1 text-[10px] text-[#8B1E1E]">{priced.promotionName}</p>
+                        )}
+                      </div>
+                      <div className="text-right font-['Manrope'] text-sm whitespace-nowrap">
+                        <span
+                          className={priced?.discountPercent ? "text-[#8B1E1E]" : "text-[#1C1C19]"}
+                        >
+                          {vnd(priced?.lineTotal ?? it.price * it.quantity)}
+                        </span>
+                        {!!priced?.discountPercent && (
+                          <span className="block text-[10px] text-[#8D887F] line-through">
+                            {vnd(priced.lineOriginal)}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <div className="text-right font-['Manrope'] text-sm whitespace-nowrap">
-                      <span className={priced?.discountPercent ? "text-[#8B1E1E]" : "text-[#1C1C19]"}>{vnd(priced?.lineTotal ?? it.price * it.quantity)}</span>
-                      {!!priced?.discountPercent && <span className="block text-[10px] text-[#8D887F] line-through">{vnd(priced.lineOriginal)}</span>}
-                    </div>
-                  </div>
                   );
                 })}
               </div>
 
               <div className="mt-5 border-t border-[rgba(208,197,175,0.5)] pt-5">
                 <div className="flex gap-2">
-                  <input value={voucherInput} onChange={(e) => setVoucherInput(e.target.value.toUpperCase())} onKeyDown={(e) => e.key === "Enter" && applyVoucher()} disabled={!!voucherCode} placeholder="Mã ưu đãi" className="min-w-0 flex-1 border border-[#D8CBB7] bg-white px-3 py-2.5 font-['Manrope'] text-xs uppercase outline-none focus:border-[#735C00]" />
-                  {voucherCode ? <button type="button" onClick={removeVoucher} className="border border-[#8B1E1E] px-3 text-xs text-[#8B1E1E]">Bỏ mã</button> : <button type="button" onClick={applyVoucher} disabled={quoteLoading} className="bg-[#1C1C19] px-4 text-xs uppercase text-white disabled:opacity-50">Áp dụng</button>}
+                  <input
+                    value={voucherInput}
+                    onChange={(e) => setVoucherInput(e.target.value.toUpperCase())}
+                    onKeyDown={(e) => e.key === "Enter" && applyVoucher()}
+                    disabled={!!voucherCode}
+                    placeholder="Mã ưu đãi"
+                    className="min-w-0 flex-1 border border-[#D8CBB7] bg-white px-3 py-2.5 font-['Manrope'] text-xs uppercase outline-none focus:border-[#735C00]"
+                  />
+                  {voucherCode ? (
+                    <button
+                      type="button"
+                      onClick={removeVoucher}
+                      className="border border-[#8B1E1E] px-3 text-xs text-[#8B1E1E]"
+                    >
+                      Bỏ mã
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={applyVoucher}
+                      disabled={quoteLoading}
+                      className="bg-[#1C1C19] px-4 text-xs uppercase text-white disabled:opacity-50"
+                    >
+                      Áp dụng
+                    </button>
+                  )}
                 </div>
-                {quote?.voucher && <p className="mt-2 text-xs text-[#735C00]">{quote.voucher.name} · {quote.voucher.code}</p>}
+                {quote?.voucher && (
+                  <p className="mt-2 text-xs text-[#735C00]">
+                    {quote.voucher.name} · {quote.voucher.code}
+                  </p>
+                )}
               </div>
 
               <div className="border-t border-[rgba(208,197,175,0.5)] mt-6 pt-5 space-y-3 font-['Manrope'] text-sm">
@@ -836,17 +878,27 @@ export default function Checkout() {
                   label={`Giá niêm yết (${quote?.count ?? count} sản phẩm)`}
                   value={vnd(quote?.originalTotal ?? total)}
                 />
-                {!!quote?.productLevelDiscount && <SummaryRow label="Ưu đãi sản phẩm" value={`-${vnd(quote.productLevelDiscount)}`} />}
-                {!!quote?.voucherDiscount && <SummaryRow label={`Voucher ${quote.voucher?.code || ""}`} value={`-${vnd(quote.voucherDiscount)}`} />}
+                {!!quote?.productLevelDiscount && (
+                  <SummaryRow
+                    label="Ưu đãi sản phẩm"
+                    value={`-${vnd(quote.productLevelDiscount)}`}
+                  />
+                )}
+                {!!quote?.voucherDiscount && (
+                  <SummaryRow
+                    label={`Voucher ${quote.voucher?.code || ""}`}
+                    value={`-${vnd(quote.voucherDiscount)}`}
+                  />
+                )}
                 <SummaryRow
                   label="Phí vận chuyển"
                   value={shippingFee ? vnd(shippingFee) : "Miễn phí"}
                 />
-                {!!quote?.shippingDiscount && <SummaryRow label="Ưu đãi vận chuyển" value={`-${vnd(quote.shippingDiscount)}`} />}
+                {!!quote?.shippingDiscount && (
+                  <SummaryRow label="Ưu đãi vận chuyển" value={`-${vnd(quote.shippingDiscount)}`} />
+                )}
                 <div className="flex justify-between items-center border-t border-[rgba(208,197,175,0.5)] pt-4 mt-1">
-                  <span className="font-['Noto_Serif'] text-lg text-[#1C1C19]">
-                    Tổng cộng
-                  </span>
+                  <span className="font-['Noto_Serif'] text-lg text-[#1C1C19]">Tổng cộng</span>
                   <span className="font-['Noto_Serif'] text-2xl text-[#1C1C19]">
                     {vnd(grandTotal)}
                   </span>
@@ -887,6 +939,7 @@ export default function Checkout() {
               <div className="bg-white p-3">
                 {pendingQr.qrUrl ? (
                   <img
+                    loading="lazy"
                     src={pendingQr.qrUrl}
                     alt="VietQR"
                     className="aspect-square w-full object-contain"
@@ -901,13 +954,17 @@ export default function Checkout() {
               <div className="space-y-3 font-['Manrope'] text-sm">
                 <QrRow label="Số tiền" value={vnd(pendingQr.amount)} strong />
                 <QrRow label="Số tài khoản" value={pendingQr.bank.accountNo || "Chưa cấu hình"} />
-                <QrRow label="Chủ tài khoản" value={pendingQr.bank.accountName || "Chưa cấu hình"} />
+                <QrRow
+                  label="Chủ tài khoản"
+                  value={pendingQr.bank.accountName || "Chưa cấu hình"}
+                />
                 <QrRow label="Nội dung CK" value={pendingQr.transferContent} />
               </div>
             </div>
 
             <p className="mt-5 bg-[#F3EEE8] px-4 py-3 font-['Manrope'] text-xs leading-5 text-[#675F57]">
-              SePay sẽ ghi nhận giao dịch. Trạng thái chỉ chuyển thành đã thanh toán sau khi admin đối soát và xác nhận.
+              SePay sẽ ghi nhận giao dịch. Trạng thái chỉ chuyển thành đã thanh toán sau khi admin
+              đối soát và xác nhận.
             </p>
 
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -938,9 +995,7 @@ export default function Checkout() {
 function Panel({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="min-w-0 border border-[rgba(208,197,175,0.4)] bg-white p-4 sm:p-6">
-      <h2 className="mb-6 font-['Noto_Serif'] text-2xl text-[#1C1C19]">
-        {title}
-      </h2>
+      <h2 className="mb-6 font-['Noto_Serif'] text-2xl text-[#1C1C19]">{title}</h2>
       {children}
     </section>
   );
@@ -974,16 +1029,10 @@ function Choice({
     >
       <span className="text-[#735C00] shrink-0">{icon}</span>
       <span className="min-w-0 flex-1">
-        <span className="block font-['Manrope'] font-semibold text-[#1C1C19]">
-          {title}
-        </span>
-        <span className="block font-['Manrope'] text-xs text-[#5F5E5E] mt-0.5">
-          {detail}
-        </span>
+        <span className="block font-['Manrope'] font-semibold text-[#1C1C19]">{title}</span>
+        <span className="block font-['Manrope'] text-xs text-[#5F5E5E] mt-0.5">{detail}</span>
       </span>
-      {price && (
-        <span className="font-['Manrope'] text-sm text-[#735C00]">{price}</span>
-      )}
+      {price && <span className="font-['Manrope'] text-sm text-[#735C00]">{price}</span>}
     </button>
   );
 }
@@ -997,7 +1046,15 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-function QrRow({ label, value, strong = false }: { label: string; value: string; strong?: boolean }) {
+function QrRow({
+  label,
+  value,
+  strong = false,
+}: {
+  label: string;
+  value: string;
+  strong?: boolean;
+}) {
   return (
     <div className="border-b border-[#E6DCCF] pb-3">
       <p className="text-[10px] uppercase tracking-[1.4px] text-[#8A8178]">{label}</p>

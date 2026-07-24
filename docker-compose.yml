@@ -1,47 +1,48 @@
-# PF-44 / PF-6: chay toan bo he thong (mongo + server + client) bang 1 lenh:
-#   docker compose up --build
-# Sau khi chay:
-#   - Web (client):     http://localhost:8080
-#   - API (server):     http://localhost:5000/api
-#   - Swagger UI:       http://localhost:5000/api/docs
-#   - MongoDB:          mongodb://localhost:27017/parfum-shop
-
+# Stack chay local/prod: MongoDB + Redis + API (server) + web tinh (client qua nginx).
+# Su dung: sao chep server/.env.example -> server/.env, dien gia tri, roi: docker compose up -d --build
 services:
   mongo:
     image: mongo:7
-    container_name: parfum-mongo
     restart: unless-stopped
+    volumes:
+      - mongo-data:/data/db
     ports:
       - "27017:27017"
-    volumes:
-      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
 
   server:
-    build: ./server
-    container_name: parfum-server
+    build:
+      context: ./server
     restart: unless-stopped
     env_file:
       - ./server/.env
+    environment:
+      # Ghi de de tro toi service trong mang compose.
+      - MONGO_URI=mongodb://mongo:27017/lessence
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_started
     ports:
       - "5000:5000"
-    environment:
-      NODE_ENV: production
-      PORT: "5000"
-      CLIENT_URL: http://localhost:8080
-      CORS_ORIGINS: http://localhost:8080,http://localhost:5173
-      DEFAULT_ADMIN_EMAIL: admin@lessencenoire.vn
-      ADMIN_BOOTSTRAP_PASSWORD: Admin@123
-      # Cloudinary / VietQR (tuy chon - dien de bat upload anh / QR that)
-      CLOUDINARY_CLOUD_NAME: ""
-      CLOUDINARY_API_KEY: ""
-      CLOUDINARY_API_SECRET: ""
 
   client:
     build:
       context: ./client
       args:
         VITE_API_URL: http://localhost:5000/api
-    container_name: parfum-client
     restart: unless-stopped
     depends_on:
       - server
@@ -49,4 +50,4 @@ services:
       - "8080:80"
 
 volumes:
-  mongo_data:
+  mongo-data:

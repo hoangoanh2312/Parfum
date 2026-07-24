@@ -40,8 +40,7 @@ type BrandProfile = {
 
 type BrandResponse = { data?: BrandProfile[] } | BrandProfile[];
 
-const FALLBACK_IMAGE =
-  "https://images.unsplash.com/photo-1541643600914-78b084683702?w=800&q=80";
+const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1541643600914-78b084683702?w=800&q=80";
 
 const slugify = (value: string) =>
   value
@@ -81,10 +80,16 @@ export default function BrandJournal({ brand: brandOverride }: { brand?: string 
           rows.find((item) => slugify(item.slug || item.name) === requestedSlug) ||
           rows.find((item) => slugify(item.name) === requestedSlug);
 
-        setBrandInfo(found || { name: brandOverride || titleFromSlug(requestedSlug), slug: requestedSlug });
+        setBrandInfo(
+          found || { name: brandOverride || titleFromSlug(requestedSlug), slug: requestedSlug },
+        );
       })
       .catch(() => {
-        if (mounted) setBrandInfo({ name: brandOverride || titleFromSlug(requestedSlug), slug: requestedSlug });
+        if (mounted)
+          setBrandInfo({
+            name: brandOverride || titleFromSlug(requestedSlug),
+            slug: requestedSlug,
+          });
       })
       .finally(() => {
         if (mounted) setBrandLoading(false);
@@ -119,17 +124,26 @@ export default function BrandJournal({ brand: brandOverride }: { brand?: string 
       .finally(() => {
         if (mounted) setProductLoading(false);
       });
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, [brand]);
 
   const heroImage = useMemo(
-    () => brandInfo?.heroImage || brandInfo?.logo || products[0]?.images?.[0] || products[0]?.image || FALLBACK_IMAGE,
+    () =>
+      brandInfo?.heroImage ||
+      brandInfo?.logo ||
+      products[0]?.images?.[0] ||
+      products[0]?.image ||
+      FALLBACK_IMAGE,
     [brandInfo, products],
   );
 
   const families = useMemo(() => {
     const set = new Set<string>();
-    products.forEach((p) => { if (p.fragranceFamily) set.add(p.fragranceFamily); });
+    products.forEach((p) => {
+      if (p.fragranceFamily) set.add(p.fragranceFamily);
+    });
     return Array.from(set);
   }, [products]);
 
@@ -140,10 +154,10 @@ export default function BrandJournal({ brand: brandOverride }: { brand?: string 
   return (
     <>
       <main className="bg-[#FDF9F4] text-[#211F1B]">
-
         {/* ① HERO — full-bleed portrait, không text overlay nặng */}
         <section className="relative w-full overflow-hidden" style={{ aspectRatio: "16/7" }}>
           <img
+            loading="lazy"
             src={heroImage}
             alt={brand}
             className="absolute inset-0 h-full w-full object-cover"
@@ -179,12 +193,15 @@ export default function BrandJournal({ brand: brandOverride }: { brand?: string 
         {/* ② BREADCRUMB + META — dưới hero, kiểu Lampoon */}
         <section className="border-b border-[#E1DDD5] px-8 sm:px-12 lg:px-16">
           <div className="mx-auto max-w-[1180px]">
-
             {/* Breadcrumb */}
             <nav className="flex items-center gap-2 py-4 text-[9px] uppercase tracking-[0.16em] text-[#A19D94]">
-              <Link to="/" className="hover:text-[#211F1B] transition">Home</Link>
+              <Link to="/" className="hover:text-[#211F1B] transition">
+                Home
+              </Link>
               <span>›</span>
-              <Link to="/brand" className="hover:text-[#211F1B] transition">Curated Houses</Link>
+              <Link to="/brand" className="hover:text-[#211F1B] transition">
+                Curated Houses
+              </Link>
               <span>›</span>
               <span className="text-[#6B6861]">{brand}</span>
             </nav>
@@ -192,18 +209,24 @@ export default function BrandJournal({ brand: brandOverride }: { brand?: string 
             {/* Meta bar — dọc theo cột, giống Lampoon "Date / Words / Tag / Share" */}
             <div className="grid grid-cols-2 gap-x-8 gap-y-4 border-t border-[#E1DDD5] py-6 sm:grid-cols-4 lg:grid-cols-5">
               <div>
-                <p className="text-[8px] font-semibold uppercase tracking-[0.18em] text-[#A19D94]">House</p>
+                <p className="text-[8px] font-semibold uppercase tracking-[0.18em] text-[#A19D94]">
+                  House
+                </p>
                 <p className="mt-1 text-[11px] text-[#44413C]">{brand}</p>
               </div>
               <div>
-                <p className="text-[8px] font-semibold uppercase tracking-[0.18em] text-[#A19D94]">Collection</p>
+                <p className="text-[8px] font-semibold uppercase tracking-[0.18em] text-[#A19D94]">
+                  Collection
+                </p>
                 <p className="mt-1 text-[11px] text-[#44413C]">
                   {loading ? "—" : `${total || brandInfo?.productCount || 0} fragrances`}
                 </p>
               </div>
               {(brandInfo?.country || brandInfo?.foundedYear) && (
                 <div>
-                  <p className="text-[8px] font-semibold uppercase tracking-[0.18em] text-[#A19D94]">Origin</p>
+                  <p className="text-[8px] font-semibold uppercase tracking-[0.18em] text-[#A19D94]">
+                    Origin
+                  </p>
                   <p className="mt-1 text-[11px] text-[#44413C]">
                     {[brandInfo.country, brandInfo.foundedYear].filter(Boolean).join(" · ")}
                   </p>
@@ -211,7 +234,9 @@ export default function BrandJournal({ brand: brandOverride }: { brand?: string 
               )}
               {families.length > 0 && (
                 <div className="col-span-2">
-                  <p className="text-[8px] font-semibold uppercase tracking-[0.18em] text-[#A19D94]">Olfactive families</p>
+                  <p className="text-[8px] font-semibold uppercase tracking-[0.18em] text-[#A19D94]">
+                    Olfactive families
+                  </p>
                   <p className="mt-1 text-[11px] text-[#44413C]">{families.join(" · ")}</p>
                 </div>
               )}
@@ -251,7 +276,6 @@ export default function BrandJournal({ brand: brandOverride }: { brand?: string 
         <section className="px-8 pb-20 sm:px-12 lg:px-16">
           <div className="mx-auto max-w-[1180px]">
             <div className="grid gap-16 lg:grid-cols-[1fr_0.42fr]">
-
               <div>
                 <BrandArticle
                   brand={brand}
@@ -311,7 +335,9 @@ export default function BrandJournal({ brand: brandOverride }: { brand?: string 
                         Olfactive families
                       </p>
                       {families.map((f) => (
-                        <p key={f} className="text-[11px] text-[#44413C]">{f}</p>
+                        <p key={f} className="text-[11px] text-[#44413C]">
+                          {f}
+                        </p>
                       ))}
                     </div>
                   )}
@@ -410,6 +436,7 @@ function ProductGrid({ products, brand }: { products: ProductListItem[]; brand: 
             {/* Ảnh — square, no border-radius, grayscale hover effect */}
             <div className="overflow-hidden bg-[#EEEAE4]">
               <img
+                loading="lazy"
                 src={image}
                 alt={product.name}
                 className="aspect-square w-full object-cover transition duration-700 group-hover:scale-[1.04] group-hover:grayscale-[20%]"
@@ -440,7 +467,11 @@ function ProductGrid({ products, brand }: { products: ProductListItem[]; brand: 
               {/* CTA — underline link, Lampoon style */}
               <span className="mt-4 inline-flex items-center gap-1.5 border-b border-[#AB9851] pb-0.5 text-[8px] font-semibold uppercase tracking-[0.2em] text-[#675711] transition group-hover:text-[#9A7C00]">
                 View fragrance
-                <ArrowRight size={11} strokeWidth={1.5} className="transition group-hover:translate-x-0.5" />
+                <ArrowRight
+                  size={11}
+                  strokeWidth={1.5}
+                  className="transition group-hover:translate-x-0.5"
+                />
               </span>
             </div>
           </Link>

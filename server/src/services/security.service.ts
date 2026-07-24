@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs';
 import { env } from '../config/env';
+import { logger } from '../utils/logger';
 import { User } from '../models/user.model';
 import Brand from '../models/brand.model';
 import Category from '../models/category.model';
@@ -31,19 +32,17 @@ export async function fixLegacySlugIndexes() {
   for (const { Model, label } of models) {
     const coll = Model.collection;
 
-    // 1) Xoa index cu non-sparse neu ton tai
     try {
       const indexes: any[] = await coll.indexes();
       const legacy = indexes.find((i) => i.name === 'slug_1' && !i.sparse);
       if (legacy) {
         await coll.dropIndex('slug_1');
-        console.log(`[migrate] Da xoa index cu slug_1 tren ${label}`);
+        logger.info(`[migrate] Da xoa index cu slug_1 tren ${label}`);
       }
     } catch {
       // khong co index -> bo qua
     }
 
-    // 2) Dien slug cho ban ghi thieu/null
     const docs: any[] = await Model.find({
       $or: [{ slug: null }, { slug: { $exists: false } }, { slug: '' }],
     });
@@ -52,43 +51,46 @@ export async function fixLegacySlugIndexes() {
       let slug = base;
       let i = 1;
       // eslint-disable-next-line no-await-in-loop
-      while (await Model.findOne({ slug, _id: { $ne: doc._id } }).select('_id').lean()) {
+      while (
+        await Model.findOne({ slug, _id: { $ne: doc._id } })
+          .select('_id')
+          .lean()
+      ) {
         slug = `${base}-${i++}`;
       }
       doc.slug = slug;
       // eslint-disable-next-line no-await-in-loop
       await doc.save();
     }
-    if (docs.length) console.log(`[migrate] Da dien slug cho ${docs.length} ban ghi ${label}`);
+    if (docs.length) logger.info(`[migrate] Da dien slug cho ${docs.length} ban ghi ${label}`);
 
-    // 3) Dong bo index theo schema moi (unique + sparse)
     try {
       await Model.syncIndexes();
     } catch (e) {
-      console.warn(`[migrate] syncIndexes ${label} loi (bo qua):`, (e as Error).message);
+      logger.warn(`[migrate] syncIndexes ${label} loi (bo qua):`, (e as Error).message);
     }
   }
 }
 
-// Dam bao LUON co it nhat 1 tai khoan admin de dang nhap trang quan tri.
-// Chay tu dong khi server khoi dong (index.ts). Neu chua co -> tao moi.
+// Dam bao co it nhat 1 tai khoan admin.
+// KHAC BAN CU: chi TAO khi CHUA co admin; KHONG reset mat khau tai khoan da ton tai;
+// KHONG in credential ra log. Neu thieu bien moi truong -> bo qua & canh bao.
 export async function ensureDefaultAdmin() {
-  const email = (env.defaultAdminEmail || 'admin@lessencenoire.vn').toLowerCase();
-  const password = env.adminBootstrapPassword || 'Admin@123';
-  const hash = await bcrypt.hash(password, 12);
+  const email = (env.defaultAdminEmail || '').toLowerCase();
 
-  const existing = await User.findOne({ email }).select('+password');
-  if (existing) {
-    // Luon dam bao: dung quyen admin + mat khau chuan de CHAC CHAN dang nhap duoc,
-    // ngay ca khi tai khoan da ton tai truoc do voi mat khau khac.
-    existing.role = 'admin';
-    existing.password = hash;
-    existing.isEmailVerified = true;
-    await existing.save();
-    console.log(`[bootstrap] Da dam bao admin (reset mat khau): ${email} / ${password}`);
+  // Neu da co admin (theo email cau hinh, hoac bat ky admin nao) -> khong lam gi.
+  const existing = email ? await User.findOne({ email }) : await User.findOne({ role: 'admin' });
+  if (existing) return;
+
+  if (!email || !env.adminBootstrapPassword) {
+    logger.warn(
+      '[bootstrap] Chua co admin va thieu DEFAULT_ADMIN_EMAIL / ADMIN_BOOTSTRAP_PASSWORD. ' +
+        'Bo qua tao admin tu dong. Hay set env roi khoi dong lai, hoac chay: npm run create-admin',
+    );
     return;
   }
 
+  const hash = await bcrypt.hash(env.adminBootstrapPassword, 12);
   await User.create({
     name: "Admin L'Essence Noire",
     email,
@@ -96,9 +98,14 @@ export async function ensureDefaultAdmin() {
     role: 'admin',
     isEmailVerified: true,
   });
-  console.log(`[bootstrap] Da tao tai khoan admin mac dinh: ${email} / ${password}`);
+  // Chi log email, KHONG log mat khau.
+  logger.info(
+    `[bootstrap] Da tao tai khoan admin: ${email} (mat khau lay tu ADMIN_BOOTSTRAP_PASSWORD)`,
+  );
 }
 
+// Rotate mat khau admin tu "legacy" sang ADMIN_BOOTSTRAP_PASSWORD (opt-in qua env).
+// Chi doi khi mat khau hien tai dung trung legacy; khong log gia tri mat khau.
 export async function rotateDefaultAdminPassword() {
   if (!env.defaultAdminEmail || !env.adminBootstrapPassword) return;
 
@@ -117,5 +124,5 @@ export async function rotateDefaultAdminPassword() {
 
   admin.password = await bcrypt.hash(env.adminBootstrapPassword, 12);
   await admin.save();
-  console.log('[security] Default admin password rotated');
+  logger.info('[security] Default admin password rotated');
 }

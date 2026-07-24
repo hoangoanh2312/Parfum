@@ -27,10 +27,7 @@ export default function BlogPost() {
   );
 
   const related = useMemo(
-    () =>
-      article
-        ? BLOG_ARTICLES.filter((a) => article.relatedSlugs.includes(a.slug))
-        : [],
+    () => (article ? BLOG_ARTICLES.filter((a) => article.relatedSlugs.includes(a.slug)) : []),
     [article],
   );
 
@@ -56,6 +53,7 @@ export default function BlogPost() {
         {/* HERO */}
         <section className="relative h-[62vh] min-h-[420px] overflow-hidden bg-[#1a1714]">
           <img
+            loading="lazy"
             src={article.heroImage}
             alt={article.title}
             className="absolute inset-0 h-full w-full object-cover grayscale opacity-60"
@@ -129,14 +127,13 @@ export default function BlogPost() {
                   </h2>
                 )}
 
-                <p className="text-[14.5px] leading-[1.9] text-[#55524C]">
-                  {section.body}
-                </p>
+                <p className="text-[14.5px] leading-[1.9] text-[#55524C]">{section.body}</p>
 
                 {section.image && (
                   <figure className="mt-8">
                     <div className="overflow-hidden bg-[#1a1714]">
                       <img
+                        loading="lazy"
                         src={section.image}
                         alt={section.imageCaption ?? section.heading ?? ""}
                         className="w-full object-cover grayscale"
@@ -165,13 +162,10 @@ export default function BlogPost() {
 
               <div className="grid gap-10 md:grid-cols-2">
                 {related.map((rel) => (
-                  <Link
-                    key={rel.slug}
-                    to={`/blog/${rel.slug}`}
-                    className="group block"
-                  >
+                  <Link key={rel.slug} to={`/blog/${rel.slug}`} className="group block">
                     <div className="overflow-hidden bg-[#272727]">
                       <img
+                        loading="lazy"
                         src={rel.image}
                         alt={rel.title}
                         className="aspect-[1.6/1] w-full object-cover grayscale transition duration-700 group-hover:scale-[1.04]"
@@ -187,9 +181,7 @@ export default function BlogPost() {
                       >
                         {rel.title}
                       </h3>
-                      <p className="mt-3 text-xs leading-5 text-[#706D66]">
-                        {rel.description}
-                      </p>
+                      <p className="mt-3 text-xs leading-5 text-[#706D66]">{rel.description}</p>
                       <span className="mt-4 inline-flex border-b border-[#AB9851] pb-1 text-[8px] font-semibold uppercase tracking-[0.18em] text-[#675711]">
                         Đọc bài viết
                       </span>

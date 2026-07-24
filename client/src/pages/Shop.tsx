@@ -1,4 +1,5 @@
 import ShopSidebar from "../components/Shop/ShopSidebar";
+import { useSeo } from "../hooks/useSeo";
 import ProductGrid from "../components/Shop/ProductGrid";
 import Pagination from "../components/Shop/Pagination";
 import { useEffect, useMemo, useState } from "react";
@@ -77,6 +78,11 @@ const normFilter = (value: string) => value.trim().toLowerCase();
 const PAGE_SIZE = 16;
 
 export default function Shop() {
+  useSeo({
+    title: "Cửa hàng nước hoa",
+    description:
+      "Mua nước hoa cao cấp chính hãng: lọc theo thương hiệu, nhóm hương, giới tính và dung tích. Giao hàng toàn quốc.",
+  });
   const [searchParams, setSearchParams] = useSearchParams();
   const initialList = (key: string) =>
     (searchParams.get(key) || "")
@@ -102,19 +108,16 @@ export default function Shop() {
   const [selectedSizes, setSelectedSizes] = useState<string[]>(() => initialList("size"));
   const [selectedOccasions, setSelectedOccasions] = useState<string[]>(() => initialList("season"));
   const [selectedSeasons, setSelectedSeasons] = useState<string[]>([]);
-  const [selectedConcentrations, setSelectedConcentrations] = useState<string[]>(
-    () => initialList("concentration"),
+  const [selectedConcentrations, setSelectedConcentrations] = useState<string[]>(() =>
+    initialList("concentration"),
   );
   const [priceMin, setPriceMin] = useState(() => initialPrice("minPrice", 0));
-  const [priceMax, setPriceMax] = useState(() =>
-    initialPrice("maxPrice", Number.MAX_SAFE_INTEGER),
-  );
+  const [priceMax, setPriceMax] = useState(() => initialPrice("maxPrice", Number.MAX_SAFE_INTEGER));
   const [sort, setSort] = useState(() => searchParams.get("sort") || "newest");
   const [page, setPage] = useState(1);
   const [filterOpen, setFilterOpen] = useState(false);
   const excludedNotes = searchParams.get("excludeNote") || "";
-  const preferenceMatch =
-    searchParams.get("match") === "any" ? "any" : undefined;
+  const preferenceMatch = searchParams.get("match") === "any" ? "any" : undefined;
 
   const toggleSize = (value: string) => {
     setSelectedSizes((prev) =>
@@ -180,12 +183,9 @@ export default function Shop() {
             excludeNote: excludedNotes || undefined,
             match: preferenceMatch,
             size: selectedSizes.join(",") || undefined,
-            season:
-              [...selectedOccasions, ...selectedSeasons].join(",") ||
-              undefined,
+            season: [...selectedOccasions, ...selectedSeasons].join(",") || undefined,
             concentration: selectedConcentrations.join(",") || undefined,
-            minPrice:
-              priceMin > (filters?.minPrice ?? 0) ? priceMin : undefined,
+            minPrice: priceMin > (filters?.minPrice ?? 0) ? priceMin : undefined,
             maxPrice:
               priceMax !== Number.MAX_SAFE_INTEGER &&
               priceMax < (filters?.maxPrice ?? Number.MAX_SAFE_INTEGER)
@@ -255,8 +255,7 @@ export default function Shop() {
   const sizes = useMemo(
     () =>
       [...(filters?.sizes ?? [])].sort(
-        (left, right) =>
-          getSizeNumber(left) - getSizeNumber(right) || left.localeCompare(right),
+        (left, right) => getSizeNumber(left) - getSizeNumber(right) || left.localeCompare(right),
       ),
     [filters],
   );
@@ -288,23 +287,15 @@ export default function Shop() {
     setParam("scent", selectedScents.join(","));
     setParam("note", selectedNotes.join(","));
     setParam("size", selectedSizes.join(","));
-    setParam(
-      "season",
-      Array.from(new Set([...selectedOccasions, ...selectedSeasons])).join(","),
-    );
+    setParam("season", Array.from(new Set([...selectedOccasions, ...selectedSeasons])).join(","));
     setParam("concentration", selectedConcentrations.join(","));
     setParam("sort", sort === "newest" ? "" : sort);
 
     if (filters) {
-      setParam(
-        "minPrice",
-        priceMin > (filters.minPrice ?? 0) ? String(priceMin) : "",
-      );
+      setParam("minPrice", priceMin > (filters.minPrice ?? 0) ? String(priceMin) : "");
       setParam(
         "maxPrice",
-        priceMax < (filters.maxPrice ?? Number.MAX_SAFE_INTEGER)
-          ? String(priceMax)
-          : "",
+        priceMax < (filters.maxPrice ?? Number.MAX_SAFE_INTEGER) ? String(priceMax) : "",
       );
     }
 
@@ -380,29 +371,24 @@ export default function Shop() {
               </h1>
 
               <p className="mt-6 max-w-md text-sm leading-7 text-[#5F5E5E] sm:mt-8 sm:leading-8">
-                A curated selection of olfactory experiences, from the smoky
-                resins of the Orient to the dew-kissed petals of a Grasse
-                morning.
+                A curated selection of olfactory experiences, from the smoky resins of the Orient to
+                the dew-kissed petals of a Grasse morning.
               </p>
             </div>
 
-              <div className="relative aspect-[16/10] min-h-[230px] overflow-hidden rounded-sm bg-[#0E0D0C] sm:h-[330px] sm:aspect-auto">
-                <video
-                  src="https://res.cloudinary.com/dwj2trmn0/video/upload/v1784437561/t%E1%BA%A1o_cho_t_video_gi%E1%BB%9Bi_thi%E1%BB%87u_m_fk3taq.mp4"
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                  className="w-full h-full object-cover opacity-90"
-                />
+            <div className="relative aspect-[16/10] min-h-[230px] overflow-hidden rounded-sm bg-[#0E0D0C] sm:h-[330px] sm:aspect-auto">
+              <video
+                src="https://res.cloudinary.com/dwj2trmn0/video/upload/v1784437561/t%E1%BA%A1o_cho_t_video_gi%E1%BB%9Bi_thi%E1%BB%87u_m_fk3taq.mp4"
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="w-full h-full object-cover opacity-90"
+              />
 
               <div className="absolute left-6 bottom-8 text-[#E8E3D8]">
-                <p className="text-[11px] tracking-[0.15em] uppercase leading-tight">
-                  Amber Oud
-                </p>
-                <p className="text-[11px] tracking-[0.15em] uppercase leading-tight">
-                  Rare Wood
-                </p>
+                <p className="text-[11px] tracking-[0.15em] uppercase leading-tight">Amber Oud</p>
+                <p className="text-[11px] tracking-[0.15em] uppercase leading-tight">Rare Wood</p>
               </div>
 
               <div className="absolute bottom-3 left-4 right-4 text-right sm:left-auto sm:right-6">
@@ -417,51 +403,65 @@ export default function Shop() {
         <section className="mx-auto flex max-w-[1536px] min-w-0 gap-10 px-5 pb-20 sm:px-8 lg:gap-12 lg:px-10 xl:gap-16">
           <div className="hidden lg:block">
             <ShopSidebar
-            search={search}
-            setSearch={setSearch}
-            brands={brands}
-            selectedBrands={selectedBrands}
-            toggleBrand={toggleBrand}
-            genders={["female", "male", "unisex"]}
-            selectedGenders={selectedGenders}
-            toggleGender={toggleGender}
-            clearGender={() => setSelectedGenders([])}
-            priceMin={priceMin}
-            priceMax={priceMax}
-            minPrice={minPrice}
-            maxPrice={maxPrice}
-            setPriceRange={(lo, hi) => {
-              setPriceMin(lo);
-              setPriceMax(hi);
-            }}
-            brandCounts={brandCounts}
-            noteCounts={noteCounts}
-            priceBuckets={priceBuckets}
-            selectedScents={selectedScents}
-            scents={scents}
-            toggleScent={toggleScent}
-            notes={notes}
-            selectedNotes={selectedNotes}
-            toggleNote={toggleNote}
-            selectedSizes={selectedSizes}
-            sizes={sizes}
-            toggleSize={toggleSize}
-            selectedOccasions={selectedOccasions}
-            occasions={filters?.seasons ?? []}
-            toggleOccasion={toggleOccasion}
-            selectedConcentrations={selectedConcentrations}
-            concentrations={concentrations}
-            toggleConcentration={toggleConcentration}
+              search={search}
+              setSearch={setSearch}
+              brands={brands}
+              selectedBrands={selectedBrands}
+              toggleBrand={toggleBrand}
+              genders={["female", "male", "unisex"]}
+              selectedGenders={selectedGenders}
+              toggleGender={toggleGender}
+              clearGender={() => setSelectedGenders([])}
+              priceMin={priceMin}
+              priceMax={priceMax}
+              minPrice={minPrice}
+              maxPrice={maxPrice}
+              setPriceRange={(lo, hi) => {
+                setPriceMin(lo);
+                setPriceMax(hi);
+              }}
+              brandCounts={brandCounts}
+              noteCounts={noteCounts}
+              priceBuckets={priceBuckets}
+              selectedScents={selectedScents}
+              scents={scents}
+              toggleScent={toggleScent}
+              notes={notes}
+              selectedNotes={selectedNotes}
+              toggleNote={toggleNote}
+              selectedSizes={selectedSizes}
+              sizes={sizes}
+              toggleSize={toggleSize}
+              selectedOccasions={selectedOccasions}
+              occasions={filters?.seasons ?? []}
+              toggleOccasion={toggleOccasion}
+              selectedConcentrations={selectedConcentrations}
+              concentrations={concentrations}
+              toggleConcentration={toggleConcentration}
             />
           </div>
 
           {filterOpen && (
             <div className="fixed inset-0 z-[70] lg:hidden">
-              <button type="button" className="absolute inset-0 bg-black/35" onClick={() => setFilterOpen(false)} aria-label="Đóng bộ lọc" />
+              <button
+                type="button"
+                className="absolute inset-0 bg-black/35"
+                onClick={() => setFilterOpen(false)}
+                aria-label="Đóng bộ lọc"
+              />
               <div className="absolute inset-y-0 left-0 w-[min(340px,90vw)] overflow-y-auto bg-[#FDF9F4] px-5 pb-10 pt-5 shadow-2xl">
                 <div className="mb-5 flex items-center justify-between border-b border-[#E4DACE] pb-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#554C42]">Bộ lọc sản phẩm</p>
-                  <button type="button" onClick={() => setFilterOpen(false)} className="flex h-10 w-10 items-center justify-center text-[#665D52]" aria-label="Đóng bộ lọc"><X size={19} /></button>
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#554C42]">
+                    Bộ lọc sản phẩm
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setFilterOpen(false)}
+                    className="flex h-10 w-10 items-center justify-center text-[#665D52]"
+                    aria-label="Đóng bộ lọc"
+                  >
+                    <X size={19} />
+                  </button>
                 </div>
                 <ShopSidebar
                   search={search}
@@ -477,7 +477,10 @@ export default function Shop() {
                   priceMax={priceMax}
                   minPrice={minPrice}
                   maxPrice={maxPrice}
-                  setPriceRange={(lo, hi) => { setPriceMin(lo); setPriceMax(hi); }}
+                  setPriceRange={(lo, hi) => {
+                    setPriceMin(lo);
+                    setPriceMax(hi);
+                  }}
                   brandCounts={brandCounts}
                   noteCounts={noteCounts}
                   priceBuckets={priceBuckets}
@@ -507,9 +510,13 @@ export default function Shop() {
             <div className="flex flex-col gap-4 border-b border-[#e8deca] pb-5 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                 <p className="text-[10px] uppercase tracking-widest text-[#5F5E5E] sm:text-xs">
-                Showing {products.length} of {productTotal} products
+                  Showing {products.length} of {productTotal} products
                 </p>
-                <button type="button" onClick={() => setFilterOpen(true)} className="flex h-10 w-full shrink-0 items-center justify-center gap-2 border border-[#D8CDBE] px-3 text-[10px] uppercase tracking-[0.12em] text-[#655B50] sm:w-auto lg:hidden">
+                <button
+                  type="button"
+                  onClick={() => setFilterOpen(true)}
+                  className="flex h-10 w-full shrink-0 items-center justify-center gap-2 border border-[#D8CDBE] px-3 text-[10px] uppercase tracking-[0.12em] text-[#655B50] sm:w-auto lg:hidden"
+                >
                   <SlidersHorizontal size={15} /> Bộ lọc
                 </button>
               </div>

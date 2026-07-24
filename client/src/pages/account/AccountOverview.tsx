@@ -1,12 +1,4 @@
-import {
-  ArrowRight,
-  ChevronRight,
-  Gift,
-  MapPin,
-  Package,
-  Plus,
-  Sparkles,
-} from "lucide-react";
+import { ArrowRight, ChevronRight, Gift, MapPin, Package, Plus, Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../../lib/api";
@@ -44,14 +36,9 @@ export default function AccountOverview() {
   const [items, setItems] = useState<RecommendationItem[]>([]);
   const [bestSellersLoading, setBestSellersLoading] = useState(true);
   const [recommendationOffset, setRecommendationOffset] = useState(0);
-  const [recommendationAnimationKey, setRecommendationAnimationKey] =
-    useState(0);
-  const [refillProduct, setRefillProduct] = useState<RecommendationItem | null>(
-    null,
-  );
-  const [scentProfile, setScentProfile] = useState<ScentProfileData | null>(
-    null,
-  );
+  const [recommendationAnimationKey, setRecommendationAnimationKey] = useState(0);
+  const [refillProduct, setRefillProduct] = useState<RecommendationItem | null>(null);
+  const [scentProfile, setScentProfile] = useState<ScentProfileData | null>(null);
   const [scentProfileLoading, setScentProfileLoading] = useState(true);
 
   useEffect(() => {
@@ -70,10 +57,7 @@ export default function AccountOverview() {
               : "Đang cập nhật",
             price: `${(order.total || 0).toLocaleString("vi-VN")}đ`,
             status: order.displayStatus || order.status,
-            paymentStatus:
-              order.payment?.status === "paid"
-                ? "Đã thanh toán"
-                : "Chưa thanh toán",
+            paymentStatus: order.payment?.status === "paid" ? "Đã thanh toán" : "Chưa thanh toán",
           })),
         );
       })
@@ -104,8 +88,7 @@ export default function AccountOverview() {
         params: { limit: 100, sort: "best_selling" },
       })
       .then(({ data }) => {
-        if (!mounted || !Array.isArray(data.data) || data.data.length === 0)
-          return;
+        if (!mounted || !Array.isArray(data.data) || data.data.length === 0) return;
         const products: RecommendationItem[] = data.data.map((product) => ({
           id: product.id,
           slug: product.slug,
@@ -113,9 +96,7 @@ export default function AccountOverview() {
           name: product.name,
           description: product.description || "Mùi hương tinh tế, sang trọng.",
           image:
-            product.images?.[0] ||
-            product.image ||
-            "https://placehold.co/800x600?text=No+Image",
+            product.images?.[0] || product.image || "https://placehold.co/800x600?text=No+Image",
           stock: product.stock || 0,
           soldCount: product.soldCount || 0,
         }));
@@ -202,9 +183,7 @@ export default function AccountOverview() {
           </h1>
 
           <div className="md:text-right">
-            <p className="text-[10px] italic text-[#8B837A]">
-              Thành viên từ tháng 11 năm 2023
-            </p>
+            <p className="text-[10px] italic text-[#8B837A]">Thành viên từ tháng 11 năm 2023</p>
 
             <p className="mt-1 text-[10px] uppercase tracking-[0.15em] text-[#8C7200]">
               Thành viên Noir Elite
@@ -221,12 +200,10 @@ export default function AccountOverview() {
                 <Gift size={20} />
               </span>
               <div>
-                <h2 className="font-serif text-xl">
-                  Hoàn thiện hồ sơ của bạn
-                </h2>
+                <h2 className="font-serif text-xl">Hoàn thiện hồ sơ của bạn</h2>
                 <p className="mt-1 max-w-xl text-sm leading-6 text-[#746C63]">
-                  Hồ sơ của bạn còn thiếu một số thông tin. Cập nhật đầy đủ để đặt
-                  hàng nhanh hơn và nhận trọn ưu đãi dành cho thành viên.
+                  Hồ sơ của bạn còn thiếu một số thông tin. Cập nhật đầy đủ để đặt hàng nhanh hơn và
+                  nhận trọn ưu đãi dành cho thành viên.
                 </p>
                 <ul className="mt-3 space-y-1.5">
                   {missingProfile.map((field) => (
@@ -290,6 +267,7 @@ export default function AccountOverview() {
             </div>
 
             <img
+              loading="lazy"
               src="https://images.unsplash.com/photo-1603006905003-be475563bc59?q=80&w=800&auto=format&fit=crop"
               alt="Hồ sơ mùi hương"
               className="h-64 w-full object-cover sm:h-full"
@@ -298,9 +276,7 @@ export default function AccountOverview() {
 
           <div className="flex flex-col justify-between bg-[#FFD65B] p-7 lg:p-8">
             <div>
-              <h2 className="font-serif text-xl text-[#7E6700]">
-                Sắp hết sản phẩm
-              </h2>
+              <h2 className="font-serif text-xl text-[#7E6700]">Sắp hết sản phẩm</h2>
 
               <p className="mt-4 text-sm leading-6 text-[#907A21]">
                 {refillProduct ? (
@@ -366,9 +342,7 @@ export default function AccountOverview() {
                     <p className="mt-1 text-[9px] uppercase tracking-widest text-[#9B8415]">
                       {order.status}
                     </p>
-                    <p className="mt-1 text-[9px] text-[#81786F]">
-                      {order.paymentStatus}
-                    </p>
+                    <p className="mt-1 text-[9px] text-[#81786F]">{order.paymentStatus}</p>
                   </div>
                 </div>
               ))}
@@ -400,11 +374,7 @@ export default function AccountOverview() {
                 </p>
 
                 <div className="mt-5 flex gap-3">
-                  <MapPin
-                    size={16}
-                    strokeWidth={1.3}
-                    className="mt-1 shrink-0"
-                  />
+                  <MapPin size={16} strokeWidth={1.3} className="mt-1 shrink-0" />
 
                   <div className="font-serif text-sm leading-6">
                     <p>{user?.name || "Chưa cập nhật"}</p>
@@ -414,10 +384,7 @@ export default function AccountOverview() {
                 </div>
 
                 <div className="mt-8 flex gap-5">
-                  <Link
-                    to="/account/addresses"
-                    className="text-[9px] uppercase tracking-widest"
-                  >
+                  <Link to="/account/addresses" className="text-[9px] uppercase tracking-widest">
                     Chỉnh sửa
                   </Link>
 
@@ -455,40 +422,28 @@ export default function AccountOverview() {
                 </p>
               </div>
 
-              <h2 className="mt-3 font-serif text-3xl italic lg:text-4xl">
-                Sản phẩm bán chạy
-              </h2>
+              <h2 className="mt-3 font-serif text-3xl italic lg:text-4xl">Sản phẩm bán chạy</h2>
             </div>
-
           </div>
 
           {bestSellersLoading ? (
             <div className="grid gap-8 md:grid-cols-3">
               {[0, 1, 2].map((item) => (
-                <div
-                  key={item}
-                  className="h-[360px] animate-pulse bg-[#ECE7E0]"
-                />
+                <div key={item} className="h-[360px] animate-pulse bg-[#ECE7E0]" />
               ))}
             </div>
           ) : visibleRecommendations.length > 0 ? (
-            <div
-              key={recommendationAnimationKey}
-              className="grid gap-8 md:grid-cols-3"
-            >
+            <div key={recommendationAnimationKey} className="grid gap-8 md:grid-cols-3">
               {visibleRecommendations.map((item, index) => (
                 <Link
                   key={`${recommendationAnimationKey}-${item.id || item.name}`}
-                  to={
-                    item.id || item.slug
-                      ? `/products/${item.slug || item.id}`
-                      : "/shop"
-                  }
+                  to={item.id || item.slug ? `/products/${item.slug || item.id}` : "/shop"}
                   className="account-best-seller-float-up group block"
                   style={{ animationDelay: `${index * 90}ms` }}
                 >
                   <div className="overflow-hidden bg-[#ECE7E0]">
                     <img
+                      loading="lazy"
                       src={item.image}
                       alt={item.name}
                       className="aspect-[4/3] w-full object-cover transition duration-700 group-hover:scale-105"
@@ -497,9 +452,7 @@ export default function AccountOverview() {
 
                   <div className="mt-5 flex items-center justify-between gap-3 text-[9px] uppercase tracking-[0.2em] text-[#9A9186]">
                     <p>{item.category}</p>
-                    <p>
-                      Đã bán {(item.soldCount || 0).toLocaleString("vi-VN")}
-                    </p>
+                    <p>Đã bán {(item.soldCount || 0).toLocaleString("vi-VN")}</p>
                   </div>
 
                   <div className="mt-2 flex items-center justify-between gap-3">
@@ -512,9 +465,7 @@ export default function AccountOverview() {
                     />
                   </div>
 
-                  <p className="mt-3 text-sm leading-6 text-[#7D746B]">
-                    {item.description}
-                  </p>
+                  <p className="mt-3 text-sm leading-6 text-[#7D746B]">{item.description}</p>
                 </Link>
               ))}
             </div>

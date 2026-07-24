@@ -115,9 +115,7 @@ export default function ScentProfile() {
         setDislikedNotes(data.dislikedNotes || []);
       })
       .catch((error) => {
-        toast.error(
-          error?.response?.data?.message || "Không thể tải hồ sơ mùi hương",
-        );
+        toast.error(error?.response?.data?.message || "Không thể tải hồ sơ mùi hương");
       })
       .finally(() => {
         if (mounted) setLoading(false);
@@ -132,9 +130,9 @@ export default function ScentProfile() {
         ).map(familyOptionFromName);
         setFamilyOptions(nextFamilies.length ? nextFamilies : fallbackScentFamilies);
         setNoteOptions(
-          Array.from(
-            new Set((data.notes || []).map((item) => item.trim()).filter(Boolean)),
-          ).sort((left, right) => left.localeCompare(right, "vi")),
+          Array.from(new Set((data.notes || []).map((item) => item.trim()).filter(Boolean))).sort(
+            (left, right) => left.localeCompare(right, "vi"),
+          ),
         );
       })
       .catch(() => undefined);
@@ -146,20 +144,14 @@ export default function ScentProfile() {
 
   const selectedFamilyOptions = useMemo(
     () =>
-      familyOptions.filter((item) =>
-        families.some((selected) => familyId(selected) === item.id),
-      ),
+      familyOptions.filter((item) => families.some((selected) => familyId(selected) === item.id)),
     [families, familyOptions],
   );
-  const selectedFamilyNames = selectedFamilyOptions
-    .map((item) => item.name)
-    .join(" · ");
+  const selectedFamilyNames = selectedFamilyOptions.map((item) => item.name).join(" · ");
   const selectedFamilyDescription = selectedFamilyOptions.length
     ? `Hồ sơ của bạn kết hợp ${selectedFamilyOptions
         .map((item) => item.name)
-        .join(", ")}. ${selectedFamilyOptions
-        .map((item) => item.description)
-        .join(" ")}`
+        .join(", ")}. ${selectedFamilyOptions.map((item) => item.description).join(" ")}`
     : "Chọn các nhóm hương yêu thích để chúng tôi xây dựng hồ sơ và đề xuất sản phẩm phù hợp hơn.";
   const selectedFamilyFilters = useMemo(
     () => selectedFamilyOptions.map((item) => item.name),
@@ -258,9 +250,7 @@ export default function ScentProfile() {
         ? current.filter((item) => familyId(item) !== familyId(note))
         : [...current, note],
     );
-    setDislikedNotes((current) =>
-      current.filter((item) => familyId(item) !== familyId(note)),
-    );
+    setDislikedNotes((current) => current.filter((item) => familyId(item) !== familyId(note)));
   };
 
   const toggleDislikedNote = (note: string) => {
@@ -269,22 +259,22 @@ export default function ScentProfile() {
         ? current.filter((item) => familyId(item) !== familyId(note))
         : [...current, note],
     );
-    setPreferredNotes((current) =>
-      current.filter((item) => familyId(item) !== familyId(note)),
-    );
+    setPreferredNotes((current) => current.filter((item) => familyId(item) !== familyId(note)));
   };
 
   const saveProfile = async () => {
     setSaving(true);
     try {
-      const { data } = await api.put<ScentProfileData & { newMemberVoucherIssued?: boolean; profileCompletionVoucherCode?: string }>(
-        "/account/scent-profile",
-        {
-          families,
-          preferredNotes,
-          dislikedNotes,
-        },
-      );
+      const { data } = await api.put<
+        ScentProfileData & {
+          newMemberVoucherIssued?: boolean;
+          profileCompletionVoucherCode?: string;
+        }
+      >("/account/scent-profile", {
+        families,
+        preferredNotes,
+        dislikedNotes,
+      });
       setFamilies(data.families || []);
       setPreferredNotes(data.preferredNotes || []);
       setDislikedNotes(data.dislikedNotes || []);
@@ -294,9 +284,7 @@ export default function ScentProfile() {
           : "Đã lưu hồ sơ mùi hương",
       );
     } catch (error: any) {
-      toast.error(
-        error?.response?.data?.message || "Không thể lưu hồ sơ mùi hương",
-      );
+      toast.error(error?.response?.data?.message || "Không thể lưu hồ sơ mùi hương");
     } finally {
       setSaving(false);
     }
@@ -305,15 +293,13 @@ export default function ScentProfile() {
   return (
     <div className="min-h-screen bg-[#FCF9F4] text-[#2D2925]">
       <section className="border-b border-[#E7E0D7] px-6 pb-7 pt-12 lg:px-12">
-        <p className="text-[10px] uppercase tracking-[0.28em] text-[#9B9288]">
-          Personal Portal
-        </p>
+        <p className="text-[10px] uppercase tracking-[0.28em] text-[#9B9288]">Personal Portal</p>
 
         <h1 className="mt-2 font-serif text-4xl lg:text-5xl">Hồ sơ mùi hương</h1>
 
         <p className="mt-3 max-w-2xl text-sm leading-6 text-[#7C746C]">
-          Hồ sơ mùi hương dựa trên các nhóm hương bạn yêu thích, giúp chúng tôi đề xuất
-          những sản phẩm phù hợp với sở thích và phong cách của bạn.
+          Hồ sơ mùi hương dựa trên các nhóm hương bạn yêu thích, giúp chúng tôi đề xuất những sản
+          phẩm phù hợp với sở thích và phong cách của bạn.
         </p>
       </section>
 
@@ -327,9 +313,7 @@ export default function ScentProfile() {
 
         <section className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
           <div className="bg-[#F2EEE9] p-7 lg:p-9">
-            <p className="text-[9px] uppercase tracking-[0.24em] text-[#978D82]">
-              Your Scent DNA
-            </p>
+            <p className="text-[9px] uppercase tracking-[0.24em] text-[#978D82]">Your Scent DNA</p>
 
             <h2 className="mt-3 font-serif text-3xl">
               {selectedFamilyNames || "Chưa chọn nhóm hương"}
@@ -379,6 +363,7 @@ export default function ScentProfile() {
                   {recommendations[activeRecommendation]?.image ||
                   recommendations[activeRecommendation]?.images?.[0] ? (
                     <img
+                      loading="lazy"
                       src={
                         recommendations[activeRecommendation]?.image ||
                         recommendations[activeRecommendation]?.images?.[0]
@@ -411,8 +396,9 @@ export default function ScentProfile() {
                     <button
                       type="button"
                       onClick={() =>
-                        setActiveRecommendation((current) =>
-                          (current - 1 + recommendations.length) % recommendations.length,
+                        setActiveRecommendation(
+                          (current) =>
+                            (current - 1 + recommendations.length) % recommendations.length,
                         )
                       }
                       className="absolute left-3 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center border border-[#D3CAC0] bg-[#FCF9F4]/90 text-[#554E47] transition hover:bg-white"
@@ -424,9 +410,7 @@ export default function ScentProfile() {
                     <button
                       type="button"
                       onClick={() =>
-                        setActiveRecommendation((current) =>
-                          (current + 1) % recommendations.length,
-                        )
+                        setActiveRecommendation((current) => (current + 1) % recommendations.length)
                       }
                       className="absolute right-3 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center border border-[#D3CAC0] bg-[#FCF9F4]/90 text-[#554E47] transition hover:bg-white"
                       aria-label="Sản phẩm tiếp theo"
@@ -453,6 +437,7 @@ export default function ScentProfile() {
                     >
                       {product.image || product.images?.[0] ? (
                         <img
+                          loading="lazy"
                           src={product.image || product.images?.[0]}
                           alt=""
                           className="h-full w-full object-contain p-1"
@@ -481,17 +466,15 @@ export default function ScentProfile() {
             <h2 className="font-serif text-2xl">Nhóm hương yêu thích</h2>
 
             <p className="mt-2 text-sm text-[#81786F]">
-              Chọn những nhóm mùi hương phù hợp với sở thích của bạn. Đề xuất sản phẩm
-              sẽ dựa trên các nhóm hương này.
+              Chọn những nhóm mùi hương phù hợp với sở thích của bạn. Đề xuất sản phẩm sẽ dựa trên
+              các nhóm hương này.
             </p>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             {familyOptions.map((item) => {
               const Icon = item.icon;
-              const selected = families.some(
-                (family) => familyId(family) === item.id,
-              );
+              const selected = families.some((family) => familyId(family) === item.id);
 
               return (
                 <button
@@ -514,9 +497,7 @@ export default function ScentProfile() {
 
                   <h3 className="mt-7 font-serif text-xl">{item.name}</h3>
 
-                  <p className="mt-2 text-xs leading-5 text-[#81786F]">
-                    {item.description}
-                  </p>
+                  <p className="mt-2 text-xs leading-5 text-[#81786F]">{item.description}</p>
                 </button>
               );
             })}
@@ -536,9 +517,7 @@ export default function ScentProfile() {
             </div>
             <div className="flex max-h-72 flex-wrap content-start gap-2 overflow-y-auto pr-2">
               {noteOptions.map((note) => {
-                const selected = preferredNotes.some(
-                  (item) => familyId(item) === familyId(note),
-                );
+                const selected = preferredNotes.some((item) => familyId(item) === familyId(note));
                 return (
                   <button
                     key={note}
@@ -570,9 +549,7 @@ export default function ScentProfile() {
             </div>
             <div className="flex max-h-72 flex-wrap content-start gap-2 overflow-y-auto pr-2">
               {noteOptions.map((note) => {
-                const selected = dislikedNotes.some(
-                  (item) => familyId(item) === familyId(note),
-                );
+                const selected = dislikedNotes.some((item) => familyId(item) === familyId(note));
                 return (
                   <button
                     key={note}

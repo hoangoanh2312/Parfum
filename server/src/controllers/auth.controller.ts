@@ -1,14 +1,25 @@
 import { Request, Response, NextFunction } from 'express';
 import * as authService from '../services/auth.service';
 import * as notificationService from '../services/notification.service';
-import { setRefreshCookie, clearRefreshCookie, parseCookies } from '../utils/cookies';
+import {
+  setRefreshCookie,
+  clearRefreshCookie,
+  parseCookies,
+  setCsrfCookie,
+  clearCsrfCookie,
+  generateCsrfToken,
+} from '../utils/cookies';
 
 const uid = (req: Request) => (req as any).user?.id;
 
 // Gui accessToken + user trong body, refreshToken luu vao httpOnly cookie (chong XSS danh cap token)
 function sendAuth(res: Response, result: any, status = 200) {
   const { refreshToken, ...rest } = result;
-  if (refreshToken) setRefreshCookie(res, refreshToken);
+  if (refreshToken) {
+    setRefreshCookie(res, refreshToken);
+    // Double-submit CSRF: phat token moi moi lan cap refresh cookie.
+    setCsrfCookie(res, generateCsrfToken());
+  }
   res.status(status).json(rest);
 }
 
@@ -35,7 +46,10 @@ export async function refresh(req: Request, res: Response, next: NextFunction) {
     // Uu tien doc tu httpOnly cookie; van chap nhan body de tuong thich nguoc
     const token = parseCookies(req).refreshToken || req.body?.refreshToken;
     if (!token) return res.status(401).json({ message: 'Missing refresh token' });
-    res.json(await authService.refreshAccessToken(token));
+    const result = await authService.refreshAccessToken(token);
+    // Xoay CSRF token moi lan refresh.
+    setCsrfCookie(res, generateCsrfToken());
+    res.json(result);
   } catch (e) {
     next(e);
   }
@@ -45,6 +59,7 @@ export async function logout(req: Request, res: Response, next: NextFunction) {
   try {
     await authService.logout(uid(req));
     clearRefreshCookie(res);
+    clearCsrfCookie(res);
     res.json({ message: 'Logged out' });
   } catch (e) {
     next(e);
@@ -67,7 +82,11 @@ export async function getNotificationPreferences(req: Request, res: Response, ne
   }
 }
 
-export async function updateNotificationPreferences(req: Request, res: Response, next: NextFunction) {
+export async function updateNotificationPreferences(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
   try {
     res.json(await notificationService.updateNotificationPreferences(uid(req), req.body));
   } catch (e) {

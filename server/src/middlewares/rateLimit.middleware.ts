@@ -11,8 +11,25 @@ type Bucket = {
   resetAt: number;
 };
 
+/**
+ * Rate limiter in-memory (theo tien trinh).
+ * - FIX ro ri bo nho: quet dinh ky de xoa cac bucket da het han (truoc day Map chi phinh to).
+ * - Luu y scale: khi chay NHIEU instance, moi tien trinh giu bucket rieng => nen dung
+ *   store phan tan (Redis). Xem REDIS_URL trong .env va huong dan o README de nang cap
+ *   sang express-rate-limit + rate-limit-redis khi trien khai da instance.
+ */
 export function rateLimit(options: RateLimitOptions) {
   const buckets = new Map<string, Bucket>();
+
+  // Don dinh ky bucket het han -> tranh ro ri bo nho.
+  const sweep = setInterval(() => {
+    const now = Date.now();
+    for (const [key, bucket] of buckets) {
+      if (bucket.resetAt <= now) buckets.delete(key);
+    }
+  }, options.windowMs);
+  // Khong giu tien trinh song chi vi timer nay.
+  if (typeof sweep.unref === 'function') sweep.unref();
 
   return (req: Request, res: Response, next: NextFunction) => {
     const now = Date.now();

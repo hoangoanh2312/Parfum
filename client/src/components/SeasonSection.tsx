@@ -75,10 +75,8 @@ function toSlideItem(product: ProductItem, index: number): SlideItem {
   return {
     id: product.id,
     name: product.name,
-    notes:
-      notes || product.fragranceFamily || product.brand || "Signature scent",
-    image:
-      product.images?.[0] ?? product.image ?? FALLBACK[index % FALLBACK.length],
+    notes: notes || product.fragranceFamily || product.brand || "Signature scent",
+    image: product.images?.[0] ?? product.image ?? FALLBACK[index % FALLBACK.length],
     to: `/products/${product.slug ?? product.id}`,
     position: index === 1 ? "bottom" : "top",
   };
@@ -86,9 +84,7 @@ function toSlideItem(product: ProductItem, index: number): SlideItem {
 
 /** Chuan hoa danh sach mua/dip cua 1 san pham */
 function productSeasons(product: ProductItem): string[] {
-  return (product.season ?? [])
-    .map((value) => value.trim().toLowerCase())
-    .filter(Boolean);
+  return (product.season ?? []).map((value) => value.trim().toLowerCase()).filter(Boolean);
 }
 
 /** San pham co thuoc mua `label` hay khong (dua tren du lieu that) */
@@ -109,17 +105,13 @@ function buildSeasons(products: ProductItem[]): SeasonGroup[] {
   const groups: SeasonGroup[] = [];
 
   for (const label of SEASON_LABELS) {
-    const seasonProducts = products.filter((product) =>
-      matchesSeason(product, label),
-    );
+    const seasonProducts = products.filter((product) => matchesSeason(product, label));
     if (!seasonProducts.length) continue;
 
     const slides: SlideItem[][] = [];
     for (let i = 0; i < seasonProducts.length; i += PER_SLIDE) {
       slides.push(
-        seasonProducts
-          .slice(i, i + PER_SLIDE)
-          .map((product, idx) => toSlideItem(product, idx)),
+        seasonProducts.slice(i, i + PER_SLIDE).map((product, idx) => toSlideItem(product, idx)),
       );
     }
 
@@ -134,7 +126,14 @@ function buildSeasons(products: ProductItem[]): SeasonGroup[] {
 --------------------------------------------- */
 function ArrowLeft() {
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.4"
+    >
       <path d="M10 3L5 8l5 5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
@@ -142,7 +141,14 @@ function ArrowLeft() {
 
 function ArrowRight() {
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.4"
+    >
       <path d="M6 3l5 5-5 5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
@@ -182,8 +188,7 @@ function NavButton({
         (e.currentTarget as HTMLButtonElement).style.color = "#735C00";
       }}
       onMouseLeave={(e) => {
-        (e.currentTarget as HTMLButtonElement).style.borderColor =
-          "rgba(26,26,24,0.18)";
+        (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(26,26,24,0.18)";
         (e.currentTarget as HTMLButtonElement).style.color = "#1D1C19";
       }}
     >
@@ -205,10 +210,7 @@ function ProductCard({
   delayMs: number;
 }) {
   return (
-    <article
-      className="text-center"
-      style={{ paddingTop: item.position === "bottom" ? 48 : 0 }}
-    >
+    <article className="text-center" style={{ paddingTop: item.position === "bottom" ? 48 : 0 }}>
       <div
         style={{
           opacity: visible ? 1 : 0,
@@ -231,6 +233,7 @@ function ProductCard({
           }}
         >
           <img
+            loading="lazy"
             src={item.image}
             alt={item.name}
             style={{
@@ -497,10 +500,7 @@ export default function SeasonSection() {
             margin: "28px 0 40px",
           }}
         >
-          <NavButton
-            onClick={() => goTo(safeSeason - 1, 0, true)}
-            label="Previous season"
-          >
+          <NavButton onClick={() => goTo(safeSeason - 1, 0, true)} label="Previous season">
             <ArrowLeft />
           </NavButton>
 
@@ -514,13 +514,11 @@ export default function SeasonSection() {
                 style={{
                   height: 1.5,
                   width: i === safeSeason ? 36 : 18,
-                  background:
-                    i === safeSeason ? "#735C00" : "rgba(115,92,0,0.25)",
+                  background: i === safeSeason ? "#735C00" : "rgba(115,92,0,0.25)",
                   border: "none",
                   cursor: "pointer",
                   padding: 0,
-                  transition:
-                    "width 0.4s cubic-bezier(0.22,1,0.36,1), background 0.4s",
+                  transition: "width 0.4s cubic-bezier(0.22,1,0.36,1), background 0.4s",
                 }}
               />
             ))}
@@ -536,18 +534,13 @@ export default function SeasonSection() {
               fontWeight: 500,
               minWidth: 56,
               opacity: visible ? 1 : 0,
-              transition: visible
-                ? "opacity 0.8s ease 0.2s"
-                : "opacity 0.4s ease",
+              transition: visible ? "opacity 0.8s ease 0.2s" : "opacity 0.4s ease",
             }}
           >
             {season.label}
           </span>
 
-          <NavButton
-            onClick={() => goTo(safeSeason + 1, 0, true)}
-            label="Next season"
-          >
+          <NavButton onClick={() => goTo(safeSeason + 1, 0, true)} label="Next season">
             <ArrowRight />
           </NavButton>
         </div>
@@ -584,10 +577,7 @@ export default function SeasonSection() {
           </div>
 
           {hasMultipleSlides ? (
-            <NavButton
-              onClick={() => goTo(safeSeason, safeSlide + 1, true)}
-              label="Next scents"
-            >
+            <NavButton onClick={() => goTo(safeSeason, safeSlide + 1, true)} label="Next scents">
               <ArrowRight />
             </NavButton>
           ) : (
@@ -607,10 +597,7 @@ export default function SeasonSection() {
             overflow: "hidden",
           }}
         >
-          <div
-            ref={progressRef}
-            style={{ height: "100%", width: "0%", background: "#735C00" }}
-          />
+          <div ref={progressRef} style={{ height: "100%", width: "0%", background: "#735C00" }} />
         </div>
 
         {/* Counter - trang san pham trong mua hien tai */}
@@ -624,8 +611,7 @@ export default function SeasonSection() {
             fontFamily: "'Manrope', sans-serif",
           }}
         >
-          {String(safeSlide + 1).padStart(2, "0")} /{" "}
-          {String(slidesLen).padStart(2, "0")}
+          {String(safeSlide + 1).padStart(2, "0")} / {String(slidesLen).padStart(2, "0")}
         </p>
       </div>
     </section>

@@ -1,14 +1,6 @@
 import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import {
-  Plus,
-  Minus,
-  ShoppingBag,
-  Lock,
-  Truck,
-  X,
-  RefreshCw,
-} from "lucide-react";
+import { Plus, Minus, ShoppingBag, Lock, Truck, X, RefreshCw } from "lucide-react";
 import { useCart } from "../store/cart.store";
 import { api } from "../lib/api";
 import { toast } from "../store/toast.store";
@@ -19,19 +11,27 @@ const vnd = (n: number) => (n || 0).toLocaleString("vi-VN") + "₫";
 const PLACEHOLDER = "https://placehold.co/256x342?text=No+Image";
 
 function similarLoopWidth(scroller: HTMLElement) {
-  const groups = scroller.querySelectorAll<HTMLElement>(
-    "[data-similar-loop]",
-  );
+  const groups = scroller.querySelectorAll<HTMLElement>("[data-similar-loop]");
   return groups.length > 1 ? groups[1].offsetLeft - groups[0].offsetLeft : 0;
 }
 
 export default function Cart() {
-  const { items, count, loadCart, updateItem, removeItem, clear } =
-    useCart();
+  const { items, count, loadCart, updateItem, removeItem, clear } = useCart();
   const navigate = useNavigate();
   // variantId -> số lượng CÒN LẠI thực tế trong kho (kiểm tra realtime)
   const [available, setAvailable] = useState<Record<string, number>>({});
-  const [pricing, setPricing] = useState<Record<string, { basePrice: number; finalPrice: number; discountPercent: number; promotionName: string; lineTotal: number }>>({});
+  const [pricing, setPricing] = useState<
+    Record<
+      string,
+      {
+        basePrice: number;
+        finalPrice: number;
+        discountPercent: number;
+        promotionName: string;
+        lineTotal: number;
+      }
+    >
+  >({});
   // Danh sách sản phẩm tương tự (load từ API)
   const [similar, setSimilar] = useState<ProductCardData[]>([]);
   const [similarOffset, setSimilarOffset] = useState(0);
@@ -75,7 +75,13 @@ export default function Cart() {
       const priceMap: typeof pricing = {};
       for (const d of data.data.items) {
         map[d.variant] = d.available;
-        priceMap[d.variant] = { basePrice: d.basePrice, finalPrice: d.finalPrice, discountPercent: d.discountPercent, promotionName: d.promotionName, lineTotal: d.lineTotal };
+        priceMap[d.variant] = {
+          basePrice: d.basePrice,
+          finalPrice: d.finalPrice,
+          discountPercent: d.discountPercent,
+          promotionName: d.promotionName,
+          lineTotal: d.lineTotal,
+        };
       }
       setAvailable(map);
       setPricing(priceMap);
@@ -93,14 +99,27 @@ export default function Cart() {
     const av = available[it.variant];
     return typeof av === "number" && av < it.quantity;
   });
-  const displayTotal = useMemo(() => items.reduce((sum, item) => sum + (pricing[item.variant]?.lineTotal ?? item.price * item.quantity), 0), [items, pricing]);
-  const originalTotal = useMemo(() => items.reduce((sum, item) => sum + (pricing[item.variant]?.basePrice ?? item.basePrice ?? item.price) * item.quantity, 0), [items, pricing]);
+  const displayTotal = useMemo(
+    () =>
+      items.reduce(
+        (sum, item) => sum + (pricing[item.variant]?.lineTotal ?? item.price * item.quantity),
+        0,
+      ),
+    [items, pricing],
+  );
+  const originalTotal = useMemo(
+    () =>
+      items.reduce(
+        (sum, item) =>
+          sum + (pricing[item.variant]?.basePrice ?? item.basePrice ?? item.price) * item.quantity,
+        0,
+      ),
+    [items, pricing],
+  );
 
   function checkout() {
     if (hasOutOfStock) {
-      toast.error(
-        "Một số sản phẩm đã hết hàng, vui lòng cập nhật giỏ trước khi thanh toán.",
-      );
+      toast.error("Một số sản phẩm đã hết hàng, vui lòng cập nhật giỏ trước khi thanh toán.");
       return;
     }
     // PF-36: chuyển sang trang thanh toán (chọn COD hoặc chuyển khoản QR)
@@ -112,9 +131,7 @@ export default function Cart() {
   const suggestionPool = similar
     .filter((p) => p.variantId && !inCart.has(p.variantId))
     .slice(0, 16);
-  const normalizedSimilarOffset = suggestionPool.length
-    ? similarOffset % suggestionPool.length
-    : 0;
+  const normalizedSimilarOffset = suggestionPool.length ? similarOffset % suggestionPool.length : 0;
   const suggestions = [
     ...suggestionPool.slice(normalizedSimilarOffset),
     ...suggestionPool.slice(0, normalizedSimilarOffset),
@@ -133,23 +150,16 @@ export default function Cart() {
 
     const handleWheel = (event: WheelEvent) => {
       const rawDelta =
-        Math.abs(event.deltaY) >= Math.abs(event.deltaX)
-          ? event.deltaY
-          : event.deltaX;
+        Math.abs(event.deltaY) >= Math.abs(event.deltaX) ? event.deltaY : event.deltaX;
       const pixelRatio =
-        event.deltaMode === 1
-          ? 16
-          : event.deltaMode === 2
-            ? scroller.clientWidth
-            : 1;
+        event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? scroller.clientWidth : 1;
       const pixelDelta = rawDelta * pixelRatio;
       const cycleWidth = similarLoopWidth(scroller);
 
       if (cycleWidth <= 1) return;
       event.preventDefault();
       const nextPosition = scroller.scrollLeft + pixelDelta;
-      scroller.scrollLeft =
-        ((nextPosition % cycleWidth) + cycleWidth) % cycleWidth;
+      scroller.scrollLeft = ((nextPosition % cycleWidth) + cycleWidth) % cycleWidth;
       setSimilarWheelActive(true);
 
       if (similarWheelTimerRef.current != null) {
@@ -174,9 +184,7 @@ export default function Cart() {
     const scroller = similarScrollerRef.current;
     if (!scroller || suggestions.length < 2) return;
 
-    const reducedMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reducedMotion) return;
 
     let frameId = 0;
@@ -190,12 +198,9 @@ export default function Cart() {
       if (!document.hidden) {
         const cycleWidth = similarLoopWidth(scroller);
         if (cycleWidth > 1) {
-          const nextPosition =
-            scroller.scrollLeft + (pixelsPerSecond * elapsed) / 1000;
+          const nextPosition = scroller.scrollLeft + (pixelsPerSecond * elapsed) / 1000;
           scroller.scrollLeft =
-            nextPosition >= cycleWidth
-              ? nextPosition - cycleWidth
-              : nextPosition;
+            nextPosition >= cycleWidth ? nextPosition - cycleWidth : nextPosition;
         }
       }
 
@@ -211,9 +216,7 @@ export default function Cart() {
       <>
         <section className="flex min-h-[60vh] flex-col items-center justify-center bg-[#FDF9F4] px-[20px] text-center">
           <ShoppingBag size={60} className="text-[#735C00] mb-6" />
-          <h1 className="font-['Noto_Serif'] text-4xl text-[#1C1C19] mb-3">
-            Giỏ hàng trống
-          </h1>
+          <h1 className="font-['Noto_Serif'] text-4xl text-[#1C1C19] mb-3">Giỏ hàng trống</h1>
           <p className="font-['Manrope'] text-[#5F5E5E] mb-8">
             Hãy thêm sản phẩm yêu thích vào giỏ.
           </p>
@@ -245,142 +248,124 @@ export default function Cart() {
           <div className="min-w-0">
             {/* Danh sách sản phẩm và giá nằm gọn trong cột trái. */}
             <div className="min-w-0 divide-y divide-[rgba(208,197,175,0.35)]">
-            {items.map((it) => {
-              const av = available[it.variant];
-              const priced = pricing[it.variant];
-              const productInfo = similar.find(
-                (product) =>
-                  product.id === it.product ||
-                  (it.slug && product.slug === it.slug),
-              );
-              const description = it.description || productInfo?.description;
-              const detailId =
-                it.slug || productInfo?.slug || it.product || productInfo?.id;
-              const detailPath = detailId
-                ? `/products/${detailId}`
-                : "/shop";
-              const soldOut = typeof av === "number" && av <= 0;
-              const notEnough =
-                typeof av === "number" && av > 0 && av < it.quantity;
-              return (
-                <article
-                  key={it.variant}
-                  className="grid min-w-0 gap-7 py-[50px] first:pt-0 md:grid-cols-[256px_minmax(0,1fr)] md:gap-x-8 lg:gap-x-10"
-                >
-                  <Link
-                    to={detailPath}
-                    aria-label={`Xem chi tiết ${it.name || "sản phẩm"}`}
-                    className="flex h-[342px] w-64 max-w-full items-center justify-center justify-self-center overflow-hidden bg-[#F1EDE8] md:justify-self-start"
+              {items.map((it) => {
+                const av = available[it.variant];
+                const priced = pricing[it.variant];
+                const productInfo = similar.find(
+                  (product) => product.id === it.product || (it.slug && product.slug === it.slug),
+                );
+                const description = it.description || productInfo?.description;
+                const detailId = it.slug || productInfo?.slug || it.product || productInfo?.id;
+                const detailPath = detailId ? `/products/${detailId}` : "/shop";
+                const soldOut = typeof av === "number" && av <= 0;
+                const notEnough = typeof av === "number" && av > 0 && av < it.quantity;
+                return (
+                  <article
+                    key={it.variant}
+                    className="grid min-w-0 gap-7 py-[50px] first:pt-0 md:grid-cols-[256px_minmax(0,1fr)] md:gap-x-8 lg:gap-x-10"
                   >
-                    <img
-                      src={it.image || PLACEHOLDER}
-                      alt={it.name}
-                      onError={(e) => {
-                        (e.currentTarget as HTMLImageElement).src = PLACEHOLDER;
-                      }}
-                      className={
-                        "h-full w-full object-cover mix-blend-multiply " +
-                        (soldOut ? "opacity-60 grayscale" : "opacity-90")
-                      }
-                    />
-                  </Link>
+                    <Link
+                      to={detailPath}
+                      aria-label={`Xem chi tiết ${it.name || "sản phẩm"}`}
+                      className="flex h-[342px] w-64 max-w-full items-center justify-center justify-self-center overflow-hidden bg-[#F1EDE8] md:justify-self-start"
+                    >
+                      <img
+                        loading="lazy"
+                        src={it.image || PLACEHOLDER}
+                        alt={it.name}
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).src = PLACEHOLDER;
+                        }}
+                        className={
+                          "h-full w-full object-cover mix-blend-multiply " +
+                          (soldOut ? "opacity-60 grayscale" : "opacity-90")
+                        }
+                      />
+                    </Link>
 
-                  <div className="flex min-w-0 flex-col py-2">
-                    <div className="flex items-start justify-between gap-5">
-                      <div className="min-w-0">
-                        <Link
-                          to={detailPath}
-                          className="group/title inline-block"
-                        >
-                          <h3 className="font-['Noto_Serif'] text-[27px] leading-tight text-[#1C1C19] transition-colors group-hover/title:text-[#887000]">
-                            {it.name}
-                          </h3>
-                        </Link>
-                        <p className="mt-2 font-['Manrope'] text-xs uppercase tracking-[1.5px] text-[#68635D]">
-                          {it.volume}
-                        </p>
-                      </div>
+                    <div className="flex min-w-0 flex-col py-2">
+                      <div className="flex items-start justify-between gap-5">
+                        <div className="min-w-0">
+                          <Link to={detailPath} className="group/title inline-block">
+                            <h3 className="font-['Noto_Serif'] text-[27px] leading-tight text-[#1C1C19] transition-colors group-hover/title:text-[#887000]">
+                              {it.name}
+                            </h3>
+                          </Link>
+                          <p className="mt-2 font-['Manrope'] text-xs uppercase tracking-[1.5px] text-[#68635D]">
+                            {it.volume}
+                          </p>
+                        </div>
 
-                      <div className="shrink-0 whitespace-nowrap text-right">
-                        <span
-                          className={
-                            "block font-['Noto_Serif'] text-xl " +
-                            (priced?.discountPercent
-                              ? "text-[#8B1E1E]"
-                              : "text-[#1C1C19]")
-                          }
-                        >
-                          {vnd(priced?.finalPrice ?? it.price)}
-                        </span>
-                        {!!priced?.discountPercent && (
-                          <span className="block text-xs text-[#8D887F] line-through">
-                            {vnd(priced.basePrice)}
+                        <div className="shrink-0 whitespace-nowrap text-right">
+                          <span
+                            className={
+                              "block font-['Noto_Serif'] text-xl " +
+                              (priced?.discountPercent ? "text-[#8B1E1E]" : "text-[#1C1C19]")
+                            }
+                          >
+                            {vnd(priced?.finalPrice ?? it.price)}
                           </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {description && (
-                      <p className="mt-5 max-w-2xl font-['Manrope'] text-sm leading-6 text-[#615A52]">
-                        {description}
-                      </p>
-                    )}
-
-                    {soldOut && (
-                      <p className="mt-3 text-sm font-semibold text-red-600">
-                        Đã hết hàng
-                      </p>
-                    )}
-                    {notEnough && (
-                      <p className="mt-3 text-sm font-semibold text-red-600">
-                        Chỉ còn {av} sản phẩm
-                      </p>
-                    )}
-                    {priced?.promotionName && (
-                      <p className="mt-3 text-xs uppercase tracking-[1px] text-[#8B1E1E]">
-                        {priced.promotionName} · -{priced.discountPercent}%
-                      </p>
-                    )}
-
-                    <div className="mt-9 flex flex-wrap items-center justify-between gap-5">
-                      <div className="flex w-fit items-center border border-[rgba(208,197,175,0.5)] font-['Manrope'] text-[#1C1C19]">
-                        <button
-                          type="button"
-                          aria-label={`Giảm số lượng ${it.name}`}
-                          className="flex h-10 w-10 items-center justify-center hover:bg-[#F1EDE8]"
-                          onClick={() =>
-                            updateItem(it.variant, it.quantity - 1)
-                          }
-                        >
-                          <Minus size={14} />
-                        </button>
-                        <span className="min-w-10 text-center text-sm">
-                          {it.quantity}
-                        </span>
-                        <button
-                          type="button"
-                          aria-label={`Tăng số lượng ${it.name}`}
-                          className="flex h-10 w-10 items-center justify-center hover:bg-[#F1EDE8]"
-                          onClick={() =>
-                            updateItem(it.variant, it.quantity + 1)
-                          }
-                        >
-                          <Plus size={14} />
-                        </button>
+                          {!!priced?.discountPercent && (
+                            <span className="block text-xs text-[#8D887F] line-through">
+                              {vnd(priced.basePrice)}
+                            </span>
+                          )}
+                        </div>
                       </div>
 
-                      <button
-                        type="button"
-                        className="flex items-center gap-2 whitespace-nowrap font-['Manrope'] text-[10px] uppercase tracking-[1.2px] text-[#6C665F] hover:text-red-500"
-                        onClick={() => removeItem(it.variant)}
-                      >
-                        <X size={14} /> Xóa
-                      </button>
+                      {description && (
+                        <p className="mt-5 max-w-2xl font-['Manrope'] text-sm leading-6 text-[#615A52]">
+                          {description}
+                        </p>
+                      )}
+
+                      {soldOut && (
+                        <p className="mt-3 text-sm font-semibold text-red-600">Đã hết hàng</p>
+                      )}
+                      {notEnough && (
+                        <p className="mt-3 text-sm font-semibold text-red-600">
+                          Chỉ còn {av} sản phẩm
+                        </p>
+                      )}
+                      {priced?.promotionName && (
+                        <p className="mt-3 text-xs uppercase tracking-[1px] text-[#8B1E1E]">
+                          {priced.promotionName} · -{priced.discountPercent}%
+                        </p>
+                      )}
+
+                      <div className="mt-9 flex flex-wrap items-center justify-between gap-5">
+                        <div className="flex w-fit items-center border border-[rgba(208,197,175,0.5)] font-['Manrope'] text-[#1C1C19]">
+                          <button
+                            type="button"
+                            aria-label={`Giảm số lượng ${it.name}`}
+                            className="flex h-10 w-10 items-center justify-center hover:bg-[#F1EDE8]"
+                            onClick={() => updateItem(it.variant, it.quantity - 1)}
+                          >
+                            <Minus size={14} />
+                          </button>
+                          <span className="min-w-10 text-center text-sm">{it.quantity}</span>
+                          <button
+                            type="button"
+                            aria-label={`Tăng số lượng ${it.name}`}
+                            className="flex h-10 w-10 items-center justify-center hover:bg-[#F1EDE8]"
+                            onClick={() => updateItem(it.variant, it.quantity + 1)}
+                          >
+                            <Plus size={14} />
+                          </button>
+                        </div>
+
+                        <button
+                          type="button"
+                          className="flex items-center gap-2 whitespace-nowrap font-['Manrope'] text-[10px] uppercase tracking-[1.2px] text-[#6C665F] hover:text-red-500"
+                          onClick={() => removeItem(it.variant)}
+                        >
+                          <X size={14} /> Xóa
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                </article>
-              );
-            })}
+                  </article>
+                );
+              })}
             </div>
 
             <button
@@ -404,11 +389,14 @@ export default function Cart() {
                 </span>
                 <span className="text-[#1C1C19]">{vnd(originalTotal)}</span>
               </div>
-              {originalTotal > displayTotal && <div className="flex justify-between text-[#8B1E1E]"><span>Ưu đãi sản phẩm</span><span>-{vnd(originalTotal - displayTotal)}</span></div>}
+              {originalTotal > displayTotal && (
+                <div className="flex justify-between text-[#8B1E1E]">
+                  <span>Ưu đãi sản phẩm</span>
+                  <span>-{vnd(originalTotal - displayTotal)}</span>
+                </div>
+              )}
               <div className="flex justify-between">
-                <span className="text-[#5F5E5E] tracking-[0.35px]">
-                  Vận chuyển
-                </span>
+                <span className="text-[#5F5E5E] tracking-[0.35px]">Vận chuyển</span>
                 <span className="uppercase text-[10px] font-bold tracking-[1px] text-[#735C00]">
                   Miễn phí
                 </span>
@@ -420,9 +408,7 @@ export default function Cart() {
             </div>
 
             <div className="flex justify-between items-center py-6 border-t border-[rgba(208,197,175,0.4)] mt-0">
-              <span className="font-['Noto_Serif'] text-lg text-[#1C1C19]">
-                Tổng cộng
-              </span>
+              <span className="font-['Noto_Serif'] text-lg text-[#1C1C19]">Tổng cộng</span>
               <span className="font-['Noto_Serif'] text-3xl text-[#1C1C19]">
                 {vnd(displayTotal)}
               </span>
@@ -475,9 +461,7 @@ export default function Cart() {
           <div className="mt-20">
             <div className="mb-5 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
               <div>
-                <h2 className="font-['Noto_Serif'] text-3xl text-[#1C1C19]">
-                  Sản phẩm tương tự
-                </h2>
+                <h2 className="font-['Noto_Serif'] text-3xl text-[#1C1C19]">Sản phẩm tương tự</h2>
                 <p className="mt-2 font-['Manrope'] text-sm tracking-[0.35px] text-[#5F5E5E]">
                   Đặt con trỏ trong dải sản phẩm và lăn để xem theo chiều ngang
                 </p>
@@ -516,10 +500,7 @@ export default function Cart() {
                           similarWheelActive ? "-translate-y-1" : ""
                         }`}
                       >
-                        <ProductCard
-                          item={product}
-                          imageAspectClassName="aspect-[256/342]"
-                        />
+                        <ProductCard item={product} imageAspectClassName="aspect-[256/342]" />
                       </div>
                     </div>
                   ))}
