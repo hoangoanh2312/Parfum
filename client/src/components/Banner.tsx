@@ -14,12 +14,12 @@ type Collection = {
 const COLLECTIONS: Collection[] = [
   {
     id: "collection-01",
-    tab: "Bộ sưu tập",
-    title: "L'Essence Noire",
-    subtitle: "Bộ sưu tập chữ ký 2025",
+    tab: "Chương I · Khởi Nguyên",
+    title: "Miền Đất Hứa",
+    subtitle: "Nơi câu chuyện của hương bắt đầu",
     description:
-      "Những mùi hương được chưng cất thủ công, gói trọn chiều sâu của gỗ quý, hổ phách và hoa đêm — dành cho người biết trân trọng sự tinh tế.",
-    image: "/images/dior-homme-banner.jpg",
+      "Trước khi trở thành một chai nước hoa, đó chỉ là ý niệm về một buổi hoàng hôn nơi cánh rừng gỗ quý — nơi hổ phách ấm dần trong nắng và những đóa hoa đêm khẽ hé nụ, chờ người tìm đến.",
+    image: "https://lelabo.ips.photos/lelabo-java/images/cms/7_ONE_SIZE_IMAGE_01_7809_344429774.jpg",
     columns: [
       { label: "Phong cách", value: "Phương Đông gỗ" },
       { label: "Nồng độ", value: "Eau de Parfum" },
@@ -29,27 +29,27 @@ const COLLECTIONS: Collection[] = [
   },
   {
     id: "archive-notes",
-    tab: "Câu chuyện hương",
-    title: "Ký ức mùi hương",
-    subtitle: "Từ nốt hương đến cảm xúc",
+    tab: "Chương II · Hành Trình",
+    title: "Lối Về Ký Ức",
+    subtitle: "Từng nốt hương, một đoạn đường đã qua",
     description:
-      "Mỗi lọ nước hoa là một trang nhật ký khứu giác — nơi bergamot buổi sớm gặp gỡ hoa nhài nồng nàn và tan vào nền gỗ đàn hương ấm áp.",
-    image: "/images/dior-homme-banner.jpg",
+      "Bergamot mở lối như buổi sớm còn ngái ngủ, hoa nhài dẫn ta qua một con phố quen, để rồi gỗ đàn hương khép lại câu chuyện bằng một cái ôm ấm áp, chẳng nỡ rời xa.",
+    image: "https://res.cloudinary.com/dwj2trmn0/image/upload/v1784880925/1784880917241-14369.png",
     columns: [
       { label: "Hương đầu", value: "Bergamot, Cam" },
       { label: "Hương giữa", value: "Hoa nhài, Hồng" },
       { label: "Hương nền", value: "Gỗ, Hổ phách" },
-      { label: "Cảm hứng", value: "Đêm Địa Trung Hải" },
+      { label: "Cảm hứng", value: "Hoàng hôn miền biển" },
     ],
   },
   {
     id: "process-film",
-    tab: "Nghệ thuật chế tác",
-    title: "Bàn tay nghệ nhân",
-    subtitle: "Chưng cất theo mẻ nhỏ",
+    tab: "Chương III · Đôi Bàn Tay",
+    title: "Người Giữ Lửa Nghề",
+    subtitle: "Nơi thời gian được trân trọng",
     description:
-      "Chúng tôi tuyển chọn từng nguyên liệu thô, kiên nhẫn ủ hương và tinh chỉnh đến khi từng nốt hương kể đúng câu chuyện của nó.",
-    image: "/images/dior-homme-banner.jpg",
+      "Không vội vã, không rút ngắn. Người nghệ nhân chọn từng giọt tinh dầu bằng cả sự kiên nhẫn, để mỗi mẻ hương nhỏ có đủ thời gian chín muồi, đủ thời gian kể đúng câu chuyện nó mang theo.",
+    image: "https://res.cloudinary.com/dwj2trmn0/image/upload/v1784881350/1784881344060-735445.png",
     columns: [
       { label: "Nguyên liệu", value: "Tuyển chọn" },
       { label: "Quy trình", value: "Mẻ nhỏ" },
@@ -59,12 +59,12 @@ const COLLECTIONS: Collection[] = [
   },
   {
     id: "material-origin",
-    tab: "Nguồn nguyên liệu",
-    title: "Cội nguồn thiên nhiên",
-    subtitle: "Nguyên liệu bền vững",
+    tab: "Chương IV · Miền Nhớ",
+    title: "Dấu Hương Ở Lại",
+    subtitle: "Khi thiên nhiên trở thành lời hứa",
     description:
-      "Từ cánh đồng oải hương đến rừng gỗ trầm, mỗi thành phần đều được khai thác có trách nhiệm, tôn trọng thiên nhiên và con người.",
-    image: "/images/dior-homme-banner.jpg",
+      "Từ cánh đồng oải hương tít tắp đến cánh rừng trầm sâu thẳm, mỗi nguyên liệu là một lời cảm ơn gửi đến đất mẹ — để hương thơm không chỉ đẹp, mà còn tử tế.",
+    image: "https://res.cloudinary.com/dwj2trmn0/image/upload/v1784881351/1784881346484-523053.png",
     columns: [
       { label: "Oải hương", value: "Provence" },
       { label: "Gỗ trầm", value: "Đông Nam Á" },

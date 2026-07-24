@@ -584,7 +584,7 @@ export default function ProductDetail() {
         <section className="bg-[#fbf8f2]">
           <div className="mx-auto grid max-w-[1240px] gap-14 px-6 py-12 md:px-10 lg:grid-cols-[1.1fr_0.9fr] lg:px-14 lg:py-16">
             {/* Hai anh san pham tinh, khong zoom khi hover. */}
-            <div className="relative min-h-[570px] overflow-hidden bg-[#f5f1eb]">
+            <div className="relative isolate min-h-[570px] overflow-hidden bg-[#f5f1eb]">
               <img
                 loading="lazy"
                 src={optimizeCloudinaryImage(currentImage, 900)}
@@ -592,7 +592,7 @@ export default function ProductDetail() {
                 width={900}
                 height={1100}
                 decoding="async"
-                className="h-full min-h-[570px] w-full object-contain p-12"
+                className="h-full min-h-[570px] w-full object-contain p-8 sm:p-10 lg:p-12"
                 onError={(e) => {
                   e.currentTarget.src = PLACEHOLDER;
                 }}
@@ -600,8 +600,10 @@ export default function ProductDetail() {
 
               {gallery.length > 1 && (
                 <button
+                  type="button"
                   onClick={() => setSelectedImage(insetImage)}
-                  className="absolute -bottom-10 right-[-20px] hidden h-[205px] w-[205px] border-[3px] border-white bg-white shadow-sm md:block"
+                  aria-label={`Xem ảnh phụ của ${product.name}`}
+                  className="absolute bottom-4 right-4 z-20 hidden h-[215px] w-[210px] overflow-hidden border-4 border-white bg-white shadow-[0_12px_32px_rgba(50,42,32,0.12)] md:block"
                 >
                   <img
                     src={optimizeCloudinaryImage(insetImage, 400)}
