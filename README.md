@@ -95,7 +95,7 @@ Hệ thống hỗ trợ toàn bộ vòng đời mua hàng: duyệt sản phẩm 
 - **Catalog & biến thể:** danh sách sản phẩm, biến thể theo dung tích/nồng độ, tìm kiếm & lọc theo họ hương/thương hiệu/giá; trang chi tiết có **JSON-LD**.
 - **Giỏ hàng lai:** giỏ hàng cho khách vãng lai (localStorage) + đồng bộ khi đăng nhập.
 - **Khuyến mãi 3 tầng:** **Flash Sale > Discount (theo độ ưu tiên) > Voucher**.
-- **Thanh toán VietQR** + tra cứu đơn theo mã.
+- **Thanh toán VietQR** + tra cứu đơn bằng email, số điện thoại và OTP email.
 - **Tài khoản:** hồ sơ, sổ địa chỉ, wishlist, hồ sơ mùi hương, lịch sử đơn.
 - **Nội dung:** Blog/Journal thương hiệu, trang giới thiệu, liên hệ.
 
@@ -309,6 +309,7 @@ Xem đầy đủ trong `.env.example`. Các biến quan trọng:
 |------|---------|
 | `MONGO_URI` | Chuỗi kết nối MongoDB (bắt buộc) |
 | `JWT_ACCESS_SECRET` / `JWT_REFRESH_SECRET` | Khóa ký JWT (bắt buộc) |
+| `GUEST_ORDER_LOOKUP_SECRET` | Khóa HMAC cho OTP tra cứu đơn guest; bỏ trống sẽ dùng `JWT_ACCESS_SECRET` |
 | `CLIENT_URL` / `CORS_ORIGINS` | Origin được phép (CORS) |
 | `CLOUDINARY_*` | Upload ảnh |
 | `VIETQR_*` / `SEPAY_WEBHOOK_SECRET` | Thanh toán VietQR + webhook |
@@ -445,7 +446,9 @@ API theo chuẩn **REST**, versioned dưới tiền tố **`/api/v1`**. Trả v�
 |--------|----------|:----:|-------|
 | `POST`  | `/orders` | 👤 | Tạo đơn (giao dịch tồn kho + snapshot giá/ưu đãi) |
 | `GET`   | `/orders` | 👤 | Lịch sử đơn của tôi |
-| `GET`   | `/orders/:code` | 🌐 | Tra cứu đơn theo mã (khách vãng lai dùng mã + email) |
+| `POST`  | `/orders/lookup/request-otp` | 🌐 | Nhận email + SĐT, gửi OTP email 1 phút nếu cùng khớp |
+| `POST`  | `/orders/lookup/verify-otp` | 🌐 | Xác minh OTP một lần và trả danh sách/chi tiết đơn khớp |
+| `GET`   | `/orders/:id` | 👤/🎫 | Xem chi tiết đơn bằng tài khoản hoặc guest access token lúc đặt hàng |
 | `POST`  | `/orders/:code/cancel` | 👤 | Huỷ đơn (khi chưa thanh toán) |
 | `GET`   | `/admin/orders` | 🔑 | Danh sách tất cả đơn (lọc theo trạng thái) |
 | `GET`   | `/admin/orders/:id` | 🔑 | Chi tiết đơn |

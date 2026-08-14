@@ -68,3 +68,6 @@ Desktop.ini
 .temp/
 tmp/
 *.local
+
+/server/restore-test/
+#-- Thu muc nay duoc tao ra khi restore database tu file backup trong test, nen khong can commit

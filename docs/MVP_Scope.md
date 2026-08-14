@@ -18,7 +18,7 @@ MVP đồng thời cung cấp khu quản trị để cửa hàng tự vận hàn
 - Lưu giỏ hàng trong `localStorage`.
 - Đặt hàng không bắt buộc đăng nhập.
 - Xem thông tin thanh toán bằng guest access token của đơn.
-- Tra cứu đơn theo mã đơn, email hoặc số điện thoại; kết quả công khai được giới hạn dữ liệu nhạy cảm và có rate-limit.
+- Tra cứu đơn guest bằng email + số điện thoại cùng khớp và OTP email 1 phút; có rate-limit gửi/xác minh và không làm lộ cặp thông tin tồn tại.
 
 ### 2.2. Thành viên
 
@@ -69,7 +69,7 @@ MVP đồng thời cung cấp khu quản trị để cửa hàng tự vận hàn
 
 - [x] Khách vãng lai và thành viên đều có thể tạo đơn.
 - [x] Thành viên xem lịch sử/chi tiết đơn; khách vãng lai truy cập chi tiết đơn bằng guest access token được trả một lần khi tạo đơn.
-- [x] Tra cứu công khai theo mã 6 ký tự, MongoDB ID, email hoặc số điện thoại.
+- [x] Tra cứu guest theo email + số điện thoại, sau đó xác minh OTP email dùng một lần trước khi trả danh sách và chi tiết đơn.
 - [x] Trạng thái đơn: `pending`, `paid`, `shipping`, `done`, `cancelled`, `returned`.
 - [x] Thành viên được hủy đơn hợp lệ; khách có thể hủy đơn QR đang chờ bằng guest token; admin có thể cập nhật trạng thái và lý do.
 - [x] Ưu tiên MongoDB transaction để chống oversell và giữ đồng bộ giữa đơn hàng, tồn kho, voucher và quota Flash Sale.

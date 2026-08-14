@@ -107,23 +107,23 @@ describe('configured API rate limits', () => {
     expect(blocked.headers['retry-after']).toBeDefined();
   });
 
-  it('allows 10 order lookups and blocks lookup 11', async () => {
+  it('allows 10 order OTP requests and blocks request 11', async () => {
     vi.spyOn(redisConfig, 'getRedisClient').mockReturnValue(null);
     const app = createApp();
     const statuses: number[] = [];
 
     for (let index = 0; index < 10; index += 1) {
       const response = await request(app)
-        .get('/api/orders/lookup?q=ab')
+        .post('/api/orders/lookup/request-otp')
         .set('X-Forwarded-For', '198.51.100.32');
       statuses.push(response.status);
     }
 
     const blocked = await request(app)
-      .get('/api/orders/lookup?q=ab')
+      .post('/api/orders/lookup/request-otp')
       .set('X-Forwarded-For', '198.51.100.32');
 
-    // q=ab is intentionally invalid, so allowed requests stop at query validation.
+    // Body rong co chu y, nen cac request hop le voi limiter dung tai request validation.
     expect(new Set(statuses)).toEqual(new Set([400]));
     expect(blocked.status).toBe(429);
     expect(blocked.headers['ratelimit-limit']).toBe('10');

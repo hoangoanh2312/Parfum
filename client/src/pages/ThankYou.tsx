@@ -186,11 +186,8 @@ export default function ThankYou() {
             </div>
 
             <p className="mt-6 font-sans text-sm text-[#5F5E5E]">
-              Bạn có thể tra cứu lại đơn bằng mã{" "}
-              <span className="font-semibold text-[#735C00]">
-                #{order.id.slice(-6).toUpperCase()}
-              </span>{" "}
-              hoặc số điện thoại/email đã đặt hàng.
+              Bạn có thể tra cứu lại đơn bằng email và số điện thoại đã dùng khi đặt hàng, sau đó
+              xác minh mã OTP được gửi đến email.
             </p>
 
             <div className="flex flex-wrap gap-4 justify-center mt-10">

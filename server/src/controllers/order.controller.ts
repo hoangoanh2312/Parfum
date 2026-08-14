@@ -83,10 +83,20 @@ export const cancelPendingQrOrder = async (req: Request, res: Response) => {
   }
 };
 
-// GET /api/orders/lookup?q=...
-export const lookupOrders = async (req: Request, res: Response) => {
+// POST /api/orders/lookup/request-otp
+export const requestLookupOtp = async (req: Request, res: Response) => {
   try {
-    const data = await orderService.lookupOrders(String(req.query.q || ''));
+    const data = await orderService.requestGuestOrderLookupOtp(req.body.email, req.body.phone);
+    res.status(202).json({ success: true, data });
+  } catch (error: any) {
+    res.status(error.status || 500).json({ success: false, message: error.message });
+  }
+};
+
+// POST /api/orders/lookup/verify-otp
+export const verifyLookupOtp = async (req: Request, res: Response) => {
+  try {
+    const data = await orderService.verifyGuestOrderLookupOtp(req.body.lookupId, req.body.otp);
     res.status(200).json({ success: true, data });
   } catch (error: any) {
     res.status(error.status || 500).json({ success: false, message: error.message });
