@@ -5,6 +5,18 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } 
 import { api } from "../lib/api";
 import RouteErrorPage from "./RouteErrorPage";
 
+const { navigateMock } = vi.hoisted(() => ({
+  navigateMock: vi.fn(),
+}));
+
+vi.mock("react-router-dom", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("react-router-dom")>();
+  return {
+    ...actual,
+    useNavigate: () => navigateMock,
+  };
+});
+
 vi.mock("./ProductCard", () => ({
   default: ({ item }: { item: { name: string } }) => <article>{item.name}</article>,
 }));
@@ -26,6 +38,7 @@ describe("custom 404 page", () => {
   let root: Root | undefined;
 
   beforeEach(() => {
+    navigateMock.mockReset();
     container = document.createElement("div");
     document.body.appendChild(container);
   });
@@ -74,11 +87,7 @@ describe("custom 404 page", () => {
       form!.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
     });
 
-    // React Router may schedule navigation through startTransition. On slower CI
-    // runners the submit act can finish before the router publishes its state.
-    await vi.waitFor(() => {
-      expect(router.state.location.pathname).toBe("/shop");
-      expect(router.state.location.search).toBe("?search=Dior%20Sauvage");
-    });
+    expect(navigateMock).toHaveBeenCalledOnce();
+    expect(navigateMock).toHaveBeenCalledWith("/shop?search=Dior%20Sauvage");
   });
 });
