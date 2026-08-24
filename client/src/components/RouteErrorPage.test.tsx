@@ -67,13 +67,18 @@ describe("custom 404 page", () => {
       input.dispatchEvent(new Event("input", { bubbles: true }));
     });
 
+    const form = container.querySelector<HTMLFormElement>('form[role="search"]');
+    expect(form).not.toBeNull();
+
     await act(async () => {
-      container
-        .querySelector<HTMLFormElement>('form[role="search"]')
-        ?.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+      form!.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
     });
 
-    expect(router.state.location.pathname).toBe("/shop");
-    expect(router.state.location.search).toBe("?search=Dior%20Sauvage");
+    // React Router may schedule navigation through startTransition. On slower CI
+    // runners the submit act can finish before the router publishes its state.
+    await vi.waitFor(() => {
+      expect(router.state.location.pathname).toBe("/shop");
+      expect(router.state.location.search).toBe("?search=Dior%20Sauvage");
+    });
   });
 });
