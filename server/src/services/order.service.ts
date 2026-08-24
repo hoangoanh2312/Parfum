@@ -1,8 +1,9 @@
 import mongoose from 'mongoose';
-import { randomBytes } from 'node:crypto';
+import { createHash, createHmac, randomBytes, randomInt, timingSafeEqual } from 'node:crypto';
 import { Variant } from '../models/variant.model';
 import { Cart } from '../models/cart.model';
 import { Order } from '../models/order.model';
+import { GuestOrderLookup } from '../models/guestOrderLookup.model';
 import { Payment } from '../models/payment.model';
 import { SupportRequest } from '../models/supportRequest.model';
 import { User } from '../models/user.model';
@@ -18,18 +19,13 @@ import {
 } from './pricing-engine.service';
 import { logger } from '../utils/logger';
 import { env } from '../config/env';
-import {
-  assertValidContact,
-  isLikelyValidEmail,
-  isLikelyValidVietnamPhone,
-  normalizeEmail,
-  normalizePhone,
-} from '../utils/contactValidation';
+import { assertValidContact, normalizeEmail, normalizePhone } from '../utils/contactValidation';
 import { normalizeOrderStatus } from '../utils/orderStatus';
 import { bankTransferNeedsRefund } from '../utils/payment';
 import { orderCompletedAt, STANDARD_RETURN_REQUEST_WINDOW_MS } from '../utils/returnPolicy';
 import { hashGuestOrderToken } from '../utils/guestOrderAccess';
 import { sendOrderNotification } from './notification.service';
+import { sendMail } from '../utils/mailer';
 import { claimGuestOrdersForUser } from './auth.service';
 import '../models/product.model';
 
@@ -809,65 +805,41 @@ export async function getMyOrders(userId: string) {
   });
 }
 
-/** Tra cuu cong khai theo ma don, so dien thoai hoac email; khong tra du lieu dia chi nhay cam. */
-export async function lookupOrders(rawQuery: string) {
-  const query = String(rawQuery || '').trim();
-  const email = normalizeEmail(query);
-  const rawPhone = normalizePhone(query);
-  const phone =
-    rawPhone.startsWith('84') && rawPhone.length === 11 ? `0${rawPhone.slice(2)}` : rawPhone;
-  const isEmail = isLikelyValidEmail(email);
-  const isPhone = isLikelyValidVietnamPhone(phone) && /^[\d\s.+()-]+$/.test(query);
-  const isFullId = /^[a-f\d]{24}$/i.test(query) && mongoose.isValidObjectId(query);
-  const isShortCode = /^[a-f\d]{6}$/i.test(query);
+const LOOKUP_OTP_TTL_MS = 60_000;
+// Giu challenge 2 gio de bo dem 5 lan/gui trong 1 gio khong bi TTL xoa som.
+const LOOKUP_RETENTION_MS = 2 * 60 * 60_000;
+const LOOKUP_MAX_ATTEMPTS = 5;
+const LOOKUP_SEND_COOLDOWN_MS = 60_000;
+const LOOKUP_MAX_SENDS_PER_HOUR = 5;
+const LOOKUP_GENERIC_MESSAGE =
+  'Nếu email và số điện thoại khớp với thông tin đặt hàng, mã OTP sẽ được gửi đến email của bạn.';
 
-  let orders: any[] = [];
+function lookupSecret() {
+  return process.env.GUEST_ORDER_LOOKUP_SECRET?.trim() || env.jwtAccessSecret;
+}
 
-  if (isFullId) {
-    const order = await Order.findById(query).lean();
-    if (order) orders = [order];
-  } else if (isShortCode) {
-    orders = await Order.aggregate([
-      {
-        $match: {
-          $expr: {
-            $eq: [
-              { $toUpper: { $substrBytes: [{ $toString: '$_id' }, 18, 6] } },
-              query.toUpperCase(),
-            ],
-          },
-        },
-      },
-      { $sort: { createdAt: -1 } },
-      { $limit: 50 },
-    ]);
-  } else if (isEmail) {
-    const escapedEmail = email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    orders = await Order.find({
-      $or: [
-        { 'address.email': email },
-        {
-          'address.email': { $in: [null, ''] },
-          note: { $regex: `Email:\\s*${escapedEmail}`, $options: 'i' },
-        },
-      ],
-    })
-      .sort({ createdAt: -1 })
-      .limit(50)
-      .lean();
-  } else if (isPhone) {
-    orders = await Order.find({ 'address.phone': phone }).sort({ createdAt: -1 }).limit(50).lean();
-  } else {
-    const message = query.includes('@')
-      ? 'Email khong dung dinh dang'
-      : /^[\d\s.+()-]+$/.test(query)
-        ? 'So dien thoai Viet Nam phai gom 10 chu so va bat dau bang 0'
-        : 'Ma don phai gom 6 hoac 24 ky tu hexadecimal';
-    throw Object.assign(new Error(message), { status: 400 });
-  }
+function hashLookupId(value: string) {
+  return createHash('sha256').update(value, 'utf8').digest('hex');
+}
 
+function keyedLookupHash(value: string) {
+  return createHmac('sha256', lookupSecret()).update(value, 'utf8').digest('hex');
+}
+
+function normalizeLookupPhone(value: string) {
+  const phone = normalizePhone(value);
+  return phone.startsWith('84') && phone.length === 11 ? `0${phone.slice(2)}` : phone;
+}
+
+async function findOrdersByVerifiedContact(email: string, phone: string) {
+  return Order.find({ 'address.email': email, 'address.phone': phone })
+    .sort({ createdAt: -1 })
+    .limit(50)
+    .lean();
+}
+
+async function presentVerifiedLookupOrders(orders: any[]) {
   if (!orders.length) return [];
-
   const payments: any[] = await Payment.find({
     order: { $in: orders.map((order) => order._id) },
   }).lean();
@@ -878,8 +850,19 @@ export async function lookupOrders(rawQuery: string) {
     return {
       code: String(order._id).slice(-6).toUpperCase(),
       createdAt: order.createdAt,
+      updatedAt: order.updatedAt,
+      processedAt: order.processedAt || null,
+      shippedAt: order.shippedAt || null,
+      completedAt: orderCompletedAt(order) || null,
+      cancelledAt: order.cancelledAt || null,
+      returnedAt: order.returnedAt || null,
       status: normalizeOrderStatus(order.status),
-      total: order.total,
+      statusHistory: (order.statusHistory || []).map((event: any) => ({
+        status: normalizeOrderStatus(event.status),
+        at: event.at,
+      })),
+      cancelReason: order.cancelReason || '',
+      cancelledBy: order.cancelledBy || null,
       itemCount: (order.items || []).reduce(
         (sum: number, item: any) => sum + Number(item.quantity || 0),
         0,
@@ -887,17 +870,164 @@ export async function lookupOrders(rawQuery: string) {
       items: (order.items || []).map((item: any) => ({
         name: item.name || '',
         volume: item.volume || '',
-        quantity: item.quantity || 0,
+        price: Number(item.price || 0),
+        basePrice: Number(item.basePrice ?? item.price ?? 0),
+        finalPrice: Number(item.finalPrice ?? item.price ?? 0),
+        productDiscountAmount: Number(item.productDiscountAmount || 0),
+        promotionName: item.promotionName || '',
+        quantity: Number(item.quantity || 0),
+        lineTotal: Number(item.price || 0) * Number(item.quantity || 0),
       })),
+      subtotal: Number(order.subtotal ?? order.total ?? 0),
+      originalTotal: Number(order.originalTotal ?? order.subtotal ?? order.total ?? 0),
+      productLevelDiscount: Number(order.productLevelDiscount || 0),
+      voucherDiscount: Number(order.voucherDiscount ?? order.discount ?? 0),
+      shippingDiscount: Number(order.shippingDiscount || 0),
+      discount: Number(order.discount || 0),
+      shippingFee: Number(order.shippingFee || 0),
+      vatRate: order.vatRate ?? null,
+      vatIncluded: order.vatIncluded ?? null,
+      pricesIncludeVat: order.pricesIncludeVat ?? null,
+      total: Number(order.total || 0),
+      voucherCode: order.voucherCode || '',
+      address: order.address || null,
+      note: order.note || '',
       payment: payment
-        ? { method: payment.method, status: payment.status }
-        : { method: 'cod', status: 'unpaid' },
-      statusHistory: (order.statusHistory || []).map((event: any) => ({
-        status: normalizeOrderStatus(event.status),
-        at: event.at,
-      })),
+        ? {
+            method: payment.method,
+            status: payment.status,
+            amount: Number(payment.amount ?? order.total ?? 0),
+            receivedAmount: Number(payment.receivedAmount || 0),
+            remainingAmount: Math.max(
+              0,
+              Number(payment.amount ?? order.total ?? 0) - Number(payment.receivedAmount || 0),
+            ),
+            paidAt: payment.paidAt || null,
+          }
+        : {
+            method: 'cod',
+            status: 'unpaid',
+            amount: Number(order.total || 0),
+            receivedAmount: 0,
+            remainingAmount: Number(order.total || 0),
+            paidAt: null,
+          },
     };
   });
+}
+
+/** Tao challenge tra cuu cho moi cap thong tin hop le ve dinh dang, khong lam lo cap co ton tai. */
+export async function requestGuestOrderLookupOtp(inputEmail: string, inputPhone: string) {
+  const email = normalizeEmail(inputEmail);
+  const phone = normalizeLookupPhone(inputPhone);
+  assertValidContact(email, phone);
+
+  const contactKey = keyedLookupHash(`${email}\n${phone}`);
+  const now = Date.now();
+  const latest: any = await GuestOrderLookup.findOne({ contactKey })
+    .sort({ createdAt: -1 })
+    .select('createdAt')
+    .lean();
+  if (latest?.createdAt && now - new Date(latest.createdAt).getTime() < LOOKUP_SEND_COOLDOWN_MS) {
+    throw Object.assign(new Error('Vui lòng chờ 1 phút trước khi yêu cầu mã OTP mới.'), {
+      status: 429,
+    });
+  }
+  const sentInLastHour = await GuestOrderLookup.countDocuments({
+    contactKey,
+    createdAt: { $gt: new Date(now - 60 * 60_000) },
+  });
+  if (sentInLastHour >= LOOKUP_MAX_SENDS_PER_HOUR) {
+    throw Object.assign(new Error('Bạn đã yêu cầu quá nhiều mã OTP. Vui lòng thử lại sau.'), {
+      status: 429,
+    });
+  }
+
+  const matched = Boolean(await Order.exists({ 'address.email': email, 'address.phone': phone }));
+  const lookupId = randomBytes(32).toString('base64url');
+  const otp = randomInt(100000, 1000000).toString();
+  const otpExpiresAt = new Date(now + LOOKUP_OTP_TTL_MS);
+
+  await GuestOrderLookup.updateMany(
+    { contactKey, consumedAt: { $exists: false } },
+    { $set: { consumedAt: new Date(now) } },
+  );
+  const challenge = await GuestOrderLookup.create({
+    lookupIdHash: hashLookupId(lookupId),
+    contactKey,
+    ...(matched ? { email, phone } : {}),
+    otpHash: keyedLookupHash(`${lookupId}\n${otp}`),
+    matched,
+    attempts: 0,
+    otpExpiresAt,
+    expiresAt: new Date(now + LOOKUP_RETENTION_MS),
+  });
+
+  if (matched) {
+    void sendMail({
+      to: email,
+      subject: `${otp} - Mã OTP tra cứu đơn hàng`,
+      html: `
+        <div style="font-family:Arial,sans-serif;color:#24211d;line-height:1.6">
+          <h2 style="color:#806b3d">Xác minh tra cứu đơn hàng</h2>
+          <p>Mã OTP của bạn là:</p>
+          <p style="font-size:34px;letter-spacing:8px;font-weight:700;color:#806b3d">${otp}</p>
+          <p>Mã chỉ có hiệu lực trong <strong>1 phút</strong> và chỉ được sử dụng một lần.</p>
+          <p>Nếu bạn không thực hiện yêu cầu này, vui lòng bỏ qua email.</p>
+        </div>`,
+      text: `Mã OTP tra cứu đơn hàng của bạn là ${otp}. Mã có hiệu lực trong 1 phút và chỉ được sử dụng một lần.`,
+    }).then(async (sent) => {
+      if (!sent) {
+        await GuestOrderLookup.updateOne(
+          { _id: challenge._id, consumedAt: { $exists: false } },
+          { $set: { consumedAt: new Date() } },
+        ).catch(() => undefined);
+      }
+    });
+  }
+
+  return { lookupId, message: LOOKUP_GENERIC_MESSAGE, expiresIn: 60 };
+}
+
+/** OTP dung chi duoc tieu thu mot lan; moi lan verify hop le ve challenge deu tinh mot attempt. */
+export async function verifyGuestOrderLookupOtp(lookupId: string, otp: string) {
+  const invalidOtp = () =>
+    Object.assign(new Error('Mã OTP không hợp lệ hoặc đã hết hạn.'), { status: 400 });
+  const lookupIdHash = hashLookupId(lookupId);
+  const challenge: any = await GuestOrderLookup.findOneAndUpdate(
+    {
+      lookupIdHash,
+      consumedAt: { $exists: false },
+      otpExpiresAt: { $gt: new Date() },
+      attempts: { $lt: LOOKUP_MAX_ATTEMPTS },
+    },
+    { $inc: { attempts: 1 } },
+    { new: true },
+  ).select('+otpHash +matched +email +phone');
+
+  if (!challenge?.otpHash) throw invalidOtp();
+  const expected = Buffer.from(challenge.otpHash, 'hex');
+  const received = Buffer.from(keyedLookupHash(`${lookupId}\n${otp}`), 'hex');
+  const matches = expected.length === received.length && timingSafeEqual(expected, received);
+
+  if (!matches || !challenge.matched || !challenge.email || !challenge.phone) {
+    if (challenge.attempts >= LOOKUP_MAX_ATTEMPTS) {
+      await GuestOrderLookup.updateOne(
+        { _id: challenge._id, consumedAt: { $exists: false } },
+        { $set: { consumedAt: new Date() } },
+      );
+    }
+    throw invalidOtp();
+  }
+
+  const consumed = await GuestOrderLookup.updateOne(
+    { _id: challenge._id, consumedAt: { $exists: false } },
+    { $set: { consumedAt: new Date() } },
+  );
+  if (consumed.modifiedCount !== 1) throw invalidOtp();
+
+  const orders = await findOrdersByVerifiedContact(challenge.email, challenge.phone);
+  return presentVerifiedLookupOrders(orders);
 }
 
 /** Chi tiet 1 don cua user (chan xem don nguoi khac bang dieu kien { _id, user }). */

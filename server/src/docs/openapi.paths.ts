@@ -964,24 +964,60 @@ export const publicPaths = {
     },
   },
 
-  '/orders/lookup': {
-    get: {
+  '/orders/lookup/request-otp': {
+    post: {
       tags: ['Orders'],
-      summary: 'Tra cuu don danh cho khach vang lai',
+      summary: 'Yeu cau OTP tra cuu don cho khach vang lai',
       description:
-        'Gioi han 10 lan tra cuu moi 15 phut theo dia chi IP de chong do thong tin don hang.',
+        'Nhan dong thoi email va so dien thoai. Luon tra thong bao chung; neu cap thong tin cung khop tren don hang, OTP 6 so co hieu luc 1 phut se duoc gui den email.',
       security: [],
-      parameters: [
-        {
-          name: 'q',
-          in: 'query',
-          required: true,
-          schema: { type: 'string', minLength: 3, maxLength: 120 },
-          description: 'Ma don, so dien thoai hoac dia chi email dat hang',
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              required: ['email', 'phone'],
+              properties: {
+                email: { type: 'string', format: 'email' },
+                phone: { type: 'string', example: '0901234567' },
+              },
+            },
+          },
         },
-      ],
+      },
       responses: {
-        200: ok('Danh sach don khop', envelope(arrayOf('Order'))),
+        202: ok('Da tiep nhan yeu cau OTP', envelope({ type: 'object' })),
+        400: e400,
+        429: e429,
+      },
+    },
+  },
+
+  '/orders/lookup/verify-otp': {
+    post: {
+      tags: ['Orders'],
+      summary: 'Xac minh OTP va lay cac don hang cung khop',
+      description:
+        'OTP chi dung mot lan, het han sau 1 phut va toi da 5 lan nhap. Thanh cong moi tra danh sach don cung khop email va so dien thoai da xac minh.',
+      security: [],
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              required: ['lookupId', 'otp'],
+              properties: {
+                lookupId: { type: 'string' },
+                otp: { type: 'string', pattern: '^\\d{6}$', example: '123456' },
+              },
+            },
+          },
+        },
+      },
+      responses: {
+        200: ok('Danh sach va chi tiet don da xac minh', envelope(arrayOf('Order'))),
         400: e400,
         429: e429,
       },

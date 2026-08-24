@@ -11,16 +11,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4 #Clone source code của repository xuống máy
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4  # CÀI NODE.JS
         with:
           node-version: 24
-          cache: npm #Lưu cache
+          cache: npm #Lưu cache giảm thời gian cài đặt.
           cache-dependency-path: package-lock.json
-      - run: npm ci #Cài đặt các dependencies được liệt kê trong package-lock.json
-      - run: npm --workspace server run lint --if-present #Chạy linter để kiểm tra code của server
-      - run: npm --workspace server run typecheck --if-present #Chạy typecheck để kiểm tra các lỗi liên quan đến kiểu dữ liệu trong code của server
-      - run: npm --workspace server run test --if-present #Chạy các bài kiểm tra (tests/) để đảm bảo rằng code của server hoạt động đúng như mong đợi
-      - run: npm --workspace server run build #Xây dựng (build) ứng dụng server, tạo ra các tệp tin cần thiết để triển khai ứng dụng.
+      #Cài đặt các dependencies được liệt kê trong package-lock.json
+      - run: npm ci 
+      #Chạy linter để kiểm tra code của server
+      - run: npm --workspace server run lint --if-present 
+      #Chạy typecheck để kiểm tra các lỗi liên quan đến kiểu dữ liệu trong code của server
+      - run: npm --workspace server run typecheck --if-present 
+      #Chạy các bài kiểm tra (tests/) để đảm bảo rằng code của server hoạt động đúng như mong đợi
+      - run: npm --workspace server run test --if-present 
+      #Xây dựng (build) ứng dụng server, tạo ra các tệp tin cần thiết để triển khai ứng dụng.
+      - run: npm --workspace server run build 
 
   client:
     name: Client - lint, typecheck, build, test
@@ -32,30 +37,40 @@ jobs:
           node-version: 24
           cache: npm
           cache-dependency-path: package-lock.json
+    
       - run: npm ci
+    
       - run: npm --workspace client run lint --if-present
+  
       - run: npm --workspace client run typecheck --if-present
+ 
       - run: npm --workspace client run build
+
       - run: npm --workspace client run test --if-present
 
   docker:
     name: Build Docker images
     needs: [server, client] #Docker chỉ chạy khi server và client chạy thành công
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' #chỉ chạy khi có push lên nhánh main hoặc master
+    if: github.event_name == 'push' 
+    #chỉ chạy khi có push lên nhánh main hoặc master
     steps:
+            # Clone source code
       - uses: actions/checkout@v4
+      # THIẾT LẬP DOCKER BUILDX để build Docker image.
       - uses: docker/setup-buildx-action@v3
       - name: Build server image
         uses: docker/build-push-action@v6
         with:
-          context: ./server
-          push: false
-          tags: lessence-server:ci
+          context: ./server          # Thư mục server là Docker build context.
+          push: false               # Chỉ BUILD image        # Không push image lên Docker Hub,registry
+          tags: lessence-server:ci #tag image dùng trong quá trình CI
       - name: Build client image
         uses: docker/build-push-action@v6
         with:
           context: ./client
           push: false
           tags: lessence-client:ci
+          # Truyền build argument vào Dockerfile frontend.
+          # Vite sẽ nhúng /api vào bundle frontend lúc build.
           build-args: VITE_API_URL=/api

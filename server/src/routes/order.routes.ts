@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { authenticate, optionalAuthenticate } from '../middlewares/auth.middleware';
-import { validate, validateParams, validateQuery } from '../middlewares/validate.middleware';
+import { validate, validateParams } from '../middlewares/validate.middleware';
 import { rateLimit } from '../middlewares/rateLimit.middleware';
 import {
   checkoutPreview,
@@ -10,7 +10,8 @@ import {
   cancelOrder,
   cancelPendingQrOrder,
   myOrders,
-  lookupOrders,
+  requestLookupOtp,
+  verifyLookupOtp,
   orderDetail,
   paymentInfo,
   pricePreview,
@@ -18,11 +19,18 @@ import {
 
 const router = Router();
 
-const lookupLimiter = rateLimit({
-  name: 'order-lookup',
+const lookupOtpRequestLimiter = rateLimit({
+  name: 'order-lookup-otp-request',
   windowMs: 15 * 60 * 1000,
   max: 10,
-  message: 'Qua nhieu lan tra cuu, vui long thu lai sau 15 phut',
+  message: 'Bạn đã yêu cầu quá nhiều mã OTP. Vui lòng thử lại sau.',
+});
+
+const lookupOtpVerifyLimiter = rateLimit({
+  name: 'order-lookup-otp-verify',
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  message: 'Bạn đã nhập OTP quá nhiều lần. Vui lòng thử lại sau.',
 });
 
 // Dia chi giao hang BAT BUOC co line + phone; cac truong khac tuy chon.
@@ -63,11 +71,27 @@ const pricePreviewSchema = z.object({
 router.get('/checkout-preview', authenticate, checkoutPreview);
 router.post('/check-stock', checkStock);
 router.post('/price-preview', optionalAuthenticate, validate(pricePreviewSchema), pricePreview);
-router.get(
-  '/lookup',
-  lookupLimiter,
-  validateQuery(z.object({ q: z.string().trim().min(3).max(120) })),
-  lookupOrders,
+router.post(
+  '/lookup/request-otp',
+  lookupOtpRequestLimiter,
+  validate(
+    z.object({
+      email: z.string().trim().email('Email không hợp lệ').max(254),
+      phone: z.string().trim().min(10).max(20),
+    }),
+  ),
+  requestLookupOtp,
+);
+router.post(
+  '/lookup/verify-otp',
+  lookupOtpVerifyLimiter,
+  validate(
+    z.object({
+      lookupId: z.string().trim().min(32).max(100),
+      otp: z.string().regex(/^\d{6}$/, 'OTP phải gồm đúng 6 chữ số'),
+    }),
+  ),
+  verifyLookupOtp,
 );
 
 router.get('/', authenticate, myOrders);

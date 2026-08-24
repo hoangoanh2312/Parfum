@@ -95,6 +95,7 @@ const orderSchema = new Schema(
 );
 
 orderSchema.index({ user: 1, createdAt: -1 });
+orderSchema.index({ 'address.email': 1, 'address.phone': 1, createdAt: -1 });
 orderSchema.index({ guestAccessTokenHash: 1 }, { sparse: true });
 orderSchema.index({ status: 1, 'items.variant': 1 });
 orderSchema.index({ status: 1, paymentCancellationAt: 1, inventoryReleasedAt: 1 });
