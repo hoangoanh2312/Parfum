@@ -12,7 +12,7 @@
 ![Redis](https://img.shields.io/badge/Redis-7-DC382D?style=for-the-badge&logo=redis&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 
-*Cửa hàng nước hoa chính hãng: catalog & biến thể, giỏ hàng, khuyến mãi 3 tầng (Flash Sale / Discount / Voucher), thanh toán VietQR, SEO prerender và khu quản trị đầy đủ.*
+*Cửa hàng nước hoa chính hãng: catalog & biến thể, giỏ hàng, khuyến mãi 3 tầng (Flash Sale / Discount / Voucher), thanh toán VietQR, nền tảng SEO cho SPA và khu quản trị đầy đủ.*
 
 [Tổng quan](#-tổng-quan) · [Kiến trúc](#-kiến-trúc) · [Bắt đầu nhanh](#-bắt-đầu-nhanh) · [API](#-tài-liệu-api) · [Roadmap](#-roadmap)
 
@@ -33,7 +33,7 @@
 - [🔧 Biến môi trường](#-biến-môi-trường)
 - [📜 Scripts thường dùng](#-scripts-thường-dùng)
 - [📚 Tài liệu API](#-tài-liệu-api)
-- [🔎 SEO & Prerender](#-seo--prerender-ssr)
+- [🔎 SPA & SEO](#-spa--seo)
 - [💾 Sao lưu & Migration DB](#-sao-lưu--migration-db)
 - [🐳 Docker](#-docker)
 - [🔄 CI/CD](#-cicd)
@@ -67,9 +67,9 @@ Hệ thống hỗ trợ toàn bộ vòng đời mua hàng: duyệt sản phẩm 
 
 | Vai trò | Thành viên | MSSV | Mã lớp |
 |--------|-----------|------|--------|
-| Team Lead / Fullstack | Cao Á Châu | 110123206 | DA223TTA |
-| Frontend Developer | Trần Vũ Ngọc Huỳnh | 110123012 | DA223TTA |
-| Backend Developer | Trần Hoàng Oanh | 110123037 | DA223TTA |
+| Team Lead / Fullstack | Cao Á Châu | 110123206 | DA23TTA |
+| Frontend Developer | Trần Vũ Ngọc Huỳnh | 110123012 | DA23TTA |
+| Backend Developer | Trần Hoàng Oanh | 110123037 | DA23TTA |
 
 - **Đại học Trà Vinh**
 - **Trường:** Kỹ Thuật và Công Nghệ
@@ -84,7 +84,7 @@ Hệ thống hỗ trợ toàn bộ vòng đời mua hàng: duyệt sản phẩm 
 - Áp dụng React, Node.js/Express, MongoDB trong một dự án quy mô thật.
 - Bảo mật nhiều lớp (JWT, CSRF, Helmet, rate-limit, sanitize).
 - Container hóa bằng Docker, thiết lập CI/CD với GitHub Actions và triển khai cloud.
-- Tối ưu SEO cho SPA bằng prerender.
+- Tối ưu SEO cho SPA bằng meta/OG động, JSON-LD, sitemap/robots và prerender tùy chọn.
 
 ---
 
@@ -98,6 +98,7 @@ Hệ thống hỗ trợ toàn bộ vòng đời mua hàng: duyệt sản phẩm 
 - **Thanh toán VietQR** + tra cứu đơn bằng email, số điện thoại và OTP email.
 - **Tài khoản:** hồ sơ, sổ địa chỉ, wishlist, hồ sơ mùi hương, lịch sử đơn.
 - **Nội dung:** Blog/Journal thương hiệu, trang giới thiệu, liên hệ.
+- **Điều hướng lỗi:** trang 404 riêng có tìm kiếm, liên kết về trang chủ và gợi ý sản phẩm nổi bật.
 
 ### 🛠️ Quản trị (`/admin`)
 
@@ -112,15 +113,25 @@ Hệ thống hỗ trợ toàn bộ vòng đời mua hàng: duyệt sản phẩm 
 
 ### 1️⃣ Tổng thể hệ thống (bird's-eye view)
 
-Mọi truy cập đi qua **Nginx** (phục vụ SPA đã prerender + reverse-proxy `/api`). Backend là một **Express API** duy nhất, nói chuyện với **MongoDB** (dữ liệu) và **Redis** (rate-limit phân tán, tùy chọn), tích hợp các dịch vụ ngoài: Cloudinary (ảnh), SePay/VietQR (thanh toán), SMTP (email).
+Production dùng **Vercel** để build/phục vụ React SPA và rewrite `/api` đến **Express API chạy bằng Docker trên Render**. Backend kết nối **MongoDB Atlas**, Redis tùy chọn và các dịch vụ ngoài. Nginx chỉ xuất hiện trong phương án Docker Compose/local hoặc khi deploy frontend bằng Docker.
 
-<div align="center">
-  <img src="docs/images/architecture-overview.png" alt="Kiến trúc tổng thể hệ thống" width="860" />
-</div>
+```mermaid
+flowchart LR
+  U[Người dùng] --> V[Vercel<br/>React SPA + Admin]
+  V -->|rewrite /api| E[Render<br/>Express API trên Node.js]
+  E --> M[(MongoDB Atlas)]
+  E -. rate-limit tùy chọn .-> R[(Redis)]
+  E --> C[Cloudinary]
+  E --> Q[VietQR]
+  E --> S[SMTP Email]
+  P[SePay] -->|Webhook HMAC-SHA256| E
+```
+
+Khi chạy Docker Compose, `client` dùng Nginx để phục vụ SPA và proxy `/api` sang `server`; MongoDB và Redis chạy trong cùng network Compose.
 
 ### 2️⃣ Kiến trúc phân lớp của Backend (layered architecture)
 
-Backend tuân theo nguyên tắc **mỗi tầng chỉ gọi xuống tầng ngay dưới nó** — giúp tách bạch trách nhiệm, dễ test và dễ bảo trì. Một request đi từ trên xuống, response đi ngược lên:
+Backend chủ yếu đi theo luồng **Middleware → Route → Controller → Service → Model** để tách bạch trách nhiệm, dễ test và dễ bảo trì. Một số module cũ vẫn còn controller truy cập model trực tiếp và đang được chuẩn hóa dần.
 
 <div align="center">
   <img src="docs/images/backend-layers.png" alt="Kiến trúc phân lớp Backend" width="480" />
@@ -193,15 +204,15 @@ SPA React tổ chức theo trách nhiệm, trạng thái toàn cục dùng **Zus
 | Lớp | Công nghệ |
 |-----|-----------|
 | **Frontend** | React 18, TypeScript, Vite 5, React Router 6, Zustand, Tailwind CSS 3, Axios |
-| **Backend** | Node ≥20, Express, TypeScript, Mongoose 7, JWT, bcryptjs, Zod/validators |
+| **Backend** | Node ≥20, Express, TypeScript, Mongoose 8, JWT, bcryptjs, Zod/validators |
 | **Database** | MongoDB 7 (giao dịch/replica set), Redis 7 (rate-limit phân tán, tùy chọn) |
 | **Bảo mật** | Helmet (CSP/HSTS), CORS allowlist, CSRF double-submit, express-mongo-sanitize, rate-limit |
 | **Thanh toán** | VietQR + webhook HMAC-SHA256 (SePay) |
 | **Ảnh** | Cloudinary |
 | **Test** | Vitest (client + server) |
-| **DevOps** | Docker (multi-stage), Docker Compose, Nginx, GitHub Actions, Render |
+| **DevOps** | Docker (multi-stage), Docker Compose, Nginx, GitHub Actions, Vercel, Render |
 | **Chất lượng** | ESLint, Prettier, Husky + lint-staged |
-| **SEO** | Prerender (react-snap), meta/OG động, robots.txt, sitemap.xml, JSON-LD |
+| **SEO** | Meta/OG động, robots.txt, sitemap.xml, JSON-LD; react-snap là tùy chọn build |
 
 ---
 
@@ -473,7 +484,7 @@ API theo chuẩn **REST**, versioned dưới tiền tố **`/api/v1`**. Trả v�
 |--------|----------|:----:|-------|
 | `GET`   | `/payments/vietqr/:orderCode` | 🌐 | Sinh mã VietQR cho đơn |
 | `GET`   | `/payments/:orderCode/status` | 🌐 | Kiểm tra trạng thái thanh toán |
-| `POST`  | `/webhooks/sepay` | 🤖 | Webhook xác nhận chuyển khoản (HMAC-SHA256, chống replay ±300s) |
+| `POST`  | `/payment-webhooks/sepay` | 🤖 | Webhook xác nhận chuyển khoản (HMAC-SHA256, chống replay ±300s) |
 
 ### 📝 Blog / Journal — `/blog`
 
@@ -521,17 +532,20 @@ API theo chuẩn **REST**, versioned dưới tiền tố **`/api/v1`**. Trả v�
 
 ---
 
-## 🔎 SEO & Prerender (SSR)
+## 🔎 SPA & SEO
 
-SPA thuần render phía client nên bất lợi cho SEO. Dự án bổ sung **prerender tại thời điểm build** bằng [`react-snap`](https://github.com/stereobooster/react-snap): sau khi build, một trình duyệt headless sẽ chụp HTML tĩnh của các trang tĩnh (Trang chủ, Shop, Giới thiệu, Thương hiệu, Blog, Liên hệ, Chính sách), giúp bot đọc được nội dung + thẻ meta ngay trong HTML.
+Frontend hiện được triển khai như một **SPA render phía client**: Vercel và Nginx đều trả `index.html`, sau đó React Router xử lý route trong trình duyệt. Build mặc định trên Vercel và trong `client/Dockerfile` là `npm run build`, vì vậy hệ thống **không phải SSR và không prerender mặc định**.
+
+Dự án vẫn hỗ trợ prerender tùy chọn bằng [`react-snap`](https://github.com/stereobooster/react-snap). Lệnh dưới đây tạo HTML tĩnh cho các route công khai đã khai báo, phù hợp khi chạy trên môi trường có Chromium:
 
 ```bash
 npm install
 npm run build:seo --workspace client
 ```
 
-- `main.tsx` tự **hydrate** khi phát hiện HTML đã prerender, ngược lại render bình thường.
+- `main.tsx` tự **hydrate** khi phát hiện HTML đã prerender; với build mặc định, React dùng `createRoot` để render SPA.
 - Danh sách route prerender cấu hình trong `client/package.json` → `reactSnap.include`.
+- Production Vercel hiện dùng build SPA thường; không cần chạy `react-snap` để deploy.
 - Chi tiết: xem **`docs/SEO-PRERENDER.md`**.
 
 ---
@@ -561,26 +575,30 @@ npm run migrate:down   --workspace server                      # revert cái m�
 ## 🐳 Docker
 
 ```bash
+# Tạo server/.env và điền các secret bắt buộc trước khi chạy.
 docker compose up -d --build
 # client: http://localhost:8080   ·   server: http://localhost:5000
 ```
 
-- **`server/Dockerfile`** & **`client/Dockerfile`**: multi-stage, chạy bằng user `node`, có `HEALTHCHECK`.
+- **`server/Dockerfile`** & **`client/Dockerfile`**: multi-stage và có `HEALTHCHECK`; container server chạy bằng user `node`, client chạy trên Nginx.
 - **`client/nginx.conf`**: SPA fallback, cache `/assets/` 1 năm, proxy `/api/` → `server:5000`.
-- **`docker-compose.yml`**: `mongo:7` + `redis:7` + `server` + `client`.
+- **`docker-compose.yml`**: `mongo:7` + `redis:7` + `server` + `client`; các cổng chỉ bind vào `127.0.0.1`.
+- Backend trong Compose luôn dùng `mongodb://mongo:27017/lessence_noire?replicaSet=rs0` và `redis://redis:6379`; các secret còn lại lấy từ `server/.env`.
+- Healthcheck Mongo tự khởi tạo replica set một node `rs0`, nên transaction của luồng đặt hàng hoạt động trong môi trường local.
 
-> Để bật giao dịch MongoDB trong compose, chạy Mongo dạng **single-node replica set** (`--replSet rs0` + `rs.initiate()`) hoặc dùng MongoDB Atlas.
+> Compose dùng cho local/integration. Production chính dùng frontend Vercel, backend Render và MongoDB Atlas; không chạy toàn bộ production bằng file Compose này.
 
 ---
 
 ## 🔄 CI/CD
 
-`.github/workflows/ci.yml` gồm 3 job: **server**, **client**, **docker** — chạy `npm ci`, lint, typecheck, test và build image (buildx, không push). Deploy mẫu qua **`render.yaml`**.
+`.github/workflows/ci.yml` chạy trên pull request và khi push vào `main`/`master`, gồm ba job:
 
-**Chiến lược nhánh:**
+- **server:** lint → typecheck → test → build.
+- **client:** lint → typecheck → build → test.
+- **docker:** sau khi hai job trên thành công, Buildx kiểm tra image client/server với `push: false`.
 
-- **`main`** — môi trường development, build image tag `dev-latest`.
-- **`production`** — môi trường production, build tag `latest`, deploy qua webhook.
+Workflow CI hiện **không push image và không tự deploy**. Triển khai production được cấu hình riêng: Vercel build frontend theo `client/vercel.json`, Render build backend theo `render.yaml` và `server/Dockerfile`. Workflow `database-backup.yml` chạy hằng ngày hoặc thủ công để backup MongoDB, nén, tạo SHA-256 checksum và tải lên Cloudflare R2.
 
 ---
 
@@ -590,11 +608,12 @@ Dự án dùng **Vitest** cho cả client và server.
 
 ```bash
 # Client
-npm run test --workspace client        # watch mode
-npm run test --workspace client -- run # chạy 1 lần (CI)
+npm run test --workspace client        # chạy 1 lần
+npm run test:watch --workspace client  # watch mode
 
 # Server
-npm run test --workspace server
+npm run test --workspace server        # chạy 1 lần
+npm run test:watch --workspace server  # watch mode
 ```
 
 **Công cụ chất lượng:**
@@ -627,10 +646,11 @@ npm run test --workspace server
 - ✅ **Đặt hàng an toàn** — giao dịch MongoDB chống race condition tồn kho
 - ✅ **Thanh toán VietQR** — webhook HMAC-SHA256, chống replay
 - ✅ **Khu quản trị** — sản phẩm, đơn, người dùng, khuyến mãi, blog, báo cáo
-- ✅ **SEO Prerender** — react-snap, meta/OG động, sitemap, robots
+- ✅ **Trang 404 tùy chỉnh** — tìm kiếm, điều hướng và gợi ý sản phẩm nổi bật
+- ✅ **Nền tảng SEO cho SPA** — meta/OG động, JSON-LD, sitemap, robots, prerender tùy chọn
 - ✅ **Backup & Migration DB** — script chuyên dụng
 - ✅ **Docker hóa** — multi-stage, Nginx, healthcheck
-- ✅ **CI/CD** — GitHub Actions (lint/typecheck/test/build)
+- ✅ **CI và cấu hình deploy** — GitHub Actions, Vercel, Render
 
 ### 📈 Quy mô (ước tính)
 
