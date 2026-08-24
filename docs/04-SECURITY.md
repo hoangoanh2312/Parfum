@@ -20,6 +20,12 @@
 - **Qua email**: OTP 6 số, TTL **5 phút**, lưu dưới dạng **hash** (`sha256(email:otp:secret)`). Sau khi xác minh OTP → cấp `resetToken` (32 byte, cũng hash) → gọi `/reset-password`.
 - **Qua số điện thoại**: OTP 6 số gửi qua **eSMS.vn**, TTL 5 phút, quy trình tương tự.
 - So sánh OTP bằng **constant-time** (`crypto.timingSafeEqual`) → chống dò thời gian.
+
+## 4.1. Tra cứu đơn khách vãng lai bằng OTP
+- Bắt buộc email và số điện thoại cùng khớp trên một đơn hàng; endpoint yêu cầu OTP luôn trả thông báo chung để chống dò dữ liệu.
+- OTP email gồm 6 số, TTL **1 phút**, lưu bằng HMAC, dùng một lần và OTP cũ bị vô hiệu khi phát hành OTP mới.
+- Giới hạn 5 lần nhập cho mỗi challenge, cooldown gửi lại 1 phút, tối đa 5 lần gửi mỗi giờ theo cặp liên hệ và thêm rate-limit theo IP.
+- Chỉ sau khi OTP hợp lệ server mới trả danh sách cùng thông tin chi tiết của các đơn khớp chính xác cả email lẫn số điện thoại.
 - Chống dò email/sđt tồn tại: luôn trả về thông điệp trung tính.
 
 ## 5. Header & tầng mạng

@@ -41,6 +41,13 @@
 | PUT  | `/auth/me`, `/auth/me/password` | Cập nhật hồ sơ / mật khẩu |
 | CRUD | `/auth/me/addresses/*` | Quản lý địa chỉ |
 
+## Tra cứu đơn khách vãng lai (`/orders/lookup`)
+
+| Method | Path | Ý nghĩa |
+|--------|------|--------|
+| POST | `/orders/lookup/request-otp` | Nhận đồng thời email + số điện thoại; luôn trả thông báo chung và chỉ gửi OTP email khi cả hai cùng khớp |
+| POST | `/orders/lookup/verify-otp` | Xác minh OTP 6 số trong 1 phút; thành công trả danh sách và thông tin chi tiết các đơn cùng khớp |
+
 ## Swagger / OpenAPI
 - Gắn tại **`/api/docs`** qua `swagger-ui-express` (`config/swagger.ts`).
-- Spec hiện tại là **stub** (`paths: {}`). Đề xuất nâng cấp: sinh spec tự động bằng `swagger-jsdoc` từ comment JSDoc ở từng route, hoặc định nghĩa schema thủ công.
+- Spec được định nghĩa thủ công trong `src/docs/openapi.paths.ts` và `src/docs/openapi.admin.ts`; khi thêm hoặc đổi endpoint cần cập nhật đồng thời các tệp này.

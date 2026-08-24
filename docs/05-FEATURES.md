@@ -10,7 +10,7 @@
 ### Giỏ hàng & đặt hàng
 - Giỏ cho **khách vãng lai** (localStorage) + **đồng bộ** khi đăng nhập.
 - Đặt hàng an toàn với **transaction** chống oversell (xem `01-ARCHITECTURE`).
-- Tra cứu đơn theo mã, xem lịch sử đơn.
+- Khách vãng lai tra cứu bằng đồng thời email + số điện thoại và OTP email dùng một lần, hết hạn sau 1 phút; sau xác minh có thể xem lịch sử và chi tiết đơn.
 
 ### Khuyến mãi (3 tầng, ưu tiên rõ ràng)
 1. **Flash Sale** — giá sốc theo suất (`stockAllocated`), giới hạn mỗi khách.
